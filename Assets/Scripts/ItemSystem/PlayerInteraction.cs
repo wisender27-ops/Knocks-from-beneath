@@ -5,7 +5,7 @@ public class PlayerInteraction : MonoBehaviour
     public float distance = 3f;
     public LayerMask layerMask;
     public PlayerInventory inventory; // Ссылка на наш новый инвентарь
-    public Camera camera;
+    public new Camera camera;
 
     void Update()
     {
@@ -18,12 +18,21 @@ public class PlayerInteraction : MonoBehaviour
 
     void PerformRaycast()
     {
+        // Создаем луч из центра экрана
         Ray ray = camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, distance, layerMask))
         {
-            // 1. Пробуем найти скрипт предмета
+            // 1. Пробуем найти скрипт выключателя света
+            LightSwitch lightSwitch = hit.collider.GetComponent<LightSwitch>();
+            if (lightSwitch != null)
+            {
+                lightSwitch.ToggleLight();
+                return; // Завершаем метод, чтобы не проверять другие условия
+            }
+
+            // 2. Пробуем найти скрипт предмета
             SimpleItem item = hit.collider.GetComponent<SimpleItem>();
             if (item != null)
             {
@@ -31,27 +40,29 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            // 2. Пробуем найти логику пола (если нужно оставить взаимодействие на E)
+            // 3. Пробуем найти логику пола
             FloorLogic floor = hit.collider.GetComponent<FloorLogic>();
             if (floor != null)
             {
                 if (inventory.hasCrowbar) floor.Break();
                 else Debug.Log("Нужен лом в инвентаре!");
+                return;
             }
         }
     }
 
     void PickUp(SimpleItem item)
     {
+        // Логика подбора предметов в инвентарь
         if (item.itemType == ItemType.Crowbar)
         {
             inventory.hasCrowbar = true;
-            inventory.ActivateItem("Crowbar"); // Берем в руки сразу
+            inventory.ActivateItem("Crowbar"); 
         }
         else if (item.itemType == ItemType.Flashlight)
         {
             inventory.hasFlashlight = true;
-            inventory.ActivateItem("Flashlight"); // Берем в руки сразу
+            inventory.ActivateItem("Flashlight"); 
         }
         else if (item.itemType == ItemType.Hammer)
         {
@@ -60,6 +71,6 @@ public class PlayerInteraction : MonoBehaviour
         }
 
         Debug.Log("Подобрали: " + item.itemType);
-        Destroy(item.gameObject); // Удаляем предмет с пола
+        Destroy(item.gameObject); // Удаляем предмет из мира
     }
 }
