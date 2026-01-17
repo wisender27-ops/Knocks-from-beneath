@@ -7,6 +7,7 @@ public class PickUpSystem : MonoBehaviour
     private GameObject heldObj;
     private Rigidbody heldObjRb;
     private PickableItem heldItemScript; // Ссылка на скрипт на самой коробке
+    private int originalLayer; // Переменная для хранения старого слоя
 
     void Update()
     {
@@ -50,7 +51,14 @@ public class PickUpSystem : MonoBehaviour
     {
         heldObj = pickObj;
         heldObjRb = pickObj.GetComponent<Rigidbody>();
-        heldItemScript = pickObj.GetComponent<PickableItem>(); // Берем скрипт с коробки
+        heldItemScript = pickObj.GetComponent<PickableItem>();
+
+        // 1. Запоминаем текущий слой объекта (например, Default)
+        originalLayer = heldObj.layer;
+        
+        // 2. Меняем слой на HeldItem (который не сталкивается с игроком)
+        // LayerMask.NameToLayer вернет номер слоя по его названию
+        heldObj.layer = LayerMask.NameToLayer("HeldItem");
 
         heldObjRb.useGravity = false;
         heldObjRb.linearDamping = 10;
@@ -61,6 +69,10 @@ public class PickUpSystem : MonoBehaviour
     void DropObject()
     {
         if (heldObj == null) return;
+
+        // 3. Возвращаем оригинальный слой, чтобы предмет снова можно было толкать
+        heldObj.layer = originalLayer;
+
         heldObjRb.useGravity = true;
         heldObjRb.linearDamping = 1;
         heldObjRb.constraints = RigidbodyConstraints.None;
