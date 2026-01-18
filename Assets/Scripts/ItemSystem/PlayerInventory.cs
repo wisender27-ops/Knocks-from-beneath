@@ -2,6 +2,10 @@ using UnityEngine;
 
 public class PlayerInventory : MonoBehaviour
 {
+    private float switchCooldown = 0.25f; // 250 мс
+    private float lastSwitchTime = -1f;
+    private int currentItemIndex = -1; // -1 если ничего не выбрано
+    private readonly string[] itemOrder = { "Crowbar", "Flashlight", "Hammer" };
     [Header("Наличие предметов (Логика)")]
     public bool hasCrowbar = false;
     public bool hasFlashlight = false;
@@ -39,11 +43,80 @@ public class PlayerInventory : MonoBehaviour
 
     void Update()
     {
-        // 1. Переключение предметов на клавиши 1, 2, 3
-        if (Input.GetKeyDown(KeyCode.Alpha1) && hasCrowbar) ActivateItem("Crowbar");
-        if (Input.GetKeyDown(KeyCode.Alpha2) && hasFlashlight) ActivateItem("Flashlight");
-        if (Input.GetKeyDown(KeyCode.Alpha3) && hasHammer) ActivateItem("Hammer");
+        // 1. Переключение предметов на клавиши 1, 2, 3 с кулдауном
+        if (Time.time - lastSwitchTime >= switchCooldown)
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha1) && hasCrowbar)
+            {
+                ActivateItem("Crowbar");
+                currentItemIndex = 0;
+                lastSwitchTime = Time.time;
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha2) && hasFlashlight)
+            {
+                ActivateItem("Flashlight");
+                currentItemIndex = 1;
+                lastSwitchTime = Time.time;
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha3) && hasHammer)
+            {
+                ActivateItem("Hammer");
+                currentItemIndex = 2;
+                lastSwitchTime = Time.time;
+            }
+        }
 
+        // 1.1 Переключение предметов колесом мыши
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (scroll != 0f && Time.time - lastSwitchTime >= switchCooldown)
+        {
+            int itemsCount = 0;
+            bool[] hasItems = { hasCrowbar, hasFlashlight, hasHammer };
+            for (int i = 0; i < hasItems.Length; i++)
+                if (hasItems[i]) itemsCount++;
+            if (itemsCount > 0)
+            {
+                // Найти текущий активный предмет
+                int prevIndex = currentItemIndex;
+                for (int i = 0; i < itemOrder.Length; i++)
+                {
+                    if ((itemOrder[i] == "Crowbar" && crowbarInHand != null && crowbarInHand.activeSelf) ||
+                        (itemOrder[i] == "Flashlight" && flashlightInHand != null && flashlightInHand.activeSelf) ||
+                        (itemOrder[i] == "Hammer" && hammerInHand != null && hammerInHand.activeSelf))
+                    {
+                        currentItemIndex = i;
+                        break;
+                    }
+                }
+                // Если ничего не выбрано, начать с первого доступного
+                if (currentItemIndex == -1)
+                {
+                    for (int i = 0; i < hasItems.Length; i++)
+                    {
+                        if (hasItems[i])
+                        {
+                            currentItemIndex = i;
+                            break;
+                        }
+                    }
+                }
+                // Прокрутка
+                int dir = scroll > 0 ? 1 : -1;
+                int nextIndex = currentItemIndex;
+                for (int i = 0; i < itemOrder.Length; i++)
+                {
+                    nextIndex = (nextIndex + dir + itemOrder.Length) % itemOrder.Length;
+                    if (hasItems[nextIndex])
+                        break;
+                }
+                if (nextIndex != currentItemIndex)
+                {
+                    ActivateItem(itemOrder[nextIndex]);
+                    currentItemIndex = nextIndex;
+                    lastSwitchTime = Time.time;
+                }
+            }
+        }
         // 2. Логика ЛКМ (Действие)
         if (Input.GetMouseButtonDown(0))
         {
