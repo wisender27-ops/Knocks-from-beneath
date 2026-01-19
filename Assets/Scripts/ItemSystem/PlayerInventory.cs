@@ -4,8 +4,8 @@ public class PlayerInventory : MonoBehaviour
 {
     private float switchCooldown = 0.25f; // 250 мс
     private float lastSwitchTime = -1f;
-    private int currentItemIndex = -1; // -1 если ничего не выбрано
-    private readonly string[] itemOrder = { "Crowbar", "Flashlight", "Hammer" };
+    private int currentItemIndex = 0; // 0 — пустая рука (не используется), 1 — пустая рука, 2+ — предметы
+    private readonly string[] itemOrder = { "None", "None", "Crowbar", "Flashlight", "Hammer" }; // 1 — пустая рука, 2 — лом, 3 — фонарик, 4 — молоток
     [Header("Наличие предметов (Логика)")]
     public bool hasCrowbar = false;
     public bool hasFlashlight = false;
@@ -39,73 +39,67 @@ public class PlayerInventory : MonoBehaviour
         if (flashlightInHand != null) flashlightInHand.SetActive(false);
         if (hammerInHand != null) hammerInHand.SetActive(false);
         if (flashlightLightSource != null) flashlightLightSource.enabled = false;
+
+        // По умолчанию — пустая рука (слот 1)
+        ActivateItem("None");
+        currentItemIndex = 1;
     }
 
     void Update()
     {
-        // 1. Переключение предметов на клавиши 1, 2, 3 с кулдауном
+        // 1. Переключение предметов на клавиши 1, 2, 3, 4 с кулдауном
         if (Time.time - lastSwitchTime >= switchCooldown)
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1) && hasCrowbar)
+            if (Input.GetKeyDown(KeyCode.Alpha1))
             {
-                ActivateItem("Crowbar");
-                currentItemIndex = 0;
-                lastSwitchTime = Time.time;
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha2) && hasFlashlight)
-            {
-                ActivateItem("Flashlight");
+                ActivateItem("None");
                 currentItemIndex = 1;
                 lastSwitchTime = Time.time;
             }
-            else if (Input.GetKeyDown(KeyCode.Alpha3) && hasHammer)
+            else if (Input.GetKeyDown(KeyCode.Alpha2) && hasCrowbar)
+            {
+                ActivateItem("Crowbar");
+                currentItemIndex = 2;
+                lastSwitchTime = Time.time;
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha3) && hasFlashlight)
+            {
+                ActivateItem("Flashlight");
+                currentItemIndex = 3;
+                lastSwitchTime = Time.time;
+            }
+            else if (Input.GetKeyDown(KeyCode.Alpha4) && hasHammer)
             {
                 ActivateItem("Hammer");
-                currentItemIndex = 2;
+                currentItemIndex = 4;
                 lastSwitchTime = Time.time;
             }
         }
 
-        // 1.1 Переключение предметов колесом мыши
+        // 1.1 Переключение предметов колесом мыши (с учётом пустой руки)
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0f && Time.time - lastSwitchTime >= switchCooldown)
         {
+            // Индексы: 1 — None, 2 — Crowbar, 3 — Flashlight, 4 — Hammer
+            bool[] hasItems = { false, true, hasCrowbar, hasFlashlight, hasHammer }; // 0 не используется, 1 — пустая рука всегда доступна
             int itemsCount = 0;
-            bool[] hasItems = { hasCrowbar, hasFlashlight, hasHammer };
-            for (int i = 0; i < hasItems.Length; i++)
+            for (int i = 1; i < hasItems.Length; i++)
                 if (hasItems[i]) itemsCount++;
             if (itemsCount > 0)
             {
                 // Найти текущий активный предмет
-                int prevIndex = currentItemIndex;
-                for (int i = 0; i < itemOrder.Length; i++)
-                {
-                    if ((itemOrder[i] == "Crowbar" && crowbarInHand != null && crowbarInHand.activeSelf) ||
-                        (itemOrder[i] == "Flashlight" && flashlightInHand != null && flashlightInHand.activeSelf) ||
-                        (itemOrder[i] == "Hammer" && hammerInHand != null && hammerInHand.activeSelf))
-                    {
-                        currentItemIndex = i;
-                        break;
-                    }
-                }
-                // Если ничего не выбрано, начать с первого доступного
-                if (currentItemIndex == -1)
-                {
-                    for (int i = 0; i < hasItems.Length; i++)
-                    {
-                        if (hasItems[i])
-                        {
-                            currentItemIndex = i;
-                            break;
-                        }
-                    }
-                }
+                if (crowbarInHand != null && crowbarInHand.activeSelf) currentItemIndex = 2;
+                else if (flashlightInHand != null && flashlightInHand.activeSelf) currentItemIndex = 3;
+                else if (hammerInHand != null && hammerInHand.activeSelf) currentItemIndex = 4;
+                else currentItemIndex = 1; // Пустая рука
+
                 // Прокрутка
                 int dir = scroll > 0 ? 1 : -1;
                 int nextIndex = currentItemIndex;
                 for (int i = 0; i < itemOrder.Length; i++)
                 {
                     nextIndex = (nextIndex + dir + itemOrder.Length) % itemOrder.Length;
+                    if (nextIndex == 0) nextIndex = (dir > 0) ? 1 : itemOrder.Length - 1; // пропуск 0
                     if (hasItems[nextIndex])
                         break;
                 }
@@ -130,6 +124,7 @@ public class PlayerInventory : MonoBehaviour
             {
                 ToggleFlashlight();
             }
+            // Если пустая рука — ничего не делаем
         }
     }
 
@@ -170,6 +165,7 @@ public class PlayerInventory : MonoBehaviour
         {
             hammerInHand.SetActive(true);
         }
+        // Если None — ничего не включаем (всё выключено)
     }
 
     void ToggleFlashlight()
