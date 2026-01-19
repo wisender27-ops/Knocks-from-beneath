@@ -7,6 +7,9 @@ public class LightSwitch : MonoBehaviour
     public Renderer[] lampRenderers;  // Объекты ламп (на которых висит материал)
     public bool isOn = true;          
 
+    [Header("Настройки вентилятора (необязательно)")]
+    public Rotator fanRotator;        // Ссылка на скрипт вращения лопастей
+
     [Header("Звуки")]
     public AudioSource switchSound; 
 
@@ -41,19 +44,23 @@ public class LightSwitch : MonoBehaviour
         {
             if (rend != null)
             {
-                Material mat = rend.material; // Получаем экземпляр материала
+                Material mat = rend.material; 
 
                 if (isOn)
                 {
                     mat.EnableKeyword("_EMISSION");
-                    // Если лампа тусклая, можно раскомментировать строку ниже, чтобы задать яркость принудительно:
-                    // mat.SetColor(EmissionColor, Color.white * 2f); 
                 }
                 else
                 {
                     mat.DisableKeyword("_EMISSION");
                 }
             }
+        }
+
+        // 3. НОВОЕ: Управляем вентилятором, если он привязан
+        if (fanRotator != null)
+        {
+            fanRotator.ToggleRotation(isOn);
         }
     }
 }
