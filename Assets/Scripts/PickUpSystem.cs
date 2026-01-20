@@ -8,6 +8,8 @@ public class PickUpSystem : MonoBehaviour
     private Rigidbody heldObjRb;
     private PickableItem heldItemScript; // Ссылка на скрипт на самой коробке
     private int originalLayer; // Переменная для хранения старого слоя
+    [SerializeField] private Camera playerCamera;
+    private float distance = 3.0f;
 
     void Update()
     {
@@ -16,8 +18,9 @@ public class PickUpSystem : MonoBehaviour
             if (heldObj == null)
             {
                 // ЛОГИКА ПОДБОРА (старая)
+                Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
                 RaycastHit hit;
-                if (Physics.Raycast(transform.position, transform.forward, out hit, pickUpRange))
+                if (Physics.Raycast(ray, out hit, distance))
                 {
                     if (hit.transform.CompareTag("Pickable"))
                     {
