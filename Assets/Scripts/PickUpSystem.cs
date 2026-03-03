@@ -6,10 +6,14 @@ public class PickUpSystem : MonoBehaviour
     public float pickUpRange = 3f;
     private GameObject heldObj;
     private Rigidbody heldObjRb;
-    private PickableItem heldItemScript; // Ссылка на скрипт на самой коробке
-    private int originalLayer; // Переменная для хранения старого слоя
+    private PickableItem heldItemScript;
+    private int originalLayer;
     [SerializeField] private Camera playerCamera;
     private float distance = 3.0f;
+
+    // Параметры для плавной фиксации
+    [Header("Настройки плавности")]
+    public float followSpeed = 20f; // Скорость следования за holdPoint
 
     void Update()
     {
@@ -17,7 +21,6 @@ public class PickUpSystem : MonoBehaviour
         {
             if (heldObj == null)
             {
-                // ЛОГИКА ПОДБОРА (старая)
                 Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
                 RaycastHit hit;
                 if (Physics.Raycast(ray, out hit, distance))
@@ -30,8 +33,6 @@ public class PickUpSystem : MonoBehaviour
             }
             else
             {
-                // ЛОГИКА УСТАНОВКИ
-                // Спрашиваем у коробки: "Ты в зоне?"
                 if (heldItemScript != null && heldItemScript.activeZone != null)
                 {
                     if (heldItemScript.activeZone.TryPlaceBox(heldObj))
@@ -41,13 +42,17 @@ public class PickUpSystem : MonoBehaviour
                         return;
                     }
                 }
-                
-                // Если не в зоне — просто бросаем
                 DropObject();
             }
         }
+    }
 
-        if (heldObj != null) MoveObject();
+    void FixedUpdate()
+    {
+        if (heldObj != null)
+        {
+            MoveObject();
+        }
     }
 
     void PickUpObject(GameObject pickObj)
@@ -56,40 +61,53 @@ public class PickUpSystem : MonoBehaviour
         heldObjRb = pickObj.GetComponent<Rigidbody>();
         heldItemScript = pickObj.GetComponent<PickableItem>();
 
-        // 1. Запоминаем текущий слой объекта (например, Default)
         originalLayer = heldObj.layer;
-        
-        // 2. Меняем слой на HeldItem (который не сталкивается с игроком)
-        // LayerMask.NameToLayer вернет номер слоя по его названию
         heldObj.layer = LayerMask.NameToLayer("HeldItem");
 
+        // ПРАВКА ДЛЯ СТАБИЛЬНОСТИ
         heldObjRb.useGravity = false;
-        heldObjRb.linearDamping = 10;
+        heldObjRb.interpolation = RigidbodyInterpolation.Interpolate; // Сглаживает движение
+        heldObjRb.collisionDetectionMode = CollisionDetectionMode.Continuous; // Против провалов
+        
+        heldObjRb.linearDamping = 5f; 
+        heldObjRb.angularDamping = 5f;
         heldObjRb.constraints = RigidbodyConstraints.FreezeRotation;
-        heldObj.transform.parent = holdPoint;
     }
 
     void DropObject()
     {
         if (heldObj == null) return;
 
-        // 3. Возвращаем оригинальный слой, чтобы предмет снова можно было толкать
         heldObj.layer = originalLayer;
-
+        
+        // ВОЗВРАЩАЕМ СТАНДАРТНЫЕ НАСТРОЙКИ
         heldObjRb.useGravity = true;
-        heldObjRb.linearDamping = 1;
+        heldObjRb.interpolation = RigidbodyInterpolation.None;
+        heldObjRb.linearDamping = 1f;
+        heldObjRb.angularDamping = 0.05f;
         heldObjRb.constraints = RigidbodyConstraints.None;
-        heldObj.transform.parent = null;
+
         heldObj = null;
         heldItemScript = null;
     }
 
     void MoveObject()
     {
-        if (Vector3.Distance(heldObj.transform.position, holdPoint.position) > 0.1f)
+        Vector3 targetPos = holdPoint.position;
+        Vector3 currentPos = heldObj.transform.position;
+        
+        // Вместо AddForce используем расчет скорости для достижения точки.
+        // Это убирает "раскачку" и дрожание.
+        Vector3 velocity = (targetPos - currentPos) * followSpeed;
+        
+        // В новых версиях Unity (2023+) используй .linearVelocity
+        // В старых используй .velocity
+        heldObjRb.linearVelocity = velocity;
+
+        // Проверка дистанции: если объект застрял и отстал — бросаем
+        if (Vector3.Distance(currentPos, targetPos) > 2.0f) 
         {
-            Vector3 moveDirection = (holdPoint.position - heldObj.transform.position);
-            heldObjRb.AddForce(moveDirection * 150f);
+            DropObject();
         }
     }
 }
