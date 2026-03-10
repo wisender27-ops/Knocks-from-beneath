@@ -1,71 +1,103 @@
 using UnityEngine;
 
-public class MonsterGrab : MonoBehaviour
+public class CinematicMonsterGrab : MonoBehaviour
 {
+    [Header("Monster")]
     public Animator monsterAnimator;
-    public Transform grabPoint;
-    public float grabRange = 2.5f;
 
-    private GameObject player;
-    private bool isGrabbing = false;
+    [Header("References")]
+    public Camera mainCam;
+    public Transform grabCamStart; // Куда камера переместится в начале
+    public Transform grabCamEnd;   // Куда камера придет в конце
+    public Transform lookTarget;   // Куда всегда смотреть
 
-    void Start()
+    [Header("Timing")]
+    public float moveDuration = 1.2f;
+    public AnimationCurve moveCurve = AnimationCurve.EaseInOut(0, 0, 1, 1);
+
+    [Header("Perlin Shake Settings")]
+    public float shakeAmplitude = 0.1f;
+    public float shakeFrequency = 10.0f;
+
+    private bool isPlaying = false;
+    private float timer = 0f;
+    private bool hasTriggered = false;
+    private float seed;
+
+    void Awake() => seed = Random.value * 100f;
+
+    // Используем LateUpdate, чтобы перезаписать положение камеры ПОСЛЕ того, 
+    // как отработали стандартные скрипты игрока и CameraRoot.
+    void LateUpdate()
     {
-        // Ищем игрока в начале игры по тегу
-        player = GameObject.FindGameObjectWithTag("Player");
+        if (!isPlaying) return;
 
-        if (player == null)
+        timer += Time.deltaTime;
+        float t = Mathf.Clamp01(timer / moveDuration);
+        float curvedT = moveCurve.Evaluate(t);
+
+        // 1. Считаем позицию (в мировых координатах)
+        Vector3 targetPos = Vector3.Lerp(grabCamStart.position, grabCamEnd.position, curvedT);
+
+        // 2. Добавляем шум Перлина
+        float nX = (Mathf.PerlinNoise(seed + Time.time * shakeFrequency, 0f) - 0.5f) * 2f;
+        float nY = (Mathf.PerlinNoise(0f, seed + Time.time * shakeFrequency) - 0.5f) * 2f;
+        Vector3 shake = new Vector3(nX, nY, 0) * shakeAmplitude;
+
+        // 3. Принудительно ставим камеру (игнорируя иерархию)
+        mainCam.transform.position = targetPos + shake;
+
+        // 4. Всегда смотрим на цель
+        if (lookTarget != null)
         {
-            Debug.LogError("Монстр не нашел объект с тегом Player!");
+            mainCam.transform.LookAt(lookTarget);
+        }
+
+        if (t >= 1f)
+        {
+            StopCinematic();
         }
     }
 
-    void Update()
+    void OnTriggerEnter(Collider other)
     {
-        if (player == null || isGrabbing) return;
-
-        float distance = Vector3.Distance(transform.position, player.transform.position);
-
-        if (distance < grabRange)
+        if (!hasTriggered && other.CompareTag("Player"))
         {
-            StartGrab();
+            hasTriggered = true;
+            if (monsterAnimator != null) monsterAnimator.SetTrigger("StartGrab");
+
+            // Блокируем скрипты игрока (WASD)
+            SetPlayerControl(other.gameObject, false);
+
+            isPlaying = true;
+            timer = 0f;
         }
     }
 
-    void StartGrab()
+    public void StopCinematic()
     {
-        isGrabbing = true;
-        monsterAnimator.SetTrigger("StartGrab");
+        isPlaying = false;
+        // Просто возвращаем управление. Камера сама "приклеится" обратно к CameraRoot, 
+        // так как мы перестали перезаписывать её позицию в LateUpdate.
+        if (GameObject.FindGameObjectWithTag("Player") != null)
+        {
+            SetPlayerControl(GameObject.FindGameObjectWithTag("Player"), true);
+        }
+    }
 
-        // Отключаем управление и физику игрока
+    private void SetPlayerControl(GameObject player, bool state)
+    {
         var controller = player.GetComponent<CharacterController>();
-        if (controller) controller.enabled = false;
+        if (controller != null) controller.enabled = state;
 
-        var rb = player.GetComponent<Rigidbody>();
-        if (rb) rb.isKinematic = true;
-
-        // Привязываем к руке
-        player.transform.SetParent(grabPoint);
-        player.transform.localPosition = Vector3.zero;
-        player.transform.localRotation = Quaternion.identity;
-    }
-
-    // Вызывается через Animation Event в конце броска
-    public void ReleasePlayer()
-    {
-        player.transform.SetParent(null);
-
-        var controller = player.GetComponent<CharacterController>();
-        if (controller) controller.enabled = true;
-
-        var rb = player.GetComponent<Rigidbody>();
-        if (rb)
+        // Отключаем все скрипты кроме этого, чтобы игрок не дергал камеру мышкой
+        MonoBehaviour[] scripts = player.GetComponentsInChildren<MonoBehaviour>();
+        foreach (var script in scripts)
         {
-            rb.isKinematic = false;
-            // Добавим импульс броска вперед и вниз
-            rb.AddForce(transform.forward * 10f + Vector3.down * 5f, ForceMode.Impulse);
+            if (script != this && !(script is Camera))
+            {
+                script.enabled = state;
+            }
         }
-
-        isGrabbing = false;
     }
 }
