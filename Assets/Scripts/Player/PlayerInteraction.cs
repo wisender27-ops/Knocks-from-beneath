@@ -40,14 +40,14 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            // 3. Пробуем найти логику пола
-            FloorLogic floor = hit.collider.GetComponent<FloorLogic>();
-            if (floor != null)
-            {
-                if (inventory.hasCrowbar) floor.Break();
-                else Debug.Log("Нужен лом в инвентаре!");
-                return;
-            }
+            //// 3. Пробуем найти логику пола
+            //FloorLogic floor = hit.collider.GetComponent<FloorLogic>();
+            //if (floor != null)
+            //{
+            //    if (inventory.hasCrowbar) floor.Break();
+            //    else Debug.Log("Нужен лом в инвентаре!");
+            //    return;
+            //}
         }
     }
 
