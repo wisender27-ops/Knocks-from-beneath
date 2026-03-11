@@ -6,6 +6,10 @@ TagManager:
   tags:
   - Pickable
   - Door
+  - Wood
+  - Stairs
+  - Concreate
+  - Grass
   layers:
   - Default
   - TransparentFX

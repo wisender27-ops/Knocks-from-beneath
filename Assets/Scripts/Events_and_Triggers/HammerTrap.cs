@@ -33,5 +33,7 @@ public class HammerTrap : MonoBehaviour
 
         // 5. Удаляем молоток из мира (он теперь в инвентаре)
         gameObject.SetActive(false);
+
+        LightingManager.Instance.ForceFlicker("5", 3.0f);
     }
 }
