@@ -3,24 +3,30 @@ using UnityEngine;
 public class HammerTrap : MonoBehaviour
 {
     [Header("Настройки сюжета")]
-    public Door roomDoor;           // Твоя дверь
-    public AudioSource slamSound;   // Звук удара
-    public GameObject monster;      // Монстр
-    public Transform monsterSpot;   // Точка у дыры
-    public GameObject finalLogic;   // Скрипт развилки (Часть 2)
+    public Door roomDoor;
+    public GameObject monster;
+    public Transform monsterSpot;
+    public GameObject finalLogic;
 
-    // Этот метод теперь PUBLIC, чтобы его вызвал инвентарь
+    [Header("Настройки мигания света")]
+    [SerializeField] private string lampID = "5";      // ID лампы
+    [SerializeField] private float flickerDuration = 3.0f; // Сколько секунд мигает
+    [SerializeField] private float flickerInterval = 0.1f; // Скорость (интервал) мигания
+
+    [Header("Звук события")]
+    public AudioSource targetSource;
+    public AudioClip slamClip;
+
     public void TriggerEvent(PlayerInventory inv)
     {
-        // 1. Ставим ту самую галочку в инвентаре
         inv.hasHammer = true;
-        inv.ActivateItem("Hammer"); // Сразу даем его в руки
+        inv.ActivateItem("Hammer");
 
-        // 2. Закрываем дверь
         if (roomDoor != null) roomDoor.CloseDoor();
-        if (slamSound != null) slamSound.Play();
 
-        // 3. Переносим монстра к дыре
+        if (targetSource != null && slamClip != null)
+            targetSource.PlayOneShot(slamClip);
+
         if (monster != null && monsterSpot != null)
         {
             monster.transform.position = monsterSpot.position;
@@ -28,12 +34,14 @@ public class HammerTrap : MonoBehaviour
             monster.SetActive(true);
         }
 
-        // 4. Включаем логику финала
         if (finalLogic != null) finalLogic.SetActive(true);
 
-        // 5. Удаляем молоток из мира (он теперь в инвентаре)
-        gameObject.SetActive(false);
+        // --- ТЕПЕРЬ ВСЁ БЕРЕТСЯ ИЗ ИНСПЕКТОРА ---
+        if (LightingManager.Instance != null)
+        {
+            LightingManager.Instance.Flicker(lampID, flickerDuration, flickerInterval);
+        }
 
-        LightingManager.Instance.ForceFlicker("5", 3.0f);
+        gameObject.SetActive(false);
     }
 }

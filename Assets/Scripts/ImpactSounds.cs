@@ -4,20 +4,37 @@ public class ImpactSounds : MonoBehaviour
 {
     public AudioSource impactSource;
     public AudioClip[] clips;
-    public float minVelocity = 1.5f; // Минимальная скорость для звука
+
+    [Header("Настройки физики")]
+    public float minVelocity = 1.5f;
+    [SerializeField] private float volumeMultiplier = 0.1f; // speed / 10
+
+    [Header("Тайминги")]
+    [SerializeField] private float cooldown = 0.1f; // Защита от спама
+    private float _lastPlayTime;
 
     private void OnCollisionEnter(Collision collision)
     {
-        // Проверяем силу удара
+        // 1. Проверка кулдауна
+        if (Time.time < _lastPlayTime + cooldown) return;
+
+        // 2. Проверка массива (чтобы не было ошибок в консоли)
+        if (clips == null || clips.Length == 0) return;
+
         float speed = collision.relativeVelocity.magnitude;
 
         if (speed > minVelocity)
         {
-            // Выбираем случайный звук из массива
+            _lastPlayTime = Time.time;
+
+            // Выбираем звук
             AudioClip clip = clips[Random.Range(0, clips.Length)];
 
-            // Громкость зависит от силы удара (но не выше 1)
-            float volume = Mathf.Clamp01(speed / 10f);
+            // 3. Рандомим питч (от 0.9 до 1.1) — это даст ОГРОМНУЮ разницу в сочности
+            impactSource.pitch = Random.Range(0.9f, 1.1f);
+
+            // Громкость
+            float volume = Mathf.Clamp01(speed * volumeMultiplier);
 
             impactSource.PlayOneShot(clip, volume);
         }

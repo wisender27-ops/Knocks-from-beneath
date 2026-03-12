@@ -2,13 +2,18 @@ using UnityEngine;
 
 public class Door : MonoBehaviour
 {
+    [Header("Настройки двери")]
     [SerializeField] private float angleRotation = 90f;
     [SerializeField] private float openSpeed = 10f;
     [SerializeField] private float mouseSensitivity = 3f;
-    [SerializeField] private float noiseThreshold = 45f; // Порог придется настроить заново
 
+    [Header("Настройки звука (Скрип)")]
     public AudioSource sfxSource;
-    public AudioClip creakClip;
+    public AudioClip doorCreakClip;
+
+    [Range(0.1f, 10f)]
+    [SerializeField] private float volumeMultiplier = 1.5f;
+    [SerializeField] private float minVelocityThreshold = 2f;
 
     public bool isOpen;
     private float baseRotationY;
@@ -16,9 +21,9 @@ public class Door : MonoBehaviour
     private float startX, startZ;
     private bool isBeingHeld = false;
 
-    // Для расчета реальной скорости двери
+    private float currentOffset = 0f;
     private float previousRotationY;
-    private float currentDoorVelocity;
+    private float smoothDoorVelocity;
 
     void Start()
     {
@@ -29,10 +34,12 @@ public class Door : MonoBehaviour
         targetRotationY = baseRotationY;
         previousRotationY = baseRotationY;
 
-        if (sfxSource && creakClip)
+        if (sfxSource && doorCreakClip)
         {
-            sfxSource.clip = creakClip;
-            sfxSource.loop = true; // Обязательно зацикливаем звук скрипа!
+            sfxSource.clip = doorCreakClip;
+            sfxSource.loop = true;
+            sfxSource.playOnAwake = false;
+            sfxSource.volume = 0f;
         }
     }
 
@@ -43,86 +50,88 @@ public class Door : MonoBehaviour
             HandleManualOpen();
         }
 
-        // 1. Плавно вращаем дверь
+        targetRotationY = baseRotationY + currentOffset;
         Quaternion targetQuaternion = Quaternion.Euler(startX, targetRotationY, startZ);
         transform.localRotation = Quaternion.Slerp(transform.localRotation, targetQuaternion, openSpeed * Time.deltaTime);
 
-        // 2. Считаем реальную скорость самой двери (а не мышки!)
         float currentRotY = transform.localEulerAngles.y;
         float deltaRot = Mathf.DeltaAngle(previousRotationY, currentRotY);
-        currentDoorVelocity = Mathf.Abs(deltaRot) / Time.deltaTime;
+        float rawVelocity = Mathf.Abs(deltaRot) / Time.deltaTime;
+
+        smoothDoorVelocity = Mathf.Lerp(smoothDoorVelocity, rawVelocity, Time.deltaTime * 10f);
         previousRotationY = currentRotY;
 
-        // 3. Управляем звуком на основе реальной скорости
-        ManageSound(currentDoorVelocity);
+        // Управление звуком и ивентом
+        ManageCreakSound(smoothDoorVelocity);
 
-        // 4. Триггерим монстра, если дверь захлопнули/открыли слишком сильно
-        if (currentDoorVelocity > noiseThreshold)
-        {
-            TriggerMonsterEvent();
-        }
-
-        isOpen = Mathf.Abs(Mathf.DeltaAngle(transform.localEulerAngles.y, baseRotationY)) > 5f;
+        isOpen = Mathf.Abs(currentOffset) > 5f;
     }
 
     private void HandleManualOpen()
     {
-        // Берем и X, и Y. Это делает открытие более интуитивным, 
-        // так как игрок может тянуть мышь по диагонали или вбок.
-        float mouseMove = Input.GetAxis("Mouse X") + Input.GetAxis("Mouse Y");
+        float mouseMove = Input.GetAxis("Mouse Y");
 
         if (Mathf.Abs(mouseMove) > 0.01f)
         {
-            float moveStep = mouseMove * mouseSensitivity;
-            // Примечание: Mathf.Clamp работает хорошо, если baseRotationY не пересекает отметку 360 градусов (например, не переходит с 350 на 10).
-            targetRotationY = Mathf.Clamp(targetRotationY + moveStep, baseRotationY, baseRotationY + angleRotation);
+            float directionMultiplier = (angleRotation < 0) ? -1f : 1f;
+            float moveStep = mouseMove * mouseSensitivity * 5f * directionMultiplier;
+
+            float min = Mathf.Min(0, angleRotation);
+            float max = Mathf.Max(0, angleRotation);
+
+            currentOffset = Mathf.Clamp(currentOffset + moveStep, min, max);
         }
     }
 
-    private void ManageSound(float velocity)
+    private void ManageCreakSound(float velocity)
     {
-        if (sfxSource == null) return;
+        if (sfxSource == null || doorCreakClip == null) return;
 
-        // Если дверь движется
-        if (velocity > 1f)
+        if (velocity > minVelocityThreshold)
         {
-            if (!sfxSource.isPlaying) sfxSource.Play();
+            // Если звук еще не играет, значит это момент начала скрипа
+            if (!sfxSource.isPlaying)
+            {
+                sfxSource.Play();
+                TriggerMonsterEvent(); // Срабатывает один раз при старте звука
+            }
 
-            // Плавно меняем громкость в зависимости от скорости
-            float targetVolume = Mathf.Clamp(velocity * 0.02f, 0.1f, 1.0f);
-            sfxSource.volume = Mathf.Lerp(sfxSource.volume, targetVolume, Time.deltaTime * 10f);
-
-            // Бонус: легкое изменение тона (Pitch) для реалистичности
-            sfxSource.pitch = Mathf.Clamp(0.8f + (velocity * 0.005f), 0.8f, 1.2f);
+            float targetVolume = Mathf.Clamp((velocity / 100f) * volumeMultiplier, 0f, 1f);
+            sfxSource.volume = Mathf.Lerp(sfxSource.volume, targetVolume, Time.deltaTime * 12f);
+            sfxSource.pitch = Mathf.Clamp(0.85f + (velocity * 0.003f), 0.85f, 1.15f);
         }
         else
         {
-            // Если дверь остановилась, плавно затухаем звук, а не обрываем его
-            sfxSource.volume = Mathf.Lerp(sfxSource.volume, 0f, Time.deltaTime * 10f);
+            sfxSource.volume = Mathf.Lerp(sfxSource.volume, 0f, Time.deltaTime * 15f);
 
-            if (sfxSource.volume < 0.05f && sfxSource.isPlaying)
-            {
+            if (sfxSource.volume < 0.01f && sfxSource.isPlaying)
                 sfxSource.Pause();
-            }
         }
+    }
+
+    public void CloseDoor()
+    {
+        currentOffset = 0f;
+        isBeingHeld = false;
+    }
+
+    public void OpenDoor()
+    {
+        currentOffset = angleRotation;
+    }
+
+    public void ToggleDoor()
+    {
+        if (isOpen) CloseDoor();
+        else OpenDoor();
     }
 
     private void TriggerMonsterEvent()
     {
-        // Ограничитель, чтобы монстр не спавнился каждый кадр
         if (MonsterWatcherManager.Instance != null)
             MonsterWatcherManager.Instance.SpawnWatcher(Camera.main.transform.position);
     }
 
     public void StartHolding() => isBeingHeld = true;
-
-    public void StopHolding()
-    {
-        isBeingHeld = false;
-        // Звук сам плавно затухнет благодаря ManageSound
-    }
-
-    public void OpenDoor() { targetRotationY = baseRotationY + angleRotation; }
-    public void CloseDoor() { targetRotationY = baseRotationY; }
-    public void ToggleDoor() { if (isOpen) CloseDoor(); else OpenDoor(); }
+    public void StopHolding() => isBeingHeld = false;
 }

@@ -1,7 +1,7 @@
 using UnityEngine;
 using TMPro;
 using System.Collections.Generic;
-using UnityEngine.Events; // Добавь это!
+using UnityEngine.Events;
 
 public class QuestManager : MonoBehaviour
 {
@@ -13,7 +13,7 @@ public class QuestManager : MonoBehaviour
         public string questTitle;
         public int requiredAmount;
         public int currentAmount;
-        public UnityEvent onQuestComplete; // Событие для каждого конкретного квеста
+        public UnityEvent onQuestComplete;
     }
 
     public List<QuestData> questList = new List<QuestData>();
@@ -21,7 +21,12 @@ public class QuestManager : MonoBehaviour
     public TextMeshProUGUI questUiText;
 
     void Awake() => Instance = this;
-    void Start() => UpdateUI();
+
+    // В Start теперь UpdateUI не вызываем, чтобы не было пустых 0/0
+    void Start()
+    {
+        if (questUiText != null) questUiText.text = "";
+    }
 
     public void AddProgress(int amount)
     {
@@ -34,10 +39,36 @@ public class QuestManager : MonoBehaviour
         {
             Debug.Log($"Квест '{activeQuest.questTitle}' выполнен!");
 
-            // Запускаем событие этого квеста (например, смену дня)
-            activeQuest.onQuestComplete?.Invoke();
-
+            // Сначала увеличиваем индекс, чтобы UpdateUI понял, что квестов больше нет
             currentQuestIndex++;
+
+            // Теперь вызываем событие (например, мысли игрока о следующем задании)
+            activeQuest.onQuestComplete?.Invoke();
+        }
+
+        UpdateUI();
+    }
+
+    public void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction onCompleteAction = null)
+    {
+        QuestData newQuest = new QuestData();
+        newQuest.questTitle = title;
+        newQuest.requiredAmount = amount;
+        newQuest.currentAmount = 0;
+
+        // КРИТИЧЕСКАЯ СТРОЧКА: Инициализируем событие, чтобы оно не было null
+        newQuest.onQuestComplete = new UnityEvent();
+
+        if (onCompleteAction != null)
+        {
+            newQuest.onQuestComplete.AddListener(onCompleteAction);
+        }
+
+        questList.Add(newQuest);
+
+        if (currentQuestIndex >= questList.Count - 1)
+        {
+            currentQuestIndex = questList.Count - 1;
         }
 
         UpdateUI();
@@ -46,6 +77,8 @@ public class QuestManager : MonoBehaviour
     void UpdateUI()
     {
         if (questUiText == null) return;
+
+        // Если есть активный квест — показываем его
         if (currentQuestIndex < questList.Count)
         {
             QuestData q = questList[currentQuestIndex];
@@ -53,7 +86,8 @@ public class QuestManager : MonoBehaviour
         }
         else
         {
-            questUiText.text = "Все задания выполнены!";
+            // Если все квесты выполнены или их еще нет — просто очищаем текст
+            questUiText.text = "";
         }
     }
 }
