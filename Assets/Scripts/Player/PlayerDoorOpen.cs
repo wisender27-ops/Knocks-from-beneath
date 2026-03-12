@@ -3,20 +3,27 @@ using UnityEngine;
 public class PlayerDoorOpen : MonoBehaviour
 {
     [SerializeField] private Camera playerCamera;
+
+    // Ссылка на твой контроллер
+    [SerializeField] private PlayerController playerController;
+
     private float distance = 3.0f;
-    
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    private Door currentHeldDoor;
+
     void Start()
     {
-        
+        // Пытаемся найти контроллер автоматически, если забыли перетащить в инспекторе
+        if (playerController == null)
+        {
+            playerController = GetComponentInParent<PlayerController>();
+        }
     }
 
-    // Update is called once per frame
     void Update()
     {
+        // 1. НАЖАЛИ КНОПКУ: Ищем дверь, хватаем её и лочим камеру
         if (Input.GetKeyDown(KeyCode.E))
         {
-            // Создаем луч из центра экрана
             Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
             RaycastHit hit;
 
@@ -25,14 +32,27 @@ public class PlayerDoorOpen : MonoBehaviour
                 Door door = hit.collider.GetComponent<Door>();
                 if (door != null)
                 {
-                    if (!door.isOpen) { door.OpenDoor(); }
-                    
-                    else { door.CloseDoor(); }
+                    currentHeldDoor = door;
+                    currentHeldDoor.StartHolding();
 
-                    return;
+                    // Блокируем вращение камеры
+                    if (playerController != null)
+                        playerController.isCameraLocked = true;
                 }
+            }
+        }
 
-                else { Debug.Log("door is null"); }
+        // 2. ОТПУСТИЛИ КНОПКУ: Бросаем дверь и разблокируем камеру
+        if (Input.GetKeyUp(KeyCode.E))
+        {
+            if (currentHeldDoor != null)
+            {
+                currentHeldDoor.StopHolding();
+                currentHeldDoor = null;
+
+                // Возвращаем управление камерой
+                if (playerController != null)
+                    playerController.isCameraLocked = false;
             }
         }
     }

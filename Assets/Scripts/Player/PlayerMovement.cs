@@ -37,6 +37,8 @@ public class PlayerController : MonoBehaviour
     private bool isExhausted;
     private bool wasRunningLastFrame;
 
+    public bool isCameraLocked = false;
+
     // Переменная для хранения текущей скорости (горизонтальной)
     private Vector3 horizontalVelocity;
 
@@ -59,6 +61,9 @@ public class PlayerController : MonoBehaviour
 
     private void HandleLook()
     {
+        // ДОБАВЛЯЕМ ЭТУ СТРОКУ: Если камера заблокирована, просто выходим из метода
+        if (isCameraLocked) return;
+
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
