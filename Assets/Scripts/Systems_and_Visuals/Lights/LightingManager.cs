@@ -23,4 +23,14 @@ public class LightingManager : MonoBehaviour
         }
         Debug.LogWarning($"Лампа {id} не найдена!");
     }
+    public void TurnOffAllLamps()
+    {
+        // Выключаем через LightSwitch чтобы состояние isOn синхронизировалось
+        LightSwitch[] allSwitches = FindObjectsOfType<LightSwitch>();
+        foreach (var ls in allSwitches)
+        {
+            if (ls.isOn)
+                ls.ForceTurnOff();
+        }
+    }
 }

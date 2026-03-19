@@ -3,17 +3,36 @@ using UnityEngine;
 public class LightSwitch : MonoBehaviour
 {
     [Header("Настройки света")]
-    public Light[] lightsToControl;   // Источники света (Light)
-    public Renderer[] lampRenderers;  // Объекты ламп (на которых висит материал)
-    public bool isOn = true;          
+    public Light[] lightsToControl;
+    public Renderer[] lampRenderers;
+    public bool isOn = true;
 
     [Header("Настройки вентилятора (необязательно)")]
-    public Rotator fanRotator;        // Ссылка на скрипт вращения лопастей
+    public Rotator fanRotator;
 
     [Header("Звуки")]
-    public AudioSource switchSound; 
+    public AudioSource switchSound;
 
     private static readonly int EmissionColor = Shader.PropertyToID("_EmissionColor");
+
+    // --- ПОДПИСКА НА СОБЫТИЯ ---
+    private void OnEnable()
+    {
+        GameEvents.OnNightStarted += ForceTurnOff;
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.OnNightStarted -= ForceTurnOff;
+    }
+
+    // Метод, который сработает при наступлении темноты
+    public void ForceTurnOff()
+    {
+        if (!isOn) return;
+        isOn = false;
+        ApplyLightState();
+    }
 
     void Start()
     {
@@ -22,7 +41,7 @@ public class LightSwitch : MonoBehaviour
 
     public void ToggleLight()
     {
-        isOn = !isOn; 
+        isOn = !isOn;
         ApplyLightState();
 
         if (switchSound != null)
@@ -44,7 +63,7 @@ public class LightSwitch : MonoBehaviour
         {
             if (rend != null)
             {
-                Material mat = rend.material; 
+                Material mat = rend.material;
 
                 if (isOn)
                 {
@@ -57,7 +76,7 @@ public class LightSwitch : MonoBehaviour
             }
         }
 
-        // 3. НОВОЕ: Управляем вентилятором, если он привязан
+        // 3. Управляем вентилятором, если он привязан
         if (fanRotator != null)
         {
             fanRotator.ToggleRotation(isOn);

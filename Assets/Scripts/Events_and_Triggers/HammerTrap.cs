@@ -22,26 +22,23 @@ public class HammerTrap : MonoBehaviour
         inv.hasHammer = true;
         inv.ActivateItem("Hammer");
 
-        if (roomDoor != null) roomDoor.CloseDoor();
+        // днаюбэ щрс ярпнвйс
+        QuestManager.Instance.AddProgress(1);
 
+        if (roomDoor != null) roomDoor.CloseDoor();
         if (targetSource != null && slamClip != null)
             targetSource.PlayOneShot(slamClip);
-
         if (monster != null && monsterSpot != null)
         {
             monster.transform.position = monsterSpot.position;
             monster.transform.rotation = monsterSpot.rotation;
             monster.SetActive(true);
         }
-
         if (finalLogic != null) finalLogic.SetActive(true);
-
-        // --- реоепэ бя╗ аеперяъ хг хмяоейрнпю ---
         if (LightingManager.Instance != null)
         {
             LightingManager.Instance.Flicker(lampID, flickerDuration, flickerInterval);
         }
-
         gameObject.SetActive(false);
     }
 }

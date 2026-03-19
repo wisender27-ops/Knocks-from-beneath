@@ -100,12 +100,27 @@ public class PlayerInteraction : MonoBehaviour
     // --- ЛОГИКА ИНВЕНТАРЯ ---
     void PickUpToInventory(SimpleItem item)
     {
+        Debug.Log($"Picking up: {item.itemType} | Current quest index: {QuestManager.Instance.currentQuestIndex} | Quest title: {QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex].questTitle}");
+
         if (item.itemType == ItemType.Crowbar) inventory.hasCrowbar = true;
         else if (item.itemType == ItemType.Flashlight) inventory.hasFlashlight = true;
         else if (item.itemType == ItemType.Hammer) inventory.hasHammer = true;
 
         inventory.ActivateItem(item.itemType.ToString());
-        Debug.Log("В инвентаре: " + item.itemType);
+
+        if (QuestManager.Instance.currentQuestIndex < QuestManager.Instance.questList.Count)
+        {
+            var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
+
+            bool isCorrectItem =
+                (item.itemType == ItemType.Crowbar && activeQuest.questTitle.Contains("лом")) ||
+                (item.itemType == ItemType.Hammer && activeQuest.questTitle.Contains("молоток")) ||
+                (item.itemType == ItemType.Flashlight && activeQuest.questTitle.Contains("фонарик")); // NEW
+
+            if (isCorrectItem)
+                QuestManager.Instance.AddProgress(1);
+        }
+
         Destroy(item.gameObject);
     }
 
@@ -116,16 +131,13 @@ public class PlayerInteraction : MonoBehaviour
         _heldObjRb = obj.GetComponent<Rigidbody>();
 
         _originalLayer = _heldObj.layer;
-        _heldObj.layer = LayerMask.NameToLayer("HeldItem"); // Тот самый слой из шага 1
+        _heldObj.layer = LayerMask.NameToLayer("HeldItem");
 
         _heldObjRb.interpolation = RigidbodyInterpolation.Interpolate;
-
         _heldObjRb.useGravity = false;
-        _heldObjRb.linearDamping = 10f; // Высокое сопротивление, чтобы не болтался
-        _heldObjRb.angularDamping = 10f;
+        _heldObjRb.linearDamping = 15f;   // Higher damping kills oscillation
+        _heldObjRb.angularDamping = 15f;
         _heldObjRb.constraints = RigidbodyConstraints.FreezeRotation;
-
-        // Важно: оставляем isKinematic = false, чтобы он видел стены!
     }
 
     void TryReleaseObject()
@@ -175,24 +187,27 @@ public class PlayerInteraction : MonoBehaviour
 
     void MovePhysicsObject()
     {
-        // Рассчитываем целевую позицию
         Vector3 targetPos = holdPoint.position;
+        Vector3 currentPos = _heldObj.transform.position;
 
-        // Плавное следование (Lerp) для самой позиции
-        // Это уберет "жесткую" привязку и сделает движение приятным
-        Vector3 smoothedPos = Vector3.Lerp(_heldObj.transform.position, targetPos, Time.deltaTime * followSpeed);
+        // --- POSITION: spring-based velocity ---
+        // Instead of moving directly, we push the rigidbody toward the target.
+        // This works WITH the physics engine, not against it.
+        Vector3 directionToTarget = targetPos - currentPos;
+        float distance = directionToTarget.magnitude;
 
-        // Двигаем через Rigidbody.MovePosition вместо изменения Velocity
-        _heldObjRb.MovePosition(smoothedPos);
+        // Apply velocity proportional to the error (PD controller approach)
+        _heldObjRb.linearVelocity = directionToTarget * followSpeed;
 
-        // Плавное вращение к holdPoint
-        _heldObj.transform.rotation = Quaternion.Lerp(_heldObj.transform.rotation, holdPoint.rotation, Time.deltaTime * followSpeed);
+        // --- ROTATION: smooth slerp toward holdPoint ---
+        Quaternion targetRot = holdPoint.rotation;
+        _heldObjRb.MoveRotation(
+            Quaternion.Slerp(_heldObj.transform.rotation, targetRot, Time.fixedDeltaTime * followSpeed)
+        );
 
-        // Проверка дистанции: если объект сильно отстал (застрял) — бросаем
-        if (Vector3.Distance(_heldObj.transform.position, targetPos) > 2.2f)
-        {
+        // Drop if too far (still stuck somewhere)
+        if (distance > 2.2f)
             DropObject();
-        }
     }
 
     void ThrowObject()

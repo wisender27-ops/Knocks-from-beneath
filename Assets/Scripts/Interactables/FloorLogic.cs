@@ -49,7 +49,8 @@ public class FloorLogic : MonoBehaviour
         if (visualModel != null) visualModel.SetActive(false); // Прячем доски
 
         isBroken = true;
-        Debug.Log("Пол сломан. Стук прекратился. Бездна ждет.");
+
+        QuestManager.Instance.AddProgress(1);
     }
 
     public void Fix()

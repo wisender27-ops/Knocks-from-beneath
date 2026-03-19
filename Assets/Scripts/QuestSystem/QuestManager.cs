@@ -55,21 +55,16 @@ public class QuestManager : MonoBehaviour
         newQuest.questTitle = title;
         newQuest.requiredAmount = amount;
         newQuest.currentAmount = 0;
-
-        // КРИТИЧЕСКАЯ СТРОЧКА: Инициализируем событие, чтобы оно не было null
         newQuest.onQuestComplete = new UnityEvent();
 
         if (onCompleteAction != null)
-        {
             newQuest.onQuestComplete.AddListener(onCompleteAction);
-        }
 
         questList.Add(newQuest);
 
-        if (currentQuestIndex >= questList.Count - 1)
-        {
-            currentQuestIndex = questList.Count - 1;
-        }
+        // Always sync to the newest quest — CreateQuest is only
+        // ever called from story callbacks, so a new quest = active quest
+        currentQuestIndex = questList.Count - 1;
 
         UpdateUI();
     }

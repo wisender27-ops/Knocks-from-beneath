@@ -15,7 +15,25 @@ public class Door : MonoBehaviour
     [SerializeField] private float volumeMultiplier = 1.5f;
     [SerializeField] private float minVelocityThreshold = 2f;
 
-    public bool isOpen;
+    // --- НОВАЯ ЛОГИКА IS_OPEN ---
+    [SerializeField] private bool _isOpen; // Внутренняя переменная
+    public bool isOpen
+    {
+        get => _isOpen;
+        set
+        {
+            if (_isOpen == value) return; // Если значение не изменилось — ничего не делаем
+            _isOpen = value;
+
+            // Если мы НЕ держим дверь руками, реагируем на смену галочки
+            if (!isBeingHeld)
+            {
+                if (_isOpen) OpenDoor();
+                else CloseDoor();
+            }
+        }
+    }
+
     private float baseRotationY;
     private float targetRotationY;
     private float startX, startZ;
@@ -50,10 +68,12 @@ public class Door : MonoBehaviour
             HandleManualOpen();
         }
 
+        // Плавный поворот к целевому смещению
         targetRotationY = baseRotationY + currentOffset;
         Quaternion targetQuaternion = Quaternion.Euler(startX, targetRotationY, startZ);
         transform.localRotation = Quaternion.Slerp(transform.localRotation, targetQuaternion, openSpeed * Time.deltaTime);
 
+        // Расчет скорости для звука
         float currentRotY = transform.localEulerAngles.y;
         float deltaRot = Mathf.DeltaAngle(previousRotationY, currentRotY);
         float rawVelocity = Mathf.Abs(deltaRot) / Time.deltaTime;
@@ -61,10 +81,23 @@ public class Door : MonoBehaviour
         smoothDoorVelocity = Mathf.Lerp(smoothDoorVelocity, rawVelocity, Time.deltaTime * 10f);
         previousRotationY = currentRotY;
 
-        // Управление звуком и ивентом
         ManageCreakSound(smoothDoorVelocity);
 
-        isOpen = Mathf.Abs(currentOffset) > 5f;
+        // Обновляем состояние галочки без вызова сеттера, чтобы просто видеть статус в инспекторе
+        // Но лучше оставить управление за пользователем через свойство выше.
+        // Чтобы галочка в инспекторе сама не "прыгала", пока ты тянешь дверь:
+        if (isBeingHeld) _isOpen = Mathf.Abs(currentOffset) > 5f;
+    }
+
+    // Это позволит видеть изменения в инспекторе Unity в реальном времени
+    private void OnValidate()
+    {
+        // Если ты в редакторе клацнул галочку — дверь среагирует
+        if (Application.isPlaying)
+        {
+            if (_isOpen) OpenDoor();
+            else CloseDoor();
+        }
     }
 
     private void HandleManualOpen()
@@ -89,11 +122,10 @@ public class Door : MonoBehaviour
 
         if (velocity > minVelocityThreshold)
         {
-            // Если звук еще не играет, значит это момент начала скрипа
             if (!sfxSource.isPlaying)
             {
                 sfxSource.Play();
-                TriggerMonsterEvent(); // Срабатывает один раз при старте звука
+                TriggerMonsterEvent();
             }
 
             float targetVolume = Mathf.Clamp((velocity / 100f) * volumeMultiplier, 0f, 1f);
@@ -103,7 +135,6 @@ public class Door : MonoBehaviour
         else
         {
             sfxSource.volume = Mathf.Lerp(sfxSource.volume, 0f, Time.deltaTime * 15f);
-
             if (sfxSource.volume < 0.01f && sfxSource.isPlaying)
                 sfxSource.Pause();
         }
@@ -112,18 +143,33 @@ public class Door : MonoBehaviour
     public void CloseDoor()
     {
         currentOffset = 0f;
-        isBeingHeld = false;
+        _isOpen = false;
     }
 
     public void OpenDoor()
     {
         currentOffset = angleRotation;
+        _isOpen = true;
     }
 
     public void ToggleDoor()
     {
-        if (isOpen) CloseDoor();
-        else OpenDoor();
+        isOpen = !isOpen; // Используем свойство
+    }
+
+    private void OnEnable()
+    {
+        GameEvents.OnNightStarted += ForceClose; // Подписываемся
+    }
+
+    private void OnDisable()
+    {
+        GameEvents.OnNightStarted -= ForceClose; // Отписываемся (обязательно для защиты от утечек памяти)
+    }
+
+    private void ForceClose()
+    {
+        isOpen = false; // Используем твое свойство, оно само запустит звук и анимацию
     }
 
     private void TriggerMonsterEvent()
