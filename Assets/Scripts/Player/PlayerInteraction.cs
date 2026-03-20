@@ -108,13 +108,15 @@ public class PlayerInteraction : MonoBehaviour
     // --- ЛОГИКА ИНВЕНТАРЯ ---
     void PickUpToInventory(SimpleItem item)
     {
-        Debug.Log($"Picking up: {item.itemType} | Current quest index: {QuestManager.Instance.currentQuestIndex} | Quest title: {QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex].questTitle}");
-
         if (item.itemType == ItemType.Crowbar) inventory.hasCrowbar = true;
         else if (item.itemType == ItemType.Flashlight) inventory.hasFlashlight = true;
         else if (item.itemType == ItemType.Hammer) inventory.hasHammer = true;
 
         inventory.ActivateItem(item.itemType.ToString());
+
+        // ДОБАВЛЯЕМ В UI
+        if (InventoryUI.Instance != null)
+            InventoryUI.Instance.AddItem(item.itemType.ToString());
 
         if (QuestManager.Instance.currentQuestIndex < QuestManager.Instance.questList.Count)
         {
@@ -123,7 +125,7 @@ public class PlayerInteraction : MonoBehaviour
             bool isCorrectItem =
                 (item.itemType == ItemType.Crowbar && activeQuest.questTitle.Contains("лом")) ||
                 (item.itemType == ItemType.Hammer && activeQuest.questTitle.Contains("молоток")) ||
-                (item.itemType == ItemType.Flashlight && activeQuest.questTitle.Contains("фонарик")); // NEW
+                (item.itemType == ItemType.Flashlight && activeQuest.questTitle.Contains("фонарик"));
 
             if (isCorrectItem)
                 QuestManager.Instance.AddProgress(1);

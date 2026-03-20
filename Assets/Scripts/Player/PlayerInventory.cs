@@ -2,10 +2,10 @@ using UnityEngine;
 
 public class PlayerInventory : MonoBehaviour
 {
-    private float switchCooldown = 0.25f; // 250 мс
+    private float switchCooldown = 0.25f;
     private float lastSwitchTime = -1f;
-    private int currentItemIndex = 0; // 0 — пустая рука (не используется), 1 — пустая рука, 2+ — предметы
-    private readonly string[] itemOrder = { "None", "None", "Crowbar", "Flashlight", "Hammer" }; // 1 — пустая рука, 2 — лом, 3 — фонарик, 4 — молоток
+    private int currentItemIndex = 0;
+
     [Header("Наличие предметов (Логика)")]
     public bool hasCrowbar = false;
     public bool hasFlashlight = false;
@@ -23,9 +23,9 @@ public class PlayerInventory : MonoBehaviour
     public AudioClip soundOff;
 
     [Header("Настройки удара ломом")]
-    public float hitDistance = 2.5f;     // Дистанция удара
-    public LayerMask interactableLayer;  // Слой объектов (Interactable)
-    public float damageDelay = 0.2f;    // Задержка луча под анимацию
+    public float hitDistance = 2.5f;
+    public LayerMask interactableLayer;
+    public float damageDelay = 0.2f;
 
     private Animator crowbarAnim;
 
@@ -34,138 +34,85 @@ public class PlayerInventory : MonoBehaviour
         if (crowbarInHand != null)
             crowbarAnim = crowbarInHand.GetComponent<Animator>();
 
-        // Выключаем всё при старте, только если объекты назначены
         if (crowbarInHand != null) crowbarInHand.SetActive(false);
         if (flashlightInHand != null) flashlightInHand.SetActive(false);
         if (hammerInHand != null) hammerInHand.SetActive(false);
         if (flashlightLightSource != null) flashlightLightSource.enabled = false;
 
-        // По умолчанию — пустая рука (слот 1)
         ActivateItem("None");
-        currentItemIndex = 1;
+        currentItemIndex = 0;
     }
 
     void Update()
     {
-        // 1. Переключение предметов на клавиши 1, 2, 3, 4 с кулдауном
+        // --- ПЕРЕКЛЮЧЕНИЕ КЛАВИШАМИ ---
         if (Time.time - lastSwitchTime >= switchCooldown)
         {
-            if (Input.GetKeyDown(KeyCode.Alpha1))
-            {
-                ActivateItem("None");
-                currentItemIndex = 1;
-                lastSwitchTime = Time.time;
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha2) && hasCrowbar)
-            {
-                ActivateItem("Crowbar");
-                currentItemIndex = 2;
-                lastSwitchTime = Time.time;
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha3) && hasFlashlight)
-            {
-                ActivateItem("Flashlight");
-                currentItemIndex = 3;
-                lastSwitchTime = Time.time;
-            }
-            else if (Input.GetKeyDown(KeyCode.Alpha4) && hasHammer)
-            {
-                ActivateItem("Hammer");
-                currentItemIndex = 4;
-                lastSwitchTime = Time.time;
-            }
+            if (Input.GetKeyDown(KeyCode.Alpha1)) SwitchToSlot(0);
+            else if (Input.GetKeyDown(KeyCode.Alpha2)) SwitchToSlot(1);
+            else if (Input.GetKeyDown(KeyCode.Alpha3)) SwitchToSlot(2);
+            else if (Input.GetKeyDown(KeyCode.Alpha4)) SwitchToSlot(3);
         }
 
-        // 1.1 Переключение предметов колесом мыши (с учётом пустой руки)
+        // --- СКРОЛЛ МЫШИ ---
         float scroll = Input.GetAxis("Mouse ScrollWheel");
         if (scroll != 0f && Time.time - lastSwitchTime >= switchCooldown)
         {
-            // Индексы: 1 — None, 2 — Crowbar, 3 — Flashlight, 4 — Hammer
-            bool[] hasItems = { false, true, hasCrowbar, hasFlashlight, hasHammer }; // 0 не используется, 1 — пустая рука всегда доступна
-            int itemsCount = 0;
-            for (int i = 1; i < hasItems.Length; i++)
-                if (hasItems[i]) itemsCount++;
-            if (itemsCount > 0)
-            {
-                // Найти текущий активный предмет
-                if (crowbarInHand != null && crowbarInHand.activeSelf) currentItemIndex = 2;
-                else if (flashlightInHand != null && flashlightInHand.activeSelf) currentItemIndex = 3;
-                else if (hammerInHand != null && hammerInHand.activeSelf) currentItemIndex = 4;
-                else currentItemIndex = 1; // Пустая рука
+            int dir = scroll > 0 ? 1 : -1;
+            int nextSlot = currentItemIndex + dir;
 
-                // Прокрутка
-                int dir = scroll > 0 ? 1 : -1;
-                int nextIndex = currentItemIndex;
-                for (int i = 0; i < itemOrder.Length; i++)
-                {
-                    nextIndex = (nextIndex + dir + itemOrder.Length) % itemOrder.Length;
-                    if (nextIndex == 0) nextIndex = (dir > 0) ? 1 : itemOrder.Length - 1; // пропуск 0
-                    if (hasItems[nextIndex])
-                        break;
-                }
-                if (nextIndex != currentItemIndex)
-                {
-                    ActivateItem(itemOrder[nextIndex]);
-                    currentItemIndex = nextIndex;
-                    lastSwitchTime = Time.time;
-                }
-            }
+            int maxSlot = InventoryUI.Instance != null ?
+                InventoryUI.Instance.GetActiveSlotCount() - 1 : 0;
+
+            nextSlot = Mathf.Clamp(nextSlot, 0, maxSlot);
+
+            if (nextSlot != currentItemIndex)
+                SwitchToSlot(nextSlot);
         }
-        // 2. Логика ЛКМ (Действие)
+
+        // --- ЛКМ ---
         if (Input.GetMouseButtonDown(0))
         {
-            // Если в руках ЛОМ
             if (crowbarInHand != null && crowbarInHand.activeSelf)
-            {
                 PerformCrowbarAttack();
-            }
-            // Если в руках ФОНАРИК
             else if (flashlightInHand != null && flashlightInHand.activeSelf)
-            {
                 ToggleFlashlight();
-            }
-            // Если пустая рука — ничего не делаем
         }
+    }
+
+    void SwitchToSlot(int slotIndex)
+    {
+        if (InventoryUI.Instance == null) return;
+
+        string itemInSlot = InventoryUI.Instance.GetItemInSlot(slotIndex);
+        if (itemInSlot == null) return;
+
+        ActivateItem(itemInSlot);
+        currentItemIndex = slotIndex;
+        lastSwitchTime = Time.time;
     }
 
     // --- ЛОГИКА ПРЕДМЕТОВ ---
 
     public void ActivateItem(string itemName)
     {
-        // Выключаем свет, только если он назначен
         if (flashlightLightSource != null)
-        {
             flashlightLightSource.enabled = false;
-        }
 
-        // ПРОВЕРКА: Выключаем только те объекты, которые реально существуют
-        if (crowbarInHand != null)
-        {
-            crowbarInHand.SetActive(false);
-        }
-        if (flashlightInHand != null)
-        {
-            flashlightInHand.SetActive(false);
-        }
-        if (hammerInHand != null)
-        {
-            hammerInHand.SetActive(false);
-        }
+        if (crowbarInHand != null) crowbarInHand.SetActive(false);
+        if (flashlightInHand != null) flashlightInHand.SetActive(false);
+        if (hammerInHand != null) hammerInHand.SetActive(false);
 
-        // Включаем нужный предмет (тоже с проверкой на null)
         if (itemName == "Crowbar" && hasCrowbar && crowbarInHand != null)
-        {
             crowbarInHand.SetActive(true);
-        }
         else if (itemName == "Flashlight" && hasFlashlight && flashlightInHand != null)
-        {
             flashlightInHand.SetActive(true);
-        }
         else if (itemName == "Hammer" && hasHammer && hammerInHand != null)
-        {
             hammerInHand.SetActive(true);
-        }
-        // Если None — ничего не включаем (всё выключено)
+
+        // Обновляем UI — подсвечиваем активный слот
+        if (InventoryUI.Instance != null)
+            InventoryUI.Instance.SetActiveSlot(itemName);
     }
 
     void ToggleFlashlight()
@@ -174,7 +121,6 @@ public class PlayerInventory : MonoBehaviour
         {
             flashlightLightSource.enabled = !flashlightLightSource.enabled;
 
-            // Звук щелчка
             if (flashlightAudioSource != null)
             {
                 AudioClip clip = flashlightLightSource.enabled ? soundOn : soundOff;
@@ -187,34 +133,23 @@ public class PlayerInventory : MonoBehaviour
     {
         if (crowbarAnim != null)
         {
-            crowbarAnim.SetTrigger("Attack"); // Запуск анимации
-            
-            // Запускаем "луч урона" с небольшой задержкой, чтобы совпало с замахом
+            crowbarAnim.SetTrigger("Attack");
             Invoke("CheckHit", damageDelay);
         }
     }
 
-    void CheckHit()
+    public void CheckHit()
     {
-        // Пускаем луч из центра экрана
         Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, hitDistance, interactableLayer))
         {
-            // Проверка на разрушаемый объект
             BreakableObject breakable = hit.collider.GetComponent<BreakableObject>();
-            if (breakable != null)
-            {
-                breakable.Break();
-            }
+            if (breakable != null) breakable.Break();
 
-            // Проверка на старую логику пола
             FloorLogic floor = hit.collider.GetComponent<FloorLogic>();
-            if (floor != null)
-            {
-                floor.Break();
-            }
+            if (floor != null) floor.Break();
         }
     }
 }

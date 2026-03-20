@@ -10,24 +10,22 @@ public class HoleEventController : MonoBehaviour
 
     [Header("Настройки")]
     public float lookDistance = 3f;
-    public float minTimeToTrigger = 2f;  // Случайный таймер — минимум
-    public float maxTimeToTrigger = 5f;  // Случайный таймер — максимум
+    public float minTimeToTrigger = 0.8f;  // Уменьшили — меньше времени
+    public float maxTimeToTrigger = 2f;
 
     [Header("Звуки напряжения (до скримера)")]
     public AudioSource tensionAudioSource;
-    public AudioClip[] tensionSounds;    // Дыхание, скрежет, шёпот
-
-    [Header("Звук нарастания (перед вспышкой)")]
-    public AudioClip buildupClip;        // Нарастающий звук перед скримером
+    public AudioClip[] tensionSounds;
 
     [Header("Настройки камеры")]
-    public float cameraShakeIntensity = 0.05f;
-    public float cameraDipAmount = 0.3f; // Насколько камера дёргается вниз
+    public float cameraShakeIntensity = 0.08f; // Сильнее
+    public float cameraDipAmount = 0.6f;        // Сильнее
 
     private float _lookTimer = 0f;
-    private float _triggerTime;          // Случайное время до скримера
+    private float _triggerTime;
     private bool _eventStarted = false;
     private bool _tensionSoundPlayed = false;
+    private bool _committed = false; // Порог — скример уже не отменить
     private Light _flashlightLight;
     private Camera _playerCam;
 
@@ -35,11 +33,7 @@ public class HoleEventController : MonoBehaviour
     {
         if (monsterFace != null) monsterFace.SetActive(false);
         if (inventory != null) _flashlightLight = inventory.flashlightLightSource;
-
-        // Находим камеру игрока
         _playerCam = Camera.main;
-
-        // Генерируем случайное время до скримера
         _triggerTime = Random.Range(minTimeToTrigger, maxTimeToTrigger);
     }
 
@@ -55,15 +49,21 @@ public class HoleEventController : MonoBehaviour
         {
             if (!isFlashlightOn)
             {
-                Debug.Log("Здесь слишком темно. Нужен фонарик.");
-                _lookTimer = 0f;
+                // Не сбрасываем если уже committed
+                if (!_committed) _lookTimer = 0f;
                 return;
             }
 
             _lookTimer += Time.deltaTime;
 
-            // На середине таймера — играем случайный звук напряжения
-            if (!_tensionSoundPlayed && _lookTimer >= _triggerTime * 0.5f)
+            // Перешли половину — скример уже не отменить
+            if (!_committed && _lookTimer >= _triggerTime * 0.5f)
+            {
+                _committed = true;
+            }
+
+            // Звук напряжения на 70% таймера — позже и короче
+            if (!_tensionSoundPlayed && _lookTimer >= _triggerTime * 0.7f)
             {
                 PlayRandomTensionSound();
                 _tensionSoundPlayed = true;
@@ -74,11 +74,18 @@ public class HoleEventController : MonoBehaviour
         }
         else
         {
-            // Если игрок отвёл взгляд — сбрасываем всё
+            // Если committed — продолжаем таймер даже без взгляда
+            if (_committed)
+            {
+                _lookTimer += Time.deltaTime;
+                if (_lookTimer >= _triggerTime)
+                    StartCoroutine(TheVoidSequence());
+                return;
+            }
+
+            // Не committed — сбрасываем
             _lookTimer = 0f;
             _tensionSoundPlayed = false;
-
-            // Новое случайное время — каждый раз разное
             _triggerTime = Random.Range(minTimeToTrigger, maxTimeToTrigger);
         }
     }
@@ -103,46 +110,37 @@ public class HoleEventController : MonoBehaviour
     {
         _eventStarted = true;
 
-        // 1. НАРАСТАЮЩИЙ ЗВУК
-        if (tensionAudioSource != null && buildupClip != null)
-            tensionAudioSource.PlayOneShot(buildupClip);
+        // 1. ТОЛЬКО БЫСТРОЕ МИГАНИЕ — без раскачки
+        yield return StartCoroutine(FlickerFlashlight(3, 0.04f));
 
-        yield return new WaitForSeconds(0.5f);
-
-        // 2. МИГАНИЕ ФОНАРИКА — нарастающее
-        yield return StartCoroutine(FlickerFlashlight(2, 0.15f));
-        yield return StartCoroutine(FlickerFlashlight(2, 0.08f));
-        yield return StartCoroutine(FlickerFlashlight(2, 0.04f));
-
-        // 3. СВЕТ В ДОМЕ ГАСНЕТ + ФОНАРИК ГАСНЕТ ОДНОВРЕМЕННО
+        // 2. СВЕТ В ДОМЕ ГАСНЕТ + ФОНАРИК ГАСНЕТ
         if (LightingManager.Instance != null)
             LightingManager.Instance.TurnOffAllLamps();
 
         _flashlightLight.enabled = false;
         PlayFlashlightSound(inventory.soundOff);
 
-        yield return new WaitForSeconds(0.8f);
+        // Короткая пауза в темноте — нагнетание
+        yield return new WaitForSeconds(0.5f);
 
-        // 4. МОНСТР ПОЯВЛЯЕТСЯ
+        // 3. МОНСТР ПОЯВЛЯЕТСЯ — резко
         monsterFace.SetActive(true);
         _flashlightLight.enabled = true;
         PlayFlashlightSound(inventory.soundOn);
 
         if (jumpscareAudio != null) jumpscareAudio.Play();
 
-        // 5. РЕЗКИЙ ЗУМ К МОНСТРУ
+        // 4. ВСЕ ЭФФЕКТЫ ОДНОВРЕМЕННО
         StartCoroutine(ZoomToMonster());
-
-        // 6. КАМЕРА ДЁРГАЕТСЯ ВНИЗ + ТРЯСКА
         StartCoroutine(CameraDip());
         StartCoroutine(CameraShake(1.5f));
 
         yield return new WaitForSeconds(1.5f);
 
-        // 7. ПАРАЛИЧ
+        // 5. ПАРАЛИЧ
         yield return StartCoroutine(Paralyze(0.8f));
 
-        // 8. ФОНАРИК ГАСНЕТ, МОНСТР ИСЧЕЗАЕТ
+        // 6. ФОНАРИК ГАСНЕТ, МОНСТР ИСЧЕЗАЕТ
         _flashlightLight.enabled = false;
         PlayFlashlightSound(inventory.soundOff);
 
@@ -151,16 +149,15 @@ public class HoleEventController : MonoBehaviour
 
         yield return new WaitForSeconds(0.3f);
 
-        // 9. ФОНАРИК ВКЛЮЧАЕТСЯ
+        // 7. ФОНАРИК ВКЛЮЧАЕТСЯ
         _flashlightLight.enabled = true;
         PlayFlashlightSound(inventory.soundOn);
 
-        // 10. ЗАВЕРШАЕМ КВЕСТ
+        // 8. ЗАВЕРШАЕМ КВЕСТ
         QuestManager.Instance.AddProgress(1);
         this.enabled = false;
     }
 
-    // Резкое приближение камеры к монстру
     IEnumerator ZoomToMonster()
     {
         if (_playerCam == null || monsterFace == null) yield break;
@@ -168,19 +165,16 @@ public class HoleEventController : MonoBehaviour
         Vector3 originalPos = _playerCam.transform.localPosition;
         float originalFov = _playerCam.fieldOfView;
 
-        // Направление к монстру
         Vector3 dirToMonster = (monsterFace.transform.position - _playerCam.transform.position).normalized;
-
-        // Целевая позиция — резко приближаемся к монстру
-        Vector3 targetPos = originalPos + _playerCam.transform.InverseTransformDirection(dirToMonster) * 0.4f;
-        float targetFov = originalFov - 15f; // Сужаем FOV — эффект зума
+        Vector3 targetPos = originalPos + _playerCam.transform.InverseTransformDirection(dirToMonster) * 0.6f;
+        float targetFov = originalFov - 25f;
 
         float t = 0;
-        // Резкий зум вперёд за 0.1 секунды
-        while (t < 0.1f)
+        // Максимально резкий зум — 0.05 секунды
+        while (t < 0.05f)
         {
             t += Time.deltaTime;
-            float progress = t / 0.1f;
+            float progress = t / 0.05f;
             _playerCam.transform.localPosition = Vector3.Lerp(originalPos, targetPos, progress);
             _playerCam.fieldOfView = Mathf.Lerp(originalFov, targetFov, progress);
             yield return null;
@@ -188,7 +182,6 @@ public class HoleEventController : MonoBehaviour
 
         yield return new WaitForSeconds(1.0f);
 
-        // Плавный возврат обратно
         t = 0;
         while (t < 0.4f)
         {
@@ -203,7 +196,6 @@ public class HoleEventController : MonoBehaviour
         _playerCam.fieldOfView = originalFov;
     }
 
-    // Камера резко дёргается вниз в сторону дыры
     IEnumerator CameraDip()
     {
         if (_playerCam == null) yield break;
@@ -212,17 +204,15 @@ public class HoleEventController : MonoBehaviour
         Vector3 dipPos = originalPos + Vector3.down * cameraDipAmount;
 
         float t = 0;
-        // Резко вниз
-        while (t < 0.1f)
+        while (t < 0.05f) // Резче вниз
         {
             t += Time.deltaTime;
-            _playerCam.transform.localPosition = Vector3.Lerp(originalPos, dipPos, t / 0.1f);
+            _playerCam.transform.localPosition = Vector3.Lerp(originalPos, dipPos, t / 0.05f);
             yield return null;
         }
 
         yield return new WaitForSeconds(0.2f);
 
-        // Плавно обратно
         t = 0;
         while (t < 0.3f)
         {
@@ -234,7 +224,6 @@ public class HoleEventController : MonoBehaviour
         _playerCam.transform.localPosition = originalPos;
     }
 
-    // Тряска камеры
     IEnumerator CameraShake(float duration)
     {
         if (_playerCam == null) yield break;
@@ -258,7 +247,6 @@ public class HoleEventController : MonoBehaviour
         _playerCam.transform.localPosition = originalPos;
     }
 
-    // Паралич — временно блокируем управление игрока
     IEnumerator Paralyze(float duration)
     {
         PlayerController pc = inventory.GetComponent<PlayerController>();

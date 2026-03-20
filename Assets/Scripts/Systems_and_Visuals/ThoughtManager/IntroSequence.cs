@@ -318,12 +318,16 @@ public class IntroSequence : MonoBehaviour
     // --- 8. Реакция и поиск молотка ---
     public void OnHoleEventFinished()
     {
+        // Запускаем таймер сразу
+        if (MonsterTimer.Instance != null)
+            MonsterTimer.Instance.StartTimer();
+
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "ТВОЮ МАТЬ! ЧТО ЭТО БЫЛО?!",
-            "Там кто-то есть... Живой! Оно смотрело прямо на меня!",
-            "Нужно заколотить это немедленно, пока оно не вылезло!",
-            "На втором этаже в ящике был молоток и гвозди. СКОРЕЕ!"
-        }, SetupHammerQuest);
+        "ТВОЮ МАТЬ! ЧТО ЭТО БЫЛО?!",
+        "Там кто-то есть... Живой! Оно смотрело прямо на меня!",
+        "Нужно заколотить это немедленно, пока оно не вылезло!",
+        "На втором этаже в ящике был молоток и гвозди. СКОРЕЕ!"
+    }, SetupHammerQuest);
     }
 
     void SetupHammerQuest()
@@ -336,10 +340,11 @@ public class IntroSequence : MonoBehaviour
     public void OnHammerPickedUp()
     {
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Взял! Назад к дыре, быстро!"
-        }, () => {
-            if (finaleTrigger != null) finaleTrigger.SetActive(true);
-            CreateQuest("Заколотить дыру", 1);
-        });
+        "Взял! Назад к дыре, быстро!"
+    }, () => {
+        if (finaleTrigger != null) finaleTrigger.SetActive(true);
+        // Таймер продолжает идти — игрок должен успеть!
+        CreateQuest("Заколотить дыру", 1);
+    });
     }
 }

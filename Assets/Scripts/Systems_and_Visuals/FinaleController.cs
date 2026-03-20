@@ -32,6 +32,10 @@ public class FinaleController : MonoBehaviour
                 QuestManager.Instance.AddProgress(1);
                 StartCoroutine(PushedIntoHoleRoutine(pc));
             }
+
+            if (MonsterTimer.Instance != null)
+                MonsterTimer.Instance.StopTimer();
+
         }
     }
 
