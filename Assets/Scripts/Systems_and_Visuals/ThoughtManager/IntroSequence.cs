@@ -7,9 +7,9 @@ public enum DebugStoryStage
     StartBoxQuest,
     StartNight,
     StartKitchenNoise,
+    StartFlashlightQuest,
     StartCrowbarQuest,
     StartBreakFloor,
-    StartFlashlightQuest,
     StartLookInHole,
     StartHammerQuest,
     StartFinale
@@ -41,9 +41,17 @@ public class IntroSequence : MonoBehaviour
     public GameObject garageZone;
     public GameObject kitchenNoiseTrigger;
     public GameObject finaleTrigger;
+    public GameObject nightStartTrigger;
+    public GameObject knockController; // Объект с RandomKnock
 
     [Header("Контроллеры")]
     public HoleEventController holeEventController;
+
+    [Header("Сюжетные предметы")]
+    public GameObject flashlightItem;
+    public GameObject crowbarItem;
+    public GameObject hammerItem;
+    
 
     // =====================================================================
     // ИНИЦИАЛИЗАЦИЯ
@@ -73,6 +81,14 @@ public class IntroSequence : MonoBehaviour
         if (garageZone != null) garageZone.SetActive(false);
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
         if (finaleTrigger != null) finaleTrigger.SetActive(false);
+        if (flashlightItem != null) flashlightItem.SetActive(false);
+        if (crowbarItem != null) crowbarItem.SetActive(false);
+        if (hammerItem != null) hammerItem.SetActive(false);
+        if (nightStartTrigger != null) nightStartTrigger.SetActive(false);
+        if (knockController != null) knockController.SetActive(false);
+
+        if (TrashManager.Instance != null)
+            TrashManager.Instance.HideAll();
     }
 
     // =====================================================================
@@ -86,7 +102,8 @@ public class IntroSequence : MonoBehaviour
         if (startStage >= DebugStoryStage.StartKitchenNoise)
         {
             if (skySwitcher != null) skySwitcher.isDayTime = false;
-            RenderSettings.fog = false; // Добавь сюда тоже
+            RenderSettings.fog = false;
+            if (knockController != null) knockController.SetActive(true);
             TeleportPlayerToBed();
         }
 
@@ -102,15 +119,17 @@ public class IntroSequence : MonoBehaviour
                 if (nightTrigger != null) nightTrigger.SetActive(true);
                 SetupSearchNoiseQuest();
                 break;
+            case DebugStoryStage.StartFlashlightQuest:
+                SetupFlashlightQuest();
+                break;
             case DebugStoryStage.StartCrowbarQuest:
+                if (playerInventory != null) playerInventory.hasFlashlight = true;
                 SetupCrowbarQuest();
                 break;
             case DebugStoryStage.StartBreakFloor:
+                if (playerInventory != null) playerInventory.hasFlashlight = true;
                 if (playerInventory != null) playerInventory.hasCrowbar = true;
                 SetupBreakFloorQuest();
-                break;
-            case DebugStoryStage.StartFlashlightQuest:
-                SetupFlashlightQuest();
                 break;
             case DebugStoryStage.StartLookInHole:
                 if (playerInventory != null) playerInventory.hasFlashlight = true;
@@ -160,24 +179,23 @@ public class IntroSequence : MonoBehaviour
 
     void SetupTrashQuest()
     {
+        TrashManager.Instance.Initialize(); // Включает мусор и сбрасывает счётчики
         CreateQuest("Собрать мусор по дому", 3, OnTrashCollected);
     }
 
-    // Весь мусор собран — появился мешок, теперь нести
     void OnTrashCollected()
     {
         if (trashZone != null) trashZone.SetActive(true);
         CreateQuest("Вынести мусорный мешок", 1, OnTrashFinished);
     }
 
-    // Мешок вынесен
     public void OnTrashFinished()
     {
         if (trashZone != null) trashZone.SetActive(false);
         ThoughtManager.Instance.ShowThoughts(new string[] {
-        "Фух, одной проблемой меньше.",
-        "Так, теперь та коробка у входа... Нужно перетащить её в гараж."
-    }, SetupBoxQuest);
+            "Фух, одной проблемой меньше.",
+            "Так, теперь та коробка у входа... Нужно перетащить её в гараж."
+        }, SetupBoxQuest);
     }
 
     // --- 2. Коробка в гараж ---
@@ -202,7 +220,6 @@ public class IntroSequence : MonoBehaviour
 
     IEnumerator NightRoutine()
     {
-        // Затемнение
         float elapsed = 0;
         while (elapsed < 1.5f)
         {
@@ -213,13 +230,15 @@ public class IntroSequence : MonoBehaviour
 
         GameEvents.OnNightStarted?.Invoke();
         if (skySwitcher != null) skySwitcher.isDayTime = false;
-        RenderSettings.fog = false; // Выключаем туман ночью
+        RenderSettings.fog = false;
         TeleportPlayerToBed();
+
+        // IntroSequence сам включает стук — NightStartTrigger больше не нужен
+        if (knockController != null) knockController.SetActive(true);
 
         yield return new WaitForSeconds(2f);
         if (nightTrigger != null) nightTrigger.SetActive(true);
 
-        // Осветление
         while (elapsed > 0)
         {
             elapsed -= Time.deltaTime;
@@ -228,10 +247,10 @@ public class IntroSequence : MonoBehaviour
         }
 
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "...Что за скрежет?",
-            "Звук идет с кухни. Похоже на крыс или старые трубы.",
-            "Надо проверить, пока они мне пол не сожрали."
-        }, SetupSearchNoiseQuest);
+        "...Что за скрежет?",
+        "Звук идет с кухни. Похоже на крыс или старые трубы.",
+        "Надо проверить, пока они мне пол не сожрали."
+    }, SetupSearchNoiseQuest);
     }
 
     // =====================================================================
@@ -255,13 +274,28 @@ public class IntroSequence : MonoBehaviour
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
         ThoughtManager.Instance.ShowThoughts(new string[] {
             "Скребется прямо под досками. Звучит хреново.",
-            "Придется вскрыть пол. Лом вроде оставался в гараже."
+            "Здесь темно... Нужен фонарик. Кажется видел его где-то в доме."
+        }, SetupFlashlightQuest);
+    }
+
+    // --- 4. Найти фонарик ---
+    void SetupFlashlightQuest()
+    {
+        if (flashlightItem != null) flashlightItem.SetActive(true);
+        CreateQuest("Найти фонарик", 1, OnFlashlightPickedUp);
+    }
+
+    public void OnFlashlightPickedUp()
+    {
+        ThoughtManager.Instance.ShowThoughts(new string[] {
+            "Вот он. Теперь найдем лом и вскроем эти доски."
         }, SetupCrowbarQuest);
     }
 
-    // --- 4. Найти лом ---
+    // --- 5. Найти лом ---
     void SetupCrowbarQuest()
     {
+        if (crowbarItem != null) crowbarItem.SetActive(true);
         CreateQuest("Найти лом в гараже", 1, OnCrowbarPickedUp);
     }
 
@@ -272,31 +306,16 @@ public class IntroSequence : MonoBehaviour
         }, SetupBreakFloorQuest);
     }
 
-    // --- 5. Сломать пол ---
+    // --- 6. Сломать пол ---
     void SetupBreakFloorQuest()
     {
         CreateQuest("Вскрыть доски на кухне", 1, OnFloorBroken);
     }
 
-    // Вызывается из FloorLogic.Break()
     public void OnFloorBroken()
     {
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Готово. Темно... Ничего не видно.",
-            "Нужен фонарик чтобы разглядеть что там внутри."
-        }, SetupFlashlightQuest);
-    }
-
-    // --- 6. Найти фонарик ---
-    void SetupFlashlightQuest()
-    {
-        CreateQuest("Найти фонарик", 1, OnFlashlightPickedUp);
-    }
-
-    public void OnFlashlightPickedUp()
-    {
-        ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Вот он. Посмотрим что там в дыре..."
+            "Готово. Что там внутри..."
         }, SetupLookInHoleQuest);
     }
 
@@ -318,33 +337,31 @@ public class IntroSequence : MonoBehaviour
     // --- 8. Реакция и поиск молотка ---
     public void OnHoleEventFinished()
     {
-        // Запускаем таймер сразу
         if (MonsterTimer.Instance != null)
             MonsterTimer.Instance.StartTimer();
 
         ThoughtManager.Instance.ShowThoughts(new string[] {
-        "ТВОЮ МАТЬ! ЧТО ЭТО БЫЛО?!",
-        "Там кто-то есть... Живой! Оно смотрело прямо на меня!",
-        "Нужно заколотить это немедленно, пока оно не вылезло!",
-        "На втором этаже в ящике был молоток и гвозди. СКОРЕЕ!"
-    }, SetupHammerQuest);
+            "ТВОЮ МАТЬ! ЧТО ЭТО БЫЛО?!",
+            "Там кто-то есть... Живой! Оно смотрело прямо на меня!",
+            "Нужно заколотить это немедленно, пока оно не вылезло!",
+            "На втором этаже в ящике был молоток и гвозди. СКОРЕЕ!"
+        }, SetupHammerQuest);
     }
 
     void SetupHammerQuest()
     {
+        if (hammerItem != null) hammerItem.SetActive(true);
         CreateQuest("Найти молоток на втором этаже", 1, OnHammerPickedUp);
     }
 
     // --- 9. Финал у дыры ---
-    // Дальше управление берет FinaleController
     public void OnHammerPickedUp()
     {
         ThoughtManager.Instance.ShowThoughts(new string[] {
-        "Взял! Назад к дыре, быстро!"
-    }, () => {
-        if (finaleTrigger != null) finaleTrigger.SetActive(true);
-        // Таймер продолжает идти — игрок должен успеть!
-        CreateQuest("Заколотить дыру", 1);
-    });
+            "Взял! Назад к дыре, быстро!"
+        }, () => {
+            if (finaleTrigger != null) finaleTrigger.SetActive(true);
+            CreateQuest("Заколотить дыру", 1);
+        });
     }
 }

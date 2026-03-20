@@ -17,7 +17,7 @@ public class PlayerInteraction : MonoBehaviour
     private int _originalLayer;
 
     [Header("Настройки броска")]
-    public float throwForce = 15f; // Сила броска
+    public float throwForce = 15f;
 
     [Header("Эффекты сочности")]
     public float shakeIntensity = 0.1f;
@@ -34,26 +34,20 @@ public class PlayerInteraction : MonoBehaviour
 
     void Update()
     {
-        // Нажатие E — взять или просто отпустить (Drop)
         if (Input.GetKeyDown(KeyCode.E))
         {
             if (_heldObj == null) PerformInteraction();
             else DropObject();
         }
 
-        // Нажатие ЛКМ (0) — если в руках что-то есть, кидаем
         if (Input.GetMouseButtonDown(0) && _heldObj != null)
-        {
             ThrowObject();
-        }
     }
 
     void FixedUpdate()
     {
         if (_heldObj != null)
-        {
             MovePhysicsObject();
-        }
     }
 
     void PerformInteraction()
@@ -65,7 +59,7 @@ public class PlayerInteraction : MonoBehaviour
         {
             GameObject hitObj = hit.transform.gameObject;
 
-            // 0. КУЧКА МУСОРА — ПРИОРИТЕТ №1
+            // 0. КУЧКА МУСОРА
             TrashPile trashPile = hitObj.GetComponent<TrashPile>();
             if (trashPile != null)
             {
@@ -73,7 +67,7 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            // 1. СЮЖЕТНЫЕ ТРИГГЕРЫ (Молоток и т.д.) - ПРИОРИТЕТ №1
+            // 1. СЮЖЕТНЫЕ ТРИГГЕРЫ
             HammerTrap storyItem = hitObj.GetComponent<HammerTrap>();
             if (storyItem != null)
             {
@@ -89,7 +83,7 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            // 3. ПРЕДМЕТЫ В ИНВЕНТАРЬ (Лом, Фонарик)
+            // 3. ПРЕДМЕТЫ В ИНВЕНТАРЬ
             SimpleItem item = hitObj.GetComponent<SimpleItem>();
             if (item != null)
             {
@@ -97,11 +91,9 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            // 4. ФИЗИЧЕСКИЙ ЗАХВАТ (Ящики, бочки) - ПРИОРИТЕТ ПОСЛЕДНИЙ
+            // 4. ФИЗИЧЕСКИЙ ЗАХВАТ
             if (hitObj.CompareTag("Pickable"))
-            {
                 GrabPhysicsObject(hitObj);
-            }
         }
     }
 
@@ -114,7 +106,6 @@ public class PlayerInteraction : MonoBehaviour
 
         inventory.ActivateItem(item.itemType.ToString());
 
-        // ДОБАВЛЯЕМ В UI
         if (InventoryUI.Instance != null)
             InventoryUI.Instance.AddItem(item.itemType.ToString());
 
@@ -134,7 +125,7 @@ public class PlayerInteraction : MonoBehaviour
         Destroy(item.gameObject);
     }
 
-    // --- ФИЗИКА (БЫВШИЙ PickUpSystem) ---
+    // --- ФИЗИКА ---
     void GrabPhysicsObject(GameObject obj)
     {
         _heldObj = obj;
@@ -145,14 +136,17 @@ public class PlayerInteraction : MonoBehaviour
 
         _heldObjRb.interpolation = RigidbodyInterpolation.Interpolate;
         _heldObjRb.useGravity = false;
-        _heldObjRb.linearDamping = 15f;   // Higher damping kills oscillation
+        _heldObjRb.linearDamping = 15f;
         _heldObjRb.angularDamping = 15f;
         _heldObjRb.constraints = RigidbodyConstraints.FreezeRotation;
+
+        // Останавливаем частицы когда берём объект
+        ParticleSystem ps = obj.GetComponentInChildren<ParticleSystem>();
+        if (ps != null) ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
     }
 
     void TryReleaseObject()
     {
-        // Проверка на зону установки (как у тебя с ящиками)
         if (_heldItemScript != null && _heldItemScript.activeZone != null)
         {
             if (_heldItemScript.activeZone.TryPlaceBox(_heldObj))
@@ -163,26 +157,19 @@ public class PlayerInteraction : MonoBehaviour
         }
         DropObject();
     }
+
     void DropObject()
     {
         if (_heldObj == null) return;
 
         _heldObj.layer = _originalLayer;
-        _heldObj.transform.SetParent(null); // На всякий случай, если использовал SetParent
+        _heldObj.transform.SetParent(null);
 
-        // --- ВОЗВРАЩАЕМ ФИЗИКУ В НОРМУ ---
         _heldObjRb.useGravity = true;
         _heldObjRb.isKinematic = false;
-
-        // Сбрасываем сопротивление (Damping) к стандартным значениям Unity
-        // Обычно это 0 или очень маленькое число (0.05)
         _heldObjRb.linearDamping = 0.05f;
         _heldObjRb.angularDamping = 0.05f;
-
-        // Снимаем заморозку вращения, чтобы объект мог катиться/падать естественно
         _heldObjRb.constraints = RigidbodyConstraints.None;
-
-        // При желании: даем легкий импульс вперед, чтобы объект не падал под ноги
         _heldObjRb.AddForce(playerCamera.transform.forward * 2f, ForceMode.Impulse);
 
         ClearHeldObject();
@@ -190,6 +177,13 @@ public class PlayerInteraction : MonoBehaviour
 
     void ClearHeldObject()
     {
+        if (_heldObj != null)
+        {
+            // Включаем частицы обратно когда отпускаем объект
+            ParticleSystem ps = _heldObj.GetComponentInChildren<ParticleSystem>();
+            if (ps != null) ps.Play();
+        }
+
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
@@ -200,33 +194,23 @@ public class PlayerInteraction : MonoBehaviour
         Vector3 targetPos = holdPoint.position;
         Vector3 currentPos = _heldObj.transform.position;
 
-        // --- POSITION: spring-based velocity ---
-        // Instead of moving directly, we push the rigidbody toward the target.
-        // This works WITH the physics engine, not against it.
         Vector3 directionToTarget = targetPos - currentPos;
         float distance = directionToTarget.magnitude;
 
-        // Apply velocity proportional to the error (PD controller approach)
         _heldObjRb.linearVelocity = directionToTarget * followSpeed;
-
-        // --- ROTATION: smooth slerp toward holdPoint ---
-        Quaternion targetRot = holdPoint.rotation;
         _heldObjRb.MoveRotation(
-            Quaternion.Slerp(_heldObj.transform.rotation, targetRot, Time.fixedDeltaTime * followSpeed)
+            Quaternion.Slerp(_heldObj.transform.rotation, holdPoint.rotation, Time.fixedDeltaTime * followSpeed)
         );
 
-        // Drop if too far (still stuck somewhere)
         if (distance > 2.2f)
             DropObject();
     }
 
     void ThrowObject()
     {
-        // Сохраняем ссылку, так как ClearHeldObject её занулит
         Rigidbody rbToThrow = _heldObjRb;
         GameObject objToThrow = _heldObj;
 
-        // Сначала сбрасываем все настройки (как при обычном Drop)
         objToThrow.layer = _originalLayer;
         rbToThrow.useGravity = true;
         rbToThrow.isKinematic = false;
@@ -235,18 +219,12 @@ public class PlayerInteraction : MonoBehaviour
         rbToThrow.constraints = RigidbodyConstraints.None;
         rbToThrow.interpolation = RigidbodyInterpolation.None;
 
-        // Очищаем переменные в скрипте (руки пусты)
         ClearHeldObject();
 
-        // ПРИКЛАДЫВАЕМ СИЛУ
-        // Кидаем вперед по направлению камеры
         rbToThrow.AddForce(playerCamera.transform.forward * throwForce, ForceMode.Impulse);
-
-        // Добавим немного случайного вращения для сочности
         rbToThrow.AddTorque(new Vector3(Random.value, Random.value, Random.value) * 5f, ForceMode.Impulse);
 
-        // Запускаем сочные эффекты
-        StopAllCoroutines(); // Чтобы эффекты не накладывались друг на друга
+        StopAllCoroutines();
         StartCoroutine(ShakeAndKick());
     }
 
@@ -255,25 +233,19 @@ public class PlayerInteraction : MonoBehaviour
         Vector3 originalPos = playerCamera.transform.localPosition;
         float elapsed = 0.0f;
 
-        // Устанавливаем целевой FOV для рывка
         playerCamera.fieldOfView = _defaultFov + fovKickAmount;
 
         while (elapsed < shakeDuration)
         {
-            // Тряска позиции
             float x = Random.Range(-1f, 1f) * shakeIntensity;
             float y = Random.Range(-1f, 1f) * shakeIntensity;
-
             playerCamera.transform.localPosition = new Vector3(originalPos.x + x, originalPos.y + y, originalPos.z);
-
             elapsed += Time.deltaTime;
             yield return null;
         }
 
-        // Возвращаем камеру на место
         playerCamera.transform.localPosition = originalPos;
 
-        // Плавный возврат FOV к стандартному
         while (Mathf.Abs(playerCamera.fieldOfView - _defaultFov) > 0.1f)
         {
             playerCamera.fieldOfView = Mathf.Lerp(playerCamera.fieldOfView, _defaultFov, Time.deltaTime * fovReturnSpeed);
@@ -282,9 +254,21 @@ public class PlayerInteraction : MonoBehaviour
         playerCamera.fieldOfView = _defaultFov;
     }
 
-    // Позволяет другим скриптам узнать, несем ли мы что-то
     public GameObject GetHeldObject()
     {
         return _heldObj;
+    }
+
+    void OnDrawGizmos()
+    {
+        if (playerCamera == null) return;
+
+        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+
+        Gizmos.color = Color.green;
+        Gizmos.DrawRay(ray.origin, ray.direction * interactionDistance);
+
+        Gizmos.color = Color.red;
+        Gizmos.DrawSphere(ray.origin + ray.direction * interactionDistance, 0.05f);
     }
 }
