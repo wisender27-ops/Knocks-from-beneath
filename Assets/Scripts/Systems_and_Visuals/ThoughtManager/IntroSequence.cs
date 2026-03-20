@@ -160,17 +160,24 @@ public class IntroSequence : MonoBehaviour
 
     void SetupTrashQuest()
     {
-        if (trashZone != null) trashZone.SetActive(true);
-        CreateQuest("Вынести мусор", 1, OnTrashFinished);
+        CreateQuest("Собрать мусор по дому", 3, OnTrashCollected);
     }
 
+    // Весь мусор собран — появился мешок, теперь нести
+    void OnTrashCollected()
+    {
+        if (trashZone != null) trashZone.SetActive(true);
+        CreateQuest("Вынести мусорный мешок", 1, OnTrashFinished);
+    }
+
+    // Мешок вынесен
     public void OnTrashFinished()
     {
         if (trashZone != null) trashZone.SetActive(false);
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Фух, одной проблемой меньше.",
-            "Так, теперь та коробка у входа... Нужно перетащить её в гараж."
-        }, SetupBoxQuest);
+        "Фух, одной проблемой меньше.",
+        "Так, теперь та коробка у входа... Нужно перетащить её в гараж."
+    }, SetupBoxQuest);
     }
 
     // --- 2. Коробка в гараж ---

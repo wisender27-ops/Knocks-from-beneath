@@ -65,6 +65,14 @@ public class PlayerInteraction : MonoBehaviour
         {
             GameObject hitObj = hit.transform.gameObject;
 
+            // 0. КУЧКА МУСОРА — ПРИОРИТЕТ №1
+            TrashPile trashPile = hitObj.GetComponent<TrashPile>();
+            if (trashPile != null)
+            {
+                trashPile.Collect();
+                return;
+            }
+
             // 1. СЮЖЕТНЫЕ ТРИГГЕРЫ (Молоток и т.д.) - ПРИОРИТЕТ №1
             HammerTrap storyItem = hitObj.GetComponent<HammerTrap>();
             if (storyItem != null)

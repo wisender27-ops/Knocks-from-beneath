@@ -1,11 +1,13 @@
 using UnityEngine;
 using UnityEngine.UI;
+using TMPro;
 
 public class CrosshairJuice : MonoBehaviour
 {
     [Header("—сылки")]
-    public Image cursorImage; // ѕеретащи сюда Image курсора
-    public PlayerInteraction interaction; // “вой новый объединенный скрипт
+    public Image cursorImage;
+    public PlayerInteraction interaction;
+    public TextMeshProUGUI hintText; // ѕеретащи сюда InteractHint
 
     [Header("Ќастройки")]
     public float scaleSpeed = 10f;
@@ -14,15 +16,17 @@ public class CrosshairJuice : MonoBehaviour
 
     [Header("÷вета")]
     public Color defaultColor = Color.white;
-    public Color interactColor = Color.yellow; // »ли красный/зеленый на твой вкус
+    public Color interactColor = Color.yellow;
 
     private Vector3 _targetScale;
     private Color _targetColor;
+    private string _targetHint = "";
 
     void Start()
     {
         _targetScale = Vector3.one * defaultScale;
         _targetColor = defaultColor;
+        if (hintText != null) hintText.text = "";
     }
 
     void Update()
@@ -37,6 +41,7 @@ public class CrosshairJuice : MonoBehaviour
         {
             _targetScale = Vector3.zero;
             _targetColor = new Color(defaultColor.r, defaultColor.g, defaultColor.b, 0);
+            _targetHint = "";
             return;
         }
 
@@ -44,24 +49,41 @@ public class CrosshairJuice : MonoBehaviour
         RaycastHit hit;
         bool hittingSomething = false;
 
-        // »спользуем дистанцию пр€мо из твоего PlayerInteraction
         if (Physics.Raycast(ray, out hit, interaction.interactionDistance, interaction.interactableLayer))
         {
-            // ѕровер€ем, что рассто€ние до объекта меньше или равно допустимому
-            // (’от€ Physics.Raycast уже ограничен по дистанции третьим параметром, 
-            // €вна€ проверка hit.distance полезна, если ты захочешь мен€ть логику на лету)
-
-            if (hit.collider.GetComponent<HammerTrap>() != null ||
-                hit.collider.GetComponent<SimpleItem>() != null ||
-                hit.collider.GetComponent<LightSwitch>() != null ||
-                hit.collider.GetComponent<Door>() != null ||
-                hit.collider.CompareTag("Pickable"))
+            //  аждый тип предмета даЄт свою подсказку
+            if (hit.collider.GetComponent<HammerTrap>() != null)
             {
                 hittingSomething = true;
+                _targetHint = "E Ч вз€ть";
+            }
+            else if (hit.collider.GetComponent<SimpleItem>() != null)
+            {
+                hittingSomething = true;
+                _targetHint = "E Ч вз€ть";
+            }
+            else if (hit.collider.GetComponent<TrashPile>() != null)
+            {
+                hittingSomething = true;
+                _targetHint = "E Ч собрать";
+            }
+            else if (hit.collider.GetComponent<LightSwitch>() != null)
+            {
+                hittingSomething = true;
+                _targetHint = "E Ч включить/выключить";
+            }
+            else if (hit.collider.GetComponent<Door>() != null)
+            {
+                hittingSomething = true;
+                _targetHint = "E Ч открыть";
+            }
+            else if (hit.collider.CompareTag("Pickable"))
+            {
+                hittingSomething = true;
+                _targetHint = "E Ч вз€ть";
             }
         }
 
-        // Ћогика анимации
         if (hittingSomething)
         {
             _targetScale = Vector3.one * interactScale;
@@ -71,13 +93,19 @@ public class CrosshairJuice : MonoBehaviour
         {
             _targetScale = Vector3.one * defaultScale;
             _targetColor = defaultColor;
+            _targetHint = "";
         }
     }
 
     void ApplyJuice()
     {
-        // ѕлавное изменение размера и цвета через Lerp
-        cursorImage.transform.localScale = Vector3.Lerp(cursorImage.transform.localScale, _targetScale, Time.deltaTime * scaleSpeed);
-        cursorImage.color = Color.Lerp(cursorImage.color, _targetColor, Time.deltaTime * scaleSpeed);
+        cursorImage.transform.localScale = Vector3.Lerp(
+            cursorImage.transform.localScale, _targetScale, Time.deltaTime * scaleSpeed);
+        cursorImage.color = Color.Lerp(
+            cursorImage.color, _targetColor, Time.deltaTime * scaleSpeed);
+
+        // “екст подсказки
+        if (hintText != null)
+            hintText.text = _targetHint;
     }
 }
