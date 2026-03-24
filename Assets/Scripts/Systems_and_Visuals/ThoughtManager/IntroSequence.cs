@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 
 public enum DebugStoryStage
@@ -51,7 +51,13 @@ public class IntroSequence : MonoBehaviour
     public GameObject flashlightItem;
     public GameObject crowbarItem;
     public GameObject hammerItem;
-    
+
+    [Header("Квест с пирогом")]
+    public GameObject pieObject;
+    public GameObject microwaveZone;
+
+    private bool _isPieTaken = false;
+    private bool _isPieHeated = false;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -79,6 +85,7 @@ public class IntroSequence : MonoBehaviour
         if (holeEventController != null) holeEventController.enabled = false;
         if (trashZone != null) trashZone.SetActive(false);
         if (garageZone != null) garageZone.SetActive(false);
+        if (microwaveZone != null) microwaveZone.SetActive(false);
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
         if (finaleTrigger != null) finaleTrigger.SetActive(false);
         // Items now stay visible on the map - they're controlled by quest requirements instead
@@ -162,7 +169,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
     void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction callback = null, string questTag = "")
     {
-        QuestManager.Instance.CreateQuest(title, amount, callback);
+        QuestManager.Instance.CreateQuest(title, amount, callback, questTag);
     }
 
     // =====================================================================
@@ -211,19 +218,59 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
         if (garageZone != null) garageZone.SetActive(false);
         ThoughtManager.Instance.ShowThoughts(new string[] {
             "Спина отваливается.",
-            "Ладно, разберусь с остальным завтра...",
-            "Пора бы лечь спать..."
+            "Надо хоть что-то поесть перед сном.",
+            "Достану пирог из холодильника."
+        }, SetupTakePieQuest);
+    }
+
+    void SetupTakePieQuest()
+    {
+        _isPieTaken = false;
+        _isPieHeated = false;
+
+        if (pieObject != null) pieObject.SetActive(true);
+        if (microwaveZone != null) microwaveZone.SetActive(false);
+
+        CreateQuest("Достать пирог из холодильника", 1, null, "pie-take");
+    }
+
+    public void OnPieTaken()
+    {
+        _isPieTaken = true;
+        if (microwaveZone != null) microwaveZone.SetActive(true);
+        CreateQuest("Поставить пирог в микроволновку", 1, OnPiePlacedInMicrowave, "pie-microwave");
+    }
+
+    public void OnPiePlacedInMicrowave()
+    {
+        _isPieHeated = true;
+        if (microwaveZone != null) microwaveZone.SetActive(false);
+        CreateQuest("Съесть пирог", 1, OnPieEaten, "pie-eat");
+    }
+
+    public void OnPieEaten()
+    {
+        ThoughtManager.Instance.ShowThoughts(new string[] {
+            "Уже легче.",
+            "Теперь можно поспать."
         }, SetupGoToBedQuest);
     }
 
     void SetupGoToBedQuest()
     {
         // nightStartTrigger.SetActive(true) убрано — кровать всегда видна
-        CreateQuest("Пойти к кровати", 1, OnGoToBedFinished);
+        CreateQuest("Пойти к кровати", 1, OnGoToBedFinished, "go-to-bed");
     }
 
     public void OnBedTriggerReached()
     {
+        if (QuestManager.Instance == null) return;
+        if (QuestManager.Instance.currentQuestIndex >= QuestManager.Instance.questList.Count) return;
+
+        var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
+        bool isBedQuest = activeQuest.questTag == "go-to-bed" || activeQuest.questTitle.Contains("кровати");
+        if (!isBedQuest) return;
+
         // nightStartTrigger.SetActive(false) убрано — кровать всегда видна
         QuestManager.Instance.AddProgress(1); // Завершить квест
     }
@@ -385,5 +432,27 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
             if (finaleTrigger != null) finaleTrigger.SetActive(true);
             CreateQuest("Закрыть дыру", 1);
         });
+    }
+
+    public bool IsPieTakeQuestActive()
+    {
+        return IsQuestActive("pie-take");
+    }
+
+    public bool CanPlacePieInMicrowave()
+    {
+        return _isPieTaken && !_isPieHeated && IsQuestActive("pie-microwave");
+    }
+
+    public bool CanEatPie()
+    {
+        return _isPieHeated && IsQuestActive("pie-eat");
+    }
+
+    bool IsQuestActive(string questTag)
+    {
+        if (QuestManager.Instance == null) return false;
+        if (QuestManager.Instance.currentQuestIndex >= QuestManager.Instance.questList.Count) return false;
+        return QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex].questTag == questTag;
     }
 }

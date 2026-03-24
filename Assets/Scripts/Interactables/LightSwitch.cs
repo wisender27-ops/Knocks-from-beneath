@@ -43,6 +43,7 @@ public class LightSwitch : MonoBehaviour
     {
         isOn = !isOn;
         ApplyLightState();
+        Debug.Log($"[LightSwitch] '{name}' toggled -> {(isOn ? "ON" : "OFF")} fanLinked={(fanRotator != null)}");
 
         if (switchSound != null)
         {

@@ -2,10 +2,19 @@ using UnityEngine;
 
 public class Door : MonoBehaviour
 {
+    public enum RotationAxis
+    {
+        X,
+        Y,
+        Z
+    }
+
     [Header("Настройки двери")]
     [SerializeField] private float angleRotation = 90f;
     [SerializeField] private float openSpeed = 10f;
     [SerializeField] private float mouseSensitivity = 3f;
+    [SerializeField] private RotationAxis rotationAxis = RotationAxis.Y;
+    [SerializeField] private bool interactionLocked = false;
 
     [Header("Настройки звука (Скрип)")]
     public AudioSource sfxSource;
@@ -34,9 +43,9 @@ public class Door : MonoBehaviour
         }
     }
 
-    private float baseRotationY;
-    private float targetRotationY;
-    private float startX, startZ;
+    private Vector3 baseLocalEuler;
+    private float baseAxisAngle;
+    private float targetAxisAngle;
     private bool isBeingHeld = false;
 
     private float currentOffset = 0f;
@@ -45,12 +54,11 @@ public class Door : MonoBehaviour
 
     void Start()
     {
-        startX = transform.localEulerAngles.x;
-        baseRotationY = transform.localEulerAngles.y;
-        startZ = transform.localEulerAngles.z;
+        baseLocalEuler = transform.localEulerAngles;
+        baseAxisAngle = GetAxisAngle(baseLocalEuler);
 
-        targetRotationY = baseRotationY;
-        previousRotationY = baseRotationY;
+        targetAxisAngle = baseAxisAngle;
+        previousRotationY = baseAxisAngle;
 
         if (sfxSource && doorCreakClip)
         {
@@ -69,8 +77,8 @@ public class Door : MonoBehaviour
         }
 
         // Плавный поворот к целевому смещению
-        targetRotationY = baseRotationY + currentOffset;
-        Quaternion targetQuaternion = Quaternion.Euler(startX, targetRotationY, startZ);
+        targetAxisAngle = baseAxisAngle + currentOffset;
+        Quaternion targetQuaternion = BuildRotation(targetAxisAngle);
         transform.localRotation = Quaternion.Slerp(transform.localRotation, targetQuaternion, openSpeed * Time.deltaTime);
 
         // Расчет скорости для звука
@@ -178,6 +186,51 @@ public class Door : MonoBehaviour
             MonsterWatcherManager.Instance.SpawnWatcher(Camera.main.transform.position);
     }
 
-    public void StartHolding() => isBeingHeld = true;
+    private float GetAxisAngle(Vector3 euler)
+    {
+        switch (rotationAxis)
+        {
+            case RotationAxis.X: return euler.x;
+            case RotationAxis.Z: return euler.z;
+            default: return euler.y;
+        }
+    }
+
+    private Quaternion BuildRotation(float axisAngle)
+    {
+        Vector3 euler = baseLocalEuler;
+        switch (rotationAxis)
+        {
+            case RotationAxis.X:
+                euler.x = axisAngle;
+                break;
+            case RotationAxis.Z:
+                euler.z = axisAngle;
+                break;
+            default:
+                euler.y = axisAngle;
+                break;
+        }
+        return Quaternion.Euler(euler);
+    }
+
+    public bool IsInteractionLocked => interactionLocked;
+
+    public void SetInteractionLocked(bool isLocked)
+    {
+        interactionLocked = isLocked;
+        if (interactionLocked)
+        {
+            isBeingHeld = false;
+            CloseDoor();
+        }
+    }
+
+    public void StartHolding()
+    {
+        if (interactionLocked) return;
+        isBeingHeld = true;
+    }
+
     public void StopHolding() => isBeingHeld = false;
 }

@@ -15,6 +15,7 @@ public class PlayerInteraction : MonoBehaviour
     private Rigidbody _heldObjRb;
     private PickableItem _heldItemScript;
     private int _originalLayer;
+    private Quaternion _heldRotationOffset = Quaternion.identity;
 
     [Header("Настройки броска")]
     public float throwForce = 15f;
@@ -26,6 +27,10 @@ public class PlayerInteraction : MonoBehaviour
     public float fovReturnSpeed = 5f;
 
     private float _defaultFov;
+    private bool _isEatingPie = false;
+
+    [Header("Звуки действий")]
+    public AudioSource actionAudioSource;
 
     void Start()
     {
@@ -34,10 +39,24 @@ public class PlayerInteraction : MonoBehaviour
 
     void Update()
     {
+        if (_isEatingPie) return;
+
         if (Input.GetKeyDown(KeyCode.E))
         {
-            if (_heldObj == null) PerformInteraction();
-            else DropObject();
+            if (_heldObj == null)
+            {
+                PerformInteraction();
+            }
+            else
+            {
+                if (TryStartEatHeldPie())
+                    return;
+
+                if (TryInteractWhileHolding())
+                    return;
+
+                DropObject();
+            }
         }
 
         if (Input.GetMouseButtonDown(0) && _heldObj != null)
@@ -102,7 +121,67 @@ public class PlayerInteraction : MonoBehaviour
                 bed.Interact();
                 return;
             }
+
+            MicrowaveInteractable microwave = hit.transform.GetComponentInParent<MicrowaveInteractable>();
+            if (microwave != null)
+            {
+                microwave.Interact();
+                return;
+            }
+
         }
+    }
+
+    bool TryStartEatHeldPie()
+    {
+        PieQuestItem pie = _heldObj != null ? _heldObj.GetComponent<PieQuestItem>() : null;
+        if (pie == null || !pie.isHeated) return false;
+
+        var intro = FindObjectOfType<IntroSequence>();
+        if (intro == null || !intro.CanEatPie()) return false;
+
+        StartCoroutine(EatPieRoutine(pie));
+        return true;
+    }
+
+    bool TryInteractWhileHolding()
+    {
+        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        RaycastHit hit;
+        if (!Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
+            return false;
+
+        MicrowaveInteractable microwave = hit.transform.GetComponentInParent<MicrowaveInteractable>();
+        if (microwave == null)
+            return false;
+
+        microwave.Interact();
+        return true;
+    }
+
+    System.Collections.IEnumerator EatPieRoutine(PieQuestItem pie)
+    {
+        _isEatingPie = true;
+
+        if (actionAudioSource != null && pie.eatSfx != null)
+            actionAudioSource.PlayOneShot(pie.eatSfx);
+
+        float eatDuration = pie.eatDuration > 0f ? pie.eatDuration : 5f;
+        yield return new WaitForSeconds(eatDuration);
+
+        GameObject pieObj = _heldObj;
+        if (pieObj != null)
+            Destroy(pieObj);
+
+        _heldObj = null;
+        _heldObjRb = null;
+        _heldItemScript = null;
+
+        var intro = FindObjectOfType<IntroSequence>();
+        if (intro != null)
+            intro.OnPieEaten();
+
+        _isEatingPie = false;
     }
 
     // --- ЛОГИКА ИНВЕНТАРЯ ---
@@ -165,6 +244,7 @@ public class PlayerInteraction : MonoBehaviour
     {
         _heldObj = obj;
         _heldObjRb = obj.GetComponent<Rigidbody>();
+        _heldRotationOffset = Quaternion.Inverse(holdPoint.rotation) * obj.transform.rotation;
 
         _originalLayer = _heldObj.layer;
         _heldObj.layer = LayerMask.NameToLayer("HeldItem");
@@ -178,6 +258,14 @@ public class PlayerInteraction : MonoBehaviour
         // Останавливаем частицы когда берём объект
         ParticleSystem ps = obj.GetComponentInChildren<ParticleSystem>();
         if (ps != null) ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+        // Сюжет: достали пирог (через уже существующую механику поднятия предмета в руки)
+        if (obj.GetComponent<PieQuestItem>() != null)
+        {
+            var intro = FindObjectOfType<IntroSequence>();
+            if (intro != null && intro.IsPieTakeQuestActive())
+                intro.OnPieTaken();
+        }
     }
 
     void TryReleaseObject()
@@ -222,6 +310,7 @@ public class PlayerInteraction : MonoBehaviour
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
+        _heldRotationOffset = Quaternion.identity;
     }
 
     void MovePhysicsObject()
@@ -233,8 +322,9 @@ public class PlayerInteraction : MonoBehaviour
         float distance = directionToTarget.magnitude;
 
         _heldObjRb.linearVelocity = directionToTarget * followSpeed;
+        Quaternion targetRotation = holdPoint.rotation * _heldRotationOffset;
         _heldObjRb.MoveRotation(
-            Quaternion.Slerp(_heldObj.transform.rotation, holdPoint.rotation, Time.fixedDeltaTime * followSpeed)
+            Quaternion.Slerp(_heldObj.transform.rotation, targetRotation, Time.fixedDeltaTime * followSpeed)
         );
 
         if (distance > 2.2f)
@@ -292,6 +382,43 @@ public class PlayerInteraction : MonoBehaviour
     public GameObject GetHeldObject()
     {
         return _heldObj;
+    }
+
+    public GameObject ReleaseHeldObject()
+    {
+        if (_heldObj == null) return null;
+
+        GameObject released = _heldObj;
+        Rigidbody releasedRb = _heldObjRb;
+
+        released.layer = _originalLayer;
+        released.transform.SetParent(null);
+
+        if (releasedRb != null)
+        {
+            releasedRb.useGravity = true;
+            releasedRb.isKinematic = false;
+            releasedRb.linearDamping = 0.05f;
+            releasedRb.angularDamping = 0.05f;
+            releasedRb.constraints = RigidbodyConstraints.None;
+            releasedRb.interpolation = RigidbodyInterpolation.None;
+        }
+
+        _heldObj = null;
+        _heldObjRb = null;
+        _heldItemScript = null;
+        _heldRotationOffset = Quaternion.identity;
+        return released;
+    }
+
+    public bool TryGrabObjectFromScript(GameObject obj)
+    {
+        if (obj == null || _heldObj != null) return false;
+        Rigidbody rb = obj.GetComponent<Rigidbody>();
+        if (rb == null) return false;
+
+        GrabPhysicsObject(obj);
+        return true;
     }
 
     void OnDrawGizmos()

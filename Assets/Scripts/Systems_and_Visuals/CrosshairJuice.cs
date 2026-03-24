@@ -37,11 +37,44 @@ public class CrosshairJuice : MonoBehaviour
 
     void CheckUnderCursor()
     {
-        if (interaction.GetHeldObject() != null)
+        GameObject heldObj = interaction.GetHeldObject();
+        if (heldObj != null)
         {
             _targetScale = Vector3.zero;
             _targetColor = new Color(defaultColor.r, defaultColor.g, defaultColor.b, 0);
             _targetHint = "";
+
+            PieQuestItem heldPie = heldObj.GetComponent<PieQuestItem>();
+            if (heldPie == null) return;
+
+            IntroSequence intro = FindObjectOfType<IntroSequence>();
+            if (intro == null) return;
+
+            // Подсказка на поедание пирога в любом месте, когда он уже согрет и квест активен
+            if (heldPie.isHeated && intro.CanEatPie())
+            {
+                _targetHint = "E — съесть";
+                return;
+            }
+
+            // Подсказка на установку пирога в микроволновку только при наведении и открытой дверце
+            Ray heldRay = interaction.playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+            RaycastHit heldHit;
+            if (!Physics.Raycast(heldRay, out heldHit, interaction.interactionDistance, interaction.interactableLayer))
+                return;
+
+            MicrowaveInteractable microwave = heldHit.collider.GetComponentInParent<MicrowaveInteractable>();
+            if (microwave == null) return;
+            if (!intro.CanPlacePieInMicrowave()) return;
+            if (microwave.microwaveDoor == null) return;
+
+            if (!microwave.microwaveDoor.isOpen)
+            {
+                _targetHint = "Открой дверцу микроволновки";
+                return;
+            }
+
+            _targetHint = "E — поставить";
             return;
         }
 
@@ -51,38 +84,52 @@ public class CrosshairJuice : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, interaction.interactionDistance, interaction.interactableLayer))
         {
+            MicrowaveInteractable microwave = hit.collider.GetComponentInParent<MicrowaveInteractable>();
+            if (microwave != null)
+            {
+                // Готовый пирог внутри: подсказываем открыть дверцу или достать.
+                if (microwave.IsPieReadyToTake())
+                {
+                    hittingSomething = true;
+                    if (microwave.microwaveDoor != null && microwave.microwaveDoor.isOpen)
+                        _targetHint = "E — достать пирог";
+                    else
+                        _targetHint = "Открой дверцу микроволновки";
+                }
+            }
+
             // Подсказки на русском
-            if (hit.collider.GetComponent<HammerTrap>() != null)
+            if (!hittingSomething && hit.collider.GetComponent<HammerTrap>() != null)
             {
                 hittingSomething = true;
                 _targetHint = "E — взять";
             }
-            else if (hit.collider.GetComponent<SimpleItem>() != null)
+            else if (!hittingSomething && hit.collider.GetComponent<SimpleItem>() != null)
             {
                 hittingSomething = true;
                 _targetHint = "E — взять";
             }
-            else if (hit.collider.GetComponent<TrashPile>() != null)
+            else if (!hittingSomething && hit.collider.GetComponent<TrashPile>() != null)
             {
                 hittingSomething = true;
                 _targetHint = "E — собрать";
             }
-            else if (hit.collider.GetComponent<LightSwitch>() != null)
+            else if (!hittingSomething && hit.collider.GetComponent<LightSwitch>() != null)
             {
                 hittingSomething = true;
                 _targetHint = "E — включить/выключить";
             }
-            else if (hit.collider.GetComponent<Door>() != null)
+            else if (!hittingSomething && hit.collider.GetComponent<Door>() != null)
             {
                 hittingSomething = true;
                 _targetHint = "E — открыть";
             }
-            else if (hit.collider.CompareTag("Pickable"))
+            else if (!hittingSomething && hit.collider.CompareTag("Pickable"))
             {
                 hittingSomething = true;
                 _targetHint = "E — взять";
             }
-            else if (hit.collider.GetComponent<BedSleepInteractable>() != null)
+            else if (!hittingSomething && hit.collider.GetComponent<BedSleepInteractable>() != null)
             {
                 hittingSomething = true;
                 _targetHint = "E — лечь спать";

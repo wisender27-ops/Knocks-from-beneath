@@ -32,6 +32,8 @@ public class PlayerDoorOpen : MonoBehaviour
                 Door door = hit.collider.GetComponent<Door>();
                 if (door != null)
                 {
+                    if (door.IsInteractionLocked) return;
+
                     currentHeldDoor = door;
                     currentHeldDoor.StartHolding();
 

@@ -17,6 +17,8 @@ public class Rotator : MonoBehaviour
 
     [Header("Настройки Crossfade")]
     public float crossfadeTime = 0.6f; 
+    [Tooltip("Сколько секунд обрезаем с конца клипа для скрытия щелчка.")]
+    public float clipTailTrim = 0.2f;
 
     private AudioSource sourceA;
     private AudioSource sourceB;
@@ -28,6 +30,7 @@ public class Rotator : MonoBehaviour
     private float effectiveLength; // Обрезанная длина файла
     private float timer;
     private bool activeSourceA = true;
+    private bool useCrossfadeLoop = true;
 
     void Start()
     {
@@ -37,14 +40,32 @@ public class Rotator : MonoBehaviour
 
         if (fanClip != null)
         {
-            // КРИТИЧЕСКИЙ МОМЕНТ: Мы отрезаем последние 0.2 секунды файла, 
-            // где обычно и прячется щелчок от нейросети.
-            effectiveLength = fanClip.length - 0.2f; 
+            float safeTrim = Mathf.Max(0f, clipTailTrim);
+            effectiveLength = Mathf.Max(0.01f, fanClip.length - safeTrim);
             
             SetupSource(sourceA);
             SetupSource(sourceB);
-            sourceA.Play();
+
+            // Для коротких клипов кроссфейд может постоянно перезапускать звук "в ноль".
+            // В этом случае включаем обычный loop на одном источнике.
+            useCrossfadeLoop = effectiveLength > crossfadeTime + 0.05f;
+            if (!useCrossfadeLoop)
+            {
+                sourceA.loop = true;
+                sourceB.loop = false;
+                sourceA.Play();
+                Debug.LogWarning($"[Rotator] '{name}': fanClip слишком короткий для crossfade. Включен обычный loop.");
+            }
+            else
+            {
+                sourceA.Play();
+            }
         }
+        else
+        {
+            Debug.LogWarning($"[Rotator] '{name}': fanClip не назначен.");
+        }
+
         powerFactor = isSpinning ? 1f : 0f;
     }
 
@@ -54,6 +75,20 @@ public class Rotator : MonoBehaviour
         source.loop = false; 
         source.spatialBlend = 1f; 
         source.volume = 0;
+    }
+
+    void EnsurePlaybackStarted()
+    {
+        if (fanClip == null) return;
+
+        if (sourceA != null && !sourceA.isPlaying)
+        {
+            sourceA.time = 0f;
+            sourceA.Play();
+        }
+
+        if (useCrossfadeLoop && sourceB != null && sourceB.isPlaying)
+            sourceB.Stop();
     }
 
     void Update()
@@ -69,8 +104,7 @@ public class Rotator : MonoBehaviour
         {
             timer += Time.deltaTime;
 
-            // Переключаем источники, используя "обрезанную" длину
-            if (timer >= effectiveLength - crossfadeTime)
+            if (useCrossfadeLoop && timer >= effectiveLength - crossfadeTime)
             {
                 timer = 0;
                 activeSourceA = !activeSourceA;
@@ -82,25 +116,33 @@ public class Rotator : MonoBehaviour
             float targetFullVolume = speedRatio * maxVolume;
             float targetPitch = Mathf.Lerp(minPitch, maxPitch, speedRatio);
 
-            // Плавный коэффициент перехода
-            float t = Mathf.Clamp01(timer / crossfadeTime);
-            
-            if (activeSourceA)
+            if (useCrossfadeLoop)
             {
-                // Source A плавно заменяет Source B
-                sourceA.volume = Mathf.Sqrt(t) * targetFullVolume;
-                sourceB.volume = Mathf.Sqrt(1.0f - t) * targetFullVolume;
+                // Плавный коэффициент перехода
+                float t = Mathf.Clamp01(timer / Mathf.Max(0.01f, crossfadeTime));
                 
-                // Если переход закончен, полностью останавливаем B
-                if (t >= 0.99f) { sourceB.Stop(); sourceB.volume = 0; }
+                if (activeSourceA)
+                {
+                    // Source A плавно заменяет Source B
+                    sourceA.volume = Mathf.Sqrt(t) * targetFullVolume;
+                    sourceB.volume = Mathf.Sqrt(1.0f - t) * targetFullVolume;
+                    
+                    // Если переход закончен, полностью останавливаем B
+                    if (t >= 0.99f) { sourceB.Stop(); sourceB.volume = 0; }
+                }
+                else
+                {
+                    // Source B плавно заменяет Source A
+                    sourceB.volume = Mathf.Sqrt(t) * targetFullVolume;
+                    sourceA.volume = Mathf.Sqrt(1.0f - t) * targetFullVolume;
+                    
+                    if (t >= 0.99f) { sourceA.Stop(); sourceA.volume = 0; }
+                }
             }
             else
             {
-                // Source B плавно заменяет Source A
-                sourceB.volume = Mathf.Sqrt(t) * targetFullVolume;
-                sourceA.volume = Mathf.Sqrt(1.0f - t) * targetFullVolume;
-                
-                if (t >= 0.99f) { sourceA.Stop(); sourceA.volume = 0; }
+                sourceA.volume = targetFullVolume;
+                sourceB.volume = 0f;
             }
 
             sourceA.pitch = targetPitch;
@@ -108,5 +150,12 @@ public class Rotator : MonoBehaviour
         }
     }
 
-    public void ToggleRotation(bool state) { isSpinning = state; }
+    public void ToggleRotation(bool state)
+    {
+        isSpinning = state;
+        if (isSpinning)
+            EnsurePlaybackStarted();
+
+        Debug.Log($"[Rotator] '{name}' spin={(isSpinning ? "ON" : "OFF")} clip={(fanClip != null ? fanClip.name : "NULL")} crossfade={(useCrossfadeLoop ? "ON" : "OFF")}");
+    }
 }
