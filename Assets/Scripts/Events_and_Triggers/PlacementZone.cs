@@ -53,5 +53,17 @@ public class PlacementZone : MonoBehaviour
         }
 
         Debug.Log($"Зона: Коробка зафиксирована в слоте {index + 1}");
+
+        // Сценарий: если активный квест - доставка коробок, считаем прогресс
+        if (QuestManager.Instance != null && QuestManager.Instance.currentQuestIndex < QuestManager.Instance.questList.Count)
+        {
+            var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
+            if (activeQuest.questTag == "box-delivery" || activeQuest.questTag == "box-collect")
+            {
+                // Считаем как одно действие по доставке (ставим одну прогресс-единицу)
+                QuestManager.Instance.AddProgress(1);
+                Debug.Log("[PlacementZone] Прогресс доставки коробки добавлен.");
+            }
+        }
     }
 }

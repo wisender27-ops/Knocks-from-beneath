@@ -1,4 +1,4 @@
-using UnityEngine;
+п»їusing UnityEngine;
 using System.Collections;
 
 public enum DebugStoryStage
@@ -21,40 +21,40 @@ public class IntroSequence : MonoBehaviour
     // INSPECTOR
     // =====================================================================
 
-    [Header("Дебаг Сюжета")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё РґРµР±Р°РіР°")]
     public bool useDebugSkip = false;
     public DebugStoryStage startStage = DebugStoryStage.None;
 
-    [Header("Игрок")]
+    [Header("РРіСЂРѕРІС‹Рµ РѕР±СЉРµРєС‚С‹")]
     public Transform playerTransform;
     public PlayerInventory playerInventory;
 
-    [Header("Переход ночи")]
+    [Header("РќРѕС‡РЅС‹Рµ РїР°СЂР°РјРµС‚СЂС‹")]
     public SkyboxSwitcher skySwitcher;
     public CanvasGroup fadeScreen;
     public GameObject nightTrigger;
     public Vector3 nightSpawnPosition;
     public Vector3 nightSpawnRotation;
 
-    [Header("Сюжетные триггеры")]
+    [Header("Р—РѕРЅС‹ Р°РєС‚РёРІРЅРѕСЃС‚Рё")]
     public GameObject trashZone;
     public GameObject garageZone;
     public GameObject kitchenNoiseTrigger;
     public GameObject finaleTrigger;
     public GameObject nightStartTrigger;
-    public GameObject knockController; // Объект с RandomKnock
+    public GameObject knockController; // Р—РІСѓРєРё СѓРґР°СЂР° Рё RandomKnock
 
-    [Header("Контроллеры")]
+    [Header("РљРѕРЅС‚СЂРѕР»Р»РµСЂС‹ СЃРѕР±С‹С‚РёР№")]
     public HoleEventController holeEventController;
 
-    [Header("Сюжетные предметы")]
+    [Header("РџСЂРµРґРјРµС‚С‹ РґР»СЏ РєРІРµСЃС‚РѕРІ")]
     public GameObject flashlightItem;
     public GameObject crowbarItem;
     public GameObject hammerItem;
     
 
     // =====================================================================
-    // ИНИЦИАЛИЗАЦИЯ
+    // РџСЂРѕС†РµРґСѓСЂС‹ Рё РёРЅРёС†РёР°Р»РёР·Р°С†РёСЏ
     // =====================================================================
 
     void Start()
@@ -81,10 +81,11 @@ public class IntroSequence : MonoBehaviour
         if (garageZone != null) garageZone.SetActive(false);
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
         if (finaleTrigger != null) finaleTrigger.SetActive(false);
-        if (flashlightItem != null) flashlightItem.SetActive(false);
-        if (crowbarItem != null) crowbarItem.SetActive(false);
-        if (hammerItem != null) hammerItem.SetActive(false);
-        if (nightStartTrigger != null) nightStartTrigger.SetActive(false);
+        // Items now stay visible on the map - they're controlled by quest requirements instead
+        // if (flashlightItem != null) flashlightItem.SetActive(false);
+        // if (crowbarItem != null) crowbarItem.SetActive(false);
+        // if (hammerItem != null) hammerItem.SetActive(false);
+        // nightStartTrigger.SetActive(false) СѓР±СЂР°РЅРѕ вЂ” РєСЂРѕРІР°С‚СЊ РІСЃРµРіРґР° РІРёРґРЅР°
         if (knockController != null) knockController.SetActive(false);
 
         if (TrashManager.Instance != null)
@@ -92,12 +93,12 @@ public class IntroSequence : MonoBehaviour
     }
 
     // =====================================================================
-    // ДЕБАГ
+    // пїЅпїЅпїЅпїЅпїЅ
     // =====================================================================
 
     void ApplyDebugSkip()
     {
-        Debug.LogWarning($"[DEBUG] Быстрый старт с этапа: {startStage}");
+Debug.LogWarning($"[DEBUG] РќР°С‡Р°Р»СЊРЅР°СЏ СЃС‚Р°РґРёСЏ: {startStage}");
 
         if (startStage >= DebugStoryStage.StartKitchenNoise)
         {
@@ -145,7 +146,7 @@ public class IntroSequence : MonoBehaviour
     }
 
     // =====================================================================
-    // ВСПОМОГАТЕЛЬНЫЕ МЕТОДЫ
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     // =====================================================================
 
     void TeleportPlayerToBed()
@@ -159,63 +160,82 @@ public class IntroSequence : MonoBehaviour
         if (cc != null) cc.enabled = true;
     }
 
-    void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction callback = null)
+    void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction callback = null, string questTag = "")
     {
         QuestManager.Instance.CreateQuest(title, amount, callback);
     }
 
     // =====================================================================
-    // ДЕНЬ 1 — ОБУСТРОЙСТВО
+    // Р­С‚Р°Рї 1 Рё СЃСЋР¶РµС‚РЅС‹Рµ Р·Р°РґР°РЅРёСЏ
     // =====================================================================
 
-    // --- 1. Мусор ---
+    // --- 1. РќР°С‡Р°Р»СЊРЅС‹Р№ РјРѕРЅРѕР»РѕРі ---
     void StartIntro()
     {
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Наконец-то я дома...",
-            "Нужно обживаться... И воняет знатно, надо бы вынести этот мусор."
+            "РќР°РєРѕРЅРµС†-С‚Рѕ - СЃРІРѕС‘ Р¶РёР»СЊС‘.",
+            "РҐРѕС‚СЊ Рё РїСЂРѕС€Р»С‹Рµ С…РѕР·СЏРµРІР° РµРіРѕ РєРѕРЅРµС‡РЅРѕ Р·Р°СЃСЂР°Р»Рё."
         }, SetupTrashQuest);
     }
 
     void SetupTrashQuest()
     {
-        TrashManager.Instance.Initialize(); // Включает мусор и сбрасывает счётчики
-        CreateQuest("Собрать мусор по дому", 3, OnTrashCollected);
+        TrashManager.Instance.Initialize();
+        CreateQuest("РЎРѕР±СЂР°С‚СЊ РјСѓСЃРѕСЂ РїРѕ РґРѕРјСѓ", 3, OnTrashCollected);
     }
 
     void OnTrashCollected()
     {
         if (trashZone != null) trashZone.SetActive(true);
-        CreateQuest("Вынести мусорный мешок", 1, OnTrashFinished);
+        CreateQuest("Р’С‹РЅРµСЃС‚Рё РјСѓСЃРѕСЂРЅС‹Р№ РјРµС€РѕРє", 1, OnTrashFinished);
     }
 
     public void OnTrashFinished()
     {
         if (trashZone != null) trashZone.SetActive(false);
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Фух, одной проблемой меньше.",
-            "Так, теперь та коробка у входа... Нужно перетащить её в гараж."
+            "РљРѕСЂРѕР±РєРё РІСЃС‘ РµС‰С‘ Сѓ РІС…РѕРґР°...",
+            "РљР°Рє Р±СѓРґС‚Рѕ РЅР° РєР°С‚РѕСЂРіСѓ РїСЂРёРµС…Р°Р»."
         }, SetupBoxQuest);
     }
 
-    // --- 2. Коробка в гараж ---
+    // --- 2. РЎРѕР±РёСЂР°С‚СЊ РєРѕСЂРѕР±РєРё ---
     void SetupBoxQuest()
     {
         if (garageZone != null) garageZone.SetActive(true);
-        CreateQuest("Отнести коробку в гараж", 1, OnBoxFinished);
+        QuestManager.Instance.CreateQuest("РћС‚РЅРµСЃС‚Рё РєРѕСЂРѕР±РєРё РІ РіР°СЂР°Р¶", 1, OnBoxFinished, "box-delivery");
     }
 
     public void OnBoxFinished()
     {
         if (garageZone != null) garageZone.SetActive(false);
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Всё, на сегодня хватит.",
-            "Смертельно устал. Пора ложиться спать."
-        }, () => StartCoroutine(NightRoutine()));
+            "РЎРїРёРЅР° РѕС‚РІР°Р»РёРІР°РµС‚СЃСЏ.",
+            "Р›Р°РґРЅРѕ, СЂР°Р·Р±РµСЂСѓСЃСЊ СЃ РѕСЃС‚Р°Р»СЊРЅС‹Рј Р·Р°РІС‚СЂР°...",
+            "РџРѕСЂР° Р±С‹ Р»РµС‡СЊ СЃРїР°С‚СЊ..."
+        }, SetupGoToBedQuest);
     }
 
+    void SetupGoToBedQuest()
+    {
+        // nightStartTrigger.SetActive(true) СѓР±СЂР°РЅРѕ вЂ” РєСЂРѕРІР°С‚СЊ РІСЃРµРіРґР° РІРёРґРЅР°
+        CreateQuest("РџРѕР№С‚Рё Рє РєСЂРѕРІР°С‚Рё", 1, OnGoToBedFinished);
+    }
+
+    public void OnBedTriggerReached()
+    {
+        // nightStartTrigger.SetActive(false) СѓР±СЂР°РЅРѕ вЂ” РєСЂРѕРІР°С‚СЊ РІСЃРµРіРґР° РІРёРґРЅР°
+        QuestManager.Instance.AddProgress(1); // Р—Р°РІРµСЂС€РёС‚СЊ РєРІРµСЃС‚
+    }
+
+    void OnGoToBedFinished()
+    {
+        StartCoroutine(NightRoutine());
+    }
+
+
     // =====================================================================
-    // НОЧЬ — ПЕРЕХОД И ПРОБУЖДЕНИЕ
+    // пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     // =====================================================================
 
     IEnumerator NightRoutine()
@@ -233,7 +253,7 @@ public class IntroSequence : MonoBehaviour
         RenderSettings.fog = false;
         TeleportPlayerToBed();
 
-        // IntroSequence сам включает стук — NightStartTrigger больше не нужен
+        // IntroSequence пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ NightStartTrigger пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         if (knockController != null) knockController.SetActive(true);
 
         yield return new WaitForSeconds(2f);
@@ -247,21 +267,21 @@ public class IntroSequence : MonoBehaviour
         }
 
         ThoughtManager.Instance.ShowThoughts(new string[] {
-        "...Что за скрежет?",
-        "Звук идет с кухни. Похоже на крыс или старые трубы.",
-        "Надо проверить, пока они мне пол не сожрали."
-    }, SetupSearchNoiseQuest);
+            "...?",
+            "Р§С‚Рѕ СЌС‚Рѕ Р±С‹Р»Рѕ?..",
+            "РЇ С‚РѕР»СЊРєРѕ РІСЉРµС…Р°Р». РџРѕС‡РµРјСѓ РѕРЅРѕ РЅРµ РїСЂРѕРїР°Р»Рѕ."
+        }, SetupSearchNoiseQuest);
     }
 
     // =====================================================================
-    // НОЧЬ — РАССЛЕДОВАНИЕ
+    // пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     // =====================================================================
 
-    // --- 3. Шум на кухне ---
+    // --- 3. РџРѕРёСЃРє РёСЃС‚РѕС‡РЅРёРєР° С€СѓРјР° ---
     void SetupSearchNoiseQuest()
     {
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(true);
-        CreateQuest("Проверить источник шума на кухне", 1, OnKitchenQuestCompleted);
+        CreateQuest("РџСЂРѕРІРµСЂРёС‚СЊ РёСЃС‚РѕС‡РЅРёРє С€СѓРјР°", 1, OnKitchenQuestCompleted);
     }
 
     public void OnKitchenTriggerReached()
@@ -273,95 +293,97 @@ public class IntroSequence : MonoBehaviour
     {
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Скребется прямо под досками. Звучит хреново.",
-            "Здесь темно... Нужен фонарик. Кажется видел его где-то в доме."
+            "РџРѕРґ РїРѕР»РѕРј.",
+            "РџСЂСЏРјРѕ РїРѕРґРѕ РјРЅРѕР№.",
+            "Р‘РµР· СЃРІРµС‚Р° СЏ С‚СѓРґР° РЅРµ РїРѕР»РµР·Сѓ."
         }, SetupFlashlightQuest);
     }
 
-    // --- 4. Найти фонарик ---
+    // --- 4. РќР°Р№С‚Рё С„РѕРЅР°СЂРёРє ---
     void SetupFlashlightQuest()
     {
         if (flashlightItem != null) flashlightItem.SetActive(true);
-        CreateQuest("Найти фонарик", 1, OnFlashlightPickedUp);
+        CreateQuest("РќР°Р№С‚Рё С„РѕРЅР°СЂРёРє", 1, OnFlashlightPickedUp);
     }
 
     public void OnFlashlightPickedUp()
     {
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Вот он. Теперь найдем лом и вскроем эти доски."
+            "РЎРІРµС‚ РµСЃС‚СЊ.",
+            "РўРµРїРµСЂСЊ Р±С‹ Р»РѕРј."
         }, SetupCrowbarQuest);
     }
 
-    // --- 5. Найти лом ---
+    // --- 5. РџРѕРёСЃРє Р»РѕРјР° ---
     void SetupCrowbarQuest()
     {
         if (crowbarItem != null) crowbarItem.SetActive(true);
-        CreateQuest("Найти лом в гараже", 1, OnCrowbarPickedUp);
+        CreateQuest("РќР°Р№С‚Рё Р»РѕРј", 1, OnCrowbarPickedUp);
     }
 
     public void OnCrowbarPickedUp()
     {
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Нашел. Теперь вскроем эти доски."
+            "РќР°С€С‘Р».",
+            "РќРµРЅР°РІРёР¶Сѓ СЌС‚Рѕ С‡СѓРІСЃС‚РІРѕ."
         }, SetupBreakFloorQuest);
     }
 
-    // --- 6. Сломать пол ---
+    // --- 6. РџСЂРѕР±РёС‚СЊ РїРѕР» ---
     void SetupBreakFloorQuest()
     {
-        CreateQuest("Вскрыть доски на кухне", 1, OnFloorBroken);
+        CreateQuest("Р’СЃРєСЂС‹С‚СЊ РґРѕСЃРєРё РЅР° РєСѓС…РЅРµ", 1, OnFloorBroken);
     }
 
     public void OnFloorBroken()
     {
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Готово. Что там внутри..."
+            "РќРёС‡РµРіРѕ РЅРµ РІРёРґРЅРѕ.",
+            "Р›Р°РґРЅРѕ С…РѕС‚СЊ С„РѕРЅР°СЂРёРє РІР·СЏР»."
         }, SetupLookInHoleQuest);
     }
 
-    // --- 7. Заглянуть в дыру (скример) ---
+    // --- 7. Р—Р°РіР»СЏРЅСѓС‚СЊ РІ РґС‹СЂСѓ ---
     void SetupLookInHoleQuest()
     {
-        CreateQuest("Заглянуть в дыру", 1, OnHoleEventFinished);
-
+        CreateQuest("Р—Р°РіР»СЏРЅСѓС‚СЊ РІ РґС‹СЂСѓ", 1, OnHoleEventFinished);
         if (holeEventController != null)
             holeEventController.enabled = true;
-        else
-            Debug.LogError("[DEBUG] HoleEventController не привязан в Inspector!");
     }
 
     // =====================================================================
-    // НОЧЬ — ФИНАЛ
+    // пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ
     // =====================================================================
 
-    // --- 8. Реакция и поиск молотка ---
+    // --- 8. Р—Р°РІРµСЂС€РёС‚СЊ СЃРѕР±С‹С‚РёРµ РІ РґС‹СЂС‹ ---
     public void OnHoleEventFinished()
     {
         if (MonsterTimer.Instance != null)
             MonsterTimer.Instance.StartTimer();
-
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "ТВОЮ МАТЬ! ЧТО ЭТО БЫЛО?!",
-            "Там кто-то есть... Живой! Оно смотрело прямо на меня!",
-            "Нужно заколотить это немедленно, пока оно не вылезло!",
-            "На втором этаже в ящике был молоток и гвозди. СКОРЕЕ!"
+            "РќР•Рў.",
+            "Р­С‚Р° С‚РІР°СЂСЊ РІС‹СЃРєРѕС‡РёР»Р° РїСЂСЏРјРѕ РЅР° РјРµРЅСЏ.",
+            "РќСѓР¶РЅРѕ Р·Р°РєРѕР»РѕС‚РёС‚СЊ РµС‘.",
+            "РџСЂСЏРјРѕ СЃРµР№С‡Р°СЃ."
         }, SetupHammerQuest);
     }
 
     void SetupHammerQuest()
     {
         if (hammerItem != null) hammerItem.SetActive(true);
-        CreateQuest("Найти молоток на втором этаже", 1, OnHammerPickedUp);
+        CreateQuest("РќР°Р№С‚Рё РјРѕР»РѕС‚РѕРє", 1, OnHammerPickedUp);
     }
 
-    // --- 9. Финал у дыры ---
+    // --- 9. РњРѕР»РѕС‚РѕРє Рё С„РёРЅР°Р» ---
     public void OnHammerPickedUp()
     {
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "Взял! Назад к дыре, быстро!"
-        }, () => {
+            "Р’Р·СЏР».",
+            "РЇ РІСЃС‘ РёСЃРїСЂР°РІР»СЋ."
+        }, () =>
+        {
             if (finaleTrigger != null) finaleTrigger.SetActive(true);
-            CreateQuest("Заколотить дыру", 1);
+            CreateQuest("Р—Р°РєСЂС‹С‚СЊ РґС‹СЂСѓ", 1);
         });
     }
 }

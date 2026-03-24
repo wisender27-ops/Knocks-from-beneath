@@ -3,15 +3,15 @@ using System.Collections;
 
 public class FinaleController : MonoBehaviour
 {
-    [Header("Ссылки на объекты")]
+    [Header("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ")]
     public Transform player;
     public GameObject monsterModel;
     public CanvasGroup fadeScreen;
 
-    [Header("Настройки сцены")]
+    [Header("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ")]
     public Transform holeBottomSpot;
 
-    [Header("Аудио")]
+    [Header("пїЅпїЅпїЅпїЅпїЅ")]
     public AudioSource audioSource;
     public AudioClip evilLaughClip;
     public AudioClip nailingWoodClip;
@@ -41,7 +41,7 @@ public class FinaleController : MonoBehaviour
 
     IEnumerator PushedIntoHoleRoutine(PlayerController pc)
     {
-        // 1. БЛОКИРУЕМ УПРАВЛЕНИЕ
+        // 1. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         pc.isCameraLocked = true;
         if (pc.GetComponent<PlayerInventory>() != null) pc.GetComponent<PlayerInventory>().enabled = false;
         if (pc.GetComponent<PlayerInteraction>() != null) pc.GetComponent<PlayerInteraction>().enabled = false;
@@ -49,21 +49,21 @@ public class FinaleController : MonoBehaviour
         Camera playerCam = pc.GetComponentInChildren<Camera>();
         CharacterController cc = pc.GetComponent<CharacterController>();
 
-        // 2. СТАВИМ МОНСТРА ЗА СПИНОЙ ОЧЕНЬ БЛИЗКО
+        // 2. пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         Vector3 behindPlayer = pc.transform.position - pc.transform.forward * 2f;
         behindPlayer.y = pc.transform.position.y;
         monsterModel.transform.position = behindPlayer;
         monsterModel.transform.LookAt(pc.transform.position);
         monsterModel.SetActive(true);
 
-        // 3. СМЕХ
+        // 3. пїЅпїЅпїЅпїЅ
         if (audioSource && evilLaughClip)
             audioSource.PlayOneShot(evilLaughClip);
 
         yield return new WaitForSeconds(0.5f);
 
-        // 4. РЕЗКИЙ РАЗВОРОТ КАМЕРЫ НА МОНСТРА
-        // Крутим только камеру через localRotation, не трогаем transform игрока
+        // 4. пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+        // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ localRotation, пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ transform пїЅпїЅпїЅпїЅпїЅпїЅ
         if (playerCam != null)
         {
             float t = 0;
@@ -71,7 +71,7 @@ public class FinaleController : MonoBehaviour
             Vector3 dirToMonster = monsterModel.transform.position + Vector3.up * 1.5f - playerCam.transform.position;
             Quaternion targetRot = Quaternion.LookRotation(dirToMonster);
 
-            // 0.08f — очень быстро, почти резко
+            // 0.08f пїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ, пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
             while (t < 0.08f)
             {
                 t += Time.deltaTime;
@@ -82,7 +82,7 @@ public class FinaleController : MonoBehaviour
 
         yield return new WaitForSeconds(0.3f);
 
-        // 5. ПАДЕНИЕ В ЯМУ — отключаем CharacterController и роняем игрока физикой
+        // 5. пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ CharacterController пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (cc != null) cc.enabled = false;
 
         float fallTime = 0f;
@@ -94,13 +94,13 @@ public class FinaleController : MonoBehaviour
             fallTime += Time.deltaTime;
             float progress = fallTime / fallDuration;
 
-            // Двигаем вниз с ускорением (имитация гравитации)
+            // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
             pc.transform.position = Vector3.Lerp(startPos, holeBottomSpot.position, progress * progress);
             yield return null;
         }
         pc.transform.position = holeBottomSpot.position;
 
-        // 6. ЗАТЕМНЕНИЕ
+        // 6. пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         float elapsed = 0;
         while (elapsed < 0.8f)
         {
@@ -112,7 +112,7 @@ public class FinaleController : MonoBehaviour
 
         monsterModel.SetActive(false);
 
-        // 7. ЗВУК ЗАКОЛАЧИВАНИЯ
+        // 7. пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         yield return new WaitForSeconds(0.5f);
         if (audioSource && nailingWoodClip)
         {
@@ -130,8 +130,8 @@ public class FinaleController : MonoBehaviour
         Cursor.visible = true;
 
         ThoughtManager.Instance.ShowThoughts(new string[] {
-        "Нет... Пожалуйста...",
-        "ОН ЗАКОЛОТИЛ МЕНЯ ЗДЕСЬ."
+        "РќР•Рў!",
+        "Р’Р«РџРЈРЎРўР РњР•РќРЇ!"
     }, QuitGame);
     }
 

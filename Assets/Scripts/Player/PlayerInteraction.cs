@@ -94,12 +94,27 @@ public class PlayerInteraction : MonoBehaviour
             // 4. ФИЗИЧЕСКИЙ ЗАХВАТ
             if (hitObj.CompareTag("Pickable"))
                 GrabPhysicsObject(hitObj);
+
+            // 5. КРОВАТЬ ДЛЯ СНА
+            BedSleepInteractable bed = hitObj.GetComponent<BedSleepInteractable>();
+            if (bed != null)
+            {
+                bed.Interact();
+                return;
+            }
         }
     }
 
     // --- ЛОГИКА ИНВЕНТАРЯ ---
     void PickUpToInventory(SimpleItem item)
     {
+        // Check if we can pick up this item - it should be required by the active quest
+        if (!CanPickUpItem(item))
+        {
+            Debug.Log($"[Inventory] Cannot pick up {item.itemType.ToString()} - required item is not needed for current quest!");
+            return;
+        }
+
         if (item.itemType == ItemType.Crowbar) inventory.hasCrowbar = true;
         else if (item.itemType == ItemType.Flashlight) inventory.hasFlashlight = true;
         else if (item.itemType == ItemType.Hammer) inventory.hasHammer = true;
@@ -123,6 +138,26 @@ public class PlayerInteraction : MonoBehaviour
         }
 
         Destroy(item.gameObject);
+    }
+
+    bool CanPickUpItem(SimpleItem item)
+    {
+        // If no active quest, cannot pick up story items
+        if (QuestManager.Instance.currentQuestIndex >= QuestManager.Instance.questList.Count)
+            return false;
+
+        var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
+
+        // Check if the item matches active quest requirement via tag (reliable) or title (fallback)
+        bool itemIsNeeded =
+            (item.itemType == ItemType.Crowbar && activeQuest.questTag == "crowbar-find") ||
+            (item.itemType == ItemType.Hammer && activeQuest.questTag == "hammer-find") ||
+            (item.itemType == ItemType.Flashlight && activeQuest.questTag == "flashlight-find") ||
+            (item.itemType == ItemType.Crowbar && activeQuest.questTitle.Contains("лом")) ||
+            (item.itemType == ItemType.Hammer && activeQuest.questTitle.Contains("молоток")) ||
+            (item.itemType == ItemType.Flashlight && activeQuest.questTitle.Contains("фонарик"));
+
+        return itemIsNeeded;
     }
 
     // --- ФИЗИКА ---

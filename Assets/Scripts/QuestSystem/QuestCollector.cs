@@ -20,8 +20,11 @@ public class QuestCollector : MonoBehaviour
         {
             var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
 
-            // Проверяем по названию квеста а не по индексу
+            // Проверяем по questTag, а не по названиям (устойчиво к локализации/кодировкам)
             bool isCorrectQuest =
+                (acceptedType == CollectableItem.ItemType.Trash && activeQuest.questTag == "trash-delivery") ||
+                (acceptedType == CollectableItem.ItemType.Box && (activeQuest.questTag == "box-delivery" || activeQuest.questTag == "box-collect")) ||
+                // fallback на текст для совместимости со старыми квестами
                 (acceptedType == CollectableItem.ItemType.Trash && activeQuest.questTitle.Contains("мусор")) ||
                 (acceptedType == CollectableItem.ItemType.Box && activeQuest.questTitle.Contains("коробку"));
 

@@ -56,7 +56,8 @@ public class MonsterTimer : MonoBehaviour
             else
                 timerText.color = Color.red;
 
-            timerText.text = $"Монстр вылезет из дыры через {Mathf.CeilToInt(remaining)} секунд";
+            timerText.text = $"Monster will emerge from the hole in {Mathf.CeilToInt(remaining)} seconds";
+                        timerText.text = $"Монстр вылезет из дыры через {Mathf.CeilToInt(remaining)} секунд";
             remaining -= Time.deltaTime;
             yield return null;
         }

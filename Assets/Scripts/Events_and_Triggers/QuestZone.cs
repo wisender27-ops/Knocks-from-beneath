@@ -36,6 +36,10 @@ public class QuestZone : MonoBehaviour
         {
             isQuestCompleted = true;
             Debug.Log("--- КВЕСТ ВЫПОЛНЕН! Все коробки на месте! ---");
+            if (QuestManager.Instance != null)
+            {
+                QuestManager.Instance.AddProgress(1);
+            }
         }
     }
 }

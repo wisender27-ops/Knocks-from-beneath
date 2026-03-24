@@ -4,17 +4,17 @@ using TMPro;
 
 public class CrosshairJuice : MonoBehaviour
 {
-    [Header("Ссылки")]
+    [Header("пїЅпїЅпїЅпїЅпїЅпїЅ")]
     public Image cursorImage;
     public PlayerInteraction interaction;
-    public TextMeshProUGUI hintText; // Перетащи сюда InteractHint
+    public TextMeshProUGUI hintText; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ InteractHint
 
-    [Header("Настройки")]
+    [Header("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")]
     public float scaleSpeed = 10f;
     public float defaultScale = 1f;
     public float interactScale = 1.5f;
 
-    [Header("Цвета")]
+    [Header("пїЅпїЅпїЅпїЅпїЅ")]
     public Color defaultColor = Color.white;
     public Color interactColor = Color.yellow;
 
@@ -51,36 +51,41 @@ public class CrosshairJuice : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, interaction.interactionDistance, interaction.interactableLayer))
         {
-            // Каждый тип предмета даёт свою подсказку
+            // РџРѕРґСЃРєР°Р·РєРё РЅР° СЂСѓСЃСЃРєРѕРј
             if (hit.collider.GetComponent<HammerTrap>() != null)
             {
                 hittingSomething = true;
-                _targetHint = "E — взять";
+                _targetHint = "E вЂ” РІР·СЏС‚СЊ";
             }
             else if (hit.collider.GetComponent<SimpleItem>() != null)
             {
                 hittingSomething = true;
-                _targetHint = "E — взять";
+                _targetHint = "E вЂ” РІР·СЏС‚СЊ";
             }
             else if (hit.collider.GetComponent<TrashPile>() != null)
             {
                 hittingSomething = true;
-                _targetHint = "E — собрать";
+                _targetHint = "E вЂ” СЃРѕР±СЂР°С‚СЊ";
             }
             else if (hit.collider.GetComponent<LightSwitch>() != null)
             {
                 hittingSomething = true;
-                _targetHint = "E — включить/выключить";
+                _targetHint = "E вЂ” РІРєР»СЋС‡РёС‚СЊ/РІС‹РєР»СЋС‡РёС‚СЊ";
             }
             else if (hit.collider.GetComponent<Door>() != null)
             {
                 hittingSomething = true;
-                _targetHint = "E — открыть";
+                _targetHint = "E вЂ” РѕС‚РєСЂС‹С‚СЊ";
             }
             else if (hit.collider.CompareTag("Pickable"))
             {
                 hittingSomething = true;
-                _targetHint = "E — взять";
+                _targetHint = "E вЂ” РІР·СЏС‚СЊ";
+            }
+            else if (hit.collider.GetComponent<BedSleepInteractable>() != null)
+            {
+                hittingSomething = true;
+                _targetHint = "E вЂ” Р»РµС‡СЊ СЃРїР°С‚СЊ";
             }
         }
 
@@ -104,7 +109,7 @@ public class CrosshairJuice : MonoBehaviour
         cursorImage.color = Color.Lerp(
             cursorImage.color, _targetColor, Time.deltaTime * scaleSpeed);
 
-        // Текст подсказки
+        // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (hintText != null)
             hintText.text = _targetHint;
     }

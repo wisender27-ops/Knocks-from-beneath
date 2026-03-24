@@ -9,28 +9,28 @@ public class InventoryUI : MonoBehaviour
     [System.Serializable]
     public class SlotUI
     {
-        public GameObject slotRoot;      // Корневой объект слота
-        public Image background;         // Фон слота (Slot1, Slot2 спрайты)
-        public Image itemIcon;           // Иконка предмета
-        public TextMeshProUGUI keyText;  // Цифра (1, 2, 3...)
-        public TextMeshProUGUI itemName; // Название предмета
+        public GameObject slotRoot;      // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+        public Image background;         // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ (Slot1, Slot2 пїЅпїЅпїЅпїЅпїЅпїЅпїЅ)
+        public Image itemIcon;           // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+        public TextMeshProUGUI keyText;  // пїЅпїЅпїЅпїЅпїЅ (1, 2, 3...)
+        public TextMeshProUGUI itemName; // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
 
-        [HideInInspector] public string assignedItem = ""; // Что сейчас в слоте
+        [HideInInspector] public string assignedItem = ""; // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅ
     }
 
-    [Header("Слоты")]
-    public SlotUI[] slots; // 4 слота
+    [Header("пїЅпїЅпїЅпїЅпїЅ")]
+    public SlotUI[] slots; // 4 пїЅпїЅпїЅпїЅпїЅ
 
-    [Header("Спрайты фона")]
-    public Sprite slotNormalSprite;   // Обычный фон
-    public Sprite slotActiveSprite;   // Фон когда слот выбран
+    [Header("пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ")]
+    public Sprite slotNormalSprite;   // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ
+    public Sprite slotActiveSprite;   // пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
 
-    [Header("Иконки предметов")]
+    [Header("пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ")]
     public Sprite crowbarIcon;
     public Sprite flashlightIcon;
     public Sprite hammerIcon;
 
-    [Header("Цвета")]
+    [Header("пїЅпїЅпїЅпїЅпїЅ")]
     public Color normalColor = new Color(1, 1, 1, 0.5f);
     public Color activeColor = Color.white;
 
@@ -41,26 +41,26 @@ public class InventoryUI : MonoBehaviour
 
     void Start()
     {
-        // Слот 1 всегда виден и пустой
+        // пїЅпїЅпїЅпїЅ 1 пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         slots[0].slotRoot.SetActive(true);
         slots[0].keyText.text = "1";
         slots[0].itemIcon.enabled = false;
         slots[0].itemName.text = "";
 
-        // Остальные слоты скрыты
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
         for (int i = 1; i < slots.Length; i++)
             slots[i].slotRoot.SetActive(false);
     }
 
-    // Добавить предмет в первый свободный слот
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
     public void AddItem(string itemName)
     {
         for (int i = 0; i < slots.Length; i++)
         {
-            // Слот 0 пустой (пустая рука) — пропускаем если ищем свободный
+            // пїЅпїЅпїЅпїЅ 0 пїЅпїЅпїЅпїЅпїЅпїЅ (пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ) пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
             if (i == 0 && slots[i].assignedItem == "")
             {
-                // Занимаем первый слот предметом
+                // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
                 AssignItemToSlot(0, itemName);
                 return;
             }
@@ -82,7 +82,7 @@ public class InventoryUI : MonoBehaviour
         slots[index].itemIcon.sprite = GetItemIcon(itemName);
     }
 
-    // Подсветить активный слот
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅ
     public void SetActiveSlot(string itemName)
     {
         for (int i = 0; i < slots.Length; i++)
@@ -110,9 +110,9 @@ public class InventoryUI : MonoBehaviour
     {
         switch (itemName)
         {
-            case "Crowbar": return "Лом";
-            case "Flashlight": return "Фонарик";
-            case "Hammer": return "Молоток";
+            case "Crowbar": return "Р›РѕРј";
+            case "Flashlight": return "Р¤РѕРЅР°СЂРёРє";
+            case "Hammer": return "РњРѕР»РѕС‚РѕРє";
             default: return "";
         }
     }

@@ -5,14 +5,14 @@ public class TrashManager : MonoBehaviour
 {
     public static TrashManager Instance;
 
-    [Header("Мусорный мешок")]
+    [Header("пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ")]
     public GameObject trashBagPrefab;
 
-    [Header("Стук из под пола")]
+    [Header("пїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅ")]
     public AudioSource floorKnockSource;
     public AudioClip floorKnockClip;
 
-    [Header("Кучки мусора")]
+    [Header("пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ")]
     public GameObject[] trashPiles;
 
     private int _totalPiles;
@@ -21,7 +21,7 @@ public class TrashManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
-        HideAll(); // Выключаем всё при старте
+        HideAll(); // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅ
     }
 
     public void HideAll()
@@ -30,7 +30,7 @@ public class TrashManager : MonoBehaviour
             if (pile != null) pile.SetActive(false);
     }
 
-    // Вызывается из IntroSequence когда квест начинается
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ IntroSequence пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
     public void Initialize()
     {
         _collectedCount = 0;
@@ -40,7 +40,7 @@ public class TrashManager : MonoBehaviour
             if (pile != null) pile.SetActive(true);
     }
 
-    // Вызывается из TrashPile.Collect()
+    // пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ TrashPile.Collect()
     public void OnPileCollected()
     {
         _collectedCount++;
@@ -51,11 +51,11 @@ public class TrashManager : MonoBehaviour
 
     IEnumerator SpawnBagRoutine()
     {
-        // Звук стука
+        // пїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
         if (floorKnockSource != null && floorKnockClip != null)
             floorKnockSource.PlayOneShot(floorKnockClip);
 
-        // Спавним мешок перед игроком
+        // пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         if (trashBagPrefab != null)
         {
             Transform player = Camera.main.transform;
@@ -75,13 +75,13 @@ public class TrashManager : MonoBehaviour
             rb.linearDamping = 2f;
         }
 
-        // Ждём 3 секунды перед мыслями
+        // пїЅпїЅпїЅ 3 пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅ
         yield return new WaitForSeconds(3f);
 
         ThoughtManager.Instance.ShowThoughts(new string[] {
-            "...Что это было?",
-            "Наверное трубы. Старый дом.",
-            "Надо вынести этот мешок."
+            "...Р§С‚Рѕ СЌС‚Рѕ Р±С‹Р»Рѕ?",
+            "РЎС‚СЂР°РЅРЅС‹Р№ Р·РІСѓРє. РќСѓР¶РЅРѕ РїСЂРѕРІРµСЂРёС‚СЊ.",
+            "РњРѕР¶РµС‚, СЌС‚Рѕ СЃ РєСѓС…РЅРё."
         }, null);
     }
 }

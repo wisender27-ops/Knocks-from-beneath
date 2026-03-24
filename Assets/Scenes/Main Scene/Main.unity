@@ -24115,7 +24115,7 @@ MonoBehaviour:
   garageZone: {fileID: 1135896086}
   kitchenNoiseTrigger: {fileID: 1935310458}
   finaleTrigger: {fileID: 174737113}
-  nightStartTrigger: {fileID: 1239044495}
+  nightStartTrigger: {fileID: 1413307267978372860}
   knockController: {fileID: 967428805}
   holeEventController: {fileID: 1126918174}
   flashlightItem: {fileID: 636986142}
@@ -48596,6 +48596,8 @@ GameObject:
   - component: {fileID: 3952746929454127420}
   - component: {fileID: 2336075380374181815}
   - component: {fileID: 7096904951727338135}
+  - component: {fileID: 7096904951727338137}
+  - component: {fileID: 7096904951727338138}
   m_Layer: 0
   m_Name: bed_03
   m_TagString: Untagged
@@ -99698,6 +99700,39 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!65 &7096904951727338137
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1413307267978372860}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.017011488, y: 0.02513574, z: 0.00845395}
+  m_Center: {x: 0.000029908419, y: -0.00025954246, z: 0.0002927187}
+--- !u!114 &7096904951727338138
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1413307267978372860}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb2bcf0328694874899d15c573828546, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BedSleepInteractable
 --- !u!1 &7099477643886950079
 GameObject:
   m_ObjectHideFlags: 0

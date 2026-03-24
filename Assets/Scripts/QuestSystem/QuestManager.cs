@@ -14,6 +14,7 @@ public class QuestManager : MonoBehaviour
         public int requiredAmount;
         public int currentAmount;
         public UnityEvent onQuestComplete;
+        public string questTag; // explicit quest type / purpose (trash, box, flashlight, crowbar, etc.)
     }
 
     public List<QuestData> questList = new List<QuestData>();
@@ -35,6 +36,8 @@ public class QuestManager : MonoBehaviour
         QuestData activeQuest = questList[currentQuestIndex];
         activeQuest.currentAmount += amount;
 
+        Debug.Log($"[QuestManager] Quest '{activeQuest.questTitle}' (tag='{activeQuest.questTag}') progress {activeQuest.currentAmount}/{activeQuest.requiredAmount}");
+
         if (activeQuest.currentAmount >= activeQuest.requiredAmount)
         {
             Debug.Log($"Квест '{activeQuest.questTitle}' выполнен!");
@@ -49,12 +52,13 @@ public class QuestManager : MonoBehaviour
         UpdateUI();
     }
 
-    public void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction onCompleteAction = null)
+    public void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction onCompleteAction = null, string questTag = "")
     {
         QuestData newQuest = new QuestData();
         newQuest.questTitle = title;
         newQuest.requiredAmount = amount;
         newQuest.currentAmount = 0;
+        newQuest.questTag = questTag;
         newQuest.onQuestComplete = new UnityEvent();
 
         if (onCompleteAction != null)
