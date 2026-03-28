@@ -1,50 +1,85 @@
 using UnityEngine;
 using UnityEngine.Audio;
-using System.Collections; // Нужно для работы корутин
+using System.Collections;
+using System.Collections.Generic;
 
 public class RainZoneSwitcher : MonoBehaviour
 {
-    public AudioMixerSnapshot targetSnapshot;
-    public float transitionTime = 3.0f; // Теперь стоит 3 секунды
+    [Header("Audio")]
+    public AudioMixerSnapshot enterSnapshot;
+    public AudioMixerSnapshot exitSnapshot;
+    public float transitionTime = 3f;
 
-    [Header("Настройки тумана")]
-    public float targetFogDensity; // Плотность, к которой стремимся
+    [Header("Fog")]
+    public float enterFogDensity;
+    public float exitFogDensity;
 
-    // Статическая переменная, чтобы все триггеры знали о запущенном переходе
-    private static Coroutine fogCoroutine;
+    // Local tracking (per trigger) to avoid double-counting when the player has multiple colliders.
+    private readonly HashSet<Collider> _playerCollidersInsideThisTrigger = new HashSet<Collider>();
+
+    private Coroutine exitCoroutine;
+
+    // Global tracking across ALL RainZoneSwitcher triggers.
+    private static int s_playerInsideAnyRainZone = 0;
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player"))
+        if (!IsPlayerCollider(other)) return;
+        if (!_playerCollidersInsideThisTrigger.Add(other)) return;
+
+        s_playerInsideAnyRainZone++;
+
+        // вќ— РѕС‚РјРµРЅСЏРµРј РІС‹С…РѕРґ, РµСЃР»Рё РѕРЅ Р±С‹Р»
+        if (exitCoroutine != null)
         {
-            // 1. Плавный переход звука (уже встроен в Unity)
-            targetSnapshot.TransitionTo(transitionTime);
-
-            // 2. Плавный переход тумана
-            if (fogCoroutine != null)
-            {
-                StopCoroutine(fogCoroutine); // Останавливаем старый переход, если он шел
-            }
-            fogCoroutine = StartCoroutine(LerpFog(targetFogDensity, transitionTime));
-
-            Debug.Log("Переход в зону: " + targetSnapshot.name);
+            StopCoroutine(exitCoroutine);
+            exitCoroutine = null;
         }
+
+        // Only apply "enter" when we transition 0 -> 1 across all zones.
+        if (s_playerInsideAnyRainZone != 1) return;
+
+        enterSnapshot.TransitionTo(transitionTime);
+        FogController.Instance.SetFog(enterFogDensity, transitionTime);
+
+        Debug.Log("Р’С…РѕРґ РІ Р·РѕРЅСѓ: " + gameObject.name);
     }
 
-    // Логика плавного изменения плотности
-    IEnumerator LerpFog(float endValue, float duration)
+    private void OnTriggerExit(Collider other)
     {
-        float startValue = RenderSettings.fogDensity;
-        float time = 0;
+        if (!IsPlayerCollider(other)) return;
+        if (!_playerCollidersInsideThisTrigger.Remove(other)) return;
 
-        while (time < duration)
+        s_playerInsideAnyRainZone--;
+        if (s_playerInsideAnyRainZone < 0) s_playerInsideAnyRainZone = 0;
+
+        // Only apply "exit" when we transition 1 -> 0 across all zones.
+        if (s_playerInsideAnyRainZone > 0) return;
+
+        // вќ— Р·Р°РїСѓСЃРєР°РµРј РѕС‚Р»РѕР¶РµРЅРЅС‹Р№ РІС‹С…РѕРґ
+        exitCoroutine = StartCoroutine(DelayedExit());
+    }
+
+    private IEnumerator DelayedExit()
+    {
+        yield return new WaitForSeconds(0.1f); // РјРѕР¶РЅРѕ 0.05вЂ“0.2
+
+        if (s_playerInsideAnyRainZone <= 0)
         {
-            // Плавно вычисляем значение между стартом и концом
-            RenderSettings.fogDensity = Mathf.Lerp(startValue, endValue, time / duration);
-            time += Time.deltaTime;
-            yield return null; // Ждем следующего кадра
+            exitSnapshot.TransitionTo(transitionTime);
+            FogController.Instance.SetFog(exitFogDensity, transitionTime);
+
+            Debug.Log("Р’С‹С…РѕРґ РёР· Р·РѕРЅС‹: " + gameObject.name);
         }
 
-        RenderSettings.fogDensity = endValue; // Финально ставим точное значение
+        exitCoroutine = null;
+    }
+
+    private static bool IsPlayerCollider(Collider col)
+    {
+        // Prefer root tag check so child colliders without the tag still count.
+        if (col == null) return false;
+        var root = col.transform != null ? col.transform.root : null;
+        return root != null && root.CompareTag("Player");
     }
 }

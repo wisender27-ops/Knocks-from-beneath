@@ -74,7 +74,7 @@ public class PlayerInteraction : MonoBehaviour
         Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
+        if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer, QueryTriggerInteraction.Ignore))
         {
             GameObject hitObj = hit.transform.gameObject;
 
@@ -142,13 +142,13 @@ public class PlayerInteraction : MonoBehaviour
 
         StartCoroutine(EatPieRoutine(pie));
         return true;
-    }
+    }   
 
     bool TryInteractWhileHolding()
     {
         Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
-        if (!Physics.Raycast(ray, out hit, interactionDistance, interactableLayer))
+        if (!Physics.Raycast(ray, out hit, interactionDistance, interactableLayer, QueryTriggerInteraction.Ignore))
             return false;
 
         MicrowaveInteractable microwave = hit.transform.GetComponentInParent<MicrowaveInteractable>();

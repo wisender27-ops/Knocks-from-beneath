@@ -82,6 +82,11 @@ public class TrashManager : MonoBehaviour
             "...Что это было?",
             "Странный звук. Нужно проверить.",
             "Может, это с кухни."
-        }, null);
+        }, () =>
+        {
+            IntroSequence intro = FindObjectOfType<IntroSequence>();
+            if (intro != null)
+                intro.StartTrashDeliveryQuest();
+        });
     }
 }
