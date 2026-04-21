@@ -3,10 +3,13 @@ using TMPro;
 using System.Collections.Generic;
 using UnityEngine.Events;
 using System.Collections;
+using System;
 
 public class QuestManager : MonoBehaviour
 {
     public static QuestManager Instance;
+
+    public static event Action<string> OnActiveQuestTagChanged;
 
     [System.Serializable]
     public class QuestData
@@ -30,8 +33,15 @@ public class QuestManager : MonoBehaviour
 
     private string _lastRenderedQuestText = "";
     private Coroutine _questColorRoutine;
+    private string _lastActiveQuestTag = null;
 
     void Awake() => Instance = this;
+
+    void OnEnable()
+    {
+        // Broadcast initial state for listeners that enable after QuestManager.
+        NotifyActiveQuestTagIfChanged(force: true);
+    }
 
     // В Start теперь UpdateUI не вызываем, чтобы не было пустых 0/0
     void Start()
@@ -64,6 +74,7 @@ public class QuestManager : MonoBehaviour
         }
 
         UpdateUI();
+        NotifyActiveQuestTagIfChanged();
     }
 
     public void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction onCompleteAction = null, string questTag = "")
@@ -85,6 +96,29 @@ public class QuestManager : MonoBehaviour
         currentQuestIndex = questList.Count - 1;
 
         UpdateUI();
+        NotifyActiveQuestTagIfChanged();
+    }
+
+    public string GetActiveQuestTag()
+    {
+        if (currentQuestIndex < 0 || currentQuestIndex >= questList.Count) return "";
+        return questList[currentQuestIndex].questTag ?? "";
+    }
+
+    public bool IsQuestActive(string questTag)
+    {
+        if (string.IsNullOrEmpty(questTag)) return false;
+        return string.Equals(GetActiveQuestTag(), questTag, StringComparison.Ordinal);
+    }
+
+    void NotifyActiveQuestTagIfChanged(bool force = false)
+    {
+        string currentTag = GetActiveQuestTag();
+        if (!force && string.Equals(_lastActiveQuestTag, currentTag, StringComparison.Ordinal))
+            return;
+
+        _lastActiveQuestTag = currentTag;
+        OnActiveQuestTagChanged?.Invoke(currentTag);
     }
 
     void UpdateUI()

@@ -350,7 +350,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
     void SetupFlashlightQuest()
     {
         if (flashlightItem != null) flashlightItem.SetActive(true);
-        CreateQuest("Найти фонарик", 1, OnFlashlightPickedUp);
+        CreateQuest("Найти фонарик", 1, OnFlashlightPickedUp, "flashlight-find");
     }
 
     public void OnFlashlightPickedUp()
@@ -365,7 +365,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
     void SetupCrowbarQuest()
     {
         if (crowbarItem != null) crowbarItem.SetActive(true);
-        CreateQuest("Найти лом", 1, OnCrowbarPickedUp);
+        CreateQuest("Найти лом", 1, OnCrowbarPickedUp, "crowbar-find");
     }
 
     public void OnCrowbarPickedUp()
@@ -418,7 +418,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
     void SetupHammerQuest()
     {
         if (hammerItem != null) hammerItem.SetActive(true);
-        CreateQuest("Найти молоток", 1, OnHammerPickedUp);
+        CreateQuest("Найти молоток", 1, OnHammerPickedUp, "hammer-find");
     }
 
     // --- 9. Молоток и финал ---

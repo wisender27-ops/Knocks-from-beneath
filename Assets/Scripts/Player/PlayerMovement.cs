@@ -49,6 +49,10 @@ public class PlayerController : MonoBehaviour
         currentStamina = maxStamina;
         currentCameraY = standingCameraY;
 
+        // Apply saved settings (if any)
+        mouseSensitivity = SettingsStore.GetMouseSensitivity(mouseSensitivity);
+        SettingsStore.ApplyMasterVolume();
+
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
