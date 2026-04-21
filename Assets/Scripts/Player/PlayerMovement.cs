@@ -36,6 +36,7 @@ public class PlayerController : MonoBehaviour
     private float currentCameraY;
     private bool isExhausted;
     private bool wasRunningLastFrame;
+    private bool isCrouching; // логическое состояние приседа
 
     public bool isCameraLocked = false;
 
@@ -85,7 +86,12 @@ public class PlayerController : MonoBehaviour
         float z = Input.GetAxisRaw("Vertical");
         
         bool isMoving = Mathf.Abs(x) > 0.1f || Mathf.Abs(z) > 0.1f;
-        bool wantsToCrouch = Input.GetKey(KeyCode.LeftControl) || IsCeilingBlocking();
+        bool crouchKeyHeld = Input.GetKey(KeyCode.LeftControl);
+        bool ceilingBlocksStandUp = !crouchKeyHeld && isCrouching && IsCeilingBlocking();
+
+        // Игрок приседает только по Ctrl, но если уже в приседе и над головой низкий потолок —
+        // не даём встать, пока потолок блокирует.
+        bool wantsToCrouch = crouchKeyHeld || ceilingBlocksStandUp;
         bool shiftHeld = Input.GetKey(KeyCode.LeftShift);
 
         // Стамина и усталость
@@ -138,6 +144,7 @@ public class PlayerController : MonoBehaviour
         controller.Move(finalVelocity * Time.deltaTime);
 
         ApplyCrouchVisuals(wantsToCrouch);
+        isCrouching = wantsToCrouch;
     }
 
     private void ApplyCrouchVisuals(bool isCrouching)
@@ -156,8 +163,23 @@ public class PlayerController : MonoBehaviour
 
     private bool IsCeilingBlocking()
     {
-        float radius = controller.radius * 0.9f;
-        Vector3 origin = transform.position + Vector3.up * crouchingHeight;
-        return Physics.SphereCast(origin, radius, Vector3.up, out _, standingHeight - crouchingHeight);
+        // Проверяем только область будущей "макушки" в стоячем положении.
+        // Это уменьшает ложные срабатывания на лестницах/склонах.
+        float checkRadius = controller.radius * 0.6f;
+        float headY = transform.position.y + standingHeight - checkRadius;
+        Vector3 headCheckPos = new Vector3(transform.position.x, headY, transform.position.z);
+
+        Collider[] overlaps = Physics.OverlapSphere(headCheckPos, checkRadius, Physics.AllLayers, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < overlaps.Length; i++)
+        {
+            Collider col = overlaps[i];
+            if (col == null) continue;
+
+            // Игнорируем собственные коллайдеры игрока.
+            if (col.transform.root == transform) continue;
+            return true;
+        }
+
+        return false;
     }
 }

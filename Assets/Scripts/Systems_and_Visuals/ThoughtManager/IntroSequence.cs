@@ -58,6 +58,7 @@ public class IntroSequence : MonoBehaviour
 
     private bool _isPieTaken = false;
     private bool _isPieHeated = false;
+    private bool _trashDeliveryQuestStarted = false;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -188,13 +189,23 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
     void SetupTrashQuest()
     {
         TrashManager.Instance.Initialize();
-        CreateQuest("Собрать мусор по дому", 3, OnTrashCollected);
+        CreateQuest("Собрать мусор по дому", 3, OnTrashCollected, "trash-collect");
     }
 
     void OnTrashCollected()
     {
+        // Delivery quest is started after TrashManager finishes its thought sequence,
+        // to prevent sequence breaks from completing it mid-dialogue.
+        _trashDeliveryQuestStarted = false;
+    }
+
+    public void StartTrashDeliveryQuest()
+    {
+        if (_trashDeliveryQuestStarted) return;
+        _trashDeliveryQuestStarted = true;
+
         if (trashZone != null) trashZone.SetActive(true);
-        CreateQuest("Вынести мусорный мешок", 1, OnTrashFinished);
+        CreateQuest("Вынести мусорный мешок", 1, OnTrashFinished, "trash-delivery");
     }
 
     public void OnTrashFinished()
