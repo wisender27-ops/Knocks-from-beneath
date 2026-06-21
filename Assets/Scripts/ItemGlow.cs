@@ -22,11 +22,16 @@ public class ItemGlow : MonoBehaviour
             return;
         }
 
+        // World + наследование скорости от Rigidbody даёт «улёт» частиц сквозь геометрию и хаотичное движение.
+        var main = _particles.main;
+        main.simulationSpace = ParticleSystemSimulationSpace.Local;
+
         _player = Camera.main.transform;
 
         // Сразу выключаем emission
         SetEmission(0);
     }
+
 
     void Update()
     {
