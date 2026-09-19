@@ -123,6 +123,22 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
+            // 6. ПРОДУКТЫ НА УЖИН (день 2, T-15)
+            IngredientItem ingredient = hitObj.GetComponent<IngredientItem>();
+            if (ingredient != null)
+            {
+                ingredient.Collect();
+                return;
+            }
+
+            // 7. ПЛИТА (день 2, T-15)
+            StoveInteractable stove = hit.transform.GetComponentInParent<StoveInteractable>();
+            if (stove != null)
+            {
+                stove.Interact();
+                return;
+            }
+
         }
     }
 

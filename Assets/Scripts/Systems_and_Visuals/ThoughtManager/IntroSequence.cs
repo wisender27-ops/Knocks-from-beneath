@@ -78,6 +78,7 @@ public class IntroSequence : MonoBehaviour
     // собирается по кускам: каждый новый тикет только переставляет одну стрелку
     // "куда идти дальше" на предыдущем звене, остальные не трогает.
     private RoomDecorationController _decoration;
+    private DinnerCookingController _dinner;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -95,9 +96,13 @@ public class IntroSequence : MonoBehaviour
             CreateQuest, ShowThoughts,
             onChoresFinished: _pieQuest.SetupTakePieQuest);
 
+        _dinner = new DinnerCookingController(
+            CreateQuest, ShowThoughts,
+            onDinnerFinished: SetupSearchNoiseQuest); // временно — заменится в T-16 на звонок соседа / T-17 на обход дома
+
         _decoration = new RoomDecorationController(
             decorationZones, CreateQuest, ShowThoughts,
-            onDecorationFinished: SetupSearchNoiseQuest); // временно — заменится в T-15 на старт готовки ужина
+            onDecorationFinished: _dinner.SetupIngredientQuest);
 
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
@@ -455,6 +460,18 @@ public class IntroSequence : MonoBehaviour
     public void OnPiePlacedInMicrowave()
     {
         _pieQuest.OnPiePlacedInMicrowave();
+    }
+
+    // --- Ужин дня 2: тот же тонкий проброс-паттерн, StoveInteractable зовёт напрямую. ---
+
+    public bool CanCookDinner()
+    {
+        return _dinner.CanCook;
+    }
+
+    public void OnDinnerEaten()
+    {
+        _dinner.OnDinnerEaten();
     }
 
     private void ShowThoughts(string[] lines, System.Action onComplete)
