@@ -20,13 +20,13 @@
 - [x] T-01 — Удалить мёртвый код и пустышки (`TestTrigger`, `BedSleepTrigger`, `Quest`)
 - [x] T-03 — Единый источник истины для «нужен ли предмет квесту» (`QuestManager.IsItemRequired`)
 - [x] T-04 — Убрать тройной дубль настройки Rigidbody (`RestoreHeldRigidbody`)
-- [ ] T-00 — Базовая линия (headless-компиляция + тесты до правок)
+- [x] T-00 — Базовая линия (headless-компиляция + тесты до правок)
 - [x] T-02 — Починить кодировку файлов и подписи в инспекторе
 - [x] T-09 — Чистка репозитория (дубли текстур, `_Recovery`, `GeneratedAssets/*_deleted`) — companyName оставлен, это выбор автора
 - [x] T-10 — Убрать устаревший `FindObjectOfType` → `FindFirstObjectByType`/`FindObjectsByType`
 - [x] T-05 — Магические числа в именованные поля (`PlayerInteraction`, `MonsterTimer`)
 - [x] T-06 — `GameEvents` как нормальная шина событий вместо `FindObjectOfType<IntroSequence>()` (частично — см. журнал)
-- [ ] T-07 — Распилить `PlayerInteraction` (вынести физический захват в `PickupController`)
+- [x] T-07 — Распилить `PlayerInteraction` (вынести физический захват в `PickupController`)
 - [ ] T-08 — Распилить `IntroSequence` (сценарий как данные, MonoBehaviour — тонкий исполнитель)
 
 Полный текст плана и обоснование порядка: `C:\Users\user\.claude\plans\jaunty-toasting-eagle.md` (у Claude), здесь — только трекер результата.
@@ -124,7 +124,7 @@
   переименовывались и не трогались.
 
 ### 2026-09-19 — T-06 — Шина событий вместо части FindObjectOfType<IntroSequence>()
-- Коммит: `(см. следующий коммит в git log)`
+- Коммит: `e824f0c`
 - Сделано: из 7 вызовов `FindFirstObjectByType<IntroSequence>()` (после T-10) конвертированы в
   события 5 — те, что были чистым уведомлением «что-то произошло» без чтения состояния в ответ:
   `BedSleepInteractable.Interact()`, `KitchenNoiseTrigger.OnTriggerEnter()`,
@@ -151,3 +151,47 @@
 - Проверено: headless-компиляция — OK. EditMode-тесты — OK, 3/3 passed. Ручную проверку сюжетной
   цепочки (мусор → кровать → кухня → пирог) должен прогнать автор в редакторе — я не могу играть
   в билд, могу только гарантировать компиляцию и то, что тесты логики квестов не сломались.
+
+### 2026-09-19 — T-07 — Распилить PlayerInteraction → PickupController
+- Коммит: `(см. следующий коммит в git log)`
+- Контекст перед тикетом (важно): проверил по GUID, что реальный игровой объект в `Main.unity` —
+  это инстанс префаба **`Assets/Prefabs/Player 1.prefab`** (GUID `b3a38904e7a6f7d43b7f5a8a1ff2b99d`),
+  не `Player.prefab` (тот, похоже, не используется вообще — не проверял, не трогал). Тот же
+  `Player 1.prefab` используется в `MainSkif.unity` и `ENDQUEEN.unity`, так что правка одного
+  файла обновила игрока во всех трёх сценах сразу.
+- Сделано: новый `Assets/Scripts/Player/PickupController.cs` — весь физический захват/следование/
+  бросок/отпускание (`TryGrab`, `HandleInteractPressed` [бывший `TryReleaseObject`], `Drop`,
+  `MovePhysicsObject` в собственном `FixedUpdate`, `HandleThrowPressed`, `ShakeAndKick`, `Release`)
+  и поля `_heldObj*`, `holdPoint`, `followSpeed`, `throwForce` + все T-05-константы дампинга/
+  дистанции/импульса. `PlayerInteraction` — теперь только диспетчер рейкаста: держит `pickup`
+  (ссылка на компонент) и делегирует туда; `GetHeldObject()`/`ReleaseHeldObject()`/
+  `TryGrabObjectFromScript()` оставлены как тонкие проброс-методы к `pickup` — внешний код
+  (`MicrowaveInteractable`, `CrosshairJuice`) их не заметил, не менялся.
+  Для поедания пирога добавлен `PickupController.ForceClearHeld()` — когда `PlayerInteraction`
+  уничтожает объект пирога после еды, он обнуляет состояние `PickupController` без попытки
+  вернуть физику уже уничтожаемому объекту (сохранил точное поведение оригинального
+  `EatPieRoutine`, которое тоже просто обнуляло поля, а не звало `ClearHeldObject()`).
+- Правка сцены/префаба (сделана вручную как YAML, с подтверждённого согласия автора):
+  в `Player 1.prefab` добавлен новый компонент `PickupController` (fileID `28288219378`, свой
+  GUID скрипта `ab718d8263dc4e94ab1de8318943fb66`) на тот же `GameObject`, что и `PlayerInteraction`;
+  fileID добавлен в `m_Component` объекта. У `PlayerInteraction` из YAML убраны переехавшие поля
+  (`holdPoint`, `followSpeed`, `throwForce`, `shakeIntensity`, `shakeDuration`, `fovKickAmount`,
+  `fovReturnSpeed`), добавлено `pickup: {fileID: 28288219378}`.
+  `PickupController.followSpeed` в префабе выставлен в `20`, а не в старый базовый `7.5` у
+  `PlayerInteraction` — потому что все три сцены (`Main`, `MainSkif`, `ENDQUEEN`) переопределяли
+  `followSpeed` до `20` через `PrefabInstance.m_Modifications`; `7.5` в базовом префабе никогда
+  фактически не использовался. Встроил реальное действующее значение прямо в новый компонент —
+  это сохраняет эффективное поведение всех трёх сцен **без правки самих файлов сцен**: старые
+  оверрайды на `followSpeed`/`actionAudioSource` у `PlayerInteraction` (`actionAudioSource`
+  остался на месте, не переехал) либо продолжают работать (audioSource), либо становятся
+  безобидно висящими (несуществующее свойство — Unity такие модификации молча игнорирует).
+- Проверено: headless-компиляция — OK. Импорт `Player 1.prefab` — OK (лог: `Start importing
+  Assets/Prefabs/Player 1.prefab ... PrefabImporter ... ` без ошибок). EditMode-тесты — OK,
+  3/3 passed.
+- **Важно, чего я не проверял и не могу проверить:** реальную игру в редакторе — что подбор/
+  перенос/бросок предметов, квест с коробками (использует `PlacementZone`/`PickableItem.activeZone`)
+  и поедание пирога всё ещё работают как раньше. Headless-прогон подтверждает только компиляцию
+  и импорт без ошибок, не корректность значений полей и не игровое поведение. Автору стоит открыть
+  `Main.unity` в редакторе, убедиться, что на игроке действительно появился компонент
+  `PickupController` с непустыми ссылками (`Player Camera`, `Hold Point`), и прогнать сценарий
+  подбора/броска/квеста с коробкой вручную, прежде чем двигаться к T-08.

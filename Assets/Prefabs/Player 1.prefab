@@ -717,6 +717,7 @@ GameObject:
   - component: {fileID: 2227011838755322609}
   - component: {fileID: 1446724500322916429}
   - component: {fileID: 4082443097780501385}
+  - component: {fileID: 28288219378}
   m_Layer: 3
   m_Name: Player 1
   m_TagString: Player
@@ -974,7 +975,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 41c3ae4e5cd79cc4fa8e2f1556c9dbd3, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
   playerCamera: {fileID: 4832567280206308402}
   interactionDistance: 2
@@ -982,9 +983,28 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 65
   inventory: {fileID: 2565123186235401928}
+  pickup: {fileID: 28288219378}
+--- !u!114 &28288219378
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5252321440651522271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab718d8263dc4e94ab1de8318943fb66, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::PickupController
+  playerCamera: {fileID: 4832567280206308402}
   holdPoint: {fileID: 23803228917073536}
-  followSpeed: 7.5
+  followSpeed: 20
+  maxHoldDistance: 2.2
   throwForce: 15
+  throwTorqueRandomness: 5
+  dropForwardImpulse: 2
+  heldRigidbodyDamping: 15
+  releasedRigidbodyDamping: 0.05
   shakeIntensity: 0.1
   shakeDuration: 0.15
   fovKickAmount: 3
