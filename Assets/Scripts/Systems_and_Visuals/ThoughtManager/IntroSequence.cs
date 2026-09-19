@@ -66,6 +66,10 @@ public class IntroSequence : MonoBehaviour
     // но не хранит их внутреннее состояние.
     private MoveInChoresController _moveInChores;
     private PieQuestController _pieQuest;
+    // Ночь 1 (спокойная) — T-13. Пока ведёт напрямую в старую цепочку расследования
+    // (SetupSearchNoiseQuest); когда день 2 будет собран (T-14..T-17), тот же
+    // колбэк-параметр переключится на старт дня 2 — сама NightOneController не изменится.
+    private NightOneController _nightOne;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -82,6 +86,11 @@ public class IntroSequence : MonoBehaviour
             trashZone, roomZones,
             CreateQuest, ShowThoughts,
             onChoresFinished: _pieQuest.SetupTakePieQuest);
+
+        _nightOne = new NightOneController(
+            fadeScreen, skySwitcher, knockController,
+            TeleportPlayerToBed, StartCoroutine, ShowThoughts,
+            onNightFinished: SetupSearchNoiseQuest);
     }
 
     void OnEnable()
@@ -251,7 +260,7 @@ public class IntroSequence : MonoBehaviour
 
     void OnGoToBedFinished()
     {
-        StartCoroutine(NightRoutine());
+        _nightOne.Run();
     }
 
 
