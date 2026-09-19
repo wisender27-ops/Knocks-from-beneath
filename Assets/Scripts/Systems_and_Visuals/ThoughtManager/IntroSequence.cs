@@ -60,6 +60,10 @@ public class IntroSequence : MonoBehaviour
     public GameObject pieObject;
     public GameObject microwaveZone;
 
+    [Header("День 2 — расстановка вещей (T-14)")]
+    [Tooltip("Зоны для мелких декоративных предметов дня 2 — та же PlacementZone+RoomRevealZone, что и коробки дня 1, отдельный набор.")]
+    public GameObject[] decorationZones;
+
     // Быт после переезда (мусор -> коробки) и квест с пирогом — самодостаточные
     // под-сюжеты, вынесены в отдельные классы (T-08). IntroSequence координирует
     // порядок и общие для всех этапов помощники (CreateQuest/ShowThoughts/IsQuestActive),
@@ -70,6 +74,10 @@ public class IntroSequence : MonoBehaviour
     // (SetupSearchNoiseQuest); когда день 2 будет собран (T-14..T-17), тот же
     // колбэк-параметр переключится на старт дня 2 — сама NightOneController не изменится.
     private NightOneController _nightOne;
+    // День 2 (T-14..T-17) — тоже сиблинги, не части друг друга. Финальная цепочка
+    // собирается по кускам: каждый новый тикет только переставляет одну стрелку
+    // "куда идти дальше" на предыдущем звене, остальные не трогает.
+    private RoomDecorationController _decoration;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -87,10 +95,14 @@ public class IntroSequence : MonoBehaviour
             CreateQuest, ShowThoughts,
             onChoresFinished: _pieQuest.SetupTakePieQuest);
 
+        _decoration = new RoomDecorationController(
+            decorationZones, CreateQuest, ShowThoughts,
+            onDecorationFinished: SetupSearchNoiseQuest); // временно — заменится в T-15 на старт готовки ужина
+
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
             TeleportPlayerToBed, StartCoroutine, ShowThoughts,
-            onNightFinished: SetupSearchNoiseQuest);
+            onNightFinished: _decoration.SetupDecorationQuest);
     }
 
     void OnEnable()
@@ -140,6 +152,13 @@ public class IntroSequence : MonoBehaviour
             }
         }
         if (microwaveZone != null) microwaveZone.SetActive(false);
+        if (decorationZones != null)
+        {
+            for (int i = 0; i < decorationZones.Length; i++)
+            {
+                if (decorationZones[i] != null) decorationZones[i].SetActive(false);
+            }
+        }
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
         if (finaleTrigger != null) finaleTrigger.SetActive(false);
         // Items now stay visible on the map - they're controlled by quest requirements instead
