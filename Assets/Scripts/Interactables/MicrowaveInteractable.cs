@@ -27,10 +27,10 @@ public class MicrowaveInteractable : MonoBehaviour
 
     public void Interact()
     {
-        var intro = FindObjectOfType<IntroSequence>();
+        var intro = FindFirstObjectByType<IntroSequence>();
         if (intro == null) return;
 
-        var playerInteraction = FindObjectOfType<PlayerInteraction>();
+        var playerInteraction = FindFirstObjectByType<PlayerInteraction>();
         if (playerInteraction == null) return;
 
         // Если пирог уже готов: достать его можно только при открытой дверце и пустых руках.

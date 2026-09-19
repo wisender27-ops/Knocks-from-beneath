@@ -104,7 +104,7 @@ public class TrashManager : MonoBehaviour
 
         if (ThoughtManager.Instance == null)
         {
-            IntroSequence fallbackIntro = FindObjectOfType<IntroSequence>();
+            IntroSequence fallbackIntro = FindFirstObjectByType<IntroSequence>();
             if (fallbackIntro != null)
                 fallbackIntro.StartTrashDeliveryQuest();
             yield break;
@@ -116,7 +116,7 @@ public class TrashManager : MonoBehaviour
             "Может, это с кухни."
         }, () =>
         {
-            IntroSequence intro = FindObjectOfType<IntroSequence>();
+            IntroSequence intro = FindFirstObjectByType<IntroSequence>();
             if (intro != null)
                 intro.StartTrashDeliveryQuest();
         });

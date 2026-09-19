@@ -23,7 +23,7 @@
 - [ ] T-00 — Базовая линия (headless-компиляция + тесты до правок)
 - [x] T-02 — Починить кодировку файлов и подписи в инспекторе
 - [x] T-09 — Чистка репозитория (дубли текстур, `_Recovery`, `GeneratedAssets/*_deleted`) — companyName оставлен, это выбор автора
-- [ ] T-10 — Убрать устаревший `FindObjectOfType` → `FindFirstObjectByType`/`FindObjectsByType`
+- [x] T-10 — Убрать устаревший `FindObjectOfType` → `FindFirstObjectByType`/`FindObjectsByType`
 - [ ] T-05 — Магические числа в именованные поля
 - [ ] T-06 — `GameEvents` как нормальная шина событий вместо `FindObjectOfType<IntroSequence>()`
 - [ ] T-07 — Распилить `PlayerInteraction` (вынести физический захват в `PickupController`)
@@ -82,7 +82,7 @@
   остались точные формулировки — можно поправить вручную, это не критично для работы игры.
 
 ### 2026-09-19 — T-09 — Чистка репозитория
-- Коммит: `(см. следующий коммит в git log)`
+- Коммит: `fbbe31e`
 - Сделано: удалены дубли текстур молотка `Hammer_{BaseColor,Metallic,Normal,Roughness} 1.png` (+`.meta`,
   проверено по GUID — 0 ссылок из `.mat`/`.prefab`/`.unity`, ~50 МБ); из-под git убраны
   `Assets/_Recovery/` (автосейв редактора) и `GeneratedAssets/*_deleted/` (сам генератор пометил
@@ -96,3 +96,11 @@
   это может быть незавершённая настройка материала, а не мусор — не удалял, только зафиксировал.
 - Проверено: `git status` перед коммитом — в удаление ушли только перечисленные файлы; ничего
   из активно используемых ассетов не задето.
+
+### 2026-09-19 — T-10 — Убрать устаревший FindObjectOfType
+- Коммит: `(см. следующий коммит в git log)`
+- Сделано: 10 вызовов `FindObjectOfType<T>()` → `FindFirstObjectByType<T>()`, 1 вызов
+  `FindObjectsOfType<LightSwitch>()` → `FindObjectsByType<LightSwitch>(FindObjectsSortMode.None)`
+  в `LightingManager.cs`. Механическая замена без изменения поведения.
+- Проверено: headless-компиляция — OK, без предупреждений об устаревшем API. EditMode-тесты —
+  OK, 3/3 passed.

@@ -4,7 +4,7 @@ public class BedSleepInteractable : MonoBehaviour
 {
     public void Interact()
     {
-        var intro = FindObjectOfType<IntroSequence>();
+        var intro = FindFirstObjectByType<IntroSequence>();
         if (intro != null)
             intro.OnBedTriggerReached();
     }

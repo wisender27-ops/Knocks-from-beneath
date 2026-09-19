@@ -149,7 +149,7 @@ public class PlayerInteraction : MonoBehaviour
         PieQuestItem pie = _heldObj != null ? _heldObj.GetComponent<PieQuestItem>() : null;
         if (pie == null || !pie.isHeated) return false;
 
-        var intro = FindObjectOfType<IntroSequence>();
+        var intro = FindFirstObjectByType<IntroSequence>();
         if (intro == null || !intro.CanEatPie()) return false;
 
         StartCoroutine(EatPieRoutine(pie));
@@ -189,7 +189,7 @@ public class PlayerInteraction : MonoBehaviour
         _heldObjRb = null;
         _heldItemScript = null;
 
-        var intro = FindObjectOfType<IntroSequence>();
+        var intro = FindFirstObjectByType<IntroSequence>();
         if (intro != null)
             intro.OnPieEaten();
 
@@ -264,7 +264,7 @@ public class PlayerInteraction : MonoBehaviour
         // Сюжет: достали пирог (через уже существующую механику поднятия предмета в руки)
         if (obj.GetComponent<PieQuestItem>() != null)
         {
-            var intro = FindObjectOfType<IntroSequence>();
+            var intro = FindFirstObjectByType<IntroSequence>();
             if (intro != null && intro.IsPieTakeQuestActive())
                 intro.OnPieTaken();
         }

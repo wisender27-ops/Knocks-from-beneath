@@ -42,7 +42,7 @@ public class LightingManager : MonoBehaviour
     public void TurnOffAllLamps()
     {
         // Выключаем через LightSwitch чтобы состояние isOn синхронизировалось
-        LightSwitch[] allSwitches = FindObjectsOfType<LightSwitch>();
+        LightSwitch[] allSwitches = FindObjectsByType<LightSwitch>(FindObjectsSortMode.None);
         foreach (var ls in allSwitches)
         {
             if (ls.isOn)

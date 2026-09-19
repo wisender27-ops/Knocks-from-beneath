@@ -55,7 +55,7 @@ public class CrosshairJuice : MonoBehaviour
             PieQuestItem heldPie = heldObj.GetComponent<PieQuestItem>();
             if (heldPie == null) return;
 
-            IntroSequence intro = FindObjectOfType<IntroSequence>();
+            IntroSequence intro = FindFirstObjectByType<IntroSequence>();
             if (intro == null) return;
 
             // Подсказка на поедание пирога в любом месте, когда он уже согрет и квест активен
