@@ -72,6 +72,12 @@ public class IntroSequence : MonoBehaviour
     [Tooltip("Триггер у входной двери — концовка 'побег'. Включается BranchEndingController, если дверь не заперта.")]
     public GameObject escapeDoorTrigger;
 
+    [Header("Ночь 2 — укрытия (T-20)")]
+    [Tooltip("3 зоны укрытия (кровать/шкаф/корзина). Индекс должен совпадать с hidingSpotAmbushPoints.")]
+    public GameObject[] hidingSpots;
+    [Tooltip("Точка засады монстра для каждой зоны укрытия — тот же индекс, что и в hidingSpots. Расставляется автором в редакторе рядом с дверью каждой комнаты.")]
+    public Transform[] hidingSpotAmbushPoints;
+
     // Быт после переезда (мусор -> коробки) и квест с пирогом — самодостаточные
     // под-сюжеты, вынесены в отдельные классы (T-08). IntroSequence координирует
     // порядок и общие для всех этапов помощники (CreateQuest/ShowThoughts/IsQuestActive),
@@ -89,6 +95,7 @@ public class IntroSequence : MonoBehaviour
     private DinnerCookingController _dinner;
     private EveningRoundController _eveningRound;
     private BranchEndingController _branchEnding;
+    private HideEndingController _hideEnding;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -118,8 +125,12 @@ public class IntroSequence : MonoBehaviour
             decorationZones, CreateQuest, ShowThoughts,
             onDecorationFinished: _dinner.SetupIngredientQuest);
 
+        _hideEnding = new HideEndingController(
+            hidingSpots, hidingSpotAmbushPoints, playerTransform,
+            StartCoroutine, ShowThoughts, LockPlayerCamera, EndGame);
+
         _branchEnding = new BranchEndingController(
-            SetupHammerQuest, escapeDoorTrigger, ShowThoughts, EndGame);
+            SetupHammerQuest, escapeDoorTrigger, _hideEnding.ActivateZones, ShowThoughts, EndGame);
 
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
@@ -187,6 +198,13 @@ public class IntroSequence : MonoBehaviour
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
         if (finaleTrigger != null) finaleTrigger.SetActive(false);
         if (escapeDoorTrigger != null) escapeDoorTrigger.SetActive(false);
+        if (hidingSpots != null)
+        {
+            for (int i = 0; i < hidingSpots.Length; i++)
+            {
+                if (hidingSpots[i] != null) hidingSpots[i].SetActive(false);
+            }
+        }
         // Items now stay visible on the map - they're controlled by quest requirements instead
         // if (flashlightItem != null) flashlightItem.SetActive(false);
         // if (crowbarItem != null) crowbarItem.SetActive(false);
@@ -460,6 +478,25 @@ public class IntroSequence : MonoBehaviour
     public void OnEscapedThroughDoor()
     {
         _branchEnding.HandleDoorEscape();
+    }
+
+    // --- Развилка ночи 2 (T-20): прятки — тонкий проброс, HidingSpotTrigger зовёт напрямую. ---
+
+    public void OnHidingSpotEntered(GameObject zone)
+    {
+        _hideEnding.HandleZoneEntered(zone);
+    }
+
+    public void OnHidingSpotExited(GameObject zone)
+    {
+        _hideEnding.HandleZoneExited(zone);
+    }
+
+    void LockPlayerCamera(bool locked)
+    {
+        if (playerTransform == null) return;
+        var pc = playerTransform.GetComponent<PlayerController>();
+        if (pc != null) pc.isCameraLocked = locked;
     }
 
     void EndGame()

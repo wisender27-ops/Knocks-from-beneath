@@ -8,6 +8,7 @@ public class BranchEndingControllerTests
 {
     private GameObject _escapeDoorTrigger;
     private bool _hammerPathActivated;
+    private bool _hidePathsActivated;
     private bool _endGameCalled;
     private List<string[]> _shownThoughts;
     private Action _lastOnComplete;
@@ -17,12 +18,14 @@ public class BranchEndingControllerTests
         _escapeDoorTrigger = new GameObject("EscapeDoorTrigger");
         _escapeDoorTrigger.SetActive(false);
         _hammerPathActivated = false;
+        _hidePathsActivated = false;
         _endGameCalled = false;
         _shownThoughts = new List<string[]>();
 
         return new BranchEndingController(
             activateHammerPath: () => _hammerPathActivated = true,
             escapeDoorTrigger: _escapeDoorTrigger,
+            activateHidePaths: () => _hidePathsActivated = true,
             showThoughts: (lines, onComplete) => { _shownThoughts.Add(lines); _lastOnComplete = onComplete; },
             endGame: () => _endGameCalled = true);
     }
@@ -42,6 +45,16 @@ public class BranchEndingControllerTests
         controller.Activate();
 
         Assert.That(_hammerPathActivated, Is.True);
+    }
+
+    [Test]
+    public void Activate_AlwaysActivatesHidePaths()
+    {
+        var controller = CreateController();
+
+        controller.Activate();
+
+        Assert.That(_hidePathsActivated, Is.True);
     }
 
     [Test]

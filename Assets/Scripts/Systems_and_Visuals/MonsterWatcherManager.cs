@@ -40,6 +40,19 @@ public class MonsterWatcherManager : MonoBehaviour
         }
     }
 
+    // Спавн в конкретной точке (T-20, концовка "прятки") — в отличие от SpawnWatcher,
+    // не ищет ближайшую точку из spawnPoints, а ставит монстра ровно туда, куда указывает
+    // автор (например, за дверью комнаты, где прятался игрок). Игнорирует _activeMonster —
+    // это скриптованный финальный скример, а не повторяемый эмбиент-скример.
+    public GameObject SpawnAt(Transform point, float duration)
+    {
+        if (point == null || monsterPrefab == null) return null;
+
+        var monster = Instantiate(monsterPrefab, point.position, point.rotation);
+        Destroy(monster, duration);
+        return monster;
+    }
+
     Transform GetClosestPoint(Vector3 playerPosition)
     {
         Transform closest = null;
