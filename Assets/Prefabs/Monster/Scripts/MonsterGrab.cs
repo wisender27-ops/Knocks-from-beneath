@@ -8,9 +8,9 @@ public class CinematicMonsterGrab : MonoBehaviour
 
     [Header("References")]
     public Camera mainCam;
-    public Transform grabCamStart; // Куда камера переместится в начале
-    public Transform grabCamEnd;   // Куда камера придет в конце
-    public Transform lookTarget;   // Куда всегда смотреть
+    public Transform grabCamStart; // РљСѓРґР° РєР°РјРµСЂР° РїРµСЂРµРјРµСЃС‚РёС‚СЃСЏ РІ РЅР°С‡Р°Р»Рµ
+    public Transform grabCamEnd;   // РљСѓРґР° РєР°РјРµСЂР° РїСЂРёРґРµС‚ РІ РєРѕРЅС†Рµ
+    public Transform lookTarget;   // РљСѓРґР° РІСЃРµРіРґР° СЃРјРѕС‚СЂРµС‚СЊ
 
     [Header("Timing")]
     public float moveDuration = 1.2f;
@@ -39,8 +39,8 @@ public class CinematicMonsterGrab : MonoBehaviour
 
     void Awake() => seed = Random.value * 100f;
 
-    // Используем LateUpdate, чтобы перезаписать положение камеры ПОСЛЕ того, 
-    // как отработали стандартные скрипты игрока и CameraRoot.
+    // РСЃРїРѕР»СЊР·СѓРµРј LateUpdate, С‡С‚РѕР±С‹ РїРµСЂРµР·Р°РїРёСЃР°С‚СЊ РїРѕР»РѕР¶РµРЅРёРµ РєР°РјРµСЂС‹ РџРћРЎР›Р• С‚РѕРіРѕ, 
+    // РєР°Рє РѕС‚СЂР°Р±РѕС‚Р°Р»Рё СЃС‚Р°РЅРґР°СЂС‚РЅС‹Рµ СЃРєСЂРёРїС‚С‹ РёРіСЂРѕРєР° Рё CameraRoot.
     void LateUpdate()
     {
         if (!isPlaying) return;
@@ -54,18 +54,18 @@ public class CinematicMonsterGrab : MonoBehaviour
         float t = moveDuration > 0f ? Mathf.Clamp01(timer / moveDuration) : 1f;
         float curvedT = moveCurve != null ? moveCurve.Evaluate(t) : t;
 
-        // 1. Считаем позицию (в мировых координатах)
+        // 1. РЎС‡РёС‚Р°РµРј РїРѕР·РёС†РёСЋ (РІ РјРёСЂРѕРІС‹С… РєРѕРѕСЂРґРёРЅР°С‚Р°С…)
         Vector3 targetPos = Vector3.Lerp(grabCamStart.position, grabCamEnd.position, curvedT);
 
-        // 2. Добавляем шум Перлина
+        // 2. Р”РѕР±Р°РІР»СЏРµРј С€СѓРј РџРµСЂР»РёРЅР°
         float nX = (Mathf.PerlinNoise(seed + Time.time * shakeFrequency, 0f) - 0.5f) * 2f;
         float nY = (Mathf.PerlinNoise(0f, seed + Time.time * shakeFrequency) - 0.5f) * 2f;
         Vector3 shake = new Vector3(nX, nY, 0) * shakeAmplitude;
 
-        // 3. Принудительно ставим камеру (игнорируя иерархию)
+        // 3. РџСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ СЃС‚Р°РІРёРј РєР°РјРµСЂСѓ (РёРіРЅРѕСЂРёСЂСѓСЏ РёРµСЂР°СЂС…РёСЋ)
         mainCam.transform.position = targetPos + shake;
 
-        // 4. Всегда смотрим на цель
+        // 4. Р’СЃРµРіРґР° СЃРјРѕС‚СЂРёРј РЅР° С†РµР»СЊ
         if (lookTarget != null)
         {
             mainCam.transform.LookAt(lookTarget);

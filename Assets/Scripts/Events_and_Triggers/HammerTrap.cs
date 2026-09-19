@@ -2,18 +2,18 @@ using UnityEngine;
 
 public class HammerTrap : MonoBehaviour
 {
-    [Header("Настройки сюжета")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё СЃСЋР¶РµС‚Р°")]
     public Door roomDoor;
     public GameObject monster;
     public Transform monsterSpot;
     public GameObject finalLogic;
 
-    [Header("Настройки мигания света")]
-    [SerializeField] private string lampID = "5";      // ID лампы
-    [SerializeField] private float flickerDuration = 3.0f; // Сколько секунд мигает
-    [SerializeField] private float flickerInterval = 0.1f; // Скорость (интервал) мигания
+    [Header("РќР°СЃС‚СЂРѕР№РєРё РјРёРіР°РЅРёСЏ СЃРІРµС‚Р°")]
+    [SerializeField] private string lampID = "5";      // ID Р»Р°РјРїС‹
+    [SerializeField] private float flickerDuration = 3.0f; // РЎРєРѕР»СЊРєРѕ СЃРµРєСѓРЅРґ РјРёРіР°РµС‚
+    [SerializeField] private float flickerInterval = 0.1f; // РЎРєРѕСЂРѕСЃС‚СЊ (РёРЅС‚РµСЂРІР°Р») РјРёРіР°РЅРёСЏ
 
-    [Header("Звук события")]
+    [Header("Р—РІСѓРє СЃРѕР±С‹С‚РёСЏ")]
     public AudioSource targetSource;
     public AudioClip slamClip;
 

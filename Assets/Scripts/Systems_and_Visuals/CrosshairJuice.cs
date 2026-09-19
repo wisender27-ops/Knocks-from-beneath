@@ -4,17 +4,17 @@ using TMPro;
 
 public class CrosshairJuice : MonoBehaviour
 {
-    [Header("������")]
+    [Header("Ссылки")]
     public Image cursorImage;
     public PlayerInteraction interaction;
-    public TextMeshProUGUI hintText; // �������� ���� InteractHint
+    public TextMeshProUGUI hintText; // Текстовое поле InteractHint
 
-    [Header("���������")]
+    [Header("Масштаб")]
     public float scaleSpeed = 10f;
     public float defaultScale = 1f;
     public float interactScale = 1.5f;
 
-    [Header("�����")]
+    [Header("Цвета")]
     public Color defaultColor = Color.white;
     public Color interactColor = Color.yellow;
 
@@ -167,7 +167,7 @@ public class CrosshairJuice : MonoBehaviour
         cursorImage.color = Color.Lerp(
             cursorImage.color, _targetColor, Time.deltaTime * scaleSpeed);
 
-        // ����� ���������
+        // Текст подсказки
         if (hintText != null)
             hintText.text = _targetHint;
     }

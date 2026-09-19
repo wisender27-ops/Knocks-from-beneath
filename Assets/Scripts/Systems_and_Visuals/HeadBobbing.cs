@@ -2,13 +2,13 @@ using UnityEngine;
 
 public class HeadBobbing : MonoBehaviour
 {
-    [Header("Настройки веса")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё РІРµСЃР°")]
     public float walkSpeed = 10f;
-    public float bobIntensity = 0.15f; // Увеличил, чтобы было заметно
-    public float tiltIntensity = 2.0f; // Наклон в стороны
+    public float bobIntensity = 0.15f; // РЈРІРµР»РёС‡РёР», С‡С‚РѕР±С‹ Р±С‹Р»Рѕ Р·Р°РјРµС‚РЅРѕ
+    public float tiltIntensity = 2.0f; // РќР°РєР»РѕРЅ РІ СЃС‚РѕСЂРѕРЅС‹
 
-    [Header("Инерция")]
-    public float smoothness = 6f; // Насколько "вязко" движется голова
+    [Header("РРЅРµСЂС†РёСЏ")]
+    public float smoothness = 6f; // РќР°СЃРєРѕР»СЊРєРѕ "РІСЏР·РєРѕ" РґРІРёР¶РµС‚СЃСЏ РіРѕР»РѕРІР°
 
     private float _timer;
     private Vector3 _targetPos;
@@ -16,8 +16,8 @@ public class HeadBobbing : MonoBehaviour
     private Vector3 _initialLocalPos;
     private CharacterController _controller;
 
-    [Header("Звуки шагов")]
-    public AudioSource footstepSource; // Сюда перетащи AudioSource с игрока
+    [Header("Р—РІСѓРєРё С€Р°РіРѕРІ")]
+    public AudioSource footstepSource; // РЎСЋРґР° РїРµСЂРµС‚Р°С‰Рё AudioSource СЃ РёРіСЂРѕРєР°
     public AudioClip[] concreteSteps;
     public AudioClip[] metalSteps;
     public AudioClip[] woodSteps;
@@ -43,27 +43,27 @@ public class HeadBobbing : MonoBehaviour
 
         if (speed > 0.2f && _controller.isGrounded)
         {
-            // Ускоряем таймер в зависимости от реальной скорости
+            // РЈСЃРєРѕСЂСЏРµРј С‚Р°Р№РјРµСЂ РІ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ СЂРµР°Р»СЊРЅРѕР№ СЃРєРѕСЂРѕСЃС‚Рё
             _timer += Time.deltaTime * (speed * walkSpeed * 0.5f);
 
-            // Создаем движение "восьмеркой" (более физично, чем круг)
+            // РЎРѕР·РґР°РµРј РґРІРёР¶РµРЅРёРµ "РІРѕСЃСЊРјРµСЂРєРѕР№" (Р±РѕР»РµРµ С„РёР·РёС‡РЅРѕ, С‡РµРј РєСЂСѓРі)
             float waveY = Mathf.Sin(_timer);
 
-            // Если синусоида в нижней точке (шаг произошел)
+            // Р•СЃР»Рё СЃРёРЅСѓСЃРѕРёРґР° РІ РЅРёР¶РЅРµР№ С‚РѕС‡РєРµ (С€Р°Рі РїСЂРѕРёР·РѕС€РµР»)
             if (waveY < -0.9f && !_stepPlayed)
             {
                 PlayFootstepSound();
                 _stepPlayed = true;
             }
 
-            // Сбрасываем флаг, когда голова пошла вверх
+            // РЎР±СЂР°СЃС‹РІР°РµРј С„Р»Р°Рі, РєРѕРіРґР° РіРѕР»РѕРІР° РїРѕС€Р»Р° РІРІРµСЂС…
             if (waveY > 0) _stepPlayed = false;
 
             float waveX = Mathf.Cos(_timer * 0.5f);
 
             _targetPos = _initialLocalPos + new Vector3(waveX * bobIntensity * 0.5f, waveY * bobIntensity, 0);
 
-            // Сильный наклон камеры (Z) при переносе веса
+            // РЎРёР»СЊРЅС‹Р№ РЅР°РєР»РѕРЅ РєР°РјРµСЂС‹ (Z) РїСЂРё РїРµСЂРµРЅРѕСЃРµ РІРµСЃР°
             _targetRot = Quaternion.Euler(0, 0, -waveX * tiltIntensity);
         }
         else
@@ -73,7 +73,7 @@ public class HeadBobbing : MonoBehaviour
             _targetRot = Quaternion.identity;
         }
 
-        // Плавное следование за целью (вязкость)
+        // РџР»Р°РІРЅРѕРµ СЃР»РµРґРѕРІР°РЅРёРµ Р·Р° С†РµР»СЊСЋ (РІСЏР·РєРѕСЃС‚СЊ)
         float smoothing = Mathf.Clamp01(Time.deltaTime * Mathf.Max(0f, smoothness));
         transform.localPosition = Vector3.Lerp(transform.localPosition, _targetPos, smoothing);
         transform.localRotation = Quaternion.Slerp(transform.localRotation, _targetRot, smoothing);
@@ -82,12 +82,12 @@ public class HeadBobbing : MonoBehaviour
     void PlayFootstepSound()
     {
         RaycastHit hit;
-        // Стреляем лучом вниз, чтобы понять, на чем стоим
+        // РЎС‚СЂРµР»СЏРµРј Р»СѓС‡РѕРј РІРЅРёР·, С‡С‚РѕР±С‹ РїРѕРЅСЏС‚СЊ, РЅР° С‡РµРј СЃС‚РѕРёРј
         if (Physics.Raycast(transform.position, Vector3.down, out hit, 2.0f))
         {
             AudioClip[] selectedArray = null;
 
-            // Проверяем тег поверхности
+            // РџСЂРѕРІРµСЂСЏРµРј С‚РµРі РїРѕРІРµСЂС…РЅРѕСЃС‚Рё
             switch (hit.collider.tag)
             {
                 case "Metal":
@@ -99,17 +99,17 @@ public class HeadBobbing : MonoBehaviour
                 case "Stairs":
                     selectedArray = stairSteps;
                     break;
-                default: // Если тег Concrete или любой другой
+                default: // Р•СЃР»Рё С‚РµРі Concrete РёР»Рё Р»СЋР±РѕР№ РґСЂСѓРіРѕР№
                     selectedArray = concreteSteps;
                     break;
             }
 
             if (selectedArray != null && selectedArray.Length > 0)
             {
-                // Берем случайный звук из выбранного массива
+                // Р‘РµСЂРµРј СЃР»СѓС‡Р°Р№РЅС‹Р№ Р·РІСѓРє РёР· РІС‹Р±СЂР°РЅРЅРѕРіРѕ РјР°СЃСЃРёРІР°
                 AudioClip clip = selectedArray[Random.Range(0, selectedArray.Length)];
 
-                // Немного меняем высоту звука (Pitch), чтобы шаги не были одинаковыми
+                // РќРµРјРЅРѕРіРѕ РјРµРЅСЏРµРј РІС‹СЃРѕС‚Сѓ Р·РІСѓРєР° (Pitch), С‡С‚РѕР±С‹ С€Р°РіРё РЅРµ Р±С‹Р»Рё РѕРґРёРЅР°РєРѕРІС‹РјРё
                 if (footstepSource == null)
                     return;
 

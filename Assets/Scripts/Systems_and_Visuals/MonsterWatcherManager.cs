@@ -5,9 +5,9 @@ public class MonsterWatcherManager : MonoBehaviour
 {
     public static MonsterWatcherManager Instance;
 
-    public GameObject monsterPrefab; // Модель монстра
-    public Transform[] spawnPoints;  // Точки, где он может появиться
-    public float observationDuration = 5f; // Сколько он будет стоять
+    public GameObject monsterPrefab; // РњРѕРґРµР»СЊ РјРѕРЅСЃС‚СЂР°
+    public Transform[] spawnPoints;  // РўРѕС‡РєРё, РіРґРµ РѕРЅ РјРѕР¶РµС‚ РїРѕСЏРІРёС‚СЊСЃСЏ
+    public float observationDuration = 5f; // РЎРєРѕР»СЊРєРѕ РѕРЅ Р±СѓРґРµС‚ СЃС‚РѕСЏС‚СЊ
 
     private GameObject _activeMonster;
 
@@ -21,19 +21,19 @@ public class MonsterWatcherManager : MonoBehaviour
 
     public void SpawnWatcher(Vector3 playerPosition)
     {
-        if (_activeMonster != null || monsterPrefab == null || spawnPoints == null) return; // Не спавним, если он уже где-то стоит
+        if (_activeMonster != null || monsterPrefab == null || spawnPoints == null) return; // РќРµ СЃРїР°РІРЅРёРј, РµСЃР»Рё РѕРЅ СѓР¶Рµ РіРґРµ-С‚Рѕ СЃС‚РѕРёС‚
 
         Transform bestPoint = GetClosestPoint(playerPosition);
         if (bestPoint != null)
         {
             _activeMonster = Instantiate(monsterPrefab, bestPoint.position, bestPoint.rotation);
-            // Заставляем его смотреть на игрока (только по оси Y)
+            // Р—Р°СЃС‚Р°РІР»СЏРµРј РµРіРѕ СЃРјРѕС‚СЂРµС‚СЊ РЅР° РёРіСЂРѕРєР° (С‚РѕР»СЊРєРѕ РїРѕ РѕСЃРё Y)
             Vector3 lookPos = playerPosition - _activeMonster.transform.position;
             lookPos.y = 0;
             if (lookPos.sqrMagnitude > 0.001f)
                 _activeMonster.transform.rotation = Quaternion.LookRotation(lookPos);
 
-            Destroy(_activeMonster, observationDuration); // Он исчезает, когда игрок отвлечется
+            Destroy(_activeMonster, observationDuration); // РћРЅ РёСЃС‡РµР·Р°РµС‚, РєРѕРіРґР° РёРіСЂРѕРє РѕС‚РІР»РµС‡РµС‚СЃСЏ
         }
     }
 
@@ -46,7 +46,7 @@ public class MonsterWatcherManager : MonoBehaviour
         {
             if (pt == null) continue;
             float dist = Vector3.Distance(playerPosition, pt.position);
-            // Точка должна быть достаточно близко, чтобы ее увидеть, но не в упор
+            // РўРѕС‡РєР° РґРѕР»Р¶РЅР° Р±С‹С‚СЊ РґРѕСЃС‚Р°С‚РѕС‡РЅРѕ Р±Р»РёР·РєРѕ, С‡С‚РѕР±С‹ РµРµ СѓРІРёРґРµС‚СЊ, РЅРѕ РЅРµ РІ СѓРїРѕСЂ
             if (dist < minDist && dist > 2f)
             {
                 minDist = dist;

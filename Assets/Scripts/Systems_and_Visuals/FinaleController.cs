@@ -3,15 +3,15 @@ using System.Collections;
 
 public class FinaleController : MonoBehaviour
 {
-    [Header("������ �� �������")]
+    [Header("Ссылки на объекты сцены")]
     public Transform player;
     public GameObject monsterModel;
     public CanvasGroup fadeScreen;
 
-    [Header("��������� �����")]
+    [Header("Точка падения в дыру")]
     public Transform holeBottomSpot;
 
-    [Header("�����")]
+    [Header("Звуки")]
     public AudioSource audioSource;
     public AudioClip evilLaughClip;
     public AudioClip nailingWoodClip;
@@ -48,7 +48,7 @@ public class FinaleController : MonoBehaviour
 
     IEnumerator PushedIntoHoleRoutine(PlayerController pc)
     {
-        // 1. ��������� ����������
+        // 1. Отключаем управление игроком
         pc.isCameraLocked = true;
         if (pc.GetComponent<PlayerInventory>() != null) pc.GetComponent<PlayerInventory>().enabled = false;
         if (pc.GetComponent<PlayerInteraction>() != null) pc.GetComponent<PlayerInteraction>().enabled = false;
@@ -56,7 +56,7 @@ public class FinaleController : MonoBehaviour
         Camera playerCam = pc.GetComponentInChildren<Camera>();
         CharacterController cc = pc.GetComponent<CharacterController>();
 
-        // 2. ������ ������� �� ������ ����� ������
+        // 2. Ставим монстра позади игрока
         Vector3 behindPlayer = pc.transform.position - pc.transform.forward * 2f;
         behindPlayer.y = pc.transform.position.y;
         if (monsterModel != null)
@@ -66,14 +66,14 @@ public class FinaleController : MonoBehaviour
             monsterModel.SetActive(true);
         }
 
-        // 3. ����
+        // 3. Звук
         if (audioSource && evilLaughClip)
             audioSource.PlayOneShot(evilLaughClip);
 
         yield return new WaitForSeconds(0.5f);
 
-        // 4. ������ �������� ������ �� �������
-        // ������ ������ ������ ����� localRotation, �� ������� transform ������
+        // 4. Резко доворачиваем камеру на монстра.
+        // Крутим мировой transform камеры, а не localRotation — камера дочерняя от игрока.
         if (playerCam != null)
         {
             float t = 0;
@@ -82,7 +82,7 @@ public class FinaleController : MonoBehaviour
             Vector3 dirToMonster = lookPosition + Vector3.up * 1.5f - playerCam.transform.position;
             Quaternion targetRot = Quaternion.LookRotation(dirToMonster);
 
-            // 0.08f � ����� ������, ����� �����
+            // 0.08f — очень быстро, чтобы получился резкий рывок
             while (t < 0.08f)
             {
                 t += Time.deltaTime;
@@ -93,7 +93,7 @@ public class FinaleController : MonoBehaviour
 
         yield return new WaitForSeconds(0.3f);
 
-        // 5. ������� � ��� � ��������� CharacterController � ������ ������ �������
+        // 5. Роняем игрока в дыру — отключаем CharacterController на время падения
         if (cc != null) cc.enabled = false;
 
         float fallTime = 0f;
@@ -105,7 +105,7 @@ public class FinaleController : MonoBehaviour
             fallTime += Time.deltaTime;
             float progress = fallTime / fallDuration;
 
-            // ������� ���� � ���������� (�������� ����������)
+            // Плавно движемся вниз, к дыре (ускоряющееся падение)
             Vector3 targetPosition = holeBottomSpot != null ? holeBottomSpot.position : startPos;
             pc.transform.position = Vector3.Lerp(startPos, targetPosition, progress * progress);
             yield return null;
@@ -113,7 +113,7 @@ public class FinaleController : MonoBehaviour
         if (holeBottomSpot != null)
             pc.transform.position = holeBottomSpot.position;
 
-        // 6. ����������
+        // 6. Затемнение экрана
         float elapsed = 0;
         while (elapsed < 0.8f)
         {
@@ -128,7 +128,7 @@ public class FinaleController : MonoBehaviour
         if (monsterModel != null)
             monsterModel.SetActive(false);
 
-        // 7. ���� �������������
+        // 7. Звук заколачивания досок
         yield return new WaitForSeconds(0.5f);
         if (audioSource && nailingWoodClip)
         {

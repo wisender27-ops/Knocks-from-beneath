@@ -5,20 +5,20 @@ public class ImpactSounds : MonoBehaviour
     public AudioSource impactSource;
     public AudioClip[] clips;
 
-    [Header("Настройки физики")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё С„РёР·РёРєРё")]
     public float minVelocity = 1.5f;
     [SerializeField] private float volumeMultiplier = 0.1f; // speed / 10
 
-    [Header("Тайминги")]
-    [SerializeField] private float cooldown = 0.1f; // Защита от спама
+    [Header("РўР°Р№РјРёРЅРіРё")]
+    [SerializeField] private float cooldown = 0.1f; // Р—Р°С‰РёС‚Р° РѕС‚ СЃРїР°РјР°
     private float _lastPlayTime;
 
     private void OnCollisionEnter(Collision collision)
     {
-        // 1. Проверка кулдауна
+        // 1. РџСЂРѕРІРµСЂРєР° РєСѓР»РґР°СѓРЅР°
         if (Time.time < _lastPlayTime + cooldown) return;
 
-        // 2. Проверка массива (чтобы не было ошибок в консоли)
+        // 2. РџСЂРѕРІРµСЂРєР° РјР°СЃСЃРёРІР° (С‡С‚РѕР±С‹ РЅРµ Р±С‹Р»Рѕ РѕС€РёР±РѕРє РІ РєРѕРЅСЃРѕР»Рё)
         if (impactSource == null || clips == null || clips.Length == 0) return;
 
         float speed = collision.relativeVelocity.magnitude;
@@ -27,13 +27,13 @@ public class ImpactSounds : MonoBehaviour
         {
             _lastPlayTime = Time.time;
 
-            // Выбираем звук
+            // Р’С‹Р±РёСЂР°РµРј Р·РІСѓРє
             AudioClip clip = clips[Random.Range(0, clips.Length)];
 
-            // 3. Рандомим питч (от 0.9 до 1.1) — это даст ОГРОМНУЮ разницу в сочности
+            // 3. Р Р°РЅРґРѕРјРёРј РїРёС‚С‡ (РѕС‚ 0.9 РґРѕ 1.1) вЂ” СЌС‚Рѕ РґР°СЃС‚ РћР“Р РћРњРќРЈР® СЂР°Р·РЅРёС†Сѓ РІ СЃРѕС‡РЅРѕСЃС‚Рё
             impactSource.pitch = Random.Range(0.9f, 1.1f);
 
-            // Громкость
+            // Р“СЂРѕРјРєРѕСЃС‚СЊ
             float volume = Mathf.Clamp01(speed * volumeMultiplier);
 
             impactSource.PlayOneShot(clip, volume);

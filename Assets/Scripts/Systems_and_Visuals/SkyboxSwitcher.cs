@@ -2,16 +2,16 @@ using UnityEngine;
 
 public class SkyboxSwitcher : MonoBehaviour
 {
-    [Header("Настройки материалов")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё РјР°С‚РµСЂРёР°Р»РѕРІ")]
     public Material skyboxDay;
     public Material skyboxNight;
 
-    [Header("Источники света (Directional Lights)")]
-    public GameObject lightDay;   // Ваш объект A
-    public GameObject lightNight; // Ваш объект B
+    [Header("РСЃС‚РѕС‡РЅРёРєРё СЃРІРµС‚Р° (Directional Lights)")]
+    public GameObject lightDay;   // Р’Р°С€ РѕР±СЉРµРєС‚ A
+    public GameObject lightNight; // Р’Р°С€ РѕР±СЉРµРєС‚ B
 
-    [Header("Состояние")]
-    [Tooltip("Галочка включена — день, выключена — ночь")]
+    [Header("РЎРѕСЃС‚РѕСЏРЅРёРµ")]
+    [Tooltip("Р“Р°Р»РѕС‡РєР° РІРєР»СЋС‡РµРЅР° вЂ” РґРµРЅСЊ, РІС‹РєР»СЋС‡РµРЅР° вЂ” РЅРѕС‡СЊ")]
     public bool isDayTime = true;
 
     private bool lastState;
@@ -33,16 +33,16 @@ public class SkyboxSwitcher : MonoBehaviour
 
     void UpdateEnvironment()
     {
-        // 1. Меняем материал неба
+        // 1. РњРµРЅСЏРµРј РјР°С‚РµСЂРёР°Р» РЅРµР±Р°
         RenderSettings.skybox = isDayTime ? skyboxDay : skyboxNight;
 
-        // 2. Переключаем объекты (свет)
+        // 2. РџРµСЂРµРєР»СЋС‡Р°РµРј РѕР±СЉРµРєС‚С‹ (СЃРІРµС‚)
         if (lightDay != null) lightDay.SetActive(isDayTime);
         if (lightNight != null) lightNight.SetActive(!isDayTime);
 
         RenderSettings.reflectionIntensity = isDayTime ? 0.5f : 0.2f;
 
-        // 3. Обновляем освещение сцены
+        // 3. РћР±РЅРѕРІР»СЏРµРј РѕСЃРІРµС‰РµРЅРёРµ СЃС†РµРЅС‹
         DynamicGI.UpdateEnvironment();
     }
 }

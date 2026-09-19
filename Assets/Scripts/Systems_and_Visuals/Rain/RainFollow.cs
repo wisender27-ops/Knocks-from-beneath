@@ -2,14 +2,14 @@ using UnityEngine;
 
 public class RainFollow : MonoBehaviour
 {
-    public Transform player; // Сюда в инспекторе перетащи игрока
-    public float height = 15f; // Высота, на которой висит "туча"
+    public Transform player; // РЎСЋРґР° РІ РёРЅСЃРїРµРєС‚РѕСЂРµ РїРµСЂРµС‚Р°С‰Рё РёРіСЂРѕРєР°
+    public float height = 15f; // Р’С‹СЃРѕС‚Р°, РЅР° РєРѕС‚РѕСЂРѕР№ РІРёСЃРёС‚ "С‚СѓС‡Р°"
 
     void LateUpdate()
     {
         if (player != null)
         {
-            // Двигаем дождь за игроком, но сохраняем высоту
+            // Р”РІРёРіР°РµРј РґРѕР¶РґСЊ Р·Р° РёРіСЂРѕРєРѕРј, РЅРѕ СЃРѕС…СЂР°РЅСЏРµРј РІС‹СЃРѕС‚Сѓ
             transform.position = new Vector3(player.position.x, player.position.y + height, player.position.z);
         }
     }

@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class ItemGlow : MonoBehaviour
 {
-    [Header("Настройки")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё")]
     public float visibleDistance = 4f;
     public float fadeDistance = 2f;
 
@@ -12,17 +12,17 @@ public class ItemGlow : MonoBehaviour
 
     void Start()
     {
-        // Ищем ParticleSystem на этом объекте или дочерних
+        // РС‰РµРј ParticleSystem РЅР° СЌС‚РѕРј РѕР±СЉРµРєС‚Рµ РёР»Рё РґРѕС‡РµСЂРЅРёС…
         _particles = GetComponentInChildren<ParticleSystem>();
 
         if (_particles == null)
         {
-            Debug.LogError($"[ItemGlow] ParticleSystem не найден на {gameObject.name}!");
+            Debug.LogError($"[ItemGlow] ParticleSystem РЅРµ РЅР°Р№РґРµРЅ РЅР° {gameObject.name}!");
             enabled = false;
             return;
         }
 
-        // World + наследование скорости от Rigidbody даёт «улёт» частиц сквозь геометрию и хаотичное движение.
+        // World + РЅР°СЃР»РµРґРѕРІР°РЅРёРµ СЃРєРѕСЂРѕСЃС‚Рё РѕС‚ Rigidbody РґР°С‘С‚ В«СѓР»С‘С‚В» С‡Р°СЃС‚РёС† СЃРєРІРѕР·СЊ РіРµРѕРјРµС‚СЂРёСЋ Рё С…Р°РѕС‚РёС‡РЅРѕРµ РґРІРёР¶РµРЅРёРµ.
         var main = _particles.main;
         main.simulationSpace = ParticleSystemSimulationSpace.Local;
 
@@ -35,7 +35,7 @@ public class ItemGlow : MonoBehaviour
 
         _player = camera.transform;
 
-        // Сразу выключаем emission
+        // РЎСЂР°Р·Сѓ РІС‹РєР»СЋС‡Р°РµРј emission
         SetEmission(0);
     }
 
@@ -64,7 +64,7 @@ public class ItemGlow : MonoBehaviour
 
     void SetEmission(float rate)
     {
-        // Правильный способ получить emission модуль
+        // РџСЂР°РІРёР»СЊРЅС‹Р№ СЃРїРѕСЃРѕР± РїРѕР»СѓС‡РёС‚СЊ emission РјРѕРґСѓР»СЊ
         var emission = _particles.emission;
         emission.rateOverTime = rate;
     }

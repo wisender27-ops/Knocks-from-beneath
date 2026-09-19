@@ -3,29 +3,29 @@ using System.Collections;
 
 public class HoleEventController : MonoBehaviour
 {
-    [Header("Ссылки")]
+    [Header("РЎСЃС‹Р»РєРё")]
     public GameObject monsterFace;
     public AudioSource jumpscareAudio;
     public PlayerInventory inventory;
 
-    [Header("Настройки")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё")]
     public float lookDistance = 3f;
-    public float minTimeToTrigger = 0.8f;  // Уменьшили — меньше времени
+    public float minTimeToTrigger = 0.8f;  // РЈРјРµРЅСЊС€РёР»Рё вЂ” РјРµРЅСЊС€Рµ РІСЂРµРјРµРЅРё
     public float maxTimeToTrigger = 2f;
 
-    [Header("Звуки напряжения (до скримера)")]
+    [Header("Р—РІСѓРєРё РЅР°РїСЂСЏР¶РµРЅРёСЏ (РґРѕ СЃРєСЂРёРјРµСЂР°)")]
     public AudioSource tensionAudioSource;
     public AudioClip[] tensionSounds;
 
-    [Header("Настройки камеры")]
-    public float cameraShakeIntensity = 0.08f; // Сильнее
-    public float cameraDipAmount = 0.6f;        // Сильнее
+    [Header("РќР°СЃС‚СЂРѕР№РєРё РєР°РјРµСЂС‹")]
+    public float cameraShakeIntensity = 0.08f; // РЎРёР»СЊРЅРµРµ
+    public float cameraDipAmount = 0.6f;        // РЎРёР»СЊРЅРµРµ
 
     private float _lookTimer = 0f;
     private float _triggerTime;
     private bool _eventStarted = false;
     private bool _tensionSoundPlayed = false;
-    private bool _committed = false; // Порог — скример уже не отменить
+    private bool _committed = false; // РџРѕСЂРѕРі вЂ” СЃРєСЂРёРјРµСЂ СѓР¶Рµ РЅРµ РѕС‚РјРµРЅРёС‚СЊ
     private Light _flashlightLight;
     private Camera _playerCam;
 
@@ -49,20 +49,20 @@ public class HoleEventController : MonoBehaviour
         {
             if (!isFlashlightOn)
             {
-                // Не сбрасываем если уже committed
+                // РќРµ СЃР±СЂР°СЃС‹РІР°РµРј РµСЃР»Рё СѓР¶Рµ committed
                 if (!_committed) _lookTimer = 0f;
                 return;
             }
 
             _lookTimer += Time.deltaTime;
 
-            // Перешли половину — скример уже не отменить
+            // РџРµСЂРµС€Р»Рё РїРѕР»РѕРІРёРЅСѓ вЂ” СЃРєСЂРёРјРµСЂ СѓР¶Рµ РЅРµ РѕС‚РјРµРЅРёС‚СЊ
             if (!_committed && _lookTimer >= _triggerTime * 0.5f)
             {
                 _committed = true;
             }
 
-            // Звук напряжения на 70% таймера — позже и короче
+            // Р—РІСѓРє РЅР°РїСЂСЏР¶РµРЅРёСЏ РЅР° 70% С‚Р°Р№РјРµСЂР° вЂ” РїРѕР·Р¶Рµ Рё РєРѕСЂРѕС‡Рµ
             if (!_tensionSoundPlayed && _lookTimer >= _triggerTime * 0.7f)
             {
                 PlayRandomTensionSound();
@@ -74,7 +74,7 @@ public class HoleEventController : MonoBehaviour
         }
         else
         {
-            // Если committed — продолжаем таймер даже без взгляда
+            // Р•СЃР»Рё committed вЂ” РїСЂРѕРґРѕР»Р¶Р°РµРј С‚Р°Р№РјРµСЂ РґР°Р¶Рµ Р±РµР· РІР·РіР»СЏРґР°
             if (_committed)
             {
                 _lookTimer += Time.deltaTime;
@@ -83,7 +83,7 @@ public class HoleEventController : MonoBehaviour
                 return;
             }
 
-            // Не committed — сбрасываем
+            // РќРµ committed вЂ” СЃР±СЂР°СЃС‹РІР°РµРј
             _lookTimer = 0f;
             _tensionSoundPlayed = false;
             _triggerTime = Random.Range(minTimeToTrigger, maxTimeToTrigger);
@@ -118,20 +118,20 @@ public class HoleEventController : MonoBehaviour
             yield break;
         }
 
-        // 1. ТОЛЬКО БЫСТРОЕ МИГАНИЕ — без раскачки
+        // 1. РўРћР›Р¬РљРћ Р‘Р«РЎРўР РћР• РњРР“РђРќРР• вЂ” Р±РµР· СЂР°СЃРєР°С‡РєРё
         yield return StartCoroutine(FlickerFlashlight(3, 0.04f));
 
-        // 2. СВЕТ В ДОМЕ ГАСНЕТ + ФОНАРИК ГАСНЕТ
+        // 2. РЎР’Р•Рў Р’ Р”РћРњР• Р“РђРЎРќР•Рў + Р¤РћРќРђР РРљ Р“РђРЎРќР•Рў
         if (LightingManager.Instance != null)
             LightingManager.Instance.TurnOffAllLamps();
 
         _flashlightLight.enabled = false;
         PlayFlashlightSound(inventory.soundOff);
 
-        // Короткая пауза в темноте — нагнетание
+        // РљРѕСЂРѕС‚РєР°СЏ РїР°СѓР·Р° РІ С‚РµРјРЅРѕС‚Рµ вЂ” РЅР°РіРЅРµС‚Р°РЅРёРµ
         yield return new WaitForSeconds(0.5f);
 
-        // 3. МОНСТР ПОЯВЛЯЕТСЯ — резко
+        // 3. РњРћРќРЎРўР  РџРћРЇР’Р›РЇР•РўРЎРЇ вЂ” СЂРµР·РєРѕ
         if (monsterFace != null)
             monsterFace.SetActive(true);
         _flashlightLight.enabled = true;
@@ -139,17 +139,17 @@ public class HoleEventController : MonoBehaviour
 
         if (jumpscareAudio != null) jumpscareAudio.Play();
 
-        // 4. ВСЕ ЭФФЕКТЫ ОДНОВРЕМЕННО
+        // 4. Р’РЎР• Р­Р¤Р¤Р•РљРўР« РћР”РќРћР’Р Р•РњР•РќРќРћ
         StartCoroutine(ZoomToMonster());
         StartCoroutine(CameraDip());
         StartCoroutine(CameraShake(1.5f));
 
         yield return new WaitForSeconds(1.5f);
 
-        // 5. ПАРАЛИЧ
+        // 5. РџРђР РђР›РР§
         yield return StartCoroutine(Paralyze(0.8f));
 
-        // 6. ФОНАРИК ГАСНЕТ, МОНСТР ИСЧЕЗАЕТ
+        // 6. Р¤РћРќРђР РРљ Р“РђРЎРќР•Рў, РњРћРќРЎРўР  РРЎР§Р•Р—РђР•Рў
         _flashlightLight.enabled = false;
         PlayFlashlightSound(inventory.soundOff);
 
@@ -159,11 +159,11 @@ public class HoleEventController : MonoBehaviour
 
         yield return new WaitForSeconds(0.3f);
 
-        // 7. ФОНАРИК ВКЛЮЧАЕТСЯ
+        // 7. Р¤РћРќРђР РРљ Р’РљР›Р®Р§РђР•РўРЎРЇ
         _flashlightLight.enabled = true;
         PlayFlashlightSound(inventory.soundOn);
 
-        // 8. ЗАВЕРШАЕМ КВЕСТ
+        // 8. Р—РђР’Р•Р РЁРђР•Рњ РљР’Р•РЎРў
         if (QuestManager.Instance != null)
             QuestManager.Instance.AddProgress(1);
         this.enabled = false;
@@ -181,7 +181,7 @@ public class HoleEventController : MonoBehaviour
         float targetFov = originalFov - 25f;
 
         float t = 0;
-        // Максимально резкий зум — 0.05 секунды
+        // РњР°РєСЃРёРјР°Р»СЊРЅРѕ СЂРµР·РєРёР№ Р·СѓРј вЂ” 0.05 СЃРµРєСѓРЅРґС‹
         while (t < 0.05f)
         {
             t += Time.deltaTime;
@@ -215,7 +215,7 @@ public class HoleEventController : MonoBehaviour
         Vector3 dipPos = originalPos + Vector3.down * cameraDipAmount;
 
         float t = 0;
-        while (t < 0.05f) // Резче вниз
+        while (t < 0.05f) // Р РµР·С‡Рµ РІРЅРёР·
         {
             t += Time.deltaTime;
             _playerCam.transform.localPosition = Vector3.Lerp(originalPos, dipPos, t / 0.05f);

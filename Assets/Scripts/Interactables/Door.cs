@@ -9,14 +9,14 @@ public class Door : MonoBehaviour
         Z
     }
 
-    [Header("Настройки двери")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё РґРІРµСЂРё")]
     [SerializeField] private float angleRotation = 90f;
     [SerializeField] private float openSpeed = 10f;
     [SerializeField] private float mouseSensitivity = 3f;
     [SerializeField] private RotationAxis rotationAxis = RotationAxis.Y;
     [SerializeField] private bool interactionLocked = false;
 
-    [Header("Настройки звука (Скрип)")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё Р·РІСѓРєР° (РЎРєСЂРёРї)")]
     public AudioSource sfxSource;
     public AudioClip doorCreakClip;
 
@@ -24,17 +24,17 @@ public class Door : MonoBehaviour
     [SerializeField] private float volumeMultiplier = 1.5f;
     [SerializeField] private float minVelocityThreshold = 2f;
 
-    // --- НОВАЯ ЛОГИКА IS_OPEN ---
-    [SerializeField] private bool _isOpen; // Внутренняя переменная
+    // --- РќРћР’РђРЇ Р›РћР“РРљРђ IS_OPEN ---
+    [SerializeField] private bool _isOpen; // Р’РЅСѓС‚СЂРµРЅРЅСЏСЏ РїРµСЂРµРјРµРЅРЅР°СЏ
     public bool isOpen
     {
         get => _isOpen;
         set
         {
-            if (_isOpen == value) return; // Если значение не изменилось — ничего не делаем
+            if (_isOpen == value) return; // Р•СЃР»Рё Р·РЅР°С‡РµРЅРёРµ РЅРµ РёР·РјРµРЅРёР»РѕСЃСЊ вЂ” РЅРёС‡РµРіРѕ РЅРµ РґРµР»Р°РµРј
             _isOpen = value;
 
-            // Если мы НЕ держим дверь руками, реагируем на смену галочки
+            // Р•СЃР»Рё РјС‹ РќР• РґРµСЂР¶РёРј РґРІРµСЂСЊ СЂСѓРєР°РјРё, СЂРµР°РіРёСЂСѓРµРј РЅР° СЃРјРµРЅСѓ РіР°Р»РѕС‡РєРё
             if (!isBeingHeld)
             {
                 if (_isOpen) OpenDoor();
@@ -76,12 +76,12 @@ public class Door : MonoBehaviour
             HandleManualOpen();
         }
 
-        // Плавный поворот к целевому смещению
+        // РџР»Р°РІРЅС‹Р№ РїРѕРІРѕСЂРѕС‚ Рє С†РµР»РµРІРѕРјСѓ СЃРјРµС‰РµРЅРёСЋ
         targetAxisAngle = baseAxisAngle + currentOffset;
         Quaternion targetQuaternion = BuildRotation(targetAxisAngle);
         transform.localRotation = Quaternion.Slerp(transform.localRotation, targetQuaternion, openSpeed * Time.deltaTime);
 
-        // Расчет скорости для звука
+        // Р Р°СЃС‡РµС‚ СЃРєРѕСЂРѕСЃС‚Рё РґР»СЏ Р·РІСѓРєР°
         float currentAxisAngle = GetAxisAngle(transform.localEulerAngles);
         float deltaRot = Mathf.DeltaAngle(previousRotationY, currentAxisAngle);
         float rawVelocity = Mathf.Abs(deltaRot) / Time.deltaTime;
@@ -91,16 +91,16 @@ public class Door : MonoBehaviour
 
         ManageCreakSound(smoothDoorVelocity);
 
-        // Обновляем состояние галочки без вызова сеттера, чтобы просто видеть статус в инспекторе
-        // Но лучше оставить управление за пользователем через свойство выше.
-        // Чтобы галочка в инспекторе сама не "прыгала", пока ты тянешь дверь:
+        // РћР±РЅРѕРІР»СЏРµРј СЃРѕСЃС‚РѕСЏРЅРёРµ РіР°Р»РѕС‡РєРё Р±РµР· РІС‹Р·РѕРІР° СЃРµС‚С‚РµСЂР°, С‡С‚РѕР±С‹ РїСЂРѕСЃС‚Рѕ РІРёРґРµС‚СЊ СЃС‚Р°С‚СѓСЃ РІ РёРЅСЃРїРµРєС‚РѕСЂРµ
+        // РќРѕ Р»СѓС‡С€Рµ РѕСЃС‚Р°РІРёС‚СЊ СѓРїСЂР°РІР»РµРЅРёРµ Р·Р° РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј С‡РµСЂРµР· СЃРІРѕР№СЃС‚РІРѕ РІС‹С€Рµ.
+        // Р§С‚РѕР±С‹ РіР°Р»РѕС‡РєР° РІ РёРЅСЃРїРµРєС‚РѕСЂРµ СЃР°РјР° РЅРµ "РїСЂС‹РіР°Р»Р°", РїРѕРєР° С‚С‹ С‚СЏРЅРµС€СЊ РґРІРµСЂСЊ:
         if (isBeingHeld) _isOpen = Mathf.Abs(currentOffset) > 5f;
     }
 
-    // Это позволит видеть изменения в инспекторе Unity в реальном времени
+    // Р­С‚Рѕ РїРѕР·РІРѕР»РёС‚ РІРёРґРµС‚СЊ РёР·РјРµРЅРµРЅРёСЏ РІ РёРЅСЃРїРµРєС‚РѕСЂРµ Unity РІ СЂРµР°Р»СЊРЅРѕРј РІСЂРµРјРµРЅРё
     private void OnValidate()
     {
-        // Если ты в редакторе клацнул галочку — дверь среагирует
+        // Р•СЃР»Рё С‚С‹ РІ СЂРµРґР°РєС‚РѕСЂРµ РєР»Р°С†РЅСѓР» РіР°Р»РѕС‡РєСѓ вЂ” РґРІРµСЂСЊ СЃСЂРµР°РіРёСЂСѓРµС‚
         if (Application.isPlaying)
         {
             if (_isOpen) OpenDoor();
@@ -162,22 +162,22 @@ public class Door : MonoBehaviour
 
     public void ToggleDoor()
     {
-        isOpen = !isOpen; // Используем свойство
+        isOpen = !isOpen; // РСЃРїРѕР»СЊР·СѓРµРј СЃРІРѕР№СЃС‚РІРѕ
     }
 
     private void OnEnable()
     {
-        GameEvents.OnNightStarted += ForceClose; // Подписываемся
+        GameEvents.OnNightStarted += ForceClose; // РџРѕРґРїРёСЃС‹РІР°РµРјСЃСЏ
     }
 
     private void OnDisable()
     {
-        GameEvents.OnNightStarted -= ForceClose; // Отписываемся (обязательно для защиты от утечек памяти)
+        GameEvents.OnNightStarted -= ForceClose; // РћС‚РїРёСЃС‹РІР°РµРјСЃСЏ (РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ РґР»СЏ Р·Р°С‰РёС‚С‹ РѕС‚ СѓС‚РµС‡РµРє РїР°РјСЏС‚Рё)
     }
 
     private void ForceClose()
     {
-        isOpen = false; // Используем твое свойство, оно само запустит звук и анимацию
+        isOpen = false; // РСЃРїРѕР»СЊР·СѓРµРј С‚РІРѕРµ СЃРІРѕР№СЃС‚РІРѕ, РѕРЅРѕ СЃР°РјРѕ Р·Р°РїСѓСЃС‚РёС‚ Р·РІСѓРє Рё Р°РЅРёРјР°С†РёСЋ
     }
 
     private void TriggerMonsterEvent()

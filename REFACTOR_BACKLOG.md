@@ -21,7 +21,7 @@
 - [x] T-03 — Единый источник истины для «нужен ли предмет квесту» (`QuestManager.IsItemRequired`)
 - [x] T-04 — Убрать тройной дубль настройки Rigidbody (`RestoreHeldRigidbody`)
 - [ ] T-00 — Базовая линия (headless-компиляция + тесты до правок)
-- [ ] T-02 — Починить кодировку файлов и подписи в инспекторе
+- [x] T-02 — Починить кодировку файлов и подписи в инспекторе
 - [ ] T-09 — Чистка репозитория (дубли текстур, `_Recovery`, `GeneratedAssets/*_deleted`, companyName)
 - [ ] T-10 — Убрать устаревший `FindObjectOfType` → `FindFirstObjectByType`/`FindObjectsByType`
 - [ ] T-05 — Магические числа в именованные поля
@@ -52,7 +52,7 @@
 -->
 
 ### 2026-09-19 — T-00 — Базовая линия
-- Коммит: `(проставлен в следующей записи — SHA известен только после коммита)`
+- Коммит: `df19216`
 - Сделано: переписан формат этого файла (без «код пишешь сам»), тикеты T-01/T-03/T-04 отмечены выполненными по факту кода, а не по чек-боксам напарника.
 - По ходу базовой линии обнаружен и исправлен независимый баг: `Assets/Tests/EditMode/KnocksFromBeneath.Tests.asmdef` ссылался на `"Assembly-CSharp"` по имени — Unity не разрешает так ссылаться на неявную предопределённую сборку, поэтому тесты **не компилировались вообще**, даже до моих правок. Исправлено добавлением `Assets/Scripts/KnocksFromBeneath.Runtime.asmdef` (покрывает весь `Assets/Scripts`, референс на `Unity.TextMeshPro` — только он использовался через `using TMPro`) и переключением ссылки в Tests-asmdef на новое имя.
 - Проверено: headless-компиляция — OK (0 ошибок); EditMode-тесты — OK, 3/3 passed (`QuestManagerTests`). Полные логи оставлены в scratchpad сессии, не в репозитории.
@@ -60,3 +60,22 @@
   ```
   Unity.exe -batchmode -nographics -projectPath "<path>" -runTests -testPlatform EditMode -testResults <path>\results.xml -logFile <path>\tests.log
   ```
+
+### 2026-09-19 — T-02 — Кодировка файлов и подписи в инспекторе
+- Коммит: `(см. следующий коммит в git log)`
+- Сделано: 17 файлов, физически сохранённых в Windows-1251, перекодированы в UTF-8 без BOM
+  (текст был цел, просто неверно интерпретировался — проверено обратным чтением как cp1251,
+  текст восстановился полностью корректно). Список: `GameEvents.cs`, `MonsterWatcherManager.cs`,
+  `ThoughtManager.cs`, `Door.cs`, `MonsterGrab.cs`, `HammerTrap.cs`, `HoleEventController.cs`,
+  `RandomKnock.cs`, `CollectableItem.cs`, `HeadBobbing.cs`, `KitchenNoiseTrigger.cs`,
+  `SkyboxSwitcher.cs`, `LightingManager.cs`, `SmartLamp.cs`, `RainFollow.cs`, `ImpactSounds.cs`, `ItemGlow.cs`.
+  В 5 файлах текст оказался необратимо испорчен ещё на первом коммите репозитория (байты U+FFFD
+  уже были сохранены как валидный UTF-8) — `[Header]`/`[Tooltip]`/комментарии в них переписаны
+  заново по смыслу окружающего кода: `InventoryUI.cs`, `TrashManager.cs`, `CrosshairJuice.cs`,
+  `FinaleController.cs`, `IntroSequence.cs`. Добавлен `.editorconfig` (`charset = utf-8`), чтобы
+  редакторы не сохраняли новые файлы в системной кодировке.
+- Проверено: полный скан всех `.cs` в `Assets/` на U+FFFD — 0 совпадений. Headless-компиляция —
+  OK. EditMode-тесты — OK, 3/3 passed.
+- На что обратить внимание: переписанные комментарии в 5 «убитых» файлах — это новый текст по
+  смыслу кода, не дословное восстановление (оригинал невосстановим). Если у автора в памяти
+  остались точные формулировки — можно поправить вручную, это не критично для работы игры.

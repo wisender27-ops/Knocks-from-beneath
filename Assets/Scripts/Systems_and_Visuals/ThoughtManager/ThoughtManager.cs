@@ -8,17 +8,17 @@ public class ThoughtManager : MonoBehaviour
 {
     public static ThoughtManager Instance;
 
-    [Header("UI элементы")]
-    [SerializeField] private TextMeshProUGUI thoughtText; // Текст из TextMeshPro
-    [SerializeField] private GameObject textCanvas;      // Весь объект Canvas (чтобы скрывать целиком)
+    [Header("UI СЌР»РµРјРµРЅС‚С‹")]
+    [SerializeField] private TextMeshProUGUI thoughtText; // РўРµРєСЃС‚ РёР· TextMeshPro
+    [SerializeField] private GameObject textCanvas;      // Р’РµСЃСЊ РѕР±СЉРµРєС‚ Canvas (С‡С‚РѕР±С‹ СЃРєСЂС‹РІР°С‚СЊ С†РµР»РёРєРѕРј)
 
-    [Header("Настройки печати")]
-    [SerializeField] private float typingSpeed = 0.05f;   // Скорость появления букв
-    [SerializeField] private float displayDuration = 2.5f; // Сколько фраза висит после печати
+    [Header("РќР°СЃС‚СЂРѕР№РєРё РїРµС‡Р°С‚Рё")]
+    [SerializeField] private float typingSpeed = 0.05f;   // РЎРєРѕСЂРѕСЃС‚СЊ РїРѕСЏРІР»РµРЅРёСЏ Р±СѓРєРІ
+    [SerializeField] private float displayDuration = 2.5f; // РЎРєРѕР»СЊРєРѕ С„СЂР°Р·Р° РІРёСЃРёС‚ РїРѕСЃР»Рµ РїРµС‡Р°С‚Рё
 
-    [Header("Звук печати")]
+    [Header("Р—РІСѓРє РїРµС‡Р°С‚Рё")]
     [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip[] typeSounds;     // Массив из 3-х звуков кликов
+    [SerializeField] private AudioClip[] typeSounds;     // РњР°СЃСЃРёРІ РёР· 3-С… Р·РІСѓРєРѕРІ РєР»РёРєРѕРІ
     [Range(0.8f, 1.2f)][SerializeField] private float minPitch = 0.95f;
     [Range(0.8f, 1.2f)][SerializeField] private float maxPitch = 1.05f;
 
@@ -39,10 +39,10 @@ public class ThoughtManager : MonoBehaviour
 
     void Awake()
     {
-        // Делаем синглтон, чтобы обращаться из других скриптов через ThoughtManager.Instance
+        // Р”РµР»Р°РµРј СЃРёРЅРіР»С‚РѕРЅ, С‡С‚РѕР±С‹ РѕР±СЂР°С‰Р°С‚СЊСЃСЏ РёР· РґСЂСѓРіРёС… СЃРєСЂРёРїС‚РѕРІ С‡РµСЂРµР· ThoughtManager.Instance
         if (Instance == null) Instance = this;
 
-        // Скрываем текст при старте
+        // РЎРєСЂС‹РІР°РµРј С‚РµРєСЃС‚ РїСЂРё СЃС‚Р°СЂС‚Рµ
         if (textCanvas != null) textCanvas.SetActive(false);
         if (thoughtText != null) thoughtText.text = "";
     }
@@ -53,9 +53,9 @@ public class ThoughtManager : MonoBehaviour
             Instance = null;
     }
 
-    // Главная функция, которую мы вызываем из IntroSequence
-    // lines - список фраз
-    // onComplete - действие, которое выполнится в самом конце (например, выдача квеста)
+    // Р“Р»Р°РІРЅР°СЏ С„СѓРЅРєС†РёСЏ, РєРѕС‚РѕСЂСѓСЋ РјС‹ РІС‹Р·С‹РІР°РµРј РёР· IntroSequence
+    // lines - СЃРїРёСЃРѕРє С„СЂР°Р·
+    // onComplete - РґРµР№СЃС‚РІРёРµ, РєРѕС‚РѕСЂРѕРµ РІС‹РїРѕР»РЅРёС‚СЃСЏ РІ СЃР°РјРѕРј РєРѕРЅС†Рµ (РЅР°РїСЂРёРјРµСЂ, РІС‹РґР°С‡Р° РєРІРµСЃС‚Р°)
     public void ShowThoughts(string[] lines, Action onComplete = null)
     {
         if (lines == null || lines.Length == 0)
@@ -88,39 +88,39 @@ public class ThoughtManager : MonoBehaviour
         foreach (string rawLine in lines)
         {
             string line = rawLine ?? string.Empty;
-            thoughtText.text = ""; // Очищаем поле перед новой фразой
+            thoughtText.text = ""; // РћС‡РёС‰Р°РµРј РїРѕР»Рµ РїРµСЂРµРґ РЅРѕРІРѕР№ С„СЂР°Р·РѕР№
 
             foreach (char letter in line.ToCharArray())
             {
                 thoughtText.text += letter;
 
-                // Проигрываем случайный звук клика с разным питчем
+                // РџСЂРѕРёРіСЂС‹РІР°РµРј СЃР»СѓС‡Р°Р№РЅС‹Р№ Р·РІСѓРє РєР»РёРєР° СЃ СЂР°Р·РЅС‹Рј РїРёС‚С‡РµРј
                 if (typeSounds != null && typeSounds.Length > 0 && audioSource != null)
                 {
                     audioSource.pitch = UnityEngine.Random.Range(minPitch, maxPitch);
                     audioSource.PlayOneShot(typeSounds[UnityEngine.Random.Range(0, typeSounds.Length)], 0.4f);
                 }
 
-                // Пауза после знаков препинания для естественности
+                // РџР°СѓР·Р° РїРѕСЃР»Рµ Р·РЅР°РєРѕРІ РїСЂРµРїРёРЅР°РЅРёСЏ РґР»СЏ РµСЃС‚РµСЃС‚РІРµРЅРЅРѕСЃС‚Рё
                 if (letter == ',' || letter == '.' || letter == '!' || letter == '?')
                     yield return new WaitForSeconds(typingSpeed * 3f);
                 else
                     yield return new WaitForSeconds(typingSpeed);
             }
 
-            // Ждем, пока игрок дочитает фразу
+            // Р–РґРµРј, РїРѕРєР° РёРіСЂРѕРє РґРѕС‡РёС‚Р°РµС‚ С„СЂР°Р·Сѓ
             yield return new WaitForSeconds(displayDuration);
 
-            // Небольшая пауза пустой строки перед следующей
+            // РќРµР±РѕР»СЊС€Р°СЏ РїР°СѓР·Р° РїСѓСЃС‚РѕР№ СЃС‚СЂРѕРєРё РїРµСЂРµРґ СЃР»РµРґСѓСЋС‰РµР№
             thoughtText.text = "";
             yield return new WaitForSeconds(0.5f);
         }
 
-        // Всё закончилось — скрываем UI
+        // Р’СЃС‘ Р·Р°РєРѕРЅС‡РёР»РѕСЃСЊ вЂ” СЃРєСЂС‹РІР°РµРј UI
         textCanvas.SetActive(false);
         _isDisplaying = false;
 
-        // ВЫПОЛНЯЕМ ДЕЙСТВИЕ, которое передали (например, включение квеста)
+        // Р’Р«РџРћР›РќРЇР•Рњ Р”Р•Р™РЎРўР’РР•, РєРѕС‚РѕСЂРѕРµ РїРµСЂРµРґР°Р»Рё (РЅР°РїСЂРёРјРµСЂ, РІРєР»СЋС‡РµРЅРёРµ РєРІРµСЃС‚Р°)
         FinishCurrentRequest(onComplete);
     }
 

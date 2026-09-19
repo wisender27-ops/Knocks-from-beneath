@@ -38,7 +38,7 @@ public class SmartLamp : MonoBehaviour
 
         while (elapsed < duration)
         {
-            // Ïðîñòî èíâåðòèðóåì ñîñòîÿíèå: åñëè ãîðåëà — ãàñèì, åñëè íåò — âêëþ÷àåì
+            // ÐŸÑ€Ð¾ÑÑ‚Ð¾ Ð¸Ð½Ð²ÐµÑ€Ñ‚Ð¸Ñ€ÑƒÐµÐ¼ ÑÐ¾ÑÑ‚Ð¾ÑÐ½Ð¸Ðµ: ÐµÑÐ»Ð¸ Ð³Ð¾Ñ€ÐµÐ»Ð° â€” Ð³Ð°ÑÐ¸Ð¼, ÐµÑÐ»Ð¸ Ð½ÐµÑ‚ â€” Ð²ÐºÐ»ÑŽÑ‡Ð°ÐµÐ¼
             lightSource.intensity = (lightSource.intensity > 0) ? 0 : _defaultIntensity;
 
             yield return new WaitForSeconds(interval);

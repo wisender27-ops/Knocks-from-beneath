@@ -9,28 +9,28 @@ public class InventoryUI : MonoBehaviour
     [System.Serializable]
     public class SlotUI
     {
-        public GameObject slotRoot;      // �������� ������ �����
-        public Image background;         // ��� ����� (Slot1, Slot2 �������)
-        public Image itemIcon;           // ������ ��������
-        public TextMeshProUGUI keyText;  // ����� (1, 2, 3...)
-        public TextMeshProUGUI itemName; // �������� ��������
+        public GameObject slotRoot;      // Корневой объект слота
+        public Image background;         // Фон слота (Slot1, Slot2 и т.д.)
+        public Image itemIcon;           // Иконка предмета
+        public TextMeshProUGUI keyText;  // Номер (1, 2, 3...)
+        public TextMeshProUGUI itemName; // Название предмета
 
-        [HideInInspector] public string assignedItem = ""; // ��� ������ � �����
+        [HideInInspector] public string assignedItem = ""; // Какой предмет в слоте
     }
 
-    [Header("�����")]
-    public SlotUI[] slots; // 4 �����
+    [Header("Слоты")]
+    public SlotUI[] slots; // 4 слота
 
-    [Header("������� ����")]
-    public Sprite slotNormalSprite;   // ������� ���
-    public Sprite slotActiveSprite;   // ��� ����� ���� ������
+    [Header("Спрайты слота")]
+    public Sprite slotNormalSprite;   // Обычный вид
+    public Sprite slotActiveSprite;   // Вид, когда слот активен
 
-    [Header("������ ���������")]
+    [Header("Иконки предметов")]
     public Sprite crowbarIcon;
     public Sprite flashlightIcon;
     public Sprite hammerIcon;
 
-    [Header("�����")]
+    [Header("Цвета")]
     public Color normalColor = new Color(1, 1, 1, 0.5f);
     public Color activeColor = Color.white;
 
@@ -50,19 +50,19 @@ public class InventoryUI : MonoBehaviour
         if (slots == null || slots.Length == 0 || slots[0] == null)
             return;
 
-        // ���� 1 ������ ����� � ������
+        // Слот 1 всегда виден с начала игры
         if (slots[0].slotRoot != null) slots[0].slotRoot.SetActive(true);
         if (slots[0].keyText != null) slots[0].keyText.text = "1";
         if (slots[0].itemIcon != null) slots[0].itemIcon.enabled = false;
         if (slots[0].itemName != null) slots[0].itemName.text = "";
 
-        // ��������� ����� ������
+        // Остальные слоты скрыты
         for (int i = 1; i < slots.Length; i++)
             if (slots[i] != null && slots[i].slotRoot != null)
                 slots[i].slotRoot.SetActive(false);
     }
 
-    // �������� ������� � ������ ��������� ����
+    // Добавляет предмет в первый свободный слот
     public void AddItem(string itemName)
     {
         if (slots == null) return;
@@ -71,10 +71,10 @@ public class InventoryUI : MonoBehaviour
         {
             if (slots[i] == null) continue;
 
-            // ���� 0 ������ (������ ����) � ���������� ���� ���� ���������
+            // Слот 0 особый (всегда виден) — просто заполняем его
             if (i == 0 && slots[i].assignedItem == "")
             {
-                // �������� ������ ���� ���������
+                // Слот уже активен, включать не нужно
                 AssignItemToSlot(0, itemName);
                 return;
             }
@@ -103,7 +103,7 @@ public class InventoryUI : MonoBehaviour
         }
     }
 
-    // ���������� �������� ����
+    // Подсвечивает активный слот
     public void SetActiveSlot(string itemName)
     {
         if (slots == null) return;

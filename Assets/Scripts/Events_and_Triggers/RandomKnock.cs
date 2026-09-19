@@ -3,23 +3,23 @@ using System.Collections;
 
 public class RandomKnock : MonoBehaviour
 {
-    [Header("Компоненты")]
+    [Header("РљРѕРјРїРѕРЅРµРЅС‚С‹")]
     [SerializeField] private AudioSource audioSource;
-    [SerializeField] private AudioClip[] knockClips; // Массив звуков для разнообразия
+    [SerializeField] private AudioClip[] knockClips; // РњР°СЃСЃРёРІ Р·РІСѓРєРѕРІ РґР»СЏ СЂР°Р·РЅРѕРѕР±СЂР°Р·РёСЏ
 
-    [Header("Настройки времени")]
+    [Header("РќР°СЃС‚СЂРѕР№РєРё РІСЂРµРјРµРЅРё")]
     [SerializeField] private float minDelay = 2f;
     [SerializeField] private float maxDelay = 5f;
 
     private void OnEnable()
     {
-        // Запускаем корутину, как только объект активируется триггером
+        // Р—Р°РїСѓСЃРєР°РµРј РєРѕСЂСѓС‚РёРЅСѓ, РєР°Рє С‚РѕР»СЊРєРѕ РѕР±СЉРµРєС‚ Р°РєС‚РёРІРёСЂСѓРµС‚СЃСЏ С‚СЂРёРіРіРµСЂРѕРј
         StartCoroutine(KnockRoutine());
     }
 
     private void OnDisable()
     {
-        // Останавливаем все процессы, если объект выключен (например, пол вскрыт)
+        // РћСЃС‚Р°РЅР°РІР»РёРІР°РµРј РІСЃРµ РїСЂРѕС†РµСЃСЃС‹, РµСЃР»Рё РѕР±СЉРµРєС‚ РІС‹РєР»СЋС‡РµРЅ (РЅР°РїСЂРёРјРµСЂ, РїРѕР» РІСЃРєСЂС‹С‚)
         StopAllCoroutines();
     }
 
@@ -27,17 +27,17 @@ public class RandomKnock : MonoBehaviour
     {
         while (true)
         {
-            // Ждем случайное количество времени
+            // Р–РґРµРј СЃР»СѓС‡Р°Р№РЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ РІСЂРµРјРµРЅРё
             float waitTime = Random.Range(Mathf.Max(0f, minDelay), Mathf.Max(minDelay, maxDelay));
             yield return new WaitForSeconds(waitTime);
 
-            // Воспроизводим случайный звук из массива
+            // Р’РѕСЃРїСЂРѕРёР·РІРѕРґРёРј СЃР»СѓС‡Р°Р№РЅС‹Р№ Р·РІСѓРє РёР· РјР°СЃСЃРёРІР°
             if (audioSource != null && knockClips != null && knockClips.Length > 0)
             {
                 int randomIndex = Random.Range(0, knockClips.Length);
                 audioSource.PlayOneShot(knockClips[randomIndex]);
 
-                Debug.Log("Раздался стук из-под пола...");
+                Debug.Log("Р Р°Р·РґР°Р»СЃСЏ СЃС‚СѓРє РёР·-РїРѕРґ РїРѕР»Р°...");
             }
         }
     }

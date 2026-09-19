@@ -2,6 +2,6 @@ using UnityEngine;
 
 public class CollectableItem : MonoBehaviour
 {
-    public enum ItemType { Trash, Box, Grocery } // Список типов
-    public ItemType currentItemType; // Выбранный тип для этого объекта
+    public enum ItemType { Trash, Box, Grocery } // РЎРїРёСЃРѕРє С‚РёРїРѕРІ
+    public ItemType currentItemType; // Р’С‹Р±СЂР°РЅРЅС‹Р№ С‚РёРї РґР»СЏ СЌС‚РѕРіРѕ РѕР±СЉРµРєС‚Р°
 }

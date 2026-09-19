@@ -5,14 +5,14 @@ public class TrashManager : MonoBehaviour
 {
     public static TrashManager Instance;
 
-    [Header("�������� �����")]
+    [Header("Мешок мусора")]
     public GameObject trashBagPrefab;
 
-    [Header("���� �� ��� ����")]
+    [Header("Звук стука из-под пола")]
     public AudioSource floorKnockSource;
     public AudioClip floorKnockClip;
 
-    [Header("����� ������")]
+    [Header("Кучи мусора")]
     public GameObject[] trashPiles;
 
     private int _totalPiles;
@@ -22,7 +22,7 @@ public class TrashManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
-        HideAll(); // ��������� �� ��� ������
+        HideAll(); // Прячем все кучи заранее
     }
 
     void OnDestroy()
@@ -39,7 +39,7 @@ public class TrashManager : MonoBehaviour
             if (pile != null) pile.SetActive(false);
     }
 
-    // ���������� �� IntroSequence ����� ����� ����������
+    // Вызывается из IntroSequence в начале квеста сбора мусора
     public void Initialize()
     {
         _collectedCount = 0;
@@ -56,7 +56,7 @@ public class TrashManager : MonoBehaviour
         }
     }
 
-    // ���������� �� TrashPile.Collect()
+    // Вызывается из TrashPile.Collect()
     public void OnPileCollected()
     {
         if (_bagSpawnStarted || _totalPiles <= 0) return;
@@ -71,11 +71,11 @@ public class TrashManager : MonoBehaviour
 
     IEnumerator SpawnBagRoutine()
     {
-        // ���� �����
+        // Звук стука
         if (floorKnockSource != null && floorKnockClip != null)
             floorKnockSource.PlayOneShot(floorKnockClip);
 
-        // ������� ����� ����� �������
+        // Спавним мешок мусора, он падает сверху
         if (trashBagPrefab != null)
         {
             Camera camera = Camera.main;
@@ -99,7 +99,7 @@ public class TrashManager : MonoBehaviour
             rb.linearDamping = 2f;
         }
 
-        // ��� 3 ������� ����� �������
+        // Ждём 3 секунды перед мыслями игрока
         yield return new WaitForSeconds(3f);
 
         if (ThoughtManager.Instance == null)

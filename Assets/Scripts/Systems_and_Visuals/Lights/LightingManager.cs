@@ -20,7 +20,7 @@ public class LightingManager : MonoBehaviour
             _allLamps.Add(lamp);
     }
 
-    // ВОТ ТВОЙ НОВЫЙ МЕТОД: ID, сколько секунд мигать, как часто (интервал)
+    // Р’РћРў РўР’РћР™ РќРћР’Р«Р™ РњР•РўРћР”: ID, СЃРєРѕР»СЊРєРѕ СЃРµРєСѓРЅРґ РјРёРіР°С‚СЊ, РєР°Рє С‡Р°СЃС‚Рѕ (РёРЅС‚РµСЂРІР°Р»)
     public void Flicker(string id, float duration, float interval)
     {
         for (int i = _allLamps.Count - 1; i >= 0; i--)
@@ -37,11 +37,11 @@ public class LightingManager : MonoBehaviour
                 return;
             }
         }
-        Debug.LogWarning($"Лампа {id} не найдена!");
+        Debug.LogWarning($"Р›Р°РјРїР° {id} РЅРµ РЅР°Р№РґРµРЅР°!");
     }
     public void TurnOffAllLamps()
     {
-        // Выключаем через LightSwitch чтобы состояние isOn синхронизировалось
+        // Р’С‹РєР»СЋС‡Р°РµРј С‡РµСЂРµР· LightSwitch С‡С‚РѕР±С‹ СЃРѕСЃС‚РѕСЏРЅРёРµ isOn СЃРёРЅС…СЂРѕРЅРёР·РёСЂРѕРІР°Р»РѕСЃСЊ
         LightSwitch[] allSwitches = FindObjectsOfType<LightSwitch>();
         foreach (var ls in allSwitches)
         {
