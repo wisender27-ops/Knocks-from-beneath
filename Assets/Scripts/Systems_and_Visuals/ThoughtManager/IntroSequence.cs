@@ -41,7 +41,8 @@ public class IntroSequence : MonoBehaviour
 
     [Header("Зоны активности")]
     public GameObject trashZone;
-    public GameObject garageZone;
+    [Tooltip("Зона для каждой из коробок дня 1 (T-12) — одна PlacementZone+RoomRevealZone на комнату.")]
+    public GameObject[] roomZones;
     public GameObject kitchenNoiseTrigger;
     public GameObject finaleTrigger;
     public GameObject nightStartTrigger;
@@ -78,7 +79,7 @@ public class IntroSequence : MonoBehaviour
             onDinnerFinished: SetupGoToBedQuest);
 
         _moveInChores = new MoveInChoresController(
-            trashZone, garageZone,
+            trashZone, roomZones,
             CreateQuest, ShowThoughts,
             onChoresFinished: _pieQuest.SetupTakePieQuest);
     }
@@ -122,7 +123,13 @@ public class IntroSequence : MonoBehaviour
     {
         if (holeEventController != null) holeEventController.enabled = false;
         if (trashZone != null) trashZone.SetActive(false);
-        if (garageZone != null) garageZone.SetActive(false);
+        if (roomZones != null)
+        {
+            for (int i = 0; i < roomZones.Length; i++)
+            {
+                if (roomZones[i] != null) roomZones[i].SetActive(false);
+            }
+        }
         if (microwaveZone != null) microwaveZone.SetActive(false);
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
         if (finaleTrigger != null) finaleTrigger.SetActive(false);

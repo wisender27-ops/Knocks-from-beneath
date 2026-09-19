@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Events;
 using System.Collections.Generic;
 
 namespace KnocksFromBeneath
@@ -7,6 +8,10 @@ namespace KnocksFromBeneath
 public class PlacementZone : MonoBehaviour
 {
     public List<Transform> slots; // Сюда перетащи Slot_1, Slot_2, Slot_3
+
+    [Tooltip("Срабатывает на каждую успешно установленную коробку — например, RoomRevealZone на этом же объекте.")]
+    public UnityEvent onBoxPlaced;
+
     private bool[] isSlotOccupied;
 
     void Awake()
@@ -76,6 +81,8 @@ public class PlacementZone : MonoBehaviour
                 Debug.Log("[PlacementZone] Прогресс доставки коробки добавлен.");
             }
         }
+
+        onBoxPlaced?.Invoke();
     }
 }
 }

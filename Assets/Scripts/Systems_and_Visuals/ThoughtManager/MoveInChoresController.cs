@@ -11,7 +11,7 @@ namespace KnocksFromBeneath
 public sealed class MoveInChoresController
 {
     private readonly GameObject _trashZone;
-    private readonly GameObject _garageZone;
+    private readonly GameObject[] _roomZones;
     private readonly Action<string, int, UnityAction, string> _createQuest;
     private readonly Action<string[], Action> _showThoughts;
     private readonly Action _onChoresFinished;
@@ -20,13 +20,13 @@ public sealed class MoveInChoresController
 
     public MoveInChoresController(
         GameObject trashZone,
-        GameObject garageZone,
+        GameObject[] roomZones,
         Action<string, int, UnityAction, string> createQuest,
         Action<string[], Action> showThoughts,
         Action onChoresFinished)
     {
         _trashZone = trashZone;
-        _garageZone = garageZone;
+        _roomZones = roomZones;
         _createQuest = createQuest;
         _showThoughts = showThoughts;
         _onChoresFinished = onChoresFinished;
@@ -68,18 +68,29 @@ public sealed class MoveInChoresController
 
     public void SetupBoxQuest()
     {
-        if (_garageZone != null) _garageZone.SetActive(true);
-        _createQuest("Отнести коробки в гараж", 1, OnBoxFinished, "box-delivery");
+        SetRoomZonesActive(true);
+        int amount = _roomZones != null ? Mathf.Max(1, _roomZones.Length) : 1;
+        _createQuest("Отнести коробки по комнатам", amount, OnBoxFinished, "box-delivery");
     }
 
     public void OnBoxFinished()
     {
-        if (_garageZone != null) _garageZone.SetActive(false);
+        SetRoomZonesActive(false);
         _showThoughts(new string[] {
             "Спина отваливается.",
             "Надо хоть что-то поесть перед сном.",
             "Достану пирог из холодильника."
         }, _onChoresFinished);
+    }
+
+    void SetRoomZonesActive(bool active)
+    {
+        if (_roomZones == null) return;
+        for (int i = 0; i < _roomZones.Length; i++)
+        {
+            if (_roomZones[i] != null)
+                _roomZones[i].SetActive(active);
+        }
     }
 }
 }
