@@ -6,10 +6,7 @@ public class KitchenNoiseTrigger : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
-            // Находим IntroSequence и говорим, что мы пришли
-            IntroSequence intro = FindFirstObjectByType<IntroSequence>();
-            if (intro != null)
-                intro.OnKitchenTriggerReached();
+            GameEvents.OnKitchenNoiseHeard?.Invoke();
             gameObject.SetActive(false); // Выключаем триггер
         }
     }

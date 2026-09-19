@@ -25,7 +25,7 @@
 - [x] T-09 — Чистка репозитория (дубли текстур, `_Recovery`, `GeneratedAssets/*_deleted`) — companyName оставлен, это выбор автора
 - [x] T-10 — Убрать устаревший `FindObjectOfType` → `FindFirstObjectByType`/`FindObjectsByType`
 - [x] T-05 — Магические числа в именованные поля (`PlayerInteraction`, `MonsterTimer`)
-- [ ] T-06 — `GameEvents` как нормальная шина событий вместо `FindObjectOfType<IntroSequence>()`
+- [x] T-06 — `GameEvents` как нормальная шина событий вместо `FindObjectOfType<IntroSequence>()` (частично — см. журнал)
 - [ ] T-07 — Распилить `PlayerInteraction` (вынести физический захват в `PickupController`)
 - [ ] T-08 — Распилить `IntroSequence` (сценарий как данные, MonoBehaviour — тонкий исполнитель)
 
@@ -106,7 +106,7 @@
   OK, 3/3 passed.
 
 ### 2026-09-19 — T-05 — Магические числа (PlayerInteraction, MonsterTimer)
-- Коммит: `(см. следующий коммит в git log)`
+- Коммит: `f5c87ad`
 - Сделано: в `PlayerInteraction.cs` вынесены в `[SerializeField] private`/`const` поля — damping
   удержания/отпускания (`15f`/`0.05f`), дистанция срыва предмета (`2.2f`), импульс при бросании
   на пол (`2f`), случайность крутящего момента при броске (`5f`), порог доводки FOV (`0.1f`,
@@ -122,3 +122,32 @@
 - Проверено: headless-компиляция — OK. EditMode-тесты — OK, 3/3 passed. Новые `[SerializeField]`
   поля получают значения по умолчанию из кода, ранее выставленные в инспекторе `public`-поля не
   переименовывались и не трогались.
+
+### 2026-09-19 — T-06 — Шина событий вместо части FindObjectOfType<IntroSequence>()
+- Коммит: `(см. следующий коммит в git log)`
+- Сделано: из 7 вызовов `FindFirstObjectByType<IntroSequence>()` (после T-10) конвертированы в
+  события 5 — те, что были чистым уведомлением «что-то произошло» без чтения состояния в ответ:
+  `BedSleepInteractable.Interact()`, `KitchenNoiseTrigger.OnTriggerEnter()`,
+  `TrashManager.SpawnBagRoutine()` (оба места), `PlayerInteraction.EatPieRoutine()`,
+  `PlayerInteraction.GrabPhysicsObject()`. `GameEvents` расширен пятью `Action`:
+  `OnBedTriggerReached`, `OnKitchenNoiseHeard`, `OnTrashDeliveryReady`, `OnPieGrabbed`,
+  `OnPieEaten`. `IntroSequence` подписывается в `OnEnable`/отписывается в `OnDisable`.
+  Для `OnPieGrabbed` раньше вызывающий код (`PlayerInteraction`) сам спрашивал
+  `intro.IsPieTakeQuestActive()` перед вызовом `OnPieTaken()` — теперь публикует событие
+  безусловно, а проверку `IsPieTakeQuestActive()` перенёс в `IntroSequence.HandlePieGrabbed()`:
+  издатель не должен знать состояние подписчика, это подписчик решает, релевантно ли ему событие.
+- Намеренно НЕ тронуты 3 вызова — это настоящие синхронные запросы состояния, а не уведомления,
+  и честно превратить их в события нельзя без переноса владения состоянием `_isPieTaken`/
+  `_isPieHeated` из `IntroSequence` во что-то опрашиваемое (это задача T-08, когда god-класс
+  всё равно будет разбираться на части, а не T-06):
+  - `PlayerInteraction.TryStartEatHeldPie()` — спрашивает `intro.CanEatPie()` и тут же в этом же
+    кадре использует ответ, чтобы решить, начинать ли поедание.
+  - `CrosshairJuice.CheckUnderCursor()` — каждый кадр спрашивает `CanEatPie()`/
+    `CanPlacePieInMicrowave()` для текста подсказки под курсором.
+  - `MicrowaveInteractable.Interact()` — спрашивает `CanPlacePieInMicrowave()` как гейт
+    взаимодействия; попутно там же остался вызов `intro.OnPiePlacedInMicrowave()` — превращать
+    его в отдельное событие бессмысленно, ссылка на `intro` в этом методе всё равно нужна для
+    самого гейта.
+- Проверено: headless-компиляция — OK. EditMode-тесты — OK, 3/3 passed. Ручную проверку сюжетной
+  цепочки (мусор → кровать → кухня → пирог) должен прогнать автор в редакторе — я не могу играть
+  в билд, могу только гарантировать компиляцию и то, что тесты логики квестов не сломались.

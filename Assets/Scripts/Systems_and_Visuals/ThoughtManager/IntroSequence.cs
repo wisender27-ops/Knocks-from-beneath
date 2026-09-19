@@ -64,6 +64,32 @@ public class IntroSequence : MonoBehaviour
     // Процедуры и инициализация
     // =====================================================================
 
+    void OnEnable()
+    {
+        GameEvents.OnBedTriggerReached += OnBedTriggerReached;
+        GameEvents.OnKitchenNoiseHeard += OnKitchenTriggerReached;
+        GameEvents.OnTrashDeliveryReady += StartTrashDeliveryQuest;
+        GameEvents.OnPieGrabbed += HandlePieGrabbed;
+        GameEvents.OnPieEaten += OnPieEaten;
+    }
+
+    void OnDisable()
+    {
+        GameEvents.OnBedTriggerReached -= OnBedTriggerReached;
+        GameEvents.OnKitchenNoiseHeard -= OnKitchenTriggerReached;
+        GameEvents.OnTrashDeliveryReady -= StartTrashDeliveryQuest;
+        GameEvents.OnPieGrabbed -= HandlePieGrabbed;
+        GameEvents.OnPieEaten -= OnPieEaten;
+    }
+
+    // Публикуется PlayerInteraction без проверки состояния квеста —
+    // сами решаем здесь, важно ли нам сейчас, что пирог взяли в руки.
+    private void HandlePieGrabbed()
+    {
+        if (IsPieTakeQuestActive())
+            OnPieTaken();
+    }
+
     void Start()
     {
         ResetUI();

@@ -203,9 +203,7 @@ public class PlayerInteraction : MonoBehaviour
         _heldObjRb = null;
         _heldItemScript = null;
 
-        var intro = FindFirstObjectByType<IntroSequence>();
-        if (intro != null)
-            intro.OnPieEaten();
+        GameEvents.OnPieEaten?.Invoke();
 
         _isEatingPie = false;
     }
@@ -275,13 +273,11 @@ public class PlayerInteraction : MonoBehaviour
         ParticleSystem ps = obj.GetComponentInChildren<ParticleSystem>();
         if (ps != null) ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
 
-        // Сюжет: достали пирог (через уже существующую механику поднятия предмета в руки)
+        // Сюжет: достали пирог (через уже существующую механику поднятия предмета в руки).
+        // Публикуем событие без проверки состояния квеста — IntroSequence сама решит,
+        // релевантно ли ей это прямо сейчас.
         if (obj.GetComponent<PieQuestItem>() != null)
-        {
-            var intro = FindFirstObjectByType<IntroSequence>();
-            if (intro != null && intro.IsPieTakeQuestActive())
-                intro.OnPieTaken();
-        }
+            GameEvents.OnPieGrabbed?.Invoke();
     }
 
     void TryReleaseObject()
