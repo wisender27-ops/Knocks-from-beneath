@@ -10,7 +10,7 @@ public class PlacementZone : MonoBehaviour
     public List<Transform> slots; // Сюда перетащи Slot_1, Slot_2, Slot_3
 
     [Tooltip("Срабатывает на каждую успешно установленную коробку — например, RoomRevealZone на этом же объекте.")]
-    public UnityEvent onBoxPlaced;
+    public UnityEvent onBoxPlaced = new UnityEvent();
 
     private bool[] isSlotOccupied;
 
@@ -25,6 +25,12 @@ public class PlacementZone : MonoBehaviour
     {
         if (box == null || slots == null)
             return false;
+
+        // Защита на случай, если Awake() ещё не отработал (в EditMode-тестах AddComponent
+        // не гарантирует немедленный вызов Awake — см. RoomRevealZoneTests). В реальной игре
+        // это no-op, Awake уже отработал к моменту вызова TryPlaceBox игроком.
+        if (isSlotOccupied == null || isSlotOccupied.Length != slots.Count)
+            isSlotOccupied = new bool[slots.Count];
 
         for (int i = 0; i < slots.Count; i++)
         {
