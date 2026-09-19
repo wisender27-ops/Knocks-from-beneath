@@ -103,7 +103,7 @@ public class IntroSequence : MonoBehaviour
 
         _eveningRound = new EveningRoundController(
             frontDoor, CreateQuest, ShowThoughts,
-            onEveningFinished: SetupSearchNoiseQuest); // временно — заменится в T-18 на полноценный старт ночи 2 (fade+teleport)
+            onEveningFinished: StartNightTwo); // T-18: fade+teleport+знакомая цепочка расследования, как в старом NightRoutine()
 
         _dinner = new DinnerCookingController(
             CreateQuest, ShowThoughts,
@@ -297,6 +297,14 @@ public class IntroSequence : MonoBehaviour
     void OnGoToBedFinished()
     {
         _nightOne.Run();
+    }
+
+    // Финал дня 2 (T-18) — переиспользует существующую цепочку fade->teleport->стук->
+    // расследование дословно, только точка входа теперь после EveningRoundController,
+    // а не сразу после пирога дня 1.
+    void StartNightTwo()
+    {
+        StartCoroutine(NightRoutine());
     }
 
 
