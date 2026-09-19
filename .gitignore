@@ -97,3 +97,13 @@ InitTestScene*.unity*
 
 # Auto-generated scenes by play mode tests
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
+
+# Unity Editor crash-recovery scenes — regenerated locally, not meant for version control
+/[Aa]ssets/_Recovery/
+
+# AI-generated model cache marked as deleted by the generator tool itself
+/GeneratedAssets/*_deleted/
+
+# Auto-regenerated IDE solution/project files (Rider/VS rewrite these on every project open)
+*.slnx
+*.csproj.user
