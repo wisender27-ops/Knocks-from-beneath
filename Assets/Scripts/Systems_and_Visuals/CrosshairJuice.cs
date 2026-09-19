@@ -37,6 +37,14 @@ public class CrosshairJuice : MonoBehaviour
 
     void CheckUnderCursor()
     {
+        if (interaction == null || interaction.playerCamera == null)
+        {
+            _targetScale = Vector3.one * defaultScale;
+            _targetColor = defaultColor;
+            _targetHint = "";
+            return;
+        }
+
         GameObject heldObj = interaction.GetHeldObject();
         if (heldObj != null)
         {
@@ -151,6 +159,9 @@ public class CrosshairJuice : MonoBehaviour
 
     void ApplyJuice()
     {
+        if (cursorImage == null)
+            return;
+
         cursorImage.transform.localScale = Vector3.Lerp(
             cursorImage.transform.localScale, _targetScale, Time.deltaTime * scaleSpeed);
         cursorImage.color = Color.Lerp(

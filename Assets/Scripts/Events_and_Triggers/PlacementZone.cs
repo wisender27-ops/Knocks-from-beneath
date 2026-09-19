@@ -9,15 +9,18 @@ public class PlacementZone : MonoBehaviour
     void Awake()
     {
         // Инициализируем массив "занятости" по количеству слотов
-        isSlotOccupied = new bool[slots.Count];
+        isSlotOccupied = new bool[slots != null ? slots.Count : 0];
     }
 
     // Тот самый метод, который вызывает игрок
     public bool TryPlaceBox(GameObject box)
     {
+        if (box == null || slots == null)
+            return false;
+
         for (int i = 0; i < slots.Count; i++)
         {
-            if (!isSlotOccupied[i]) // Нашли свободный слот
+            if (!isSlotOccupied[i] && slots[i] != null) // Нашли свободный слот
             {
                 FinalizePlacement(box, i);
                 return true; // Говорим игроку: "Всё ок, я забрала!"
@@ -29,6 +32,9 @@ public class PlacementZone : MonoBehaviour
 
     void FinalizePlacement(GameObject box, int index)
     {
+        if (box == null || slots == null || index < 0 || index >= slots.Count || slots[index] == null)
+            return;
+
         // 1. Убиваем физику
         Rigidbody rb = box.GetComponent<Rigidbody>();
         if (rb != null) {
@@ -55,7 +61,9 @@ public class PlacementZone : MonoBehaviour
         Debug.Log($"Зона: Коробка зафиксирована в слоте {index + 1}");
 
         // Сценарий: если активный квест - доставка коробок, считаем прогресс
-        if (QuestManager.Instance != null && QuestManager.Instance.currentQuestIndex < QuestManager.Instance.questList.Count)
+        if (QuestManager.Instance != null &&
+            QuestManager.Instance.currentQuestIndex >= 0 &&
+            QuestManager.Instance.currentQuestIndex < QuestManager.Instance.questList.Count)
         {
             var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
             if (activeQuest.questTag == "box-delivery" || activeQuest.questTag == "box-collect")

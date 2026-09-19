@@ -19,7 +19,7 @@ public class ImpactSounds : MonoBehaviour
         if (Time.time < _lastPlayTime + cooldown) return;
 
         // 2. ѕроверка массива (чтобы не было ошибок в консоли)
-        if (clips == null || clips.Length == 0) return;
+        if (impactSource == null || clips == null || clips.Length == 0) return;
 
         float speed = collision.relativeVelocity.magnitude;
 

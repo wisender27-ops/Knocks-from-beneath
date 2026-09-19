@@ -43,6 +43,11 @@ public class PlayerInventory : MonoBehaviour
         currentItemIndex = 0;
     }
 
+    void OnDisable()
+    {
+        CancelInvoke(nameof(CheckHit));
+    }
+
     void Update()
     {
         // --- ПЕРЕКЛЮЧЕНИЕ КЛАВИШАМИ ---
@@ -124,7 +129,8 @@ public class PlayerInventory : MonoBehaviour
             if (flashlightAudioSource != null)
             {
                 AudioClip clip = flashlightLightSource.enabled ? soundOn : soundOff;
-                flashlightAudioSource.PlayOneShot(clip);
+                if (clip != null)
+                    flashlightAudioSource.PlayOneShot(clip);
             }
         }
     }
@@ -134,13 +140,16 @@ public class PlayerInventory : MonoBehaviour
         if (crowbarAnim != null)
         {
             crowbarAnim.SetTrigger("Attack");
-            Invoke("CheckHit", damageDelay);
+            Invoke(nameof(CheckHit), Mathf.Max(0f, damageDelay));
         }
     }
 
     public void CheckHit()
     {
-        Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        Camera camera = Camera.main;
+        if (camera == null) return;
+
+        Ray ray = camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, hitDistance, interactableLayer))

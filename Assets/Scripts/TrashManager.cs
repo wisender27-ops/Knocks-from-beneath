@@ -17,6 +17,7 @@ public class TrashManager : MonoBehaviour
 
     private int _totalPiles;
     private int _collectedCount;
+    private bool _bagSpawnStarted;
 
     void Awake()
     {
@@ -24,8 +25,16 @@ public class TrashManager : MonoBehaviour
         HideAll(); // ��������� �� ��� ������
     }
 
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
     public void HideAll()
     {
+        if (trashPiles == null) return;
+
         foreach (var pile in trashPiles)
             if (pile != null) pile.SetActive(false);
     }
@@ -34,19 +43,30 @@ public class TrashManager : MonoBehaviour
     public void Initialize()
     {
         _collectedCount = 0;
-        _totalPiles = trashPiles.Length;
+        _totalPiles = 0;
+        _bagSpawnStarted = false;
+
+        if (trashPiles == null) return;
 
         foreach (var pile in trashPiles)
-            if (pile != null) pile.SetActive(true);
+        {
+            if (pile == null) continue;
+            _totalPiles++;
+            pile.SetActive(true);
+        }
     }
 
     // ���������� �� TrashPile.Collect()
     public void OnPileCollected()
     {
+        if (_bagSpawnStarted || _totalPiles <= 0) return;
         _collectedCount++;
 
         if (_collectedCount >= _totalPiles)
+        {
+            _bagSpawnStarted = true;
             StartCoroutine(SpawnBagRoutine());
+        }
     }
 
     IEnumerator SpawnBagRoutine()
@@ -58,7 +78,11 @@ public class TrashManager : MonoBehaviour
         // ������� ����� ����� �������
         if (trashBagPrefab != null)
         {
-            Transform player = Camera.main.transform;
+            Camera camera = Camera.main;
+            if (camera == null)
+                yield break;
+
+            Transform player = camera.transform;
             Vector3 spawnPos = player.position + player.forward * 1.2f;
             spawnPos.y = player.position.y - 1f;
             Vector3 spawnPosHigh = spawnPos + Vector3.up * 1.5f;
@@ -77,6 +101,14 @@ public class TrashManager : MonoBehaviour
 
         // ��� 3 ������� ����� �������
         yield return new WaitForSeconds(3f);
+
+        if (ThoughtManager.Instance == null)
+        {
+            IntroSequence fallbackIntro = FindObjectOfType<IntroSequence>();
+            if (fallbackIntro != null)
+                fallbackIntro.StartTrashDeliveryQuest();
+            yield break;
+        }
 
         ThoughtManager.Instance.ShowThoughts(new string[] {
             "...Что это было?",

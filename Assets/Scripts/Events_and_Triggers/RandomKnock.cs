@@ -28,11 +28,11 @@ public class RandomKnock : MonoBehaviour
         while (true)
         {
             // ∆дем случайное количество времени
-            float waitTime = Random.Range(minDelay, maxDelay);
+            float waitTime = Random.Range(Mathf.Max(0f, minDelay), Mathf.Max(minDelay, maxDelay));
             yield return new WaitForSeconds(waitTime);
 
             // ¬оспроизводим случайный звук из массива
-            if (knockClips.Length > 0)
+            if (audioSource != null && knockClips != null && knockClips.Length > 0)
             {
                 int randomIndex = Random.Range(0, knockClips.Length);
                 audioSource.PlayOneShot(knockClips[randomIndex]);

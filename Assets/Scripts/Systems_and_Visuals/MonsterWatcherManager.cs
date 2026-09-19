@@ -13,9 +13,15 @@ public class MonsterWatcherManager : MonoBehaviour
 
     void Awake() => Instance = this;
 
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
     public void SpawnWatcher(Vector3 playerPosition)
     {
-        if (_activeMonster != null) return; // Ќе спавним, если он уже где-то стоит
+        if (_activeMonster != null || monsterPrefab == null || spawnPoints == null) return; // Ќе спавним, если он уже где-то стоит
 
         Transform bestPoint = GetClosestPoint(playerPosition);
         if (bestPoint != null)
@@ -24,7 +30,8 @@ public class MonsterWatcherManager : MonoBehaviour
             // «аставл€ем его смотреть на игрока (только по оси Y)
             Vector3 lookPos = playerPosition - _activeMonster.transform.position;
             lookPos.y = 0;
-            _activeMonster.transform.rotation = Quaternion.LookRotation(lookPos);
+            if (lookPos.sqrMagnitude > 0.001f)
+                _activeMonster.transform.rotation = Quaternion.LookRotation(lookPos);
 
             Destroy(_activeMonster, observationDuration); // ќн исчезает, когда игрок отвлечетс€
         }
@@ -37,6 +44,7 @@ public class MonsterWatcherManager : MonoBehaviour
 
         foreach (Transform pt in spawnPoints)
         {
+            if (pt == null) continue;
             float dist = Vector3.Distance(playerPosition, pt.position);
             // “очка должна быть достаточно близко, чтобы ее увидеть, но не в упор
             if (dist < minDist && dist > 2f)

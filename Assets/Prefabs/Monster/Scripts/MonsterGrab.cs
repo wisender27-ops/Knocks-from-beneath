@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections.Generic;
 
 public class CinematicMonsterGrab : MonoBehaviour
 {
@@ -23,6 +24,18 @@ public class CinematicMonsterGrab : MonoBehaviour
     private float timer = 0f;
     private bool hasTriggered = false;
     private float seed;
+    private GameObject activePlayer;
+    private readonly List<MonoBehaviour> disabledPlayerScripts = new List<MonoBehaviour>();
+    private bool playerControllerWasEnabled;
+    private Vector3 cameraPositionBeforeCinematic;
+    private Quaternion cameraRotationBeforeCinematic;
+    private bool cameraTransformCaptured;
+
+    void OnDisable()
+    {
+        if (isPlaying)
+            StopCinematic();
+    }
 
     void Awake() => seed = Random.value * 100f;
 
@@ -31,10 +44,15 @@ public class CinematicMonsterGrab : MonoBehaviour
     void LateUpdate()
     {
         if (!isPlaying) return;
+        if (mainCam == null || grabCamStart == null || grabCamEnd == null)
+        {
+            StopCinematic();
+            return;
+        }
 
         timer += Time.deltaTime;
-        float t = Mathf.Clamp01(timer / moveDuration);
-        float curvedT = moveCurve.Evaluate(t);
+        float t = moveDuration > 0f ? Mathf.Clamp01(timer / moveDuration) : 1f;
+        float curvedT = moveCurve != null ? moveCurve.Evaluate(t) : t;
 
         // 1. Считаем позицию (в мировых координатах)
         Vector3 targetPos = Vector3.Lerp(grabCamStart.position, grabCamEnd.position, curvedT);
@@ -61,43 +79,83 @@ public class CinematicMonsterGrab : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (!hasTriggered && other.CompareTag("Player"))
+        if (hasTriggered || other == null) return;
+
+        Transform playerRoot = other.transform.root;
+        if (playerRoot == null || !playerRoot.CompareTag("Player")) return;
+
+        hasTriggered = true;
+        activePlayer = playerRoot.gameObject;
+        if (mainCam == null)
+            mainCam = Camera.main;
+        if (mainCam != null)
         {
-            hasTriggered = true;
-            if (monsterAnimator != null) monsterAnimator.SetTrigger("StartGrab");
-
-            // Блокируем скрипты игрока (WASD)
-            SetPlayerControl(other.gameObject, false);
-
-            isPlaying = true;
-            timer = 0f;
+            cameraPositionBeforeCinematic = mainCam.transform.position;
+            cameraRotationBeforeCinematic = mainCam.transform.rotation;
+            cameraTransformCaptured = true;
         }
+
+        if (monsterAnimator != null) monsterAnimator.SetTrigger("StartGrab");
+
+        SetPlayerControl(activePlayer, false);
+
+        isPlaying = true;
+        timer = 0f;
     }
 
     public void StopCinematic()
     {
         isPlaying = false;
-        // Просто возвращаем управление. Камера сама "приклеится" обратно к CameraRoot, 
-        // так как мы перестали перезаписывать её позицию в LateUpdate.
-        if (GameObject.FindGameObjectWithTag("Player") != null)
+
+        if (cameraTransformCaptured && mainCam != null)
         {
-            SetPlayerControl(GameObject.FindGameObjectWithTag("Player"), true);
+            mainCam.transform.SetPositionAndRotation(cameraPositionBeforeCinematic, cameraRotationBeforeCinematic);
+            cameraTransformCaptured = false;
         }
+
+        GameObject player = activePlayer != null ? activePlayer : GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+            SetPlayerControl(player, true);
+
+        activePlayer = null;
     }
 
     private void SetPlayerControl(GameObject player, bool state)
     {
-        var controller = player.GetComponent<CharacterController>();
-        if (controller != null) controller.enabled = state;
+        if (player == null) return;
 
-        // Отключаем все скрипты кроме этого, чтобы игрок не дергал камеру мышкой
-        MonoBehaviour[] scripts = player.GetComponentsInChildren<MonoBehaviour>();
-        foreach (var script in scripts)
+        var controller = player.GetComponent<CharacterController>();
+        if (!state)
         {
-            if (script != this && !(script is Camera))
+            disabledPlayerScripts.Clear();
+            playerControllerWasEnabled = controller != null && controller.enabled;
+            if (controller != null) controller.enabled = false;
+
+            MonoBehaviour[] scripts = player.GetComponentsInChildren<MonoBehaviour>();
+            foreach (var script in scripts)
             {
-                script.enabled = state;
+                if (script != this && !(script is Camera) && script.enabled)
+                {
+                    script.enabled = false;
+                    disabledPlayerScripts.Add(script);
+                }
             }
+            return;
         }
+
+        if (controller != null)
+            controller.enabled = playerControllerWasEnabled;
+
+        foreach (var script in disabledPlayerScripts)
+        {
+            if (script != null)
+                script.enabled = true;
+        }
+        disabledPlayerScripts.Clear();
     }
+}
+
+// Compatibility class for prefabs serialized with the original file name.
+public sealed class MonsterGrab : CinematicMonsterGrab
+{
 }

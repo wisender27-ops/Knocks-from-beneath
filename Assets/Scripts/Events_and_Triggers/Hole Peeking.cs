@@ -14,6 +14,9 @@ public class HolePeeping : MonoBehaviour
 
     void Update()
     {
+        if (mainCamera == null || peepPoint == null)
+            return;
+
         if (Input.GetKeyDown(KeyCode.E) && IsPlayerNear()) // Добавь свою проверку дистанции
         {
             TogglePeeping();
@@ -27,6 +30,9 @@ public class HolePeeping : MonoBehaviour
 
     void TogglePeeping()
     {
+        if (mainCamera == null || peepPoint == null)
+            return;
+
         isPeeping = !isPeeping;
 
         if (isPeeping)
@@ -48,6 +54,8 @@ public class HolePeeping : MonoBehaviour
 
     void HandleRotation()
     {
+        if (mainCamera == null) return;
+
         rotX += Input.GetAxis("Mouse X") * sensitivity;
         rotY -= Input.GetAxis("Mouse Y") * sensitivity;
 
@@ -60,6 +68,6 @@ public class HolePeeping : MonoBehaviour
     
     bool IsPlayerNear() {
         // Здесь логика проверки: через Trigger Enter/Exit или Raycast
-        return true; 
+        return mainCamera != null && peepPoint != null;
     }
 }

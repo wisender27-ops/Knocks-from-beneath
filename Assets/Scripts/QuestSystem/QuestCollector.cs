@@ -15,10 +15,16 @@ public class QuestCollector : MonoBehaviour
             return;
         }
 
+        if (QuestManager.Instance == null)
+            return;
+
         // Проверяем что сейчас активен квест который ждёт этот тип предмета
-        if (QuestManager.Instance.currentQuestIndex < QuestManager.Instance.questList.Count)
+        if (QuestManager.Instance.currentQuestIndex >= 0 &&
+            QuestManager.Instance.currentQuestIndex < QuestManager.Instance.questList.Count)
         {
             var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
+            if (activeQuest == null)
+                return;
 
             // Проверяем по questTag, а не по названиям (устойчиво к локализации/кодировкам)
             bool isCorrectQuest =

@@ -42,6 +42,7 @@ public class PlayerController : MonoBehaviour
 
     // Переменная для хранения текущей скорости (горизонтальной)
     private Vector3 horizontalVelocity;
+    private readonly Collider[] ceilingOverlaps = new Collider[16];
 
     void Start()
     {
@@ -67,7 +68,7 @@ public class PlayerController : MonoBehaviour
     private void HandleLook()
     {
         // ДОБАВЛЯЕМ ЭТУ СТРОКУ: Если камера заблокирована, просто выходим из метода
-        if (isCameraLocked) return;
+        if (isCameraLocked || cam == null) return;
 
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
@@ -156,9 +157,12 @@ public class PlayerController : MonoBehaviour
         controller.center = new Vector3(0f, controller.height / 2f, 0f);
 
         currentCameraY = Mathf.Lerp(currentCameraY, targetCameraY, Time.deltaTime * crouchSmooth);
-        Vector3 camPos = cam.transform.localPosition;
-        camPos.y = currentCameraY;
-        cam.transform.localPosition = camPos;
+        if (cam != null)
+        {
+            Vector3 camPos = cam.transform.localPosition;
+            camPos.y = currentCameraY;
+            cam.transform.localPosition = camPos;
+        }
     }
 
     private bool IsCeilingBlocking()
@@ -169,10 +173,16 @@ public class PlayerController : MonoBehaviour
         float headY = transform.position.y + standingHeight - checkRadius;
         Vector3 headCheckPos = new Vector3(transform.position.x, headY, transform.position.z);
 
-        Collider[] overlaps = Physics.OverlapSphere(headCheckPos, checkRadius, Physics.AllLayers, QueryTriggerInteraction.Ignore);
-        for (int i = 0; i < overlaps.Length; i++)
+        int overlapCount = Physics.OverlapSphereNonAlloc(
+            headCheckPos,
+            checkRadius,
+            ceilingOverlaps,
+            Physics.AllLayers,
+            QueryTriggerInteraction.Ignore);
+
+        for (int i = 0; i < overlapCount; i++)
         {
-            Collider col = overlaps[i];
+            Collider col = ceilingOverlaps[i];
             if (col == null) continue;
 
             // Игнорируем собственные коллайдеры игрока.
@@ -182,4 +192,9 @@ public class PlayerController : MonoBehaviour
 
         return false;
     }
+}
+
+// Compatibility class for prefabs serialized with the original file name.
+public sealed class PlayerMovement : PlayerController
+{
 }

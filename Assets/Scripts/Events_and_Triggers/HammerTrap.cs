@@ -19,13 +19,16 @@ public class HammerTrap : MonoBehaviour
 
     public void TriggerEvent(PlayerInventory inv)
     {
+        if (inv == null) return;
+
         inv.hasHammer = true;
         inv.ActivateItem("Hammer");
 
         if (InventoryUI.Instance != null)
             InventoryUI.Instance.AddItem("Hammer");
 
-        QuestManager.Instance.AddProgress(1);
+        if (QuestManager.Instance != null)
+            QuestManager.Instance.AddProgress(1);
 
         if (roomDoor != null) roomDoor.CloseDoor();
         if (targetSource != null && slamClip != null)

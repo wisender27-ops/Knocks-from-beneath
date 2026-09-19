@@ -22,7 +22,7 @@ public class QuestZone : MonoBehaviour
     {
         if (other.CompareTag("Pickable"))
         {
-            currentBoxes--;
+            currentBoxes = Mathf.Max(0, currentBoxes - 1);
             Debug.Log("Коробку вынесли. В зоне осталось: " + currentBoxes);
             
             // Если вынесли коробку, квест снова можно завершить позже

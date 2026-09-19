@@ -29,10 +29,15 @@ public class HeadBobbing : MonoBehaviour
     {
         _controller = GetComponentInParent<CharacterController>();
         _initialLocalPos = transform.localPosition;
+        _targetPos = _initialLocalPos;
+        _targetRot = transform.localRotation;
     }
 
     void Update()
     {
+        if (_controller == null)
+            return;
+
         Vector3 vel = new Vector3(_controller.velocity.x, 0, _controller.velocity.z);
         float speed = vel.magnitude;
 
@@ -69,8 +74,9 @@ public class HeadBobbing : MonoBehaviour
         }
 
         // ѕлавное следование за целью (в€зкость)
-        transform.localPosition = Vector3.Lerp(transform.localPosition, _targetPos, Time.deltaTime * smoothness);
-        transform.localRotation = Quaternion.Slerp(transform.localRotation, _targetRot, Time.deltaTime * smoothness);
+        float smoothing = Mathf.Clamp01(Time.deltaTime * Mathf.Max(0f, smoothness));
+        transform.localPosition = Vector3.Lerp(transform.localPosition, _targetPos, smoothing);
+        transform.localRotation = Quaternion.Slerp(transform.localRotation, _targetRot, smoothing);
     }
 
     void PlayFootstepSound()
@@ -104,6 +110,9 @@ public class HeadBobbing : MonoBehaviour
                 AudioClip clip = selectedArray[Random.Range(0, selectedArray.Length)];
 
                 // Ќемного мен€ем высоту звука (Pitch), чтобы шаги не были одинаковыми
+                if (footstepSource == null)
+                    return;
+
                 footstepSource.pitch = Random.Range(0.9f, 1.1f);
                 footstepSource.PlayOneShot(clip);
             }

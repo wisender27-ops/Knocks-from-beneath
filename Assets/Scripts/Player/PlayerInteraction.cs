@@ -34,11 +34,15 @@ public class PlayerInteraction : MonoBehaviour
 
     void Start()
     {
-        _defaultFov = playerCamera.fieldOfView;
+        if (playerCamera != null)
+            _defaultFov = playerCamera.fieldOfView;
     }
 
     void Update()
     {
+        if (playerCamera == null)
+            return;
+
         if (_isEatingPie) return;
 
         if (Input.GetKeyDown(KeyCode.E))
@@ -55,7 +59,7 @@ public class PlayerInteraction : MonoBehaviour
                 if (TryInteractWhileHolding())
                     return;
 
-                DropObject();
+                TryReleaseObject();
             }
         }
 
@@ -65,8 +69,16 @@ public class PlayerInteraction : MonoBehaviour
 
     void FixedUpdate()
     {
-        if (_heldObj != null)
+        if (_heldObj != null && _heldObjRb != null && holdPoint != null)
             MovePhysicsObject();
+    }
+
+    void OnDisable()
+    {
+        StopAllCoroutines();
+        if (_heldObj != null)
+            ReleaseHeldObject();
+        _isEatingPie = false;
     }
 
     void PerformInteraction()
@@ -187,6 +199,9 @@ public class PlayerInteraction : MonoBehaviour
     // --- ЛОГИКА ИНВЕНТАРЯ ---
     void PickUpToInventory(SimpleItem item)
     {
+        if (item == null || inventory == null)
+            return;
+
         // Check if we can pick up this item - it should be required by the active quest
         if (!CanPickUpItem(item))
         {
@@ -203,51 +218,38 @@ public class PlayerInteraction : MonoBehaviour
         if (InventoryUI.Instance != null)
             InventoryUI.Instance.AddItem(item.itemType.ToString());
 
-        if (QuestManager.Instance.currentQuestIndex < QuestManager.Instance.questList.Count)
-        {
-            var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
-
-            bool isCorrectItem =
-                (item.itemType == ItemType.Crowbar && activeQuest.questTitle.Contains("лом")) ||
-                (item.itemType == ItemType.Hammer && activeQuest.questTitle.Contains("молоток")) ||
-                (item.itemType == ItemType.Flashlight && activeQuest.questTitle.Contains("фонарик"));
-
-            if (isCorrectItem)
-                QuestManager.Instance.AddProgress(1);
-        }
+        if (QuestManager.Instance != null && QuestManager.Instance.IsItemRequired(item.itemType))
+            QuestManager.Instance.AddProgress(1);
 
         Destroy(item.gameObject);
     }
 
     bool CanPickUpItem(SimpleItem item)
     {
-        // If no active quest, cannot pick up story items
-        if (QuestManager.Instance.currentQuestIndex >= QuestManager.Instance.questList.Count)
-            return false;
-
-        var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
-
-        // Check if the item matches active quest requirement via tag (reliable) or title (fallback)
-        bool itemIsNeeded =
-            (item.itemType == ItemType.Crowbar && activeQuest.questTag == "crowbar-find") ||
-            (item.itemType == ItemType.Hammer && activeQuest.questTag == "hammer-find") ||
-            (item.itemType == ItemType.Flashlight && activeQuest.questTag == "flashlight-find") ||
-            (item.itemType == ItemType.Crowbar && activeQuest.questTitle.Contains("лом")) ||
-            (item.itemType == ItemType.Hammer && activeQuest.questTitle.Contains("молоток")) ||
-            (item.itemType == ItemType.Flashlight && activeQuest.questTitle.Contains("фонарик"));
-
-        return itemIsNeeded;
+        return item != null && QuestManager.Instance != null && QuestManager.Instance.IsItemRequired(item.itemType);
     }
 
     // --- ФИЗИКА ---
     void GrabPhysicsObject(GameObject obj)
     {
+        if (obj == null || _heldObj != null || holdPoint == null)
+            return;
+
         _heldObj = obj;
         _heldObjRb = obj.GetComponent<Rigidbody>();
+        if (_heldObjRb == null)
+        {
+            _heldObj = null;
+            return;
+        }
+
+        _heldItemScript = obj.GetComponent<PickableItem>();
         _heldRotationOffset = Quaternion.Inverse(holdPoint.rotation) * obj.transform.rotation;
 
         _originalLayer = _heldObj.layer;
-        _heldObj.layer = LayerMask.NameToLayer("HeldItem");
+        int heldLayer = LayerMask.NameToLayer("HeldItem");
+        if (heldLayer >= 0)
+            _heldObj.layer = heldLayer;
 
         _heldObjRb.interpolation = RigidbodyInterpolation.Interpolate;
         _heldObjRb.useGravity = false;
@@ -281,6 +283,19 @@ public class PlayerInteraction : MonoBehaviour
         DropObject();
     }
 
+    private static void RestoreHeldRigidbody(Rigidbody rb, bool resetInterpolation)
+    {
+        if (rb == null) return;
+
+        rb.useGravity = true;
+        rb.isKinematic = false;
+        rb.linearDamping = 0.05f;
+        rb.angularDamping = 0.05f;
+        rb.constraints = RigidbodyConstraints.None;
+        if (resetInterpolation)
+            rb.interpolation = RigidbodyInterpolation.None;
+    }
+
     void DropObject()
     {
         if (_heldObj == null) return;
@@ -288,12 +303,9 @@ public class PlayerInteraction : MonoBehaviour
         _heldObj.layer = _originalLayer;
         _heldObj.transform.SetParent(null);
 
-        _heldObjRb.useGravity = true;
-        _heldObjRb.isKinematic = false;
-        _heldObjRb.linearDamping = 0.05f;
-        _heldObjRb.angularDamping = 0.05f;
-        _heldObjRb.constraints = RigidbodyConstraints.None;
-        _heldObjRb.AddForce(playerCamera.transform.forward * 2f, ForceMode.Impulse);
+        RestoreHeldRigidbody(_heldObjRb, true);
+        if (_heldObjRb != null && playerCamera != null)
+            _heldObjRb.AddForce(playerCamera.transform.forward * 2f, ForceMode.Impulse);
 
         ClearHeldObject();
     }
@@ -315,6 +327,9 @@ public class PlayerInteraction : MonoBehaviour
 
     void MovePhysicsObject()
     {
+        if (_heldObj == null || _heldObjRb == null || holdPoint == null)
+            return;
+
         Vector3 targetPos = holdPoint.position;
         Vector3 currentPos = _heldObj.transform.position;
 
@@ -337,12 +352,7 @@ public class PlayerInteraction : MonoBehaviour
         GameObject objToThrow = _heldObj;
 
         objToThrow.layer = _originalLayer;
-        rbToThrow.useGravity = true;
-        rbToThrow.isKinematic = false;
-        rbToThrow.linearDamping = 0.05f;
-        rbToThrow.angularDamping = 0.05f;
-        rbToThrow.constraints = RigidbodyConstraints.None;
-        rbToThrow.interpolation = RigidbodyInterpolation.None;
+        RestoreHeldRigidbody(rbToThrow, true);
 
         ClearHeldObject();
 
@@ -394,26 +404,21 @@ public class PlayerInteraction : MonoBehaviour
         released.layer = _originalLayer;
         released.transform.SetParent(null);
 
-        if (releasedRb != null)
-        {
-            releasedRb.useGravity = true;
-            releasedRb.isKinematic = false;
-            releasedRb.linearDamping = 0.05f;
-            releasedRb.angularDamping = 0.05f;
-            releasedRb.constraints = RigidbodyConstraints.None;
-            releasedRb.interpolation = RigidbodyInterpolation.None;
-        }
+        RestoreHeldRigidbody(releasedRb, true);
 
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
         _heldRotationOffset = Quaternion.identity;
+
+        ParticleSystem ps = released.GetComponentInChildren<ParticleSystem>();
+        if (ps != null) ps.Play();
         return released;
     }
 
     public bool TryGrabObjectFromScript(GameObject obj)
     {
-        if (obj == null || _heldObj != null) return false;
+        if (obj == null || _heldObj != null || holdPoint == null) return false;
         Rigidbody rb = obj.GetComponent<Rigidbody>();
         if (rb == null) return false;
 

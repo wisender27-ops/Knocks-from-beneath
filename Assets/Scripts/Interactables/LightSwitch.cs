@@ -54,12 +54,14 @@ public class LightSwitch : MonoBehaviour
     void ApplyLightState()
     {
         // 1. Управляем источниками света
+        if (lightsToControl != null)
         foreach (Light l in lightsToControl)
         {
             if (l != null) l.enabled = isOn;
         }
 
         // 2. Управляем визуальным свечением материала
+        if (lampRenderers != null)
         foreach (Renderer rend in lampRenderers)
         {
             if (rend != null)

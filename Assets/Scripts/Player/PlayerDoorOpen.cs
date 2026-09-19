@@ -21,6 +21,9 @@ public class PlayerDoorOpen : MonoBehaviour
 
     void Update()
     {
+        if (playerCamera == null)
+            return;
+
         // 1. НАЖАЛИ КНОПКУ: Ищем дверь, хватаем её и лочим камеру
         if (Input.GetKeyDown(KeyCode.E))
         {
@@ -57,5 +60,17 @@ public class PlayerDoorOpen : MonoBehaviour
                     playerController.isCameraLocked = false;
             }
         }
+    }
+
+    void OnDisable()
+    {
+        if (currentHeldDoor != null)
+        {
+            currentHeldDoor.StopHolding();
+            currentHeldDoor = null;
+        }
+
+        if (playerController != null)
+            playerController.isCameraLocked = false;
     }
 }

@@ -5,9 +5,12 @@ public class TrashPile : MonoBehaviour
     public void Collect()
     {
         if (QuestManager.Instance == null) return;
-        if (QuestManager.Instance.currentQuestIndex >= QuestManager.Instance.questList.Count) return;
+        if (QuestManager.Instance.questList == null ||
+            QuestManager.Instance.currentQuestIndex < 0 ||
+            QuestManager.Instance.currentQuestIndex >= QuestManager.Instance.questList.Count) return;
 
         var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
+        if (activeQuest == null) return;
         if (activeQuest.questTag != "trash-collect")
         {
             Debug.Log("[TrashPile] Сбор мусора вне этапа 'trash-collect' — игнор.");

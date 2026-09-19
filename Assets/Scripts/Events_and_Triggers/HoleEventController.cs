@@ -39,7 +39,7 @@ public class HoleEventController : MonoBehaviour
 
     void Update()
     {
-        if (_eventStarted) return;
+        if (_eventStarted || inventory == null || _playerCam == null) return;
 
         bool isFlashlightOn = inventory.hasFlashlight &&
                               _flashlightLight != null &&
@@ -92,7 +92,9 @@ public class HoleEventController : MonoBehaviour
 
     bool IsPlayerLookingAtHole()
     {
-        Ray ray = Camera.main.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        if (_playerCam == null) return false;
+
+        Ray ray = _playerCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
         if (Physics.Raycast(ray, out hit, lookDistance))
             return hit.collider.CompareTag("FloorBoards");
@@ -101,7 +103,7 @@ public class HoleEventController : MonoBehaviour
 
     void PlayRandomTensionSound()
     {
-        if (tensionAudioSource == null || tensionSounds.Length == 0) return;
+        if (tensionAudioSource == null || tensionSounds == null || tensionSounds.Length == 0) return;
         AudioClip clip = tensionSounds[Random.Range(0, tensionSounds.Length)];
         tensionAudioSource.PlayOneShot(clip);
     }
@@ -109,6 +111,12 @@ public class HoleEventController : MonoBehaviour
     IEnumerator TheVoidSequence()
     {
         _eventStarted = true;
+
+        if (inventory == null || _flashlightLight == null || _playerCam == null)
+        {
+            _eventStarted = false;
+            yield break;
+        }
 
         // 1. “ŒÀ‹ Œ ¡€—“–Œ≈ Ã»√¿Õ»≈ ó ·ÂÁ ‡ÒÍ‡˜ÍË
         yield return StartCoroutine(FlickerFlashlight(3, 0.04f));
@@ -124,7 +132,8 @@ public class HoleEventController : MonoBehaviour
         yield return new WaitForSeconds(0.5f);
 
         // 3. ÃŒÕ—“– œŒﬂ¬Àﬂ≈“—ﬂ ó ÂÁÍÓ
-        monsterFace.SetActive(true);
+        if (monsterFace != null)
+            monsterFace.SetActive(true);
         _flashlightLight.enabled = true;
         PlayFlashlightSound(inventory.soundOn);
 
@@ -145,7 +154,8 @@ public class HoleEventController : MonoBehaviour
         PlayFlashlightSound(inventory.soundOff);
 
         yield return new WaitForSeconds(0.4f);
-        monsterFace.SetActive(false);
+        if (monsterFace != null)
+            monsterFace.SetActive(false);
 
         yield return new WaitForSeconds(0.3f);
 
@@ -154,7 +164,8 @@ public class HoleEventController : MonoBehaviour
         PlayFlashlightSound(inventory.soundOn);
 
         // 8. «¿¬≈–ÿ¿≈Ã  ¬≈—“
-        QuestManager.Instance.AddProgress(1);
+        if (QuestManager.Instance != null)
+            QuestManager.Instance.AddProgress(1);
         this.enabled = false;
     }
 
@@ -249,6 +260,8 @@ public class HoleEventController : MonoBehaviour
 
     IEnumerator Paralyze(float duration)
     {
+        if (inventory == null) yield break;
+
         PlayerController pc = inventory.GetComponent<PlayerController>();
         if (pc == null) yield break;
 
@@ -271,7 +284,7 @@ public class HoleEventController : MonoBehaviour
 
     void PlayFlashlightSound(AudioClip clip)
     {
-        if (inventory.flashlightAudioSource != null && clip != null)
+        if (inventory != null && inventory.flashlightAudioSource != null && clip != null)
             inventory.flashlightAudioSource.PlayOneShot(clip);
     }
 }

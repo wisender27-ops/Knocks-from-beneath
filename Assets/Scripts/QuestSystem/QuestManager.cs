@@ -35,7 +35,18 @@ public class QuestManager : MonoBehaviour
     private Coroutine _questColorRoutine;
     private string _lastActiveQuestTag = null;
 
-    void Awake() => Instance = this;
+    void Awake()
+    {
+        Instance = this;
+        if (questList == null)
+            questList = new List<QuestData>();
+    }
+
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
 
     void OnEnable()
     {
@@ -55,9 +66,10 @@ public class QuestManager : MonoBehaviour
 
     public void AddProgress(int amount)
     {
-        if (currentQuestIndex >= questList.Count) return;
+        if (amount <= 0 || currentQuestIndex < 0 || currentQuestIndex >= questList.Count) return;
 
         QuestData activeQuest = questList[currentQuestIndex];
+        if (activeQuest == null) return;
         activeQuest.currentAmount += amount;
 
         Debug.Log($"[QuestManager] Quest '{activeQuest.questTitle}' (tag='{activeQuest.questTag}') progress {activeQuest.currentAmount}/{activeQuest.requiredAmount}");
@@ -80,8 +92,8 @@ public class QuestManager : MonoBehaviour
     public void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction onCompleteAction = null, string questTag = "")
     {
         QuestData newQuest = new QuestData();
-        newQuest.questTitle = title;
-        newQuest.requiredAmount = amount;
+        newQuest.questTitle = title ?? string.Empty;
+        newQuest.requiredAmount = Mathf.Max(1, amount);
         newQuest.currentAmount = 0;
         newQuest.questTag = questTag;
         newQuest.onQuestComplete = new UnityEvent();
@@ -102,13 +114,35 @@ public class QuestManager : MonoBehaviour
     public string GetActiveQuestTag()
     {
         if (currentQuestIndex < 0 || currentQuestIndex >= questList.Count) return "";
-        return questList[currentQuestIndex].questTag ?? "";
+        QuestData activeQuest = questList[currentQuestIndex];
+        return activeQuest != null ? activeQuest.questTag ?? "" : "";
     }
 
     public bool IsQuestActive(string questTag)
     {
         if (string.IsNullOrEmpty(questTag)) return false;
         return string.Equals(GetActiveQuestTag(), questTag, StringComparison.Ordinal);
+    }
+
+    public bool IsItemRequired(ItemType itemType)
+    {
+        string requiredQuestTag;
+        switch (itemType)
+        {
+            case ItemType.Crowbar:
+                requiredQuestTag = "crowbar-find";
+                break;
+            case ItemType.Hammer:
+                requiredQuestTag = "hammer-find";
+                break;
+            case ItemType.Flashlight:
+                requiredQuestTag = "flashlight-find";
+                break;
+            default:
+                return false;
+        }
+
+        return IsQuestActive(requiredQuestTag);
     }
 
     void NotifyActiveQuestTagIfChanged(bool force = false)
@@ -126,9 +160,14 @@ public class QuestManager : MonoBehaviour
         if (questUiText == null) return;
 
         // Если есть активный квест — показываем его
-        if (currentQuestIndex < questList.Count)
+        if (currentQuestIndex >= 0 && currentQuestIndex < questList.Count)
         {
             QuestData q = questList[currentQuestIndex];
+            if (q == null)
+            {
+                questUiText.text = "";
+                return;
+            }
             string newText;
 
             // Для одношаговых квестов выводим только цель.

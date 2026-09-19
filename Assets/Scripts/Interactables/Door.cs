@@ -82,12 +82,12 @@ public class Door : MonoBehaviour
         transform.localRotation = Quaternion.Slerp(transform.localRotation, targetQuaternion, openSpeed * Time.deltaTime);
 
         // Расчет скорости для звука
-        float currentRotY = transform.localEulerAngles.y;
-        float deltaRot = Mathf.DeltaAngle(previousRotationY, currentRotY);
+        float currentAxisAngle = GetAxisAngle(transform.localEulerAngles);
+        float deltaRot = Mathf.DeltaAngle(previousRotationY, currentAxisAngle);
         float rawVelocity = Mathf.Abs(deltaRot) / Time.deltaTime;
 
         smoothDoorVelocity = Mathf.Lerp(smoothDoorVelocity, rawVelocity, Time.deltaTime * 10f);
-        previousRotationY = currentRotY;
+        previousRotationY = currentAxisAngle;
 
         ManageCreakSound(smoothDoorVelocity);
 
@@ -182,8 +182,9 @@ public class Door : MonoBehaviour
 
     private void TriggerMonsterEvent()
     {
-        if (MonsterWatcherManager.Instance != null)
-            MonsterWatcherManager.Instance.SpawnWatcher(Camera.main.transform.position);
+        Camera camera = Camera.main;
+        if (MonsterWatcherManager.Instance != null && camera != null)
+            MonsterWatcherManager.Instance.SpawnWatcher(camera.transform.position);
     }
 
     private float GetAxisAngle(Vector3 euler)

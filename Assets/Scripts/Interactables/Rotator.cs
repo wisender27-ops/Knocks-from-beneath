@@ -95,8 +95,9 @@ public class Rotator : MonoBehaviour
     {
         // Логика вращения
         float targetPower = isSpinning ? 1f : 0f;
-        powerFactor = Mathf.MoveTowards(powerFactor, targetPower, Time.deltaTime / powerRampDuration);
-        float dynamicMaxSpeed = maxSpeed * powerFactor;
+        float rampDuration = Mathf.Max(0.01f, powerRampDuration);
+        powerFactor = Mathf.MoveTowards(powerFactor, targetPower, Time.deltaTime / rampDuration);
+        float dynamicMaxSpeed = Mathf.Max(0f, maxSpeed) * powerFactor;
         currentSpeed = Mathf.MoveTowards(currentSpeed, dynamicMaxSpeed, (isSpinning ? acceleration : deceleration) * Time.deltaTime);
         transform.Rotate(rotationAxis * currentSpeed * Time.deltaTime);
 
@@ -112,7 +113,7 @@ public class Rotator : MonoBehaviour
                 else { sourceB.time = 0; sourceB.Play(); }
             }
 
-            float speedRatio = currentSpeed / maxSpeed;
+            float speedRatio = maxSpeed > 0f ? currentSpeed / maxSpeed : 0f;
             float targetFullVolume = speedRatio * maxVolume;
             float targetPitch = Mathf.Lerp(minPitch, maxPitch, speedRatio);
 

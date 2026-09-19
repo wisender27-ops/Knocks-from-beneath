@@ -50,7 +50,8 @@ public class FloorLogic : MonoBehaviour
 
         isBroken = true;
 
-        QuestManager.Instance.AddProgress(1);
+        if (QuestManager.Instance != null)
+            QuestManager.Instance.AddProgress(1);
     }
 
     public void Fix()

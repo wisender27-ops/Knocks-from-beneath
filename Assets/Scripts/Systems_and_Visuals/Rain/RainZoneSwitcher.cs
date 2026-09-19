@@ -39,8 +39,10 @@ public class RainZoneSwitcher : MonoBehaviour
         // Only apply "enter" when we transition 0 -> 1 across all zones.
         if (s_playerInsideAnyRainZone != 1) return;
 
-        enterSnapshot.TransitionTo(transitionTime);
-        FogController.Instance.SetFog(enterFogDensity, transitionTime);
+        if (enterSnapshot != null)
+            enterSnapshot.TransitionTo(transitionTime);
+        if (FogController.Instance != null)
+            FogController.Instance.SetFog(enterFogDensity, transitionTime);
 
         Debug.Log("Вход в зону: " + gameObject.name);
     }
@@ -66,13 +68,49 @@ public class RainZoneSwitcher : MonoBehaviour
 
         if (s_playerInsideAnyRainZone <= 0)
         {
-            exitSnapshot.TransitionTo(transitionTime);
-            FogController.Instance.SetFog(exitFogDensity, transitionTime);
+            if (exitSnapshot != null)
+                exitSnapshot.TransitionTo(transitionTime);
+            if (FogController.Instance != null)
+                FogController.Instance.SetFog(exitFogDensity, transitionTime);
 
             Debug.Log("Выход из зоны: " + gameObject.name);
         }
 
         exitCoroutine = null;
+    }
+
+    private void OnDisable()
+    {
+        bool hadPendingExit = exitCoroutine != null;
+        if (exitCoroutine != null)
+        {
+            StopCoroutine(exitCoroutine);
+            exitCoroutine = null;
+        }
+
+        int removedColliders = _playerCollidersInsideThisTrigger.Count;
+        if (removedColliders == 0)
+        {
+            if (hadPendingExit && s_playerInsideAnyRainZone == 0)
+            {
+                if (exitSnapshot != null)
+                    exitSnapshot.TransitionTo(transitionTime);
+                if (FogController.Instance != null)
+                    FogController.Instance.SetFog(exitFogDensity, transitionTime);
+            }
+            return;
+        }
+
+        _playerCollidersInsideThisTrigger.Clear();
+        s_playerInsideAnyRainZone = Mathf.Max(0, s_playerInsideAnyRainZone - removedColliders);
+
+        if (s_playerInsideAnyRainZone == 0)
+        {
+            if (exitSnapshot != null)
+                exitSnapshot.TransitionTo(transitionTime);
+            if (FogController.Instance != null)
+                FogController.Instance.SetFog(exitFogDensity, transitionTime);
+        }
     }
 
     private static bool IsPlayerCollider(Collider col)

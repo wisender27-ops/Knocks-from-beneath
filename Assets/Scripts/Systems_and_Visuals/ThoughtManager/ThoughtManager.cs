@@ -2,6 +2,7 @@ using UnityEngine;
 using TMPro;
 using System;
 using System.Collections;
+using System.Collections.Generic;
 
 public class ThoughtManager : MonoBehaviour
 {
@@ -22,6 +23,19 @@ public class ThoughtManager : MonoBehaviour
     [Range(0.8f, 1.2f)][SerializeField] private float maxPitch = 1.05f;
 
     private bool _isDisplaying = false;
+    private readonly Queue<ThoughtRequest> _pendingRequests = new Queue<ThoughtRequest>();
+
+    private sealed class ThoughtRequest
+    {
+        public readonly string[] lines;
+        public readonly Action onComplete;
+
+        public ThoughtRequest(string[] lines, Action onComplete)
+        {
+            this.lines = lines;
+            this.onComplete = onComplete;
+        }
+    }
 
     void Awake()
     {
@@ -33,22 +47,47 @@ public class ThoughtManager : MonoBehaviour
         if (thoughtText != null) thoughtText.text = "";
     }
 
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
     // √лавна€ функци€, которую мы вызываем из IntroSequence
     // lines - список фраз
     // onComplete - действие, которое выполнитс€ в самом конце (например, выдача квеста)
     public void ShowThoughts(string[] lines, Action onComplete = null)
     {
-        if (_isDisplaying) return; // ≈сли уже что-то печатаем Ч игнорируем новый вызов
+        if (lines == null || lines.Length == 0)
+        {
+            onComplete?.Invoke();
+            return;
+        }
+
+        if (_isDisplaying)
+        {
+            _pendingRequests.Enqueue(new ThoughtRequest(lines, onComplete));
+            return;
+        }
+
         StartCoroutine(DisplaySequence(lines, onComplete));
     }
 
     private IEnumerator DisplaySequence(string[] lines, Action onComplete)
     {
         _isDisplaying = true;
+
+        if (textCanvas == null || thoughtText == null)
+        {
+            FinishCurrentRequest(onComplete);
+            yield break;
+        }
+
         textCanvas.SetActive(true);
 
-        foreach (string line in lines)
+        foreach (string rawLine in lines)
         {
+            string line = rawLine ?? string.Empty;
             thoughtText.text = ""; // ќчищаем поле перед новой фразой
 
             foreach (char letter in line.ToCharArray())
@@ -82,6 +121,18 @@ public class ThoughtManager : MonoBehaviour
         _isDisplaying = false;
 
         // ¬џѕќЋЌя≈ћ ƒ≈…—“¬»≈, которое передали (например, включение квеста)
+        FinishCurrentRequest(onComplete);
+    }
+
+    private void FinishCurrentRequest(Action onComplete)
+    {
+        _isDisplaying = false;
         onComplete?.Invoke();
+
+        if (!_isDisplaying && _pendingRequests.Count > 0)
+        {
+            ThoughtRequest next = _pendingRequests.Dequeue();
+            StartCoroutine(DisplaySequence(next.lines, next.onComplete));
+        }
     }
 }

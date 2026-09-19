@@ -8,13 +8,29 @@ public class LightingManager : MonoBehaviour
 
     void Awake() { Instance = this; }
 
-    public void RegisterLamp(SmartLamp lamp) => _allLamps.Add(lamp);
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
+    public void RegisterLamp(SmartLamp lamp)
+    {
+        if (lamp != null && !_allLamps.Contains(lamp))
+            _allLamps.Add(lamp);
+    }
 
     // ÂÎÒ ÒÂÎÉ ÍÎÂÛÉ ÌÅÒÎÄ: ID, ñêîëüêî ñåêóíä ìèãàòü, êàê ÷àñòî (èíòåðâàë)
     public void Flicker(string id, float duration, float interval)
     {
-        foreach (var lamp in _allLamps)
+        for (int i = _allLamps.Count - 1; i >= 0; i--)
         {
+            SmartLamp lamp = _allLamps[i];
+            if (lamp == null)
+            {
+                _allLamps.RemoveAt(i);
+                continue;
+            }
             if (lamp.lampID == id)
             {
                 lamp.StartSimpleFlicker(duration, interval);

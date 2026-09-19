@@ -26,7 +26,14 @@ public class ItemGlow : MonoBehaviour
         var main = _particles.main;
         main.simulationSpace = ParticleSystemSimulationSpace.Local;
 
-        _player = Camera.main.transform;
+        Camera camera = Camera.main;
+        if (camera == null)
+        {
+            enabled = false;
+            return;
+        }
+
+        _player = camera.transform;
 
         // Сразу выключаем emission
         SetEmission(0);
@@ -49,7 +56,8 @@ public class ItemGlow : MonoBehaviour
         }
         else
         {
-            float t = 1f - (distance - fadeDistance) / (visibleDistance - fadeDistance);
+            float fadeRange = Mathf.Max(0.001f, visibleDistance - fadeDistance);
+            float t = 1f - (distance - fadeDistance) / fadeRange;
             SetEmission(_baseEmissionRate * t);
         }
     }

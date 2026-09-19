@@ -14,18 +14,25 @@ public class SmartLamp : MonoBehaviour
     void Start()
     {
         if (lightSource == null) lightSource = GetComponent<Light>();
+        if (lightSource == null)
+            return;
+
         _defaultIntensity = lightSource.intensity;
-        LightingManager.Instance.RegisterLamp(this);
+        if (LightingManager.Instance != null)
+            LightingManager.Instance.RegisterLamp(this);
     }
 
     public void StartSimpleFlicker(float duration, float interval)
     {
+        if (lightSource == null) return;
         if (_currentFlicker != null) StopCoroutine(_currentFlicker);
-        _currentFlicker = StartCoroutine(FlickerRoutine(duration, interval));
+        _currentFlicker = StartCoroutine(FlickerRoutine(Mathf.Max(0f, duration), Mathf.Max(0.01f, interval)));
     }
 
     private IEnumerator FlickerRoutine(float duration, float interval)
     {
+        if (lightSource == null) yield break;
+
         float elapsed = 0;
         if (audioSource && flickerClip) { audioSource.clip = flickerClip; audioSource.Play(); }
 

@@ -23,6 +23,12 @@ public class MonsterTimer : MonoBehaviour
         Instance = this;
     }
 
+    void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
     void Start()
     {
         if (timerText != null) timerText.text = "";
@@ -46,6 +52,13 @@ public class MonsterTimer : MonoBehaviour
         _isRunning = true;
         float remaining = timerDuration;
 
+        if (timerText == null)
+        {
+            _isRunning = false;
+            OnTimerExpired();
+            yield break;
+        }
+
         while (remaining > 0)
         {
             // Текст меняет цвет — белый → жёлтый → красный
@@ -56,8 +69,7 @@ public class MonsterTimer : MonoBehaviour
             else
                 timerText.color = Color.red;
 
-            timerText.text = $"Monster will emerge from the hole in {Mathf.CeilToInt(remaining)} seconds";
-                        timerText.text = $"Монстр вылезет из дыры через {Mathf.CeilToInt(remaining)} секунд";
+            timerText.text = $"Монстр вылезет из дыры через {Mathf.CeilToInt(remaining)} секунд";
             remaining -= Time.deltaTime;
             yield return null;
         }
@@ -74,7 +86,8 @@ public class MonsterTimer : MonoBehaviour
             audioSource.PlayOneShot(monsterEscapeClip);
 
         // Надпись на экране
-        StartCoroutine(ShowFinalMessage());
+        if (timerText != null)
+            StartCoroutine(ShowFinalMessage());
     }
 
     IEnumerator ShowFinalMessage()

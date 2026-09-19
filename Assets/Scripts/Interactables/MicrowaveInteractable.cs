@@ -47,11 +47,14 @@ public class MicrowaveInteractable : MonoBehaviour
         if (microwaveDoor == null || !microwaveDoor.isOpen) return;
         if (pieInsidePoint == null) return;
 
-        GameObject held = playerInteraction.ReleaseHeldObject();
+        GameObject held = playerInteraction.GetHeldObject();
         if (held == null) return;
 
         PieQuestItem pie = held.GetComponent<PieQuestItem>();
         if (pie == null) return;
+
+        held = playerInteraction.ReleaseHeldObject();
+        if (held == null) return;
 
         PutPieInsideMicrowave(held, pie);
         microwaveDoor.CloseDoor(); // принудительно закрываем дверцу после установки

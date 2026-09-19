@@ -20,21 +20,28 @@ public class FinaleController : MonoBehaviour
 
     private void OnTriggerEnter(Collider other)
     {
-        if (other.CompareTag("Player") && !isEndingTriggered)
+        if (isEndingTriggered || other == null)
+            return;
+
+        Transform playerRoot = other.transform.root;
+        if (playerRoot == null || !playerRoot.CompareTag("Player"))
+            return;
+
+        if (!isEndingTriggered)
         {
-            PlayerInventory inventory = other.GetComponent<PlayerInventory>();
-            PlayerController pc = other.GetComponent<PlayerController>();
+            PlayerInventory inventory = playerRoot.GetComponent<PlayerInventory>();
+            PlayerController pc = playerRoot.GetComponent<PlayerController>();
 
             if (inventory != null && inventory.hasHammer && pc != null)
             {
                 isEndingTriggered = true;
                 inventory.ActivateItem("Hammer");
-                QuestManager.Instance.AddProgress(1);
+                if (QuestManager.Instance != null)
+                    QuestManager.Instance.AddProgress(1);
                 StartCoroutine(PushedIntoHoleRoutine(pc));
+                if (MonsterTimer.Instance != null)
+                    MonsterTimer.Instance.StopTimer();
             }
-
-            if (MonsterTimer.Instance != null)
-                MonsterTimer.Instance.StopTimer();
 
         }
     }
@@ -52,9 +59,12 @@ public class FinaleController : MonoBehaviour
         // 2. ������ ������� �� ������ ����� ������
         Vector3 behindPlayer = pc.transform.position - pc.transform.forward * 2f;
         behindPlayer.y = pc.transform.position.y;
-        monsterModel.transform.position = behindPlayer;
-        monsterModel.transform.LookAt(pc.transform.position);
-        monsterModel.SetActive(true);
+        if (monsterModel != null)
+        {
+            monsterModel.transform.position = behindPlayer;
+            monsterModel.transform.LookAt(pc.transform.position);
+            monsterModel.SetActive(true);
+        }
 
         // 3. ����
         if (audioSource && evilLaughClip)
@@ -68,7 +78,8 @@ public class FinaleController : MonoBehaviour
         {
             float t = 0;
             Quaternion startRot = playerCam.transform.rotation;
-            Vector3 dirToMonster = monsterModel.transform.position + Vector3.up * 1.5f - playerCam.transform.position;
+            Vector3 lookPosition = monsterModel != null ? monsterModel.transform.position : pc.transform.position + pc.transform.forward;
+            Vector3 dirToMonster = lookPosition + Vector3.up * 1.5f - playerCam.transform.position;
             Quaternion targetRot = Quaternion.LookRotation(dirToMonster);
 
             // 0.08f � ����� ������, ����� �����
@@ -95,22 +106,27 @@ public class FinaleController : MonoBehaviour
             float progress = fallTime / fallDuration;
 
             // ������� ���� � ���������� (�������� ����������)
-            pc.transform.position = Vector3.Lerp(startPos, holeBottomSpot.position, progress * progress);
+            Vector3 targetPosition = holeBottomSpot != null ? holeBottomSpot.position : startPos;
+            pc.transform.position = Vector3.Lerp(startPos, targetPosition, progress * progress);
             yield return null;
         }
-        pc.transform.position = holeBottomSpot.position;
+        if (holeBottomSpot != null)
+            pc.transform.position = holeBottomSpot.position;
 
         // 6. ����������
         float elapsed = 0;
         while (elapsed < 0.8f)
         {
             elapsed += Time.deltaTime;
-            fadeScreen.alpha = elapsed / 0.8f;
+            if (fadeScreen != null)
+                fadeScreen.alpha = elapsed / 0.8f;
             yield return null;
         }
-        fadeScreen.alpha = 1f;
+        if (fadeScreen != null)
+            fadeScreen.alpha = 1f;
 
-        monsterModel.SetActive(false);
+        if (monsterModel != null)
+            monsterModel.SetActive(false);
 
         // 7. ���� �������������
         yield return new WaitForSeconds(0.5f);
@@ -121,7 +137,7 @@ public class FinaleController : MonoBehaviour
             audioSource.Play();
         }
 
-        if (QuestManager.Instance != null)
+        if (QuestManager.Instance != null && QuestManager.Instance.questUiText != null)
             QuestManager.Instance.questUiText.text = "";
 
         yield return new WaitForSeconds(3f);
@@ -129,10 +145,13 @@ public class FinaleController : MonoBehaviour
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 
-        ThoughtManager.Instance.ShowThoughts(new string[] {
-        "НЕТ!",
-        "ВЫПУСТИ МЕНЯ!"
-    }, QuitGame);
+        if (ThoughtManager.Instance != null)
+        {
+            ThoughtManager.Instance.ShowThoughts(new string[] {
+                "НЕТ!",
+                "ВЫПУСТИ МЕНЯ!"
+            }, QuitGame);
+        }
     }
 
     void QuitGame()

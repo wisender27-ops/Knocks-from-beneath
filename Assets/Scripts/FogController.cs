@@ -12,10 +12,23 @@ public class FogController : MonoBehaviour
         Instance = this;
     }
 
+    private void OnDestroy()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
+
     public void SetFog(float targetDensity, float duration)
     {
         if (currentCoroutine != null)
             StopCoroutine(currentCoroutine);
+
+        if (duration <= 0f)
+        {
+            RenderSettings.fogDensity = targetDensity;
+            currentCoroutine = null;
+            return;
+        }
 
         currentCoroutine = StartCoroutine(LerpFog(targetDensity, duration));
     }
@@ -33,5 +46,6 @@ public class FogController : MonoBehaviour
         }
 
         RenderSettings.fogDensity = target;
+        currentCoroutine = null;
     }
 }

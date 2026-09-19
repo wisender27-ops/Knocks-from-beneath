@@ -77,7 +77,7 @@ public class IntroSequence : MonoBehaviour
 
     void ResetUI()
     {
-        if (QuestManager.Instance.questUiText != null)
+        if (QuestManager.Instance != null && QuestManager.Instance.questUiText != null)
             QuestManager.Instance.questUiText.text = "";
     }
 
@@ -170,7 +170,8 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
     void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction callback = null, string questTag = "")
     {
-        QuestManager.Instance.CreateQuest(title, amount, callback, questTag);
+        if (QuestManager.Instance != null)
+            QuestManager.Instance.CreateQuest(title, amount, callback, questTag);
     }
 
     // =====================================================================
@@ -180,7 +181,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
     // --- 1. Начальный монолог ---
     void StartIntro()
     {
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ShowThoughts(new string[] {
             "Наконец-то - своё жильё.",
             "Хоть и прошлые хозяева его конечно засрали."
         }, SetupTrashQuest);
@@ -188,7 +189,8 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
     void SetupTrashQuest()
     {
-        TrashManager.Instance.Initialize();
+        if (TrashManager.Instance != null)
+            TrashManager.Instance.Initialize();
         CreateQuest("Собрать мусор по дому", 3, OnTrashCollected, "trash-collect");
     }
 
@@ -211,7 +213,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
     public void OnTrashFinished()
     {
         if (trashZone != null) trashZone.SetActive(false);
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ShowThoughts(new string[] {
             "Коробки всё ещё у входа...",
             "Как будто на каторгу приехал."
         }, SetupBoxQuest);
@@ -221,13 +223,13 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
     void SetupBoxQuest()
     {
         if (garageZone != null) garageZone.SetActive(true);
-        QuestManager.Instance.CreateQuest("Отнести коробки в гараж", 1, OnBoxFinished, "box-delivery");
+        CreateQuest("Отнести коробки в гараж", 1, OnBoxFinished, "box-delivery");
     }
 
     public void OnBoxFinished()
     {
         if (garageZone != null) garageZone.SetActive(false);
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ShowThoughts(new string[] {
             "Спина отваливается.",
             "Надо хоть что-то поесть перед сном.",
             "Достану пирог из холодильника."
@@ -261,7 +263,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
     public void OnPieEaten()
     {
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ShowThoughts(new string[] {
             "Уже легче.",
             "Теперь можно поспать."
         }, SetupGoToBedQuest);
@@ -276,11 +278,10 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
     public void OnBedTriggerReached()
     {
         if (QuestManager.Instance == null) return;
-        if (QuestManager.Instance.currentQuestIndex >= QuestManager.Instance.questList.Count) return;
+        if (QuestManager.Instance.currentQuestIndex < 0 ||
+            QuestManager.Instance.currentQuestIndex >= QuestManager.Instance.questList.Count) return;
 
-        var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
-        bool isBedQuest = activeQuest.questTag == "go-to-bed" || activeQuest.questTitle.Contains("кровати");
-        if (!isBedQuest) return;
+        if (!QuestManager.Instance.IsQuestActive("go-to-bed")) return;
 
         // nightStartTrigger.SetActive(false) убрано — кровать всегда видна
         QuestManager.Instance.AddProgress(1); // Завершить квест
@@ -302,7 +303,8 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
         while (elapsed < 1.5f)
         {
             elapsed += Time.deltaTime;
-            fadeScreen.alpha = elapsed / 1.5f;
+            if (fadeScreen != null)
+                fadeScreen.alpha = elapsed / 1.5f;
             yield return null;
         }
 
@@ -320,11 +322,12 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
         while (elapsed > 0)
         {
             elapsed -= Time.deltaTime;
-            fadeScreen.alpha = elapsed / 1.5f;
+            if (fadeScreen != null)
+                fadeScreen.alpha = elapsed / 1.5f;
             yield return null;
         }
 
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ShowThoughts(new string[] {
             "...?",
             "Что это было?..",
             "Я только въехал. Почему оно не пропало."
@@ -344,13 +347,14 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
     public void OnKitchenTriggerReached()
     {
-        QuestManager.Instance.AddProgress(1);
+        if (QuestManager.Instance != null)
+            QuestManager.Instance.AddProgress(1);
     }
 
     void OnKitchenQuestCompleted()
     {
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ShowThoughts(new string[] {
             "Под полом.",
             "Прямо подо мной.",
             "Без света я туда не полезу."
@@ -366,7 +370,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
     public void OnFlashlightPickedUp()
     {
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ShowThoughts(new string[] {
             "Свет есть.",
             "Теперь бы лом."
         }, SetupCrowbarQuest);
@@ -381,7 +385,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
     public void OnCrowbarPickedUp()
     {
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ShowThoughts(new string[] {
             "Нашёл.",
             "Ненавижу это чувство."
         }, SetupBreakFloorQuest);
@@ -395,7 +399,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
     public void OnFloorBroken()
     {
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ShowThoughts(new string[] {
             "Ничего не видно.",
             "Ладно хоть фонарик взял."
         }, SetupLookInHoleQuest);
@@ -418,7 +422,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
     {
         if (MonsterTimer.Instance != null)
             MonsterTimer.Instance.StartTimer();
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ShowThoughts(new string[] {
             "НЕТ.",
             "Эта тварь выскочила прямо на меня.",
             "Нужно заколотить её.",
@@ -435,7 +439,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
     // --- 9. Молоток и финал ---
     public void OnHammerPickedUp()
     {
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ShowThoughts(new string[] {
             "Взял.",
             "Я всё исправлю."
         }, () =>
@@ -460,10 +464,23 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
         return _isPieHeated && IsQuestActive("pie-eat");
     }
 
+    private void ShowThoughts(string[] lines, System.Action onComplete)
+    {
+        if (ThoughtManager.Instance != null)
+        {
+            ThoughtManager.Instance.ShowThoughts(lines, onComplete);
+            return;
+        }
+
+        onComplete?.Invoke();
+    }
+
     bool IsQuestActive(string questTag)
     {
         if (QuestManager.Instance == null) return false;
-        if (QuestManager.Instance.currentQuestIndex >= QuestManager.Instance.questList.Count) return false;
-        return QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex].questTag == questTag;
+        if (QuestManager.Instance.currentQuestIndex < 0 ||
+            QuestManager.Instance.currentQuestIndex >= QuestManager.Instance.questList.Count) return false;
+        QuestManager.QuestData activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
+        return activeQuest != null && activeQuest.questTag == questTag;
     }
 }
