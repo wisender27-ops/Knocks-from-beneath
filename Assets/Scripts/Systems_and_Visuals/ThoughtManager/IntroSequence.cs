@@ -56,38 +56,46 @@ public class IntroSequence : MonoBehaviour
     public GameObject pieObject;
     public GameObject microwaveZone;
 
-    private bool _isPieTaken = false;
-    private bool _isPieHeated = false;
-    private bool _trashDeliveryQuestStarted = false;
+    // Быт после переезда (мусор -> коробки) и квест с пирогом — самодостаточные
+    // под-сюжеты, вынесены в отдельные классы (T-08). IntroSequence координирует
+    // порядок и общие для всех этапов помощники (CreateQuest/ShowThoughts/IsQuestActive),
+    // но не хранит их внутреннее состояние.
+    private MoveInChoresController _moveInChores;
+    private PieQuestController _pieQuest;
 
     // =====================================================================
     // Процедуры и инициализация
     // =====================================================================
 
+    void Awake()
+    {
+        _pieQuest = new PieQuestController(
+            pieObject, microwaveZone,
+            CreateQuest, ShowThoughts, IsQuestActive,
+            onDinnerFinished: SetupGoToBedQuest);
+
+        _moveInChores = new MoveInChoresController(
+            trashZone, garageZone,
+            CreateQuest, ShowThoughts,
+            onChoresFinished: _pieQuest.SetupTakePieQuest);
+    }
+
     void OnEnable()
     {
         GameEvents.OnBedTriggerReached += OnBedTriggerReached;
         GameEvents.OnKitchenNoiseHeard += OnKitchenTriggerReached;
-        GameEvents.OnTrashDeliveryReady += StartTrashDeliveryQuest;
-        GameEvents.OnPieGrabbed += HandlePieGrabbed;
-        GameEvents.OnPieEaten += OnPieEaten;
+        GameEvents.OnTrashDeliveryReady += _moveInChores.StartTrashDeliveryQuest;
+        GameEvents.OnPieGrabbed += _pieQuest.HandlePieGrabbed;
+        GameEvents.OnPieEaten += _pieQuest.OnPieEaten;
     }
 
     void OnDisable()
     {
         GameEvents.OnBedTriggerReached -= OnBedTriggerReached;
         GameEvents.OnKitchenNoiseHeard -= OnKitchenTriggerReached;
-        GameEvents.OnTrashDeliveryReady -= StartTrashDeliveryQuest;
-        GameEvents.OnPieGrabbed -= HandlePieGrabbed;
-        GameEvents.OnPieEaten -= OnPieEaten;
-    }
-
-    // Публикуется PlayerInteraction без проверки состояния квеста —
-    // сами решаем здесь, важно ли нам сейчас, что пирог взяли в руки.
-    private void HandlePieGrabbed()
-    {
-        if (IsPieTakeQuestActive())
-            OnPieTaken();
+        GameEvents.OnTrashDeliveryReady -= _moveInChores.StartTrashDeliveryQuest;
+        GameEvents.OnPieGrabbed -= _pieQuest.HandlePieGrabbed;
+        GameEvents.OnPieEaten -= _pieQuest.OnPieEaten;
     }
 
     void Start()
@@ -132,7 +140,7 @@ public class IntroSequence : MonoBehaviour
 
     void ApplyDebugSkip()
     {
-Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
+        Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
         if (startStage >= DebugStoryStage.StartKitchenNoise)
         {
@@ -145,7 +153,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
         switch (startStage)
         {
             case DebugStoryStage.StartBoxQuest:
-                SetupBoxQuest();
+                _moveInChores.SetupBoxQuest();
                 break;
             case DebugStoryStage.StartNight:
                 StartCoroutine(NightRoutine());
@@ -210,89 +218,7 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
         ShowThoughts(new string[] {
             "Наконец-то - своё жильё.",
             "Хоть и прошлые хозяева его конечно засрали."
-        }, SetupTrashQuest);
-    }
-
-    void SetupTrashQuest()
-    {
-        if (TrashManager.Instance != null)
-            TrashManager.Instance.Initialize();
-        CreateQuest("Собрать мусор по дому", 3, OnTrashCollected, "trash-collect");
-    }
-
-    void OnTrashCollected()
-    {
-        // Delivery quest is started after TrashManager finishes its thought sequence,
-        // to prevent sequence breaks from completing it mid-dialogue.
-        _trashDeliveryQuestStarted = false;
-    }
-
-    public void StartTrashDeliveryQuest()
-    {
-        if (_trashDeliveryQuestStarted) return;
-        _trashDeliveryQuestStarted = true;
-
-        if (trashZone != null) trashZone.SetActive(true);
-        CreateQuest("Вынести мусорный мешок", 1, OnTrashFinished, "trash-delivery");
-    }
-
-    public void OnTrashFinished()
-    {
-        if (trashZone != null) trashZone.SetActive(false);
-        ShowThoughts(new string[] {
-            "Коробки всё ещё у входа...",
-            "Как будто на каторгу приехал."
-        }, SetupBoxQuest);
-    }
-
-    // --- 2. Собирать коробки ---
-    void SetupBoxQuest()
-    {
-        if (garageZone != null) garageZone.SetActive(true);
-        CreateQuest("Отнести коробки в гараж", 1, OnBoxFinished, "box-delivery");
-    }
-
-    public void OnBoxFinished()
-    {
-        if (garageZone != null) garageZone.SetActive(false);
-        ShowThoughts(new string[] {
-            "Спина отваливается.",
-            "Надо хоть что-то поесть перед сном.",
-            "Достану пирог из холодильника."
-        }, SetupTakePieQuest);
-    }
-
-    void SetupTakePieQuest()
-    {
-        _isPieTaken = false;
-        _isPieHeated = false;
-
-        if (pieObject != null) pieObject.SetActive(true);
-        if (microwaveZone != null) microwaveZone.SetActive(false);
-
-        CreateQuest("Достать пирог из холодильника", 1, null, "pie-take");
-    }
-
-    public void OnPieTaken()
-    {
-        _isPieTaken = true;
-        if (microwaveZone != null) microwaveZone.SetActive(true);
-        CreateQuest("Поставить пирог в микроволновку", 1, OnPiePlacedInMicrowave, "pie-microwave");
-    }
-
-    public void OnPiePlacedInMicrowave()
-    {
-        _isPieHeated = true;
-        if (microwaveZone != null) microwaveZone.SetActive(false);
-        CreateQuest("Съесть пирог", 1, OnPieEaten, "pie-eat");
-    }
-
-    public void OnPieEaten()
-    {
-        ShowThoughts(new string[] {
-            "Уже легче.",
-            "Теперь можно поспать."
-        }, SetupGoToBedQuest);
+        }, _moveInChores.SetupTrashQuest);
     }
 
     void SetupGoToBedQuest()
@@ -475,19 +401,22 @@ Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
         });
     }
 
-    public bool IsPieTakeQuestActive()
-    {
-        return IsQuestActive("pie-take");
-    }
+    // --- Квест с пирогом: внешний контракт (MicrowaveInteractable, CrosshairJuice,
+    // PlayerInteraction зовут эти методы напрямую) — тонкие проброс-методы в PieQuestController.
 
     public bool CanPlacePieInMicrowave()
     {
-        return _isPieTaken && !_isPieHeated && IsQuestActive("pie-microwave");
+        return _pieQuest.CanPlacePieInMicrowave();
     }
 
     public bool CanEatPie()
     {
-        return _isPieHeated && IsQuestActive("pie-eat");
+        return _pieQuest.CanEatPie();
+    }
+
+    public void OnPiePlacedInMicrowave()
+    {
+        _pieQuest.OnPiePlacedInMicrowave();
     }
 
     private void ShowThoughts(string[] lines, System.Action onComplete)
