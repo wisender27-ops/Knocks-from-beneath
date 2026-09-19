@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fc01f046bfb31a3d3904b8bced4cdfa3, type: 3}
+  m_Name: RetroPSX Display
+  m_EditorClassIdentifier: RetroPSX.Runtime::RetroPSX.RetroDisplayProfile
+  enabled: 1
+  scanlines: 0.16
+  maskStrength: 0.14
+  maskMode: 2
+  curvature: 0.015
+  overscan: 0.01
+  vignette: 0.08
+  horizontalBleed: 0.12
+  chromaBleed: 0.05
+  chromaticMisalignment: 0.08
+  signalNoise: 0.012
+  brightness: 1.04
+  interlacing: 0
+  pixelBloom: 0.08

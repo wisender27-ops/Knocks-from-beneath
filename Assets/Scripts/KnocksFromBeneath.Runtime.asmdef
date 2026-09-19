@@ -2,7 +2,8 @@
   "name": "KnocksFromBeneath.Runtime",
   "rootNamespace": "",
   "references": [
-    "Unity.TextMeshPro"
+    "Unity.TextMeshPro",
+    "RetroPSX.Runtime"
   ],
   "includePlatforms": [],
   "excludePlatforms": [],
