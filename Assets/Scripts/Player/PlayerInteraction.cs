@@ -147,6 +147,14 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
+            // 9. ЗАМОК ВХОДНОЙ ДВЕРИ (день 2, T-17)
+            FrontDoorLockInteractable doorLock = hitObj.GetComponent<FrontDoorLockInteractable>();
+            if (doorLock != null)
+            {
+                doorLock.Interact();
+                return;
+            }
+
         }
     }
 

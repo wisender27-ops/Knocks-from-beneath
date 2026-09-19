@@ -64,6 +64,10 @@ public class IntroSequence : MonoBehaviour
     [Tooltip("Зоны для мелких декоративных предметов дня 2 — та же PlacementZone+RoomRevealZone, что и коробки дня 1, отдельный набор.")]
     public GameObject[] decorationZones;
 
+    [Header("День 2 — вечерний обход (T-17)")]
+    [Tooltip("Входная дверь дома — EveningRoundController запирает её через Door.SetInteractionLocked, если игрок выберет 'запереть'.")]
+    public Door frontDoor;
+
     // Быт после переезда (мусор -> коробки) и квест с пирогом — самодостаточные
     // под-сюжеты, вынесены в отдельные классы (T-08). IntroSequence координирует
     // порядок и общие для всех этапов помощники (CreateQuest/ShowThoughts/IsQuestActive),
@@ -79,6 +83,7 @@ public class IntroSequence : MonoBehaviour
     // "куда идти дальше" на предыдущем звене, остальные не трогает.
     private RoomDecorationController _decoration;
     private DinnerCookingController _dinner;
+    private EveningRoundController _eveningRound;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -96,9 +101,13 @@ public class IntroSequence : MonoBehaviour
             CreateQuest, ShowThoughts,
             onChoresFinished: _pieQuest.SetupTakePieQuest);
 
+        _eveningRound = new EveningRoundController(
+            frontDoor, CreateQuest, ShowThoughts,
+            onEveningFinished: SetupSearchNoiseQuest); // временно — заменится в T-18 на полноценный старт ночи 2 (fade+teleport)
+
         _dinner = new DinnerCookingController(
             CreateQuest, ShowThoughts,
-            onDinnerFinished: SetupSearchNoiseQuest); // временно — заменится в T-16 на звонок соседа / T-17 на обход дома
+            onDinnerFinished: _eveningRound.SetupEveningWalkQuest);
 
         _decoration = new RoomDecorationController(
             decorationZones, CreateQuest, ShowThoughts,
@@ -113,6 +122,7 @@ public class IntroSequence : MonoBehaviour
     void OnEnable()
     {
         GameEvents.OnBedTriggerReached += OnBedTriggerReached;
+        GameEvents.OnBedTriggerReached += _eveningRound.HandleBedReached;
         GameEvents.OnKitchenNoiseHeard += OnKitchenTriggerReached;
         GameEvents.OnTrashDeliveryReady += _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed += _pieQuest.HandlePieGrabbed;
@@ -122,6 +132,7 @@ public class IntroSequence : MonoBehaviour
     void OnDisable()
     {
         GameEvents.OnBedTriggerReached -= OnBedTriggerReached;
+        GameEvents.OnBedTriggerReached -= _eveningRound.HandleBedReached;
         GameEvents.OnKitchenNoiseHeard -= OnKitchenTriggerReached;
         GameEvents.OnTrashDeliveryReady -= _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed -= _pieQuest.HandlePieGrabbed;
@@ -147,6 +158,7 @@ public class IntroSequence : MonoBehaviour
 
     void ResetTriggers()
     {
+        GameState.frontDoorLocked = false;
         if (holeEventController != null) holeEventController.enabled = false;
         if (trashZone != null) trashZone.SetActive(false);
         if (roomZones != null)
@@ -472,6 +484,11 @@ public class IntroSequence : MonoBehaviour
     public void OnDinnerEaten()
     {
         _dinner.OnDinnerEaten();
+    }
+
+    public void OnFrontDoorLocked()
+    {
+        _eveningRound.LockFrontDoor();
     }
 
     private void ShowThoughts(string[] lines, System.Action onComplete)
