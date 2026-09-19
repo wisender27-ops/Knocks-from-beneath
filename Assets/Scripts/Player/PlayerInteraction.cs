@@ -19,12 +19,21 @@ public class PlayerInteraction : MonoBehaviour
 
     [Header("Настройки броска")]
     public float throwForce = 15f;
+    [SerializeField] private float throwTorqueRandomness = 5f;
 
     [Header("Эффекты сочности")]
     public float shakeIntensity = 0.1f;
     public float shakeDuration = 0.15f;
     public float fovKickAmount = 3f;
     public float fovReturnSpeed = 5f;
+    private const float FovSnapThreshold = 0.1f;
+
+    [Header("Физика удержания предмета")]
+    [SerializeField] private float heldRigidbodyDamping = 15f;
+    [SerializeField] private float releasedRigidbodyDamping = 0.05f;
+    [SerializeField] private float maxHoldDistance = 2.2f;
+    [SerializeField] private float dropForwardImpulse = 2f;
+    [SerializeField] private float defaultPieEatDuration = 5f;
 
     private float _defaultFov;
     private bool _isEatingPie = false;
@@ -81,9 +90,14 @@ public class PlayerInteraction : MonoBehaviour
         _isEatingPie = false;
     }
 
+    private Ray GetCenterScreenRay()
+    {
+        return playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+    }
+
     void PerformInteraction()
     {
-        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        Ray ray = GetCenterScreenRay();
         RaycastHit hit;
 
         if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer, QueryTriggerInteraction.Ignore))
@@ -158,7 +172,7 @@ public class PlayerInteraction : MonoBehaviour
 
     bool TryInteractWhileHolding()
     {
-        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        Ray ray = GetCenterScreenRay();
         RaycastHit hit;
         if (!Physics.Raycast(ray, out hit, interactionDistance, interactableLayer, QueryTriggerInteraction.Ignore))
             return false;
@@ -178,7 +192,7 @@ public class PlayerInteraction : MonoBehaviour
         if (actionAudioSource != null && pie.eatSfx != null)
             actionAudioSource.PlayOneShot(pie.eatSfx);
 
-        float eatDuration = pie.eatDuration > 0f ? pie.eatDuration : 5f;
+        float eatDuration = pie.eatDuration > 0f ? pie.eatDuration : defaultPieEatDuration;
         yield return new WaitForSeconds(eatDuration);
 
         GameObject pieObj = _heldObj;
@@ -253,8 +267,8 @@ public class PlayerInteraction : MonoBehaviour
 
         _heldObjRb.interpolation = RigidbodyInterpolation.Interpolate;
         _heldObjRb.useGravity = false;
-        _heldObjRb.linearDamping = 15f;
-        _heldObjRb.angularDamping = 15f;
+        _heldObjRb.linearDamping = heldRigidbodyDamping;
+        _heldObjRb.angularDamping = heldRigidbodyDamping;
         _heldObjRb.constraints = RigidbodyConstraints.FreezeRotation;
 
         // Останавливаем частицы когда берём объект
@@ -283,14 +297,14 @@ public class PlayerInteraction : MonoBehaviour
         DropObject();
     }
 
-    private static void RestoreHeldRigidbody(Rigidbody rb, bool resetInterpolation)
+    private void RestoreHeldRigidbody(Rigidbody rb, bool resetInterpolation)
     {
         if (rb == null) return;
 
         rb.useGravity = true;
         rb.isKinematic = false;
-        rb.linearDamping = 0.05f;
-        rb.angularDamping = 0.05f;
+        rb.linearDamping = releasedRigidbodyDamping;
+        rb.angularDamping = releasedRigidbodyDamping;
         rb.constraints = RigidbodyConstraints.None;
         if (resetInterpolation)
             rb.interpolation = RigidbodyInterpolation.None;
@@ -305,7 +319,7 @@ public class PlayerInteraction : MonoBehaviour
 
         RestoreHeldRigidbody(_heldObjRb, true);
         if (_heldObjRb != null && playerCamera != null)
-            _heldObjRb.AddForce(playerCamera.transform.forward * 2f, ForceMode.Impulse);
+            _heldObjRb.AddForce(playerCamera.transform.forward * dropForwardImpulse, ForceMode.Impulse);
 
         ClearHeldObject();
     }
@@ -342,7 +356,7 @@ public class PlayerInteraction : MonoBehaviour
             Quaternion.Slerp(_heldObj.transform.rotation, targetRotation, Time.fixedDeltaTime * followSpeed)
         );
 
-        if (distance > 2.2f)
+        if (distance > maxHoldDistance)
             DropObject();
     }
 
@@ -357,7 +371,7 @@ public class PlayerInteraction : MonoBehaviour
         ClearHeldObject();
 
         rbToThrow.AddForce(playerCamera.transform.forward * throwForce, ForceMode.Impulse);
-        rbToThrow.AddTorque(new Vector3(Random.value, Random.value, Random.value) * 5f, ForceMode.Impulse);
+        rbToThrow.AddTorque(new Vector3(Random.value, Random.value, Random.value) * throwTorqueRandomness, ForceMode.Impulse);
 
         StopAllCoroutines();
         StartCoroutine(ShakeAndKick());
@@ -381,7 +395,7 @@ public class PlayerInteraction : MonoBehaviour
 
         playerCamera.transform.localPosition = originalPos;
 
-        while (Mathf.Abs(playerCamera.fieldOfView - _defaultFov) > 0.1f)
+        while (Mathf.Abs(playerCamera.fieldOfView - _defaultFov) > FovSnapThreshold)
         {
             playerCamera.fieldOfView = Mathf.Lerp(playerCamera.fieldOfView, _defaultFov, Time.deltaTime * fovReturnSpeed);
             yield return null;
@@ -430,7 +444,7 @@ public class PlayerInteraction : MonoBehaviour
     {
         if (playerCamera == null) return;
 
-        Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+        Ray ray = GetCenterScreenRay();
 
         Gizmos.color = Color.green;
         Gizmos.DrawRay(ray.origin, ray.direction * interactionDistance);

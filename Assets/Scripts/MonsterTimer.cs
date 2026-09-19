@@ -11,12 +11,20 @@ public class MonsterTimer : MonoBehaviour
 
     [Header("Настройки")]
     public float timerDuration = 30f;
+    [SerializeField] private float yellowThreshold = 20f;
+    [SerializeField] private float redThreshold = 10f;
 
     [Header("Звук когда таймер истекает")]
     public AudioSource audioSource;
     public AudioClip monsterEscapeClip;
 
+    [Header("Финальное сообщение")]
+    [SerializeField] private float finalMessageFontSize = 36f;
+    [SerializeField] private float finalMessageWordDelay = 0.6f;
+    [SerializeField] private float finalMessageHoldDuration = 3f;
+
     private bool _isRunning = false;
+    private float _defaultFontSize;
 
     void Awake()
     {
@@ -31,7 +39,11 @@ public class MonsterTimer : MonoBehaviour
 
     void Start()
     {
-        if (timerText != null) timerText.text = "";
+        if (timerText != null)
+        {
+            timerText.text = "";
+            _defaultFontSize = timerText.fontSize;
+        }
     }
 
     public void StartTimer()
@@ -62,9 +74,9 @@ public class MonsterTimer : MonoBehaviour
         while (remaining > 0)
         {
             // Текст меняет цвет — белый → жёлтый → красный
-            if (remaining > 20f)
+            if (remaining > yellowThreshold)
                 timerText.color = Color.white;
-            else if (remaining > 10f)
+            else if (remaining > redThreshold)
                 timerText.color = Color.yellow;
             else
                 timerText.color = Color.red;
@@ -92,25 +104,25 @@ public class MonsterTimer : MonoBehaviour
 
     IEnumerator ShowFinalMessage()
     {
-        timerText.fontSize = 36f;
+        timerText.fontSize = finalMessageFontSize;
         timerText.color = Color.red;
 
         // Каждое слово появляется отдельно с паузой
         timerText.text = "ТЕБЕ.";
-        yield return new WaitForSeconds(0.6f);
+        yield return new WaitForSeconds(finalMessageWordDelay);
 
         timerText.text = "ТЕБЕ. НУЖНО.";
-        yield return new WaitForSeconds(0.6f);
+        yield return new WaitForSeconds(finalMessageWordDelay);
 
         timerText.text = "ТЕБЕ. НУЖНО. ЗАКОЛОТИТЬ.";
-        yield return new WaitForSeconds(0.6f);
+        yield return new WaitForSeconds(finalMessageWordDelay);
 
         timerText.text = "ТЕБЕ. НУЖНО. ЗАКОЛОТИТЬ. ДЫРУ.";
-        yield return new WaitForSeconds(3f);
+        yield return new WaitForSeconds(finalMessageHoldDuration);
 
         // Убираем надпись
         timerText.text = "";
-        timerText.fontSize = 24f;
+        timerText.fontSize = _defaultFontSize;
         timerText.color = Color.white;
 
         _isRunning = false;
