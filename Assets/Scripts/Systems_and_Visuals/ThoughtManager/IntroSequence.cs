@@ -68,6 +68,10 @@ public class IntroSequence : MonoBehaviour
     [Tooltip("Входная дверь дома — EveningRoundController запирает её через Door.SetInteractionLocked, если игрок выберет 'запереть'.")]
     public Door frontDoor;
 
+    [Header("Ночь 2 — развилка концовок (T-19)")]
+    [Tooltip("Триггер у входной двери — концовка 'побег'. Включается BranchEndingController, если дверь не заперта.")]
+    public GameObject escapeDoorTrigger;
+
     // Быт после переезда (мусор -> коробки) и квест с пирогом — самодостаточные
     // под-сюжеты, вынесены в отдельные классы (T-08). IntroSequence координирует
     // порядок и общие для всех этапов помощники (CreateQuest/ShowThoughts/IsQuestActive),
@@ -84,6 +88,7 @@ public class IntroSequence : MonoBehaviour
     private RoomDecorationController _decoration;
     private DinnerCookingController _dinner;
     private EveningRoundController _eveningRound;
+    private BranchEndingController _branchEnding;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -112,6 +117,9 @@ public class IntroSequence : MonoBehaviour
         _decoration = new RoomDecorationController(
             decorationZones, CreateQuest, ShowThoughts,
             onDecorationFinished: _dinner.SetupIngredientQuest);
+
+        _branchEnding = new BranchEndingController(
+            SetupHammerQuest, escapeDoorTrigger, ShowThoughts, EndGame);
 
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
@@ -178,6 +186,7 @@ public class IntroSequence : MonoBehaviour
         }
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
         if (finaleTrigger != null) finaleTrigger.SetActive(false);
+        if (escapeDoorTrigger != null) escapeDoorTrigger.SetActive(false);
         // Items now stay visible on the map - they're controlled by quest requirements instead
         // if (flashlightItem != null) flashlightItem.SetActive(false);
         // if (crowbarItem != null) crowbarItem.SetActive(false);
@@ -442,7 +451,23 @@ public class IntroSequence : MonoBehaviour
             "Эта тварь выскочила прямо на меня.",
             "Нужно заколотить её.",
             "Прямо сейчас."
-        }, SetupHammerQuest);
+        }, _branchEnding.Activate);
+    }
+
+    // --- Развилка ночи 2 (T-19): побег через дверь — тонкий проброс, EscapeDoorTrigger
+    // зовёт напрямую тем же паттерном, что Stove/Microwave/FrontDoorLock. ---
+
+    public void OnEscapedThroughDoor()
+    {
+        _branchEnding.HandleDoorEscape();
+    }
+
+    void EndGame()
+    {
+        Application.Quit();
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
     }
 
     void SetupHammerQuest()
