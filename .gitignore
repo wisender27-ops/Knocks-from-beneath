@@ -101,8 +101,11 @@ InitTestScene*.unity*
 # Unity Editor crash-recovery scenes — regenerated locally, not meant for version control
 /[Aa]ssets/_Recovery/
 
-# AI-generated model cache marked as deleted by the generator tool itself
-/GeneratedAssets/*_deleted/
+# AI-generated asset cache — regenerable output of the generation tool, not source content
+/GeneratedAssets/
+
+# Default Unity project template welcome screen, never customized
+/Assets/TutorialInfo/
 
 # Auto-regenerated IDE solution/project files (Rider/VS rewrite these on every project open)
 *.slnx
