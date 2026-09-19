@@ -10,6 +10,7 @@ public class MoveInChoresControllerTests
     private sealed class Recorder
     {
         public readonly List<string> CreatedQuestTags = new List<string>();
+        public readonly List<int> CreatedQuestAmounts = new List<int>();
         public bool ChoresFinishedCalled;
         public bool ShowThoughtsCalled;
         public Action LastOnComplete;
@@ -17,6 +18,7 @@ public class MoveInChoresControllerTests
         public void CreateQuest(string title, int amount, UnityAction callback, string tag)
         {
             CreatedQuestTags.Add(tag);
+            CreatedQuestAmounts.Add(amount);
         }
 
         public void ShowThoughts(string[] lines, Action onComplete)
@@ -29,17 +31,17 @@ public class MoveInChoresControllerTests
     }
 
     private GameObject _trashZone;
-    private GameObject _garageZone;
+    private GameObject[] _roomZones;
     private Recorder _recorder;
 
     private MoveInChoresController CreateController()
     {
         _trashZone = new GameObject("TrashZone");
-        _garageZone = new GameObject("GarageZone");
+        _roomZones = new[] { new GameObject("RoomZone1"), new GameObject("RoomZone2"), new GameObject("RoomZone3") };
         _recorder = new Recorder();
 
         return new MoveInChoresController(
-            _trashZone, _garageZone,
+            _trashZone, _roomZones,
             _recorder.CreateQuest, _recorder.ShowThoughts,
             _recorder.OnChoresFinished);
     }
@@ -48,7 +50,11 @@ public class MoveInChoresControllerTests
     public void TearDown()
     {
         if (_trashZone != null) UnityEngine.Object.DestroyImmediate(_trashZone);
-        if (_garageZone != null) UnityEngine.Object.DestroyImmediate(_garageZone);
+        if (_roomZones != null)
+        {
+            foreach (var zone in _roomZones)
+                if (zone != null) UnityEngine.Object.DestroyImmediate(zone);
+        }
     }
 
     [Test]
@@ -87,19 +93,30 @@ public class MoveInChoresControllerTests
         Assert.That(_recorder.ShowThoughtsCalled, Is.True);
 
         _recorder.LastOnComplete?.Invoke();
-        Assert.That(_garageZone.activeSelf, Is.True);
+        Assert.That(_roomZones, Has.All.Matches<GameObject>(z => z.activeSelf));
         Assert.That(_recorder.CreatedQuestTags, Does.Contain("box-delivery"));
     }
 
     [Test]
-    public void OnBoxFinished_HidesZoneAndChainsToChoresFinished()
+    public void SetupBoxQuest_ActivatesAllZonesWithAmountMatchingZoneCount()
+    {
+        var controller = CreateController();
+
+        controller.SetupBoxQuest();
+
+        Assert.That(_roomZones, Has.All.Matches<GameObject>(z => z.activeSelf));
+        Assert.That(_recorder.CreatedQuestAmounts, Does.Contain(_roomZones.Length));
+    }
+
+    [Test]
+    public void OnBoxFinished_HidesZonesAndChainsToChoresFinished()
     {
         var controller = CreateController();
         controller.SetupBoxQuest();
 
         controller.OnBoxFinished();
 
-        Assert.That(_garageZone.activeSelf, Is.False);
+        Assert.That(_roomZones, Has.None.Matches<GameObject>(z => z.activeSelf));
         Assert.That(_recorder.ShowThoughtsCalled, Is.True);
 
         _recorder.LastOnComplete?.Invoke();
