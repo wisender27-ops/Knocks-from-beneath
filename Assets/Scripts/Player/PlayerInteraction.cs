@@ -139,6 +139,14 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
+            // 8. ЗАПИСКА/ЗВОНОК СОСЕДА (день 2, T-16)
+            NeighborNoteInteractable note = hitObj.GetComponent<NeighborNoteInteractable>();
+            if (note != null)
+            {
+                note.Interact();
+                return;
+            }
+
         }
     }
 

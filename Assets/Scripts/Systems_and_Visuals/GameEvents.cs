@@ -27,5 +27,9 @@ public static class GameEvents
 
     // Игрок доел пирог (PlayerInteraction)
     public static Action OnPieEaten;
+
+    // Игрок прочитал записку/принял звонок соседа (NeighborNoteInteractable, T-16) —
+    // побочная необязательная находка дня 2, не часть основной квест-цепочки.
+    public static Action OnNeighborNoteRead;
 }
 }
