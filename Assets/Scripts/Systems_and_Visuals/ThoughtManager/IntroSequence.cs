@@ -346,7 +346,7 @@ public class IntroSequence : MonoBehaviour
     // --- 6. Пробить пол ---
     void SetupBreakFloorQuest()
     {
-        CreateQuest("Вскрыть доски на кухне", 1, OnFloorBroken);
+        CreateQuest("Вскрыть доски на кухне", 1, OnFloorBroken, "break-floor");
     }
 
     public void OnFloorBroken()

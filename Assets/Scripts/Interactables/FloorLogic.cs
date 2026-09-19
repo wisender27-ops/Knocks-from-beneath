@@ -16,6 +16,10 @@ public class FloorLogic : MonoBehaviour
     [Header("Состояние пола")]
     public bool isBroken = false;
 
+    [Header("Привязка к квесту")]
+    [Tooltip("Пол ломается только пока активен квест с этим тегом — иначе лом бьёт по полу вхолостую.")]
+    [SerializeField] private string requiredQuestTag = "break-floor";
+
     void Start()
     {
         anim = GetComponent<Animator>();
@@ -25,6 +29,13 @@ public class FloorLogic : MonoBehaviour
     public void Break()
     {
         if (isBroken) return;
+
+        // Ломается только когда квест на это реально активен. Без этой проверки игрок может
+        // сломать пол ломом раньше, чем квест "Вскрыть доски" вообще создан (например, пока ещё
+        // идёт диалог после подбора лома) — тогда квест создастся уже поверх сломанного пола,
+        // повторно сломать нельзя (см. guard выше), и прогресс встаёт намертво.
+        if (QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive(requiredQuestTag))
+            return;
 
         // 1. Анимация и физика
         if (anim != null) anim.SetTrigger("Break");

@@ -157,6 +157,9 @@ public class FinaleController : MonoBehaviour
     void QuitGame()
     {
         Debug.Log("GAME OVER");
-        // Application.Quit();
+        Application.Quit();
+#if UNITY_EDITOR
+        UnityEditor.EditorApplication.isPlaying = false;
+#endif
     }
 }
