@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
+namespace KnocksFromBeneath
+{
+
 public class FogController : MonoBehaviour
 {
     public static FogController Instance;
@@ -48,4 +51,5 @@ public class FogController : MonoBehaviour
         RenderSettings.fogDensity = target;
         currentCoroutine = null;
     }
+}
 }

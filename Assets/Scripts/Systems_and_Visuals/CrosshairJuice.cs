@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+namespace KnocksFromBeneath
+{
+
 public class CrosshairJuice : MonoBehaviour
 {
     [Header("Ссылки")]
@@ -171,4 +174,5 @@ public class CrosshairJuice : MonoBehaviour
         if (hintText != null)
             hintText.text = _targetHint;
     }
+}
 }

@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class HammerTrap : MonoBehaviour
 {
     [Header("Настройки сюжета")]
@@ -46,4 +49,5 @@ public class HammerTrap : MonoBehaviour
         }
         gameObject.SetActive(false);
     }
+}
 }

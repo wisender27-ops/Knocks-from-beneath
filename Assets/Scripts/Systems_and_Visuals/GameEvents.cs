@@ -1,5 +1,8 @@
 using System;
 
+namespace KnocksFromBeneath
+{
+
 // Шина уведомлений об игровых событиях — для случаев, когда отправителю
 // не нужен ответ и не нужна ссылка на конкретный обработчик (IntroSequence
 // и т.п.). Подписчик решает сам, важно ли ему это событие прямо сейчас —
@@ -24,4 +27,5 @@ public static class GameEvents
 
     // Игрок доел пирог (PlayerInteraction)
     public static Action OnPieEaten;
+}
 }

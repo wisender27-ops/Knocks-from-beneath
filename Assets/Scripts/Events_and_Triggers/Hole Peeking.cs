@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class HolePeeping : MonoBehaviour
 {
     public Camera mainCamera;          // Основная камера игрока
@@ -70,4 +73,5 @@ public class HolePeeping : MonoBehaviour
         // Здесь логика проверки: через Trigger Enter/Exit или Raycast
         return mainCamera != null && peepPoint != null;
     }
+}
 }

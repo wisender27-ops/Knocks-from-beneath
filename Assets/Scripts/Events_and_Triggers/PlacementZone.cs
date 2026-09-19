@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+namespace KnocksFromBeneath
+{
+
 public class PlacementZone : MonoBehaviour
 {
     public List<Transform> slots; // Сюда перетащи Slot_1, Slot_2, Slot_3
@@ -74,4 +77,5 @@ public class PlacementZone : MonoBehaviour
             }
         }
     }
+}
 }

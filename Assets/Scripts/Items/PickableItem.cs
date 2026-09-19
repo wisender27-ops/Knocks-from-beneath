@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class PickableItem : MonoBehaviour
 {
     public PlacementZone activeZone; // Зона, в которой сейчас находится эта коробка
@@ -21,4 +24,5 @@ public class PickableItem : MonoBehaviour
             activeZone = null;
         }
     }
+}
 }

@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class SkyboxSwitcher : MonoBehaviour
 {
     [Header("Настройки материалов")]
@@ -45,4 +48,5 @@ public class SkyboxSwitcher : MonoBehaviour
         // 3. Обновляем освещение сцены
         DynamicGI.UpdateEnvironment();
     }
+}
 }

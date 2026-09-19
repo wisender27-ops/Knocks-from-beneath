@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
+namespace KnocksFromBeneath
+{
+
 public class TrashManager : MonoBehaviour
 {
     public static TrashManager Instance;
@@ -117,4 +120,5 @@ public class TrashManager : MonoBehaviour
             GameEvents.OnTrashDeliveryReady?.Invoke();
         });
     }
+}
 }

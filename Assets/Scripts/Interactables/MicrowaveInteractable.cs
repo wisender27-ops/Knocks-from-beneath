@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
+namespace KnocksFromBeneath
+{
+
 public class MicrowaveInteractable : MonoBehaviour
 {
     [Header("Ссылки")]
@@ -165,4 +168,5 @@ public class MicrowaveInteractable : MonoBehaviour
     {
         return _isReady && !_isHeating && _pieInMicrowave != null;
     }
+}
 }

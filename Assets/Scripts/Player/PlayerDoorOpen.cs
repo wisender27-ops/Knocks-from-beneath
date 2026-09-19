@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class PlayerDoorOpen : MonoBehaviour
 {
     [SerializeField] private Camera playerCamera;
@@ -73,4 +76,5 @@ public class PlayerDoorOpen : MonoBehaviour
         if (playerController != null)
             playerController.isCameraLocked = false;
     }
+}
 }

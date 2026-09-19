@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class HeadBobbing : MonoBehaviour
 {
     [Header("Настройки веса")]
@@ -118,4 +121,5 @@ public class HeadBobbing : MonoBehaviour
             }
         }
     }
+}
 }

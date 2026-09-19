@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class Door : MonoBehaviour
 {
     public enum RotationAxis
@@ -234,4 +237,5 @@ public class Door : MonoBehaviour
     }
 
     public void StopHolding() => isBeingHeld = false;
+}
 }

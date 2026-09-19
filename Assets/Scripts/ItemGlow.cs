@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class ItemGlow : MonoBehaviour
 {
     [Header("Настройки")]
@@ -68,4 +71,5 @@ public class ItemGlow : MonoBehaviour
         var emission = _particles.emission;
         emission.rateOverTime = rate;
     }
+}
 }

@@ -4,6 +4,9 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 
+namespace KnocksFromBeneath
+{
+
 public class ThoughtManager : MonoBehaviour
 {
     public static ThoughtManager Instance;
@@ -135,4 +138,5 @@ public class ThoughtManager : MonoBehaviour
             StartCoroutine(DisplaySequence(next.lines, next.onComplete));
         }
     }
+}
 }

@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+namespace KnocksFromBeneath
+{
+
 public class InventoryUI : MonoBehaviour
 {
     public static InventoryUI Instance;
@@ -158,4 +161,5 @@ public class InventoryUI : MonoBehaviour
             if (slot != null && slot.slotRoot != null && slot.slotRoot.activeSelf) count++;
         return count;
     }
+}
 }

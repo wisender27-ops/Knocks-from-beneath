@@ -1,6 +1,9 @@
-﻿using UnityEngine;
+using UnityEngine;
 using System.Collections;
 using TMPro;
+
+namespace KnocksFromBeneath
+{
 
 public class MonsterTimer : MonoBehaviour
 {
@@ -127,4 +130,5 @@ public class MonsterTimer : MonoBehaviour
 
         _isRunning = false;
     }
+}
 }

@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using KnocksFromBeneath;
 
 public class PlayerInteractionTests
 {

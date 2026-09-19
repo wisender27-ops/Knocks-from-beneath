@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
+namespace KnocksFromBeneath
+{
+
 public class SmartLamp : MonoBehaviour
 {
     public Light lightSource;
@@ -48,4 +51,5 @@ public class SmartLamp : MonoBehaviour
         lightSource.intensity = _defaultIntensity;
         if (audioSource) audioSource.Stop();
     }
+}
 }

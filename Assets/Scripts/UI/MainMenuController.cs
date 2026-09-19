@@ -1,6 +1,9 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
+namespace KnocksFromBeneath
+{
+
 public class MainMenuController : MonoBehaviour
 {
     [Header("Panels")]
@@ -48,4 +51,4 @@ public class MainMenuController : MonoBehaviour
         if (settingsPanel != null) settingsPanel.SetActive(false);
     }
 }
-
+}

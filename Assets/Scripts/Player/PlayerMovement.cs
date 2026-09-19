@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
@@ -197,4 +200,5 @@ public class PlayerController : MonoBehaviour
 // Compatibility class for prefabs serialized with the original file name.
 public sealed class PlayerMovement : PlayerController
 {
+}
 }

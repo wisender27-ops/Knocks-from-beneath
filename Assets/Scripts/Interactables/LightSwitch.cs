@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class LightSwitch : MonoBehaviour
 {
     [Header("Настройки света")]
@@ -85,4 +88,5 @@ public class LightSwitch : MonoBehaviour
             fanRotator.ToggleRotation(isOn);
         }
     }
+}
 }

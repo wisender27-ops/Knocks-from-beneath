@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+namespace KnocksFromBeneath
+{
+
 public class LightingManager : MonoBehaviour
 {
     public static LightingManager Instance;
@@ -49,4 +52,5 @@ public class LightingManager : MonoBehaviour
                 ls.ForceTurnOff();
         }
     }
+}
 }

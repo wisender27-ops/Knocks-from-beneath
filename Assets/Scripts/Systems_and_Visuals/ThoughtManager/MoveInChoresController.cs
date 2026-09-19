@@ -2,6 +2,9 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
+namespace KnocksFromBeneath
+{
+
 // Мини-сюжет "быт после переезда": собрать мусор -> вынести мешок ->
 // занести коробки в гараж. Выделен из IntroSequence (T-08). Не MonoBehaviour —
 // получает нужные ссылки и колбэки от IntroSequence при создании.
@@ -78,4 +81,5 @@ public sealed class MoveInChoresController
             "Достану пирог из холодильника."
         }, _onChoresFinished);
     }
+}
 }

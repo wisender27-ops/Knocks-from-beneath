@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
+namespace KnocksFromBeneath
+{
+
 public class FinaleController : MonoBehaviour
 {
     [Header("Ссылки на объекты сцены")]
@@ -162,4 +165,5 @@ public class FinaleController : MonoBehaviour
         UnityEditor.EditorApplication.isPlaying = false;
 #endif
     }
+}
 }

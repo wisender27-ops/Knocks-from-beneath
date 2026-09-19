@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class PieQuestItem : MonoBehaviour
 {
     [Header("Состояние пирога")]
@@ -8,4 +11,5 @@ public class PieQuestItem : MonoBehaviour
     [Header("Поедание")]
     public AudioClip eatSfx;
     public float eatDuration = 5f;
+}
 }

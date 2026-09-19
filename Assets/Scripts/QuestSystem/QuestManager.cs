@@ -5,6 +5,9 @@ using UnityEngine.Events;
 using System.Collections;
 using System;
 
+namespace KnocksFromBeneath
+{
+
 public class QuestManager : MonoBehaviour
 {
     public static QuestManager Instance;
@@ -233,4 +236,5 @@ public class QuestManager : MonoBehaviour
         questUiText.color = baseQuestColor;
         _questColorRoutine = null;
     }
+}
 }

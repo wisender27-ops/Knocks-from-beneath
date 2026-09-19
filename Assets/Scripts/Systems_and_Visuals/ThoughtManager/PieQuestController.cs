@@ -2,6 +2,9 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
+namespace KnocksFromBeneath
+{
+
 // Мини-сюжет "квест с пирогом": достать из холодильника -> разогреть в
 // микроволновке -> съесть. Выделен из IntroSequence (T-08) как отдельный
 // самодостаточный кусок сюжета. Не MonoBehaviour — получает нужные ссылки
@@ -89,4 +92,5 @@ public sealed class PieQuestController
     {
         return _isPieHeated && _isQuestActive("pie-eat");
     }
+}
 }

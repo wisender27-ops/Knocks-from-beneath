@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class RainFollow : MonoBehaviour
 {
     public Transform player; // Сюда в инспекторе перетащи игрока
@@ -13,4 +16,5 @@ public class RainFollow : MonoBehaviour
             transform.position = new Vector3(player.position.x, player.position.y + height, player.position.z);
         }
     }
+}
 }

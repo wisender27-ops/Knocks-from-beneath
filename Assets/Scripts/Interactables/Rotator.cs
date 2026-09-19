@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class Rotator : MonoBehaviour
 {
     [Header("Настройки вращения")]
@@ -159,4 +162,5 @@ public class Rotator : MonoBehaviour
 
         Debug.Log($"[Rotator] '{name}' spin={(isSpinning ? "ON" : "OFF")} clip={(fanClip != null ? fanClip.name : "NULL")} crossfade={(useCrossfadeLoop ? "ON" : "OFF")}");
     }
+}
 }

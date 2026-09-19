@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
+namespace KnocksFromBeneath
+{
+
 public class HoleEventController : MonoBehaviour
 {
     [Header("Ссылки")]
@@ -287,4 +290,5 @@ public class HoleEventController : MonoBehaviour
         if (inventory != null && inventory.flashlightAudioSource != null && clip != null)
             inventory.flashlightAudioSource.PlayOneShot(clip);
     }
+}
 }

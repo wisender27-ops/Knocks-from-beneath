@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class ImpactSounds : MonoBehaviour
 {
     public AudioSource impactSource;
@@ -39,4 +42,5 @@ public class ImpactSounds : MonoBehaviour
             impactSource.PlayOneShot(clip, volume);
         }
     }
+}
 }

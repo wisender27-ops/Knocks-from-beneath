@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class QuestCollector : MonoBehaviour
 {
     public CollectableItem.ItemType acceptedType;
@@ -39,4 +42,5 @@ public class QuestCollector : MonoBehaviour
             }
         }
     }
+}
 }

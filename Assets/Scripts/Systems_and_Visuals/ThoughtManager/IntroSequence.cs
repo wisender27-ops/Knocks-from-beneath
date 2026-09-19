@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
+namespace KnocksFromBeneath
+{
+
 public enum DebugStoryStage
 {
     None,
@@ -438,4 +441,5 @@ public class IntroSequence : MonoBehaviour
         QuestManager.QuestData activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
         return activeQuest != null && activeQuest.questTag == questTag;
     }
+}
 }

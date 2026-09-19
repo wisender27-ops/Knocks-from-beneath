@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.Events;
+using KnocksFromBeneath;
 
 public class MoveInChoresControllerTests
 {

@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class BreakableObject : MonoBehaviour
 {
     public void Break()
@@ -8,4 +11,5 @@ public class BreakableObject : MonoBehaviour
         Debug.Log(gameObject.name + " сломан!");
         Destroy(gameObject);
     }
+}
 }

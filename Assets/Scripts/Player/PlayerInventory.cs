@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class PlayerInventory : MonoBehaviour
 {
     private float switchCooldown = 0.25f;
@@ -161,4 +164,5 @@ public class PlayerInventory : MonoBehaviour
             if (floor != null) floor.Break();
         }
     }
+}
 }

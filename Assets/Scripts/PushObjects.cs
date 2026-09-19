@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class PushObjects : MonoBehaviour
 {
     public float pushPower = 5.0f; // Сила толчка (для массы 3 ставь 5-10)
@@ -20,4 +23,5 @@ public class PushObjects : MonoBehaviour
         // Прикладываем силу
         body.AddForce(pushDir * pushPower, ForceMode.Impulse);
     }
+}
 }

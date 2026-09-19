@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public static class SettingsStore
 {
     public const string Key_MasterVolume = "settings_masterVolume";
@@ -33,4 +36,4 @@ public static class SettingsStore
         PlayerPrefs.Save();
     }
 }
-
+}

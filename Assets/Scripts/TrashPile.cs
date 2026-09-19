@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class TrashPile : MonoBehaviour
 {
     public void Collect()
@@ -22,4 +25,5 @@ public class TrashPile : MonoBehaviour
             TrashManager.Instance.OnPileCollected();
         Destroy(gameObject);
     }
+}
 }

@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class FloorLogic : MonoBehaviour
 {
     private Animator anim;
@@ -76,4 +79,5 @@ public class FloorLogic : MonoBehaviour
         isBroken = false;
         Debug.Log("Пол заколочен монстром!");
     }
+}
 }

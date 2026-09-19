@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class QuestZone : MonoBehaviour
 {
     public int boxesRequired = 3;
@@ -42,4 +45,5 @@ public class QuestZone : MonoBehaviour
             }
         }
     }
+}
 }

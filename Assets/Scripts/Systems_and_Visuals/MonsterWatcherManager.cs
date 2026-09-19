@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+namespace KnocksFromBeneath
+{
+
 public class MonsterWatcherManager : MonoBehaviour
 {
     public static MonsterWatcherManager Instance;
@@ -55,4 +58,5 @@ public class MonsterWatcherManager : MonoBehaviour
         }
         return closest;
     }
+}
 }

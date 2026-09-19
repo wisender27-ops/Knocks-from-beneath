@@ -2,6 +2,9 @@ using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
+namespace KnocksFromBeneath
+{
+
 public class SettingsMenuUI : MonoBehaviour
 {
     [Header("UI")]
@@ -64,4 +67,4 @@ public class SettingsMenuUI : MonoBehaviour
             mouseSensitivityValueText.text = value.ToString("0.0");
     }
 }
-
+}

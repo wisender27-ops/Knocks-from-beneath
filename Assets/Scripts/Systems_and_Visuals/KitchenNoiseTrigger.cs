@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class KitchenNoiseTrigger : MonoBehaviour
 {
     private void OnTriggerEnter(Collider other)
@@ -10,4 +13,5 @@ public class KitchenNoiseTrigger : MonoBehaviour
             gameObject.SetActive(false); // Выключаем триггер
         }
     }
+}
 }

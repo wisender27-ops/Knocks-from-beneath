@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections;
 
+namespace KnocksFromBeneath
+{
+
 public class RandomKnock : MonoBehaviour
 {
     [Header("Компоненты")]
@@ -41,4 +44,5 @@ public class RandomKnock : MonoBehaviour
             }
         }
     }
+}
 }

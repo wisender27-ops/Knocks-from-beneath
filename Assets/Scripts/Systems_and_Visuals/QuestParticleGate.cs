@@ -1,6 +1,9 @@
 using System;
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class QuestParticleGate : MonoBehaviour
 {
     [Header("Режим")]
@@ -84,4 +87,4 @@ public class QuestParticleGate : MonoBehaviour
         return false;
     }
 }
-
+}

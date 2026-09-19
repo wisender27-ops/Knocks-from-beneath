@@ -3,6 +3,9 @@ using UnityEngine.Audio;
 using System.Collections;
 using System.Collections.Generic;
 
+namespace KnocksFromBeneath
+{
+
 public class RainZoneSwitcher : MonoBehaviour
 {
     [Header("Audio")]
@@ -120,4 +123,5 @@ public class RainZoneSwitcher : MonoBehaviour
         var root = col.transform != null ? col.transform.root : null;
         return root != null && root.CompareTag("Player");
     }
+}
 }

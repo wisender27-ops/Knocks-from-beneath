@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 public class PlayerInteraction : MonoBehaviour
 {
     [Header("Настройки луча")]
@@ -232,4 +235,5 @@ public class PlayerInteraction : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawSphere(ray.origin + ray.direction * interactionDistance, 0.05f);
     }
+}
 }

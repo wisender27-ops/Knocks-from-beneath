@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 // Перечисление типов предметов (всего 3)
 public enum ItemType
 {
@@ -11,4 +14,5 @@ public enum ItemType
 public class SimpleItem : MonoBehaviour
 {
     public ItemType itemType; // Выбираем тип в инспекторе Unity
+}
 }

@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 [ExecuteInEditMode]
 public class ImageEffectTest : MonoBehaviour
 {
@@ -8,4 +11,5 @@ public class ImageEffectTest : MonoBehaviour
         Graphics.Blit(src, dest);
         Debug.Log("OnRenderImage called");
     }
+}
 }

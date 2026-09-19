@@ -1,5 +1,8 @@
 using UnityEngine;
 
+namespace KnocksFromBeneath
+{
+
 // Физический захват/перенос/бросок предметов игроком. Выделен из PlayerInteraction
 // (T-07): PlayerInteraction остаётся тонким диспетчером рейкаста, вся физика
 // удержания предмета в руках — здесь.
@@ -256,4 +259,5 @@ public class PickupController : MonoBehaviour
         if (ps != null) ps.Play();
         return released;
     }
+}
 }

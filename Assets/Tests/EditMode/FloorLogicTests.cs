@@ -1,5 +1,6 @@
 using NUnit.Framework;
 using UnityEngine;
+using KnocksFromBeneath;
 
 // Регрессионный тест на баг: удар ломом по полу до того, как квест
 // "Вскрыть доски на кухне" вообще создан (пока ещё идёт диалог после
