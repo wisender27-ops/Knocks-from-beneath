@@ -2,7 +2,7 @@
   "name": "KnocksFromBeneath.Tests",
   "rootNamespace": "",
   "references": [
-    "Assembly-CSharp",
+    "KnocksFromBeneath.Runtime",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"
   ],
