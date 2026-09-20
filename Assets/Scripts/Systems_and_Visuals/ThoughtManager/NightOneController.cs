@@ -76,6 +76,7 @@ public sealed class NightOneController
     {
         if (_skySwitcher != null) _skySwitcher.isDayTime = true;
         RenderSettings.fog = _fogBeforeNight;
+        GameEvents.OnDayStarted?.Invoke();
         _onNightFinished?.Invoke();
     }
 

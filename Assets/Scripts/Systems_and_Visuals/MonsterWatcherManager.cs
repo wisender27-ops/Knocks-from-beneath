@@ -24,16 +24,40 @@ public class MonsterWatcherManager : MonoBehaviour
     void OnEnable()
     {
         GameEvents.OnNightStarted += EnableAmbientWatchers;
+        GameEvents.OnDayStarted += DisableAmbientWatchers;
     }
 
     void OnDisable()
     {
         GameEvents.OnNightStarted -= EnableAmbientWatchers;
+        GameEvents.OnDayStarted -= DisableAmbientWatchers;
     }
 
     void EnableAmbientWatchers()
     {
         ambientWatchersEnabled = true;
+    }
+
+    void DisableAmbientWatchers()
+    {
+        ambientWatchersEnabled = false;
+        // Дожил до утра — убираем, иначе фигура так и стоит в дневной сцене.
+        if (_activeMonster != null) Destroy(_activeMonster);
+    }
+
+    // Случайная фигура нужна только для того, чтобы на неё посмотрели: снимаем с копии
+    // коллайдеры, и кат-сцена захвата (она срабатывает по OnTriggerEnter) просто не
+    // запустится. Это важно, потому что живёт копия по своему таймеру observationDuration
+    // и может исчезнуть посреди кат-сцены — а возвращает управление игроку именно она.
+    // Захват остаётся у сюжетного монстра в сцене, его мы не трогаем.
+    static void MakeHarmless(GameObject monster)
+    {
+        if (monster == null) return;
+
+        foreach (var col in monster.GetComponentsInChildren<Collider>(true))
+            col.enabled = false;
+        foreach (var body in monster.GetComponentsInChildren<Rigidbody>(true))
+            body.isKinematic = true;
     }
 
     void OnDestroy()
@@ -57,6 +81,7 @@ public class MonsterWatcherManager : MonoBehaviour
             if (lookPos.sqrMagnitude > 0.001f)
                 _activeMonster.transform.rotation = Quaternion.LookRotation(lookPos);
 
+            MakeHarmless(_activeMonster);
             Destroy(_activeMonster, observationDuration); // Он исчезает, когда игрок отвлечется
         }
     }
@@ -70,6 +95,7 @@ public class MonsterWatcherManager : MonoBehaviour
         if (point == null || monsterPrefab == null) return null;
 
         var monster = Instantiate(monsterPrefab, point.position, point.rotation);
+        MakeHarmless(monster);
         Destroy(monster, duration);
         return monster;
     }

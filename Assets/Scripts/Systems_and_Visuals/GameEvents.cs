@@ -12,6 +12,10 @@ public static class GameEvents
     // Началась ночь
     public static Action OnNightStarted;
 
+    // Ночь кончилась и снова наступил день (NightOneController). Парный к OnNightStarted:
+    // всё, что включается на ночь, должно уметь выключиться обратно.
+    public static Action OnDayStarted;
+
     // Игрок дошёл до кровати (BedSleepInteractable)
     public static Action OnBedTriggerReached;
 
