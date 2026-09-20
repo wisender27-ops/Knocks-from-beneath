@@ -14,7 +14,7 @@ public sealed class BranchEndingController
 {
     private readonly Action _activateHammerPath;
     private readonly GameObject _escapeDoorTrigger;
-    private readonly Action _activateHidePaths;
+    private readonly Action<bool> _setHidePathsActive;
     private readonly Action<string[], Action> _showThoughts;
     private readonly Action _endGame;
 
@@ -23,13 +23,13 @@ public sealed class BranchEndingController
     public BranchEndingController(
         Action activateHammerPath,
         GameObject escapeDoorTrigger,
-        Action activateHidePaths,
+        Action<bool> setHidePathsActive,
         Action<string[], Action> showThoughts,
         Action endGame)
     {
         _activateHammerPath = activateHammerPath;
         _escapeDoorTrigger = escapeDoorTrigger;
-        _activateHidePaths = activateHidePaths;
+        _setHidePathsActive = setHidePathsActive;
         _showThoughts = showThoughts;
         _endGame = endGame;
     }
@@ -44,17 +44,27 @@ public sealed class BranchEndingController
         if (_escapeDoorTrigger != null)
             _escapeDoorTrigger.SetActive(!GameState.frontDoorLocked);
 
-        _activateHidePaths?.Invoke();
+        _setHidePathsActive?.Invoke(true);
+    }
+
+    // Единая защёлка на все концовки ночи 2. Первое дошедшее до конца действие
+    // забирает развилку себе и гасит остальные пути — иначе игрок, вышедший из
+    // укрытия прямо у входной двери, успевал запустить две концовки подряд.
+    public bool TryResolve()
+    {
+        if (_resolved) return false;
+        _resolved = true;
+
+        if (_escapeDoorTrigger != null) _escapeDoorTrigger.SetActive(false);
+        _setHidePathsActive?.Invoke(false);
+        return true;
     }
 
     // Концовка 2: побег через входную дверь. Вызывается из EscapeDoorTrigger через
     // IntroSequence.OnEscapedThroughDoor().
     public void HandleDoorEscape()
     {
-        if (_resolved) return;
-        _resolved = true;
-
-        if (_escapeDoorTrigger != null) _escapeDoorTrigger.SetActive(false);
+        if (!TryResolve()) return;
 
         _showThoughts(new string[] {
             "Выбрался.",

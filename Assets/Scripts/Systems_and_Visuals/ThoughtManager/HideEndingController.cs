@@ -16,6 +16,7 @@ public sealed class HideEndingController
     private readonly Func<IEnumerator, Coroutine> _startCoroutine;
     private readonly Action<string[], Action> _showThoughts;
     private readonly Action<bool> _lockCamera;
+    private readonly Func<bool> _tryClaimEnding;
     private readonly Action _endGame;
 
     private bool _resolved;
@@ -32,6 +33,7 @@ public sealed class HideEndingController
         Func<IEnumerator, Coroutine> startCoroutine,
         Action<string[], Action> showThoughts,
         Action<bool> lockCamera,
+        Func<bool> tryClaimEnding,
         Action endGame)
     {
         _hideZones = hideZones;
@@ -40,15 +42,27 @@ public sealed class HideEndingController
         _startCoroutine = startCoroutine;
         _showThoughts = showThoughts;
         _lockCamera = lockCamera;
+        _tryClaimEnding = tryClaimEnding;
         _endGame = endGame;
     }
 
     public void ActivateZones()
     {
+        SetZonesActive(true);
+    }
+
+    // Вызывается BranchEndingController.TryResolve(), когда развилку забрала другая
+    // концовка: зоны гаснут, и начатое укрытие уже ничем не закончится.
+    public void SetZonesActive(bool active)
+    {
+        // Включение = чистый старт развилки, выключение = развилку забрал кто-то другой.
+        _resolved = !active;
+        _activeZoneIndex = -1;
+
         if (_hideZones == null) return;
         for (int i = 0; i < _hideZones.Length; i++)
         {
-            if (_hideZones[i] != null) _hideZones[i].SetActive(true);
+            if (_hideZones[i] != null) _hideZones[i].SetActive(active);
         }
     }
 
@@ -69,6 +83,9 @@ public sealed class HideEndingController
 
         int idx = IndexOfZone(zone);
         if (idx < 0 || idx != _activeZoneIndex) return;
+
+        // Забираем развилку себе; если её уже забрал побег через дверь — выходим молча.
+        if (_tryClaimEnding != null && !_tryClaimEnding()) return;
 
         _resolved = true;
         _startCoroutine(AmbushRoutine(idx));

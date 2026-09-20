@@ -12,6 +12,9 @@ public class PlacementZone : MonoBehaviour
     [Tooltip("Срабатывает на каждую успешно установленную коробку — например, RoomRevealZone на этом же объекте.")]
     public UnityEvent onBoxPlaced = new UnityEvent();
 
+    [Tooltip("Теги квестов, которым эта зона засчитывает прогресс. Коробки дня 1 — box-delivery/box-collect, декор дня 2 — room-decoration.")]
+    public string[] progressQuestTags = { "box-delivery", "box-collect" };
+
     private bool[] isSlotOccupied;
 
     void Awake()
@@ -80,7 +83,7 @@ public class PlacementZone : MonoBehaviour
             QuestManager.Instance.currentQuestIndex < QuestManager.Instance.questList.Count)
         {
             var activeQuest = QuestManager.Instance.questList[QuestManager.Instance.currentQuestIndex];
-            if (activeQuest.questTag == "box-delivery" || activeQuest.questTag == "box-collect")
+            if (activeQuest != null && IsProgressQuest(activeQuest.questTag))
             {
                 // Считаем как одно действие по доставке (ставим одну прогресс-единицу)
                 QuestManager.Instance.AddProgress(1);
@@ -89,6 +92,16 @@ public class PlacementZone : MonoBehaviour
         }
 
         onBoxPlaced?.Invoke();
+    }
+
+    bool IsProgressQuest(string questTag)
+    {
+        if (progressQuestTags == null || string.IsNullOrEmpty(questTag)) return false;
+        for (int i = 0; i < progressQuestTags.Length; i++)
+        {
+            if (progressQuestTags[i] == questTag) return true;
+        }
+        return false;
     }
 }
 }

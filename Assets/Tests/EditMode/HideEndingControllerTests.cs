@@ -15,6 +15,9 @@ public class HideEndingControllerTests
     private bool _endGameCalled;
     private List<string[]> _shownThoughts;
     private Action _lastOnComplete;
+    // Имитирует общую защёлку концовок: BranchEndingController.TryResolve() отдаёт
+    // развилку только первому дошедшему пути.
+    private bool _endingClaimable;
 
     // Manually pumps the coroutine to completion instead of running it through Unity's own
     // scheduler — WaitForSeconds is just a yielded object here, nothing enforces real time,
@@ -36,6 +39,7 @@ public class HideEndingControllerTests
 
         _cameraLockCalled = false;
         _endGameCalled = false;
+        _endingClaimable = true;
         _shownThoughts = new List<string[]>();
 
         return new HideEndingController(
@@ -43,7 +47,8 @@ public class HideEndingControllerTests
             FakeStartCoroutine,
             (lines, onComplete) => { _shownThoughts.Add(lines); _lastOnComplete = onComplete; },
             locked => { _cameraLockCalled = true; _cameraLockedValue = locked; },
-            () => _endGameCalled = true);
+            tryClaimEnding: () => _endingClaimable,
+            endGame: () => _endGameCalled = true);
     }
 
     [TearDown]
@@ -117,5 +122,37 @@ public class HideEndingControllerTests
         controller.HandleZoneEntered(_zones[1]);
 
         Assert.That(_shownThoughts, Is.Empty, "entering a second zone while already hiding must be a no-op");
+    }
+
+    [Test]
+    public void ZoneExit_DoesNothing_WhenAnotherEndingAlreadyClaimedTheBranch()
+    {
+        var controller = CreateController();
+        controller.ActivateZones();
+        controller.HandleZoneEntered(_zones[0]);
+
+        _shownThoughts.Clear();
+        _endingClaimable = false; // развилку уже забрал побег через дверь
+        controller.HandleZoneExited(_zones[0]);
+
+        Assert.That(_cameraLockCalled, Is.False);
+        Assert.That(_endGameCalled, Is.False);
+        Assert.That(_shownThoughts, Is.Empty);
+    }
+
+    [Test]
+    public void SetZonesActiveFalse_DisablesZonesAndStopsTheHidingPath()
+    {
+        var controller = CreateController();
+        controller.ActivateZones();
+        controller.HandleZoneEntered(_zones[0]);
+
+        controller.SetZonesActive(false);
+        _shownThoughts.Clear();
+        controller.HandleZoneExited(_zones[0]);
+
+        Assert.That(_zones[0].activeSelf, Is.False);
+        Assert.That(_endGameCalled, Is.False);
+        Assert.That(_shownThoughts, Is.Empty);
     }
 }

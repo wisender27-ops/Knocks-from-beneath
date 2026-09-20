@@ -8,6 +8,11 @@ public enum DebugStoryStage
 {
     None,
     StartBoxQuest,
+    // День 2 (T-14..T-17) — стадии стоят до StartNight намеренно: ApplyDebugSkip
+    // включает ночь только начиная со StartKitchenNoise, а день 2 идёт при свете.
+    StartDay2Decoration,
+    StartDay2Dinner,
+    StartDay2Evening,
     StartNight,
     StartKitchenNoise,
     StartFlashlightQuest,
@@ -15,7 +20,10 @@ public enum DebugStoryStage
     StartBreakFloor,
     StartLookInHole,
     StartHammerQuest,
-    StartFinale
+    StartFinale,
+    // Развилка ночи 2 (T-19/T-20) — сразу после выхода монстра из дыры,
+    // все три пути открыты.
+    StartBranchEndings
 }
 
 public class IntroSequence : MonoBehaviour
@@ -127,10 +135,12 @@ public class IntroSequence : MonoBehaviour
 
         _hideEnding = new HideEndingController(
             hidingSpots, hidingSpotAmbushPoints, playerTransform,
-            StartCoroutine, ShowThoughts, LockPlayerCamera, EndGame);
+            StartCoroutine, ShowThoughts, LockPlayerCamera,
+            tryClaimEnding: () => _branchEnding.TryResolve(), // общая защёлка всех концовок ночи 2
+            endGame: EndGame);
 
         _branchEnding = new BranchEndingController(
-            SetupHammerQuest, escapeDoorTrigger, _hideEnding.ActivateZones, ShowThoughts, EndGame);
+            SetupHammerQuest, escapeDoorTrigger, _hideEnding.SetZonesActive, ShowThoughts, EndGame);
 
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
@@ -237,6 +247,15 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartBoxQuest:
                 _moveInChores.SetupBoxQuest();
                 break;
+            case DebugStoryStage.StartDay2Decoration:
+                _decoration.SetupDecorationQuest();
+                break;
+            case DebugStoryStage.StartDay2Dinner:
+                _dinner.SetupIngredientQuest();
+                break;
+            case DebugStoryStage.StartDay2Evening:
+                _eveningRound.SetupEveningWalkQuest();
+                break;
             case DebugStoryStage.StartNight:
                 StartCoroutine(NightRoutine());
                 break;
@@ -265,6 +284,11 @@ public class IntroSequence : MonoBehaviour
                 break;
             case DebugStoryStage.StartFinale:
                 OnHammerPickedUp();
+                break;
+            case DebugStoryStage.StartBranchEndings:
+                if (MonsterTimer.Instance != null)
+                    MonsterTimer.Instance.StartTimer();
+                _branchEnding.Activate();
                 break;
         }
     }
