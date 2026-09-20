@@ -12,9 +12,29 @@ public class MonsterWatcherManager : MonoBehaviour
     public Transform[] spawnPoints;  // Точки, где он может появиться
     public float observationDuration = 5f; // Сколько он будет стоять
 
+    [Tooltip("Случайные появления монстра (скрип двери и т.п.). Днём выключены и включаются "
+             + "сами с наступлением ночи — на бытовых квестах дня скример ломает тон. "
+             + "Поставь галочку вручную, если нужно, чтобы он появлялся всегда.")]
+    public bool ambientWatchersEnabled = false;
+
     private GameObject _activeMonster;
 
     void Awake() => Instance = this;
+
+    void OnEnable()
+    {
+        GameEvents.OnNightStarted += EnableAmbientWatchers;
+    }
+
+    void OnDisable()
+    {
+        GameEvents.OnNightStarted -= EnableAmbientWatchers;
+    }
+
+    void EnableAmbientWatchers()
+    {
+        ambientWatchersEnabled = true;
+    }
 
     void OnDestroy()
     {
@@ -24,6 +44,7 @@ public class MonsterWatcherManager : MonoBehaviour
 
     public void SpawnWatcher(Vector3 playerPosition)
     {
+        if (!ambientWatchersEnabled) return; // днём монстра в доме быть не должно
         if (_activeMonster != null || monsterPrefab == null || spawnPoints == null) return; // Не спавним, если он уже где-то стоит
 
         Transform bestPoint = GetClosestPoint(playerPosition);

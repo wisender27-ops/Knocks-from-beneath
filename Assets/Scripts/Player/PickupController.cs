@@ -16,6 +16,10 @@ public class PickupController : MonoBehaviour
     public float followSpeed = 20f;
     [SerializeField] private float maxHoldDistance = 2.2f;
 
+    [Header("Установка в зоны")]
+    [Tooltip("Радиус поиска зоны размещения вокруг предмета в руках, если триггер зоны почему-то не сработал.")]
+    [SerializeField] private float placementSearchRadius = 2.5f;
+
     [Header("Настройки броска")]
     public float throwForce = 15f;
     [SerializeField] private float throwTorqueRandomness = 5f;
@@ -110,15 +114,45 @@ public class PickupController : MonoBehaviour
     // пробуем поставить в зону размещения, иначе просто роняем.
     public void HandleInteractPressed()
     {
-        if (_heldItemScript != null && _heldItemScript.activeZone != null)
+        PlacementZone zone = _heldItemScript != null ? _heldItemScript.activeZone : null;
+
+        // PickableItem.activeZone ставится по OnTriggerEnter и обнуляется любым OnTriggerExit —
+        // достаточно войти в две зоны подряд или пронести предмет мимо края, чтобы ссылка
+        // потерялась, и игрок жмёт E внутри зоны впустую. Поэтому в момент нажатия ещё и
+        // ищем зону вокруг предмета напрямую: это не зависит от истории триггеров.
+        if (zone == null)
+            zone = FindPlacementZoneNearHeldObject();
+
+        if (zone != null && zone.TryPlaceBox(_heldObj))
         {
-            if (_heldItemScript.activeZone.TryPlaceBox(_heldObj))
-            {
-                ClearHeldObject();
-                return;
-            }
+            ClearHeldObject();
+            return;
         }
         DropObject();
+    }
+
+    PlacementZone FindPlacementZoneNearHeldObject()
+    {
+        if (_heldObj == null) return null;
+
+        Collider[] around = Physics.OverlapSphere(
+            _heldObj.transform.position, placementSearchRadius, ~0, QueryTriggerInteraction.Collide);
+
+        PlacementZone closest = null;
+        float closestDistance = float.MaxValue;
+        for (int i = 0; i < around.Length; i++)
+        {
+            PlacementZone zone = around[i].GetComponentInParent<PlacementZone>();
+            if (zone == null || !zone.isActiveAndEnabled) continue;
+
+            float distance = (zone.transform.position - _heldObj.transform.position).sqrMagnitude;
+            if (distance < closestDistance)
+            {
+                closestDistance = distance;
+                closest = zone;
+            }
+        }
+        return closest;
     }
 
     private void RestoreHeldRigidbody(Rigidbody rb, bool resetInterpolation)
