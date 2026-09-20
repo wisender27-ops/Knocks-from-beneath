@@ -580,9 +580,9 @@ public class IntroSequence : MonoBehaviour
         _dinner.OnDinnerEaten();
     }
 
-    public void OnFrontDoorLocked()
+    public bool OnFrontDoorLocked()
     {
-        _eveningRound.LockFrontDoor();
+        return _eveningRound.LockFrontDoor();
     }
 
     private void ShowThoughts(string[] lines, System.Action onComplete)

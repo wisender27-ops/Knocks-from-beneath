@@ -20,6 +20,8 @@ public sealed class NightOneController
     private readonly Action<string[], Action> _showThoughts;
     private readonly Action _onNightFinished;
 
+    private bool _fogBeforeNight;
+
     private const float FadeDuration = 1.5f;
     private const float KnockWindowSeconds = 6f; // окно активности RandomKnock — при его min/maxDelay (2-5с) даёт максимум пару стуков
 
@@ -52,6 +54,9 @@ public sealed class NightOneController
 
         GameEvents.OnNightStarted?.Invoke();
         if (_skySwitcher != null) _skySwitcher.isDayTime = false;
+        // Ночь 1 — единственный отрезок, после которого игра возвращается в день,
+        // поэтому туман тут не выключается насовсем, а запоминается и восстанавливается.
+        _fogBeforeNight = RenderSettings.fog;
         RenderSettings.fog = false;
         _teleportToBed?.Invoke();
 
@@ -70,6 +75,7 @@ public sealed class NightOneController
     void OnCalmNightFinished()
     {
         if (_skySwitcher != null) _skySwitcher.isDayTime = true;
+        RenderSettings.fog = _fogBeforeNight;
         _onNightFinished?.Invoke();
     }
 

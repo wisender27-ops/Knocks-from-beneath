@@ -33,13 +33,17 @@ public sealed class EveningRoundController
     }
 
     // Вызывается из FrontDoorLockInteractable через IntroSequence.OnFrontDoorLocked().
-    public void LockFrontDoor()
+    // Возвращает true, если дверь действительно заперли — щеколде это нужно, чтобы
+    // не уезжать в закрытое положение, когда запирать ещё рано.
+    public bool LockFrontDoor()
     {
-        if (QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive("evening-walk")) return;
+        if (QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive("evening-walk")) return false;
+        if (GameState.frontDoorLocked) return false;
 
         GameState.frontDoorLocked = true;
         if (_frontDoor != null) _frontDoor.SetInteractionLocked(true);
         QuestManager.Instance.AddProgress(1);
+        return true;
     }
 
     // Вызывается из IntroSequence через тот же GameEvents.OnBedTriggerReached, на который
