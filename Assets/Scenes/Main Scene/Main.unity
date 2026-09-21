@@ -51059,12 +51059,13 @@ GameObject:
   - component: {fileID: 6581662028739387337}
   - component: {fileID: 7407707332281301061}
   - component: {fileID: 336853903637276172}
+  - component: {fileID: 910070000000000002}
   m_Layer: 0
   m_Name: garden_gate_01
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 65
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!4 &1488562961789674354
 Transform:
@@ -113084,12 +113085,13 @@ GameObject:
   - component: {fileID: 4228403658113406823}
   - component: {fileID: 763628228049868309}
   - component: {fileID: 2218290253278122261}
+  - component: {fileID: 910070000000000001}
   m_Layer: 0
   m_Name: garden_gate
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 65
+  m_StaticEditorFlags: 0
   m_IsActive: 1
 --- !u!1 &8376292482820683906
 GameObject:
@@ -120984,3 +120986,53 @@ SceneRoots:
   - {fileID: 573090836}
   - {fileID: 395855701}
   - {fileID: 680718991}
+--- !u!114 &910070000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8368672641815037925}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad9dac0883eda034ba6469526cb5afaf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::KnocksFromBeneath.Door
+  angleRotation: -95
+  openSpeed: 7
+  mouseSensitivity: 3
+  rotationAxis: 1
+  interactionLocked: 0
+  useOuterEdgeHinge: 1
+  hingeAtMaximumWorldX: 1
+  addGateCollider: 1
+  sfxSource: {fileID: 0}
+  doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
+  volumeMultiplier: 1.5
+  minVelocityThreshold: 2
+  _isOpen: 0
+--- !u!114 &910070000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484727074344903046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad9dac0883eda034ba6469526cb5afaf, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::KnocksFromBeneath.Door
+  angleRotation: 95
+  openSpeed: 7
+  mouseSensitivity: 3
+  rotationAxis: 1
+  interactionLocked: 0
+  useOuterEdgeHinge: 1
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 1
+  sfxSource: {fileID: 0}
+  doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
+  volumeMultiplier: 1.5
+  minVelocityThreshold: 2
+  _isOpen: 0

@@ -12,6 +12,10 @@ public class PlayerDoorOpen : MonoBehaviour
 
     private float distance = 3.0f;
     private Door currentHeldDoor;
+    private float pressTime;
+    private float mouseMovement;
+    private const float TapDuration = 0.22f;
+    private const float TapMouseTolerance = 0.1f;
 
     void Start()
     {
@@ -35,12 +39,14 @@ public class PlayerDoorOpen : MonoBehaviour
 
             if (Physics.Raycast(ray, out hit, distance))
             {
-                Door door = hit.collider.GetComponent<Door>();
+                Door door = hit.collider.GetComponentInParent<Door>();
                 if (door != null)
                 {
                     if (door.IsInteractionLocked) return;
 
                     currentHeldDoor = door;
+                    pressTime = Time.unscaledTime;
+                    mouseMovement = 0f;
                     currentHeldDoor.StartHolding();
 
                     // Блокируем вращение камеры
@@ -50,12 +56,19 @@ public class PlayerDoorOpen : MonoBehaviour
             }
         }
 
+        if (currentHeldDoor != null && Input.GetKey(KeyCode.E))
+            mouseMovement += Mathf.Abs(Input.GetAxis("Mouse Y"));
+
         // 2. ОТПУСТИЛИ КНОПКУ: Бросаем дверь и разблокируем камеру
         if (Input.GetKeyUp(KeyCode.E))
         {
             if (currentHeldDoor != null)
             {
+                bool wasTap = Time.unscaledTime - pressTime <= TapDuration &&
+                              mouseMovement <= TapMouseTolerance;
                 currentHeldDoor.StopHolding();
+                if (wasTap && !currentHeldDoor.IsInteractionLocked)
+                    currentHeldDoor.ToggleDoor();
                 currentHeldDoor = null;
 
                 // Возвращаем управление камерой

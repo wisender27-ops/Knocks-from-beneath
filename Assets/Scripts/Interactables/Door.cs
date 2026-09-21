@@ -15,9 +15,14 @@ public class Door : MonoBehaviour
     [Header("Настройки двери")]
     [SerializeField] private float angleRotation = 90f;
     [SerializeField] private float openSpeed = 10f;
+    [SerializeField] private float automaticOpenSpeed = 4f;
     [SerializeField] private float mouseSensitivity = 3f;
     [SerializeField] private RotationAxis rotationAxis = RotationAxis.Y;
     [SerializeField] private bool interactionLocked = false;
+    [Header("Петля створки")]
+    [SerializeField] private bool useOuterEdgeHinge;
+    [SerializeField] private bool hingeAtMaximumWorldX;
+    [SerializeField] private bool addGateCollider;
 
     [Header("Настройки звука (Скрип)")]
     public AudioSource sfxSource;
@@ -54,9 +59,53 @@ public class Door : MonoBehaviour
     private float currentOffset = 0f;
     private float previousRotationY;
     private float smoothDoorVelocity;
+    private Vector3 closedWorldPosition;
+    private Quaternion closedWorldRotation;
+    private Vector3 hingeWorldPosition;
+    private Quaternion previousWorldRotation;
+
+    void Awake()
+    {
+        if (addGateCollider && !TryGetComponent<Collider>(out _))
+        {
+            MeshFilter filter = GetComponent<MeshFilter>();
+            if (filter != null && filter.sharedMesh != null)
+            {
+                BoxCollider box = gameObject.AddComponent<BoxCollider>();
+                box.center = filter.sharedMesh.bounds.center;
+                box.size = filter.sharedMesh.bounds.size;
+            }
+        }
+
+        if (useOuterEdgeHinge && sfxSource == null && doorCreakClip != null)
+        {
+            sfxSource = gameObject.AddComponent<AudioSource>();
+            sfxSource.spatialBlend = 1f;
+            sfxSource.minDistance = 1f;
+            sfxSource.maxDistance = 12f;
+        }
+    }
 
     void Start()
     {
+        closedWorldPosition = transform.position;
+        closedWorldRotation = transform.rotation;
+        previousWorldRotation = closedWorldRotation;
+        if (useOuterEdgeHinge)
+        {
+            Renderer gateRenderer = GetComponent<Renderer>();
+            if (gateRenderer != null)
+            {
+                Bounds bounds = gateRenderer.bounds;
+                hingeWorldPosition = new Vector3(
+                    hingeAtMaximumWorldX ? bounds.max.x : bounds.min.x,
+                    bounds.center.y, bounds.center.z);
+            }
+            else
+            {
+                hingeWorldPosition = closedWorldPosition;
+            }
+        }
         baseLocalEuler = transform.localEulerAngles;
         baseAxisAngle = GetAxisAngle(baseLocalEuler);
 
@@ -81,16 +130,35 @@ public class Door : MonoBehaviour
 
         // Плавный поворот к целевому смещению
         targetAxisAngle = baseAxisAngle + currentOffset;
-        Quaternion targetQuaternion = BuildRotation(targetAxisAngle);
-        transform.localRotation = Quaternion.Slerp(transform.localRotation, targetQuaternion, openSpeed * Time.deltaTime);
+        if (useOuterEdgeHinge)
+        {
+            Quaternion swing = Quaternion.AngleAxis(currentOffset, Vector3.up);
+            Quaternion targetRotation = swing * closedWorldRotation;
+            Vector3 targetPosition = hingeWorldPosition + swing * (closedWorldPosition - hingeWorldPosition);
+            float speed = isBeingHeld ? openSpeed : automaticOpenSpeed;
+            float smoothing = 1f - Mathf.Exp(-speed * Time.deltaTime);
+            transform.SetPositionAndRotation(
+                Vector3.Lerp(transform.position, targetPosition, smoothing),
+                Quaternion.Slerp(transform.rotation, targetRotation, smoothing));
+        }
+        else
+        {
+            Quaternion targetQuaternion = BuildRotation(targetAxisAngle);
+            float speed = isBeingHeld ? openSpeed : automaticOpenSpeed;
+            float smoothing = 1f - Mathf.Exp(-speed * Time.deltaTime);
+            transform.localRotation = Quaternion.Slerp(transform.localRotation, targetQuaternion, smoothing);
+        }
 
         // Расчет скорости для звука
         float currentAxisAngle = GetAxisAngle(transform.localEulerAngles);
         float deltaRot = Mathf.DeltaAngle(previousRotationY, currentAxisAngle);
-        float rawVelocity = Mathf.Abs(deltaRot) / Time.deltaTime;
+        float rawVelocity = useOuterEdgeHinge
+            ? Quaternion.Angle(previousWorldRotation, transform.rotation) / Mathf.Max(Time.deltaTime, 0.0001f)
+            : Mathf.Abs(deltaRot) / Mathf.Max(Time.deltaTime, 0.0001f);
 
         smoothDoorVelocity = Mathf.Lerp(smoothDoorVelocity, rawVelocity, Time.deltaTime * 10f);
         previousRotationY = currentAxisAngle;
+        previousWorldRotation = transform.rotation;
 
         ManageCreakSound(smoothDoorVelocity);
 
