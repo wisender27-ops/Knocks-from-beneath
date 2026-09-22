@@ -225,8 +225,9 @@ public class IntroSequence : MonoBehaviour
         // nightStartTrigger.SetActive(false) убрано — кровать всегда видна
         if (knockController != null) knockController.SetActive(false);
 
-        if (TrashManager.Instance != null)
-            TrashManager.Instance.HideAll();
+        // Кучи мусора (garbagepile 1-3) теперь видны с самого начала — не прячем их
+        // здесь, TrashManager больше не скрывает их сам. Недоступность подбора до
+        // старта квеста 'trash-collect' обеспечивает TrashPile.Collect().
     }
 
     // =====================================================================

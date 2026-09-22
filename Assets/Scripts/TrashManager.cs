@@ -25,21 +25,15 @@ public class TrashManager : MonoBehaviour
     void Awake()
     {
         Instance = this;
-        HideAll(); // Прячем все кучи заранее
+        // Кучи мусора видны с самого начала (захламлённый дом от прежних хозяев) — не
+        // прячем их. Недоступность подбора до старта квеста обеспечивает
+        // TrashPile.Collect() самостоятельно, проверяя activeQuest.questTag.
     }
 
     void OnDestroy()
     {
         if (Instance == this)
             Instance = null;
-    }
-
-    public void HideAll()
-    {
-        if (trashPiles == null) return;
-
-        foreach (var pile in trashPiles)
-            if (pile != null) pile.SetActive(false);
     }
 
     // Вызывается из IntroSequence в начале квеста сбора мусора
@@ -55,7 +49,6 @@ public class TrashManager : MonoBehaviour
         {
             if (pile == null) continue;
             _totalPiles++;
-            pile.SetActive(true);
         }
     }
 
