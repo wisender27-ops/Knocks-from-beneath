@@ -24,8 +24,8 @@ public class HammerTrap : MonoBehaviour
     {
         if (inv == null) return;
 
-        inv.hasHammer = true;
-        inv.ActivateItem("Hammer");
+        inv.AddItem("Hammer");
+        inv.Equip("Hammer");
 
         if (InventoryUI.Instance != null)
             InventoryUI.Instance.AddItem("Hammer");

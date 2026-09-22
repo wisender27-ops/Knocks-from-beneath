@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b982558d5a48d234e8f74d3554eb2256, type: 3}
+  m_Name: InventoryDatabase
+  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.InventoryDatabase
+  items:
+  - {fileID: 11400000, guid: ea4f3943dfabf954fbbb4a679ac62178, type: 2}
+  - {fileID: 11400000, guid: 21fdc424f35ff6845aecb1dc5bf1bac9, type: 2}
+  - {fileID: 11400000, guid: 82e8f1e2af8bd1f4cb52b60ce9466fdb, type: 2}

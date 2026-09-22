@@ -856,7 +856,6 @@ GameObject:
   - component: {fileID: 49618317}
   - component: {fileID: 49618316}
   - component: {fileID: 49618315}
-  - component: {fileID: 49618318}
   m_Layer: 5
   m_Name: Canvas (UI)
   m_TagString: Untagged
@@ -955,44 +954,6 @@ Canvas:
   m_SortingLayerID: 0
   m_SortingOrder: 1
   m_TargetDisplay: 0
---- !u!114 &49618318
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 49618313}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: bff61a9243ad9e64eac52eb838ca1ec4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::InventoryUI
-  slots:
-  - slotRoot: {fileID: 1105329454}
-    background: {fileID: 1105329456}
-    itemIcon: {fileID: 841755387}
-    keyText: {fileID: 196767084}
-    itemName: {fileID: 745924066}
-    assignedItem: 
-  - slotRoot: {fileID: 1744719340}
-    background: {fileID: 1744719342}
-    itemIcon: {fileID: 555116170}
-    keyText: {fileID: 1874636252}
-    itemName: {fileID: 1218205813}
-    assignedItem: 
-  - slotRoot: {fileID: 1906535831}
-    background: {fileID: 1906535833}
-    itemIcon: {fileID: 348532178}
-    keyText: {fileID: 1948893450}
-    itemName: {fileID: 1440785551}
-    assignedItem: 
-  slotNormalSprite: {fileID: 0}
-  slotActiveSprite: {fileID: 0}
-  crowbarIcon: {fileID: 21300000, guid: 17c79cd7db8a7874dbb2222180a63555, type: 3}
-  flashlightIcon: {fileID: 21300000, guid: fd14cae93e5b42646938f54c84b70ed2, type: 3}
-  hammerIcon: {fileID: 21300000, guid: fd0b4e2780a33db4a8b2804d82411931, type: 3}
-  normalColor: {r: 1, g: 1, b: 1, a: 0.5}
-  activeColor: {r: 1, g: 1, b: 1, a: 1}
 --- !u!1 &50542870
 GameObject:
   m_ObjectHideFlags: 0
@@ -9533,6 +9494,67 @@ Mesh:
       - serializedVersion: 1
         m_IndexStart: 0
         m_IndexCount: 0
+--- !u!1001 &680718991
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 2854106058642189944, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2854106058642189944, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2854106058642189944, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2854106058642189944, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 2854106058642189944, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2854106058642189944, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2854106058642189944, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2854106058642189944, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2854106058642189944, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 2854106058642189944, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3579996947748667166, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: inventory
+      value: 
+      objectReference: {fileID: 6977330415233415940}
+    - target: {fileID: 5087083955294961533, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
+      propertyPath: m_Name
+      value: Retro Inventory Screen
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2c80d9c93797204428180b2ad53ea89b, type: 3}
 --- !u!1 &680902508
 GameObject:
   m_ObjectHideFlags: 0
@@ -93092,6 +93114,10 @@ PrefabInstance:
       propertyPath: cursorImage
       value: 
       objectReference: {fileID: 803778764}
+    - target: {fileID: 2565123186235401928, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
+      propertyPath: database
+      value: 
+      objectReference: {fileID: 11400000, guid: b7244b21a66b59347ac97a814583ba25, type: 2}
     - target: {fileID: 4082443097780501385, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: m_Resource
       value: 
@@ -153750,3 +153776,4 @@ SceneRoots:
   - {fileID: 832575519}
   - {fileID: 573090836}
   - {fileID: 395855701}
+  - {fileID: 680718991}

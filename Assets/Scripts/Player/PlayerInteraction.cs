@@ -220,14 +220,14 @@ public class PlayerInteraction : MonoBehaviour
             return;
         }
 
-        if (item.itemType == ItemType.Crowbar) inventory.hasCrowbar = true;
-        else if (item.itemType == ItemType.Flashlight) inventory.hasFlashlight = true;
-        else if (item.itemType == ItemType.Hammer) inventory.hasHammer = true;
+        string itemId = item.itemType.ToString();
+        if (!inventory.AddItem(itemId))
+            return;
 
-        inventory.ActivateItem(item.itemType.ToString());
+        inventory.Equip(itemId);
 
         if (InventoryUI.Instance != null)
-            InventoryUI.Instance.AddItem(item.itemType.ToString());
+            InventoryUI.Instance.AddItem(itemId);
 
         if (QuestManager.Instance != null && QuestManager.Instance.IsItemRequired(item.itemType))
             QuestManager.Instance.AddProgress(1);
