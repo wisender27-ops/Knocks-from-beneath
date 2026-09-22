@@ -17,7 +17,7 @@ public sealed class HideEndingController
     private readonly Action<string[], Action> _showThoughts;
     private readonly Action<bool> _lockCamera;
     private readonly Func<bool> _tryClaimEnding;
-    private readonly Action _endGame;
+    private readonly Action<string> _endGame;
 
     private bool _resolved;
     private int _activeZoneIndex = -1;
@@ -34,7 +34,7 @@ public sealed class HideEndingController
         Action<string[], Action> showThoughts,
         Action<bool> lockCamera,
         Func<bool> tryClaimEnding,
-        Action endGame)
+        Action<string> endGame)
     {
         _hideZones = hideZones;
         _ambushPoints = ambushPoints;
@@ -142,7 +142,7 @@ public sealed class HideEndingController
 
         _showThoughts(new string[] {
             "..."
-        }, _endGame);
+        }, () => _endGame("КОНЕЦ: ТЫ ОСТАЛСЯ ЗДЕСЬ (2/4)"));
     }
 }
 }

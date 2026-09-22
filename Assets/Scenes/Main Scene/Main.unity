@@ -494,6 +494,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!65 &27300884
 BoxCollider:
@@ -827,8 +830,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 86.44544
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 86.44544
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -1276,6 +1279,55 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!1 &83326546
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 83326548}
+  - component: {fileID: 83326547}
+  m_Layer: 0
+  m_Name: EndingScreen
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &83326547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 83326546}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d12d3297dd3fa5444a8303bccbff1a26, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.EndingScreen
+  fadeScreen: {fileID: 1032283654}
+  titleText: {fileID: 1604727102}
+  fadeDuration: 1.2
+  holdDuration: 3.5
+  mainMenuSceneName: MainMenu
+--- !u!4 &83326548
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 83326546}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &86506418
 GameObject:
   m_ObjectHideFlags: 0
@@ -6025,7 +6077,10 @@ Transform:
   m_LocalPosition: {x: -46.258022, y: -8.3619795, z: -6.4195786}
   m_LocalScale: {x: 1, y: 1, z: 1.0749362}
   m_ConstrainProportionsScale: 0
-  m_Children: [{fileID: 86506419}, {fileID: 344273045}, {fileID: 1244898955}]
+  m_Children:
+  - {fileID: 86506419}
+  - {fileID: 344273045}
+  - {fileID: 1244898955}
   m_Father: {fileID: 1279739769}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!64 &462354873
@@ -6577,8 +6632,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 0.99999994
-  m_MeshMetrics[1]: 2.5651245
+  'm_MeshMetrics[0]': 0.99999994
+  'm_MeshMetrics[1]': 2.5651245
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -9443,8 +9498,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 54.06372
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 54.06372
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -9777,8 +9832,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 86.44544
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 86.44544
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -11471,8 +11526,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 0.021306178
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 0.021306178
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -22805,8 +22860,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 8.382929
-  m_MeshMetrics[1]: 0.19951072
+  'm_MeshMetrics[0]': 8.382929
+  'm_MeshMetrics[1]': 0.19951072
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -34435,8 +34490,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 1
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 1
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -36790,8 +36845,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1.0000002
-  m_MeshMetrics[1]: 3.1618924
+  'm_MeshMetrics[0]': 1.0000002
+  'm_MeshMetrics[1]': 3.1618924
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -42246,6 +42301,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 110139791}
+  - {fileID: 1604727104}
   m_Father: {fileID: 49618314}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
@@ -42655,6 +42711,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!23 &1049615085
 MeshRenderer:
@@ -43365,8 +43424,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 1
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 1
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -43605,8 +43664,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 86.44544
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 86.44544
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -44777,8 +44836,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 86.44544
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 86.44544
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -53533,11 +53592,11 @@ PrefabInstance:
       value: Hammer
       objectReference: {fileID: 0}
     - target: {fileID: 3149174970126446461, guid: a965e11c158867a4e853ef60bc5ee52e, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: f1f5d67c7b2eec142a7cd26130efe387, type: 2}
     - target: {fileID: 5453795944538888442, guid: a965e11c158867a4e853ef60bc5ee52e, type: 3}
-      propertyPath: m_Materials.Array.data[0]
+      propertyPath: 'm_Materials.Array.data[0]'
       value: 
       objectReference: {fileID: 2100000, guid: f1f5d67c7b2eec142a7cd26130efe387, type: 2}
     m_RemovedComponents: []
@@ -53580,15 +53639,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79ad5e66977eb544aac91a8ba1f223f5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::HammerTrap
-  roomDoor: {fileID: 6176780796768861065}
-  monster: {fileID: 609731076}
-  monsterSpot: {fileID: 1543238257}
-  finalLogic: {fileID: 174737113}
   lampID: 5
   flickerDuration: 3
   flickerInterval: 0.25
-  targetSource: {fileID: 1737612918}
-  slamClip: {fileID: 8300000, guid: 283665cecbcb7484bbb2dcb332098ff3, type: 3}
 --- !u!65 &1335434720
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -58917,8 +58970,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 29.9253
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 29.9253
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -59282,8 +59335,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 3.3905635
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 3.3905635
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -59458,6 +59511,143 @@ MonoBehaviour:
   minVelocity: 1.5
   volumeMultiplier: 0.5
   cooldown: 0.1
+--- !u!1 &1604727101
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1604727104}
+  - component: {fileID: 1604727103}
+  - component: {fileID: 1604727102}
+  m_Layer: 0
+  m_Name: EndingTitle
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 0
+--- !u!114 &1604727102
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604727101}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f4688fdb7df04437aeb418b961361dc5, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.TextMeshPro::TMPro.TextMeshProUGUI
+  m_Material: {fileID: 0}
+  m_Color: {r: 1, g: 1, b: 1, a: 1}
+  m_RaycastTarget: 1
+  m_RaycastPadding: {x: 0, y: 0, z: 0, w: 0}
+  m_Maskable: 1
+  m_OnCullStateChanged:
+    m_PersistentCalls:
+      m_Calls: []
+  m_text: 
+  m_isRightToLeft: 0
+  m_fontAsset: {fileID: 11400000, guid: ebe780e3e86cfd841a2574a0d1ba7071, type: 2}
+  m_sharedMaterial: {fileID: 8129917695540873254, guid: ebe780e3e86cfd841a2574a0d1ba7071, type: 2}
+  m_fontSharedMaterials: []
+  m_fontMaterial: {fileID: 0}
+  m_fontMaterials: []
+  m_fontColor32:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+  m_enableVertexGradient: 0
+  m_colorMode: 3
+  m_fontColorGradient:
+    topLeft: {r: 1, g: 1, b: 1, a: 1}
+    topRight: {r: 1, g: 1, b: 1, a: 1}
+    bottomLeft: {r: 1, g: 1, b: 1, a: 1}
+    bottomRight: {r: 1, g: 1, b: 1, a: 1}
+  m_fontColorGradientPreset: {fileID: 0}
+  m_spriteAsset: {fileID: 0}
+  m_tintAllSprites: 0
+  m_StyleSheet: {fileID: 0}
+  m_TextStyleHashCode: 0
+  m_overrideHtmlColors: 0
+  m_faceColor:
+    serializedVersion: 2
+    rgba: 4294967295
+  m_fontSize: 64
+  m_fontSizeBase: 64
+  m_fontWeight: 400
+  m_enableAutoSizing: 0
+  m_fontSizeMin: 18
+  m_fontSizeMax: 72
+  m_fontStyle: 0
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
+  m_textAlignment: 65535
+  m_characterSpacing: 0
+  m_characterHorizontalScale: 1
+  m_wordSpacing: 0
+  m_lineSpacing: 0
+  m_lineSpacingMax: 0
+  m_paragraphSpacing: 0
+  m_charWidthMaxAdj: 0
+  m_TextWrappingMode: 1
+  m_wordWrappingRatios: 0.4
+  m_overflowMode: 0
+  m_linkedTextComponent: {fileID: 0}
+  parentLinkedComponent: {fileID: 0}
+  m_enableKerning: 0
+  m_ActiveFontFeatures: 6e72656b
+  m_enableExtraPadding: 0
+  checkPaddingRequired: 0
+  m_isRichText: 1
+  m_EmojiFallbackSupport: 1
+  m_parseCtrlCharacters: 1
+  m_isOrthographic: 1
+  m_isCullingEnabled: 0
+  m_horizontalMapping: 0
+  m_verticalMapping: 0
+  m_uvLineOffset: 0
+  m_geometrySortingOrder: 0
+  m_IsTextObjectScaleStatic: 0
+  m_VertexBufferAutoSizeReduction: 0
+  m_useMaxVisibleDescender: 1
+  m_pageToDisplay: 1
+  m_margin: {x: 0, y: 0, z: 0, w: 0}
+  m_isUsingLegacyAnimationComponent: 0
+  m_isVolumetricText: 0
+  m_hasFontAssetChanged: 0
+  m_baseMaterial: {fileID: 0}
+  m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!222 &1604727103
+CanvasRenderer:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604727101}
+  m_CullTransparentMesh: 1
+--- !u!224 &1604727104
+RectTransform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1604727101}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 1032283651}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_AnchorMin: {x: 0.5, y: 0.5}
+  m_AnchorMax: {x: 0.5, y: 0.5}
+  m_AnchoredPosition: {x: 0, y: 0}
+  m_SizeDelta: {x: 1400, y: 200}
+  m_Pivot: {x: 0.5, y: 0.5}
 --- !u!1 &1614302221
 GameObject:
   m_ObjectHideFlags: 0
@@ -62036,8 +62226,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 3.3905635
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 3.3905635
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -62594,8 +62784,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 23.130302
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 23.130302
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -63681,8 +63871,8 @@ Mesh:
   m_CookingOptions: 30
   m_BakedConvexCollisionMesh: 
   m_BakedTriangleCollisionMesh: 
-  m_MeshMetrics[0]: 1
-  m_MeshMetrics[1]: 86.44544
+  'm_MeshMetrics[0]': 1
+  'm_MeshMetrics[1]': 86.44544
   m_MeshOptimizationFlags: 1
   m_StreamData:
     serializedVersion: 2
@@ -79598,6 +79788,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 2
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!114 &910070000000000002
 MonoBehaviour:
@@ -79624,6 +79817,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 2
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!4 &916094634192241357
 Transform:
@@ -121876,6 +122072,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!65 &5696299203813715296
 BoxCollider:
@@ -123041,9 +123240,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.NeighborNoteInteractable
   noteLines:
   - "\u0417\u0432\u043E\u043D\u0438\u043B \u0441\u043E\u0441\u0435\u0434."
-  - "\u0413\u043E\u0432\u043E\u0440\u0438\u0442, \u0441\u0432\u0435\u0442 \u0432 \u043C\u043E\u0451\u043C
-    \u043F\u043E\u0434\u0432\u0430\u043B\u0435 \u0433\u043E\u0440\u0435\u043B \u0435\u0449\u0451
-    \u0434\u043E \u0442\u043E\u0433\u043E, \u043A\u0430\u043A \u044F \u0432\u044A\u0435\u0445\u0430\u043B."
+  - "\u0413\u043E\u0432\u043E\u0440\u0438\u0442, \u0441\u0432\u0435\u0442 \u0432
+    \u043C\u043E\u0451\u043C \u043F\u043E\u0434\u0432\u0430\u043B\u0435 \u0433\u043E\u0440\u0435\u043B
+    \u0435\u0449\u0451 \u0434\u043E \u0442\u043E\u0433\u043E, \u043A\u0430\u043A
+    \u044F \u0432\u044A\u0435\u0445\u0430\u043B."
   - "\u0421\u043F\u0440\u043E\u0441\u0438\u043B, \u043D\u0435 \u0441\u043B\u044B\u0448\u0443
     \u043B\u0438 \u044F \u0447\u0435\u0433\u043E \u043F\u043E \u043D\u043E\u0447\u0430\u043C.
     \u042F \u0441\u043A\u0430\u0437\u0430\u043B, \u0447\u0442\u043E \u043D\u0435\u0442."
@@ -123080,6 +123280,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!82 &5831933271741327453
 AudioSource:
@@ -126338,6 +126541,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!65 &6176780796768861066
 BoxCollider:
@@ -129619,6 +129825,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!65 &6560339198073330695
 BoxCollider:
@@ -130056,6 +130265,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!65 &6591590296106035188
 BoxCollider:
@@ -136584,6 +136796,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!82 &7222206742911158773
 AudioSource:
@@ -137216,7 +137431,8 @@ Transform:
   m_LocalPosition: {x: 4.1222954, y: 1.2949488, z: 6.879753}
   m_LocalScale: {x: 100, y: 100.000015, z: 100.000015}
   m_ConstrainProportionsScale: 0
-  m_Children: [{fileID: 1195810645}]
+  m_Children:
+  - {fileID: 1195810645}
   m_Father: {fileID: 425752063}
   m_LocalEulerAnglesHint: {x: -89.98, y: 0, z: 0}
 --- !u!4 &7275178685803967832
@@ -138769,6 +138985,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!82 &7455745085458782361
 AudioSource:
@@ -145113,6 +145332,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!82 &8146849547124944294
 AudioSource:
@@ -149036,6 +149258,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 0}
   volumeMultiplier: 1.5
   minVelocityThreshold: 2
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!65 &8585057639115902841
 BoxCollider:
@@ -150146,6 +150371,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!82 &8719936586397271447
 AudioSource:
@@ -150693,6 +150921,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!65 &8747176889132289512
 BoxCollider:
@@ -152334,6 +152565,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!65 &8918280150008172501
 BoxCollider:
@@ -154146,6 +154380,9 @@ MonoBehaviour:
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  lockedRattleClip: {fileID: 0}
+  rattleAngle: 6
+  rattleDuration: 0.3
   _isOpen: 0
 --- !u!82 &9132277117663369900
 AudioSource:
@@ -155167,3 +155404,4 @@ SceneRoots:
   - {fileID: 573090836}
   - {fileID: 395855701}
   - {fileID: 680718991}
+  - {fileID: 83326548}

@@ -140,7 +140,8 @@ public class IntroSequence : MonoBehaviour
             endGame: EndGame);
 
         _branchEnding = new BranchEndingController(
-            SetupHammerQuest, escapeDoorTrigger, _hideEnding.SetZonesActive, ShowThoughts, EndGame);
+            SetupHammerQuest, escapeDoorTrigger, _hideEnding.SetZonesActive,
+            playerTransform, StartCoroutine, ShowThoughts, LockPlayerCamera, EndGame);
 
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
@@ -156,6 +157,7 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnTrashDeliveryReady += _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed += _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten += _pieQuest.OnPieEaten;
+        GameEvents.OnMonsterTimerExpired += _branchEnding.HandleTimerExpired;
     }
 
     void OnDisable()
@@ -166,6 +168,7 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnTrashDeliveryReady -= _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed -= _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten -= _pieQuest.OnPieEaten;
+        GameEvents.OnMonsterTimerExpired -= _branchEnding.HandleTimerExpired;
     }
 
     void Start()
@@ -419,6 +422,9 @@ public class IntroSequence : MonoBehaviour
     void OnKitchenQuestCompleted()
     {
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
+        // T-21: источник шума найден — RandomKnock (knockController) раньше продолжал
+        // стучать всю оставшуюся ночь, включая сцену у дыры и развилку концовок.
+        if (knockController != null) knockController.SetActive(false);
         ShowThoughts(new string[] {
             "Под полом.",
             "Прямо подо мной.",
@@ -522,12 +528,20 @@ public class IntroSequence : MonoBehaviour
         if (pc != null) pc.isCameraLocked = locked;
     }
 
-    void EndGame()
+    // Общая защёлка развилки ночи 2 — внешний контракт для FinaleController (концовка
+    // молотка), который не знает про _branchEnding напрямую и зовёт через IntroSequence тем
+    // же тонким проброс-паттерном, что и остальные интерактивы (T-21).
+    public bool TryClaimEnding()
     {
-        Application.Quit();
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#endif
+        return _branchEnding.TryResolve();
+    }
+
+    // T-21: раньше тут был Application.Quit() сразу после последней реплики — в билде игра
+    // просто закрывалась. Теперь показываем карточку концовки и возвращаемся в главное меню.
+    void EndGame(string endingTitle)
+    {
+        if (EndingScreen.Instance != null)
+            EndingScreen.Instance.ShowEnding(endingTitle);
     }
 
     void SetupHammerQuest()

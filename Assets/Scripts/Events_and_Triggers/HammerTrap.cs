@@ -3,26 +3,26 @@ using UnityEngine;
 namespace KnocksFromBeneath
 {
 
+// Момент подбора молотка (квест "hammer-find", SetupHammerQuest в IntroSequence). T-21:
+// раньше это был дореформенный "молоток = мгновенный джампскейр" — TriggerEvent без всякого
+// гейта захлопывал дверь, спавнил монстра на monsterSpot и включал finalLogic. finalLogic
+// оказался дословно тем же объектом, что и IntroSequence.finaleTrigger, а monster — тем же
+// Monster, которым управляет FinaleController.OnTriggerEnter у дыры (проверено сравнением
+// ссылок в редакторе). То есть при подборе молотка сюжет задваивался и запускался раньше
+// срока, минуя поход к дыре. Оставлена только настоящая механика подбора: инвентарь, квест,
+// мигание лампы как атмосферный штрих. Момент "монстр выходит" — целиком у FinaleController.
 public class HammerTrap : MonoBehaviour
 {
-    [Header("Настройки сюжета")]
-    public Door roomDoor;
-    public GameObject monster;
-    public Transform monsterSpot;
-    public GameObject finalLogic;
-
     [Header("Настройки мигания света")]
     [SerializeField] private string lampID = "5";      // ID лампы
     [SerializeField] private float flickerDuration = 3.0f; // Сколько секунд мигает
     [SerializeField] private float flickerInterval = 0.1f; // Скорость (интервал) мигания
 
-    [Header("Звук события")]
-    public AudioSource targetSource;
-    public AudioClip slamClip;
-
     public void TriggerEvent(PlayerInventory inv)
     {
         if (inv == null) return;
+        if (QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive("hammer-find"))
+            return;
 
         inv.AddItem("Hammer");
         inv.Equip("Hammer");
@@ -30,23 +30,11 @@ public class HammerTrap : MonoBehaviour
         if (InventoryUI.Instance != null)
             InventoryUI.Instance.AddItem("Hammer");
 
-        if (QuestManager.Instance != null)
-            QuestManager.Instance.AddProgress(1);
+        QuestManager.Instance.AddProgress(1);
 
-        if (roomDoor != null) roomDoor.CloseDoor();
-        if (targetSource != null && slamClip != null)
-            targetSource.PlayOneShot(slamClip);
-        if (monster != null && monsterSpot != null)
-        {
-            monster.transform.position = monsterSpot.position;
-            monster.transform.rotation = monsterSpot.rotation;
-            monster.SetActive(true);
-        }
-        if (finalLogic != null) finalLogic.SetActive(true);
         if (LightingManager.Instance != null)
-        {
             LightingManager.Instance.Flicker(lampID, flickerDuration, flickerInterval);
-        }
+
         gameObject.SetActive(false);
     }
 }

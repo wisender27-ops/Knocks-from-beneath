@@ -59,7 +59,14 @@ public class MonsterTimer : MonoBehaviour
     {
         StopAllCoroutines();
         _isRunning = false;
-        if (timerText != null) timerText.text = "";
+        if (timerText != null)
+        {
+            timerText.text = "";
+            // StopAllCoroutines() может оборвать ShowFinalMessage() на середине — вернуть
+            // размер/цвет шрифта, иначе следующий обычный квест-таймер останется красным 36pt.
+            timerText.fontSize = _defaultFontSize;
+            timerText.color = Color.white;
+        }
     }
 
     IEnumerator TimerRoutine()
@@ -103,6 +110,10 @@ public class MonsterTimer : MonoBehaviour
         // Надпись на экране
         if (timerText != null)
             StartCoroutine(ShowFinalMessage());
+
+        // Четвёртая концовка ночи 2 (T-21) — игрок не успел заколотить дыру вовремя.
+        // Подписчик (IntroSequence) сам решает, актуально ли это прямо сейчас.
+        GameEvents.OnMonsterTimerExpired?.Invoke();
     }
 
     IEnumerator ShowFinalMessage()

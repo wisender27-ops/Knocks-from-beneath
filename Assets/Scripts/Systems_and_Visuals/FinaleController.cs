@@ -37,6 +37,14 @@ public class FinaleController : MonoBehaviour
 
             if (inventory != null && inventory.hasHammer && pc != null)
             {
+                // T-21: общая защёлка развилки ночи 2 — без неё эта концовка могла сработать
+                // поверх уже идущего побега/пряток/"не успел" (BranchEndingController._resolved
+                // ничего не знал про эту концовку). Если IntroSequence не найден (например, в
+                // отдельной тестовой сцене без полной цепочки) — работаем как раньше, без гейта.
+                var intro = FindFirstObjectByType<IntroSequence>();
+                if (intro != null && !intro.TryClaimEnding())
+                    return;
+
                 isEndingTriggered = true;
                 inventory.ActivateItem("Hammer");
                 if (QuestManager.Instance != null)
@@ -153,17 +161,21 @@ public class FinaleController : MonoBehaviour
             ThoughtManager.Instance.ShowThoughts(new string[] {
                 "НЕТ!",
                 "ВЫПУСТИ МЕНЯ!"
-            }, QuitGame);
+            }, ShowEnding);
+        }
+        else
+        {
+            ShowEnding();
         }
     }
 
-    void QuitGame()
+    void ShowEnding()
     {
-        Debug.Log("GAME OVER");
-        Application.Quit();
-#if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false;
-#endif
+        // T-21: раньше тут был Application.Quit() сразу после реплики — в билде игра просто
+        // закрывалась без всякой карточки итога. Теперь как и у остальных трёх концовок —
+        // экран "КОНЕЦ: ..." и возврат в главное меню (EndingScreen).
+        if (EndingScreen.Instance != null)
+            EndingScreen.Instance.ShowEnding("КОНЕЦ: ПОЙМАН (3/4)");
     }
 }
 }

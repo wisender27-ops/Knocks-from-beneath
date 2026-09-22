@@ -13,6 +13,7 @@ public class HideEndingControllerTests
     private bool _cameraLockCalled;
     private bool _cameraLockedValue;
     private bool _endGameCalled;
+    private string _lastEndingTitle;
     private List<string[]> _shownThoughts;
     private Action _lastOnComplete;
     // Имитирует общую защёлку концовок: BranchEndingController.TryResolve() отдаёт
@@ -48,7 +49,7 @@ public class HideEndingControllerTests
             (lines, onComplete) => { _shownThoughts.Add(lines); _lastOnComplete = onComplete; },
             locked => { _cameraLockCalled = true; _cameraLockedValue = locked; },
             tryClaimEnding: () => _endingClaimable,
-            endGame: () => _endGameCalled = true);
+            endGame: title => { _endGameCalled = true; _lastEndingTitle = title; });
     }
 
     [TearDown]
@@ -99,6 +100,7 @@ public class HideEndingControllerTests
 
         _lastOnComplete?.Invoke();
         Assert.That(_endGameCalled, Is.True);
+        Assert.That(_lastEndingTitle, Is.Not.Null.And.Not.Empty);
     }
 
     [Test]

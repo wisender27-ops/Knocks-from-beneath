@@ -42,7 +42,12 @@ public class PlayerDoorOpen : MonoBehaviour
                 Door door = hit.collider.GetComponentInParent<Door>();
                 if (door != null)
                 {
-                    if (door.IsInteractionLocked) return;
+                    if (door.IsInteractionLocked)
+                    {
+                        door.PlayLockedFeedback();
+                        NotifyLockedFrontDoor(door);
+                        return;
+                    }
 
                     currentHeldDoor = door;
                     pressTime = Time.unscaledTime;
@@ -88,6 +93,22 @@ public class PlayerDoorOpen : MonoBehaviour
 
         if (playerController != null)
             playerController.isCameraLocked = false;
+    }
+
+    // T-21: Door.IsInteractionLocked обслуживает и входную дверь (заперта на вечернем обходе
+    // дня 2), и дверцу микроволновки (заперта во время готовки, MicrowaveInteractable) — общий
+    // рычащий звук/дёргание ручки (Door.PlayLockedFeedback) уместен для обеих, а вот сюжетная
+    // мысль "сам вчера закрыл" — только для входной двери и только пока она реально заперта
+    // игроком, поэтому сверяемся с IntroSequence.frontDoor, а не просто с любой запертой дверью.
+    void NotifyLockedFrontDoor(Door door)
+    {
+        if (!GameState.frontDoorLocked) return;
+
+        var intro = FindFirstObjectByType<IntroSequence>();
+        if (intro == null || door != intro.frontDoor) return;
+
+        if (ThoughtManager.Instance != null)
+            ThoughtManager.Instance.ShowThoughts(new string[] { "Заперто.", "Я сам вчера закрыл." });
     }
 }
 }

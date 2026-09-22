@@ -35,5 +35,9 @@ public static class GameEvents
     // Игрок прочитал записку/принял звонок соседа (NeighborNoteInteractable, T-16) —
     // побочная необязательная находка дня 2, не часть основной квест-цепочки.
     public static Action OnNeighborNoteRead;
+
+    // Таймер на закрытие дыры истёк, монстр вылезает без предупреждения (MonsterTimer, T-21) —
+    // четвёртая концовка ночи 2, наравне с побегом/пряткам/молотком.
+    public static Action OnMonsterTimerExpired;
 }
 }

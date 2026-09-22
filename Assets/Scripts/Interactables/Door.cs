@@ -1,4 +1,5 @@
 using UnityEngine;
+using System.Collections;
 
 namespace KnocksFromBeneath
 {
@@ -31,6 +32,12 @@ public class Door : MonoBehaviour
     [Range(0.1f, 10f)]
     [SerializeField] private float volumeMultiplier = 1.5f;
     [SerializeField] private float minVelocityThreshold = 2f;
+
+    [Header("Заперто (T-21)")]
+    [Tooltip("Звук, когда игрок пытается открыть запертую дверь. Если не задан — просто дёргается без звука.")]
+    [SerializeField] private AudioClip lockedRattleClip;
+    [SerializeField] private float rattleAngle = 6f;
+    [SerializeField] private float rattleDuration = 0.3f;
 
     // --- НОВАЯ ЛОГИКА IS_OPEN ---
     [SerializeField] private bool _isOpen; // Внутренняя переменная
@@ -305,5 +312,30 @@ public class Door : MonoBehaviour
     }
 
     public void StopHolding() => isBeingHeld = false;
+
+    // T-21: раньше попытка открыть запертую дверь не давала игроку никакой реакции — тишина,
+    // будто дверь просто не заметила клик. Дёргаем ручку и проигрываем звук, чтобы "заперто"
+    // читалось физически, а не только по отсутствию отклика.
+    public void PlayLockedFeedback()
+    {
+        if (!interactionLocked) return;
+        if (sfxSource != null && lockedRattleClip != null)
+            sfxSource.PlayOneShot(lockedRattleClip);
+        StopCoroutine(nameof(RattleRoutine));
+        StartCoroutine(RattleRoutine());
+    }
+
+    IEnumerator RattleRoutine()
+    {
+        float t = 0f;
+        while (t < rattleDuration)
+        {
+            t += Time.deltaTime;
+            float decay = 1f - t / rattleDuration;
+            currentOffset = Mathf.Sin(t * 40f) * rattleAngle * decay;
+            yield return null;
+        }
+        currentOffset = 0f;
+    }
 }
 }
