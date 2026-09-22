@@ -21,6 +21,20 @@ public class PlacementZone : MonoBehaviour
     private bool[] isSlotOccupied;
     private bool _revealed;
 
+    // Зоны в сцене изначально выключены (их включает MoveInChoresController/
+    // RoomDecorationController по ходу сюжета) — Awake() выключенного GameObject не
+    // вызывается, пока его не включат, поэтому HideItems() в Awake() одной зоны не
+    // спрячет предметы сразу при запуске игры. Прогоняем скрытие по всем зонам сцены
+    // (включая выключенные) один раз при загрузке — независимо от того, активна зона
+    // или нет.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void HideAllRevealItemsAtBoot()
+    {
+        var zones = FindObjectsByType<PlacementZone>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < zones.Length; i++)
+            zones[i].HideItems();
+    }
+
     void Awake()
     {
         // Инициализируем массив "занятости" по количеству слотов

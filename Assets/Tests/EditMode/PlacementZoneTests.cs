@@ -67,6 +67,14 @@ public class PlacementZoneTests
         method.Invoke(zone, null);
     }
 
+    // Симулирует [RuntimeInitializeOnLoadMethod(AfterSceneLoad)] — прогоняет HideItems()
+    // по всем зонам сцены, включая выключенные (чей Awake() ещё не вызывался).
+    private void InvokeBootHide()
+    {
+        var method = typeof(PlacementZone).GetMethod("HideAllRevealItemsAtBoot", BindingFlags.NonPublic | BindingFlags.Static);
+        method.Invoke(null, null);
+    }
+
     [TearDown]
     public void TearDown()
     {
@@ -139,6 +147,24 @@ public class PlacementZoneTests
         zone.RevealItems();
         _item1.SetActive(false); // simulate something else turning it back off
         zone.RevealItems(); // must not re-activate — _revealed guard should block this
+
+        Assert.That(_item1.activeSelf, Is.False);
+    }
+
+    [Test]
+    public void BootHide_HidesConfiguredItems_OnZoneThatStartsInactive()
+    {
+        // Все зоны в реальной сцене начинают выключенными (их включает
+        // MoveInChoresController/RoomDecorationController по ходу сюжета) — Awake()
+        // выключенного GameObject не срабатывает, поэтому скрытие не может зависеть от
+        // него. HideAllRevealItemsAtBoot() должен находить такие зоны через
+        // FindObjectsInactive.Include и прятать их предметы без Awake().
+        var zone = CreateZone();
+        _zoneGo.SetActive(false);
+        _item1 = new GameObject("HiddenItem1");
+        SetItemsToReveal(zone, _item1);
+
+        InvokeBootHide();
 
         Assert.That(_item1.activeSelf, Is.False);
     }
