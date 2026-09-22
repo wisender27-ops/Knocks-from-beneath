@@ -20,10 +20,10 @@ public class RoomRevealZoneTests
         _slotGo = new GameObject("Slot1");
         _zone.slots = new List<Transform> { _slotGo.transform };
 
+        // Left active on purpose — RoomRevealZone.Awake() is now responsible for hiding
+        // them itself, an author should no longer need to pre-disable items in the scene.
         _item1 = new GameObject("HiddenItem1");
         _item2 = new GameObject("HiddenItem2");
-        _item1.SetActive(false);
-        _item2.SetActive(false);
 
         var reveal = _zoneGo.AddComponent<RoomRevealZone>();
 
@@ -35,9 +35,10 @@ public class RoomRevealZoneTests
 
         // AddComponent doesn't reliably fire Awake() in this test runner (same reason
         // FloorLogicTests/EveningRoundControllerTests set QuestManager.Instance by hand) —
-        // RoomRevealZone.Awake() is what wires onBoxPlaced.AddListener(RevealItems) in real
-        // gameplay (where Awake always fires on scene load), so simulate that here too.
-        _zone.onBoxPlaced.AddListener(reveal.RevealItems);
+        // invoke it explicitly so both the onBoxPlaced subscription and the initial
+        // HideItems() call happen exactly like they would on real scene load.
+        var awake = typeof(RoomRevealZone).GetMethod("Awake", BindingFlags.NonPublic | BindingFlags.Instance);
+        awake.Invoke(reveal, null);
 
         return reveal;
     }
@@ -50,6 +51,15 @@ public class RoomRevealZoneTests
         if (_item1 != null) Object.DestroyImmediate(_item1);
         if (_item2 != null) Object.DestroyImmediate(_item2);
         if (_box != null) Object.DestroyImmediate(_box);
+    }
+
+    [Test]
+    public void Awake_HidesConfiguredItems_EvenIfLeftActiveInScene()
+    {
+        CreateZoneWithItems();
+
+        Assert.That(_item1.activeSelf, Is.False);
+        Assert.That(_item2.activeSelf, Is.False);
     }
 
     [Test]

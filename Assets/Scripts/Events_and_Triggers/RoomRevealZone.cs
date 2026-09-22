@@ -3,14 +3,16 @@ using UnityEngine;
 namespace KnocksFromBeneath
 {
 
-// Вешается на тот же GameObject, что и PlacementZone комнаты. Когда в зону ставят
-// коробку, показывает заранее скрытые мелкие предметы этой комнаты (посуда и т.п.) —
-// видимый прогресс "обживания" дома. Подписывается на PlacementZone.onBoxPlaced сама,
-// чтобы в инспекторе нужно было расставить только сами предметы, а не событие.
+// Вешается на тот же GameObject, что и PlacementZone комнаты. Сама выключает
+// назначенные предметы в момент старта сцены (не нужно вручную снимать галочку
+// активности у каждого объекта в инспекторе) и включает их обратно, когда в зону
+// поставят коробку — видимый прогресс "обживания" дома. Подписывается на
+// PlacementZone.onBoxPlaced сама, чтобы в инспекторе нужно было расставить только
+// сами предметы, а не событие.
 [RequireComponent(typeof(PlacementZone))]
 public class RoomRevealZone : MonoBehaviour
 {
-    [Tooltip("Предметы комнаты, изначально выключенные в сцене — появятся при установке коробки в эту зону.")]
+    [Tooltip("Предметы комнаты — скрываются при старте сцены и появятся при установке коробки в эту зону.")]
     [SerializeField] private GameObject[] itemsToReveal;
 
     private bool _revealed;
@@ -18,6 +20,17 @@ public class RoomRevealZone : MonoBehaviour
     void Awake()
     {
         GetComponent<PlacementZone>().onBoxPlaced.AddListener(RevealItems);
+        HideItems();
+    }
+
+    void HideItems()
+    {
+        if (itemsToReveal == null) return;
+        for (int i = 0; i < itemsToReveal.Length; i++)
+        {
+            if (itemsToReveal[i] != null)
+                itemsToReveal[i].SetActive(false);
+        }
     }
 
     public void RevealItems()
