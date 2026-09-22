@@ -25,7 +25,7 @@ public class BranchEndingControllerTests
         return new BranchEndingController(
             activateHammerPath: () => _hammerPathActivated = true,
             escapeDoorTrigger: _escapeDoorTrigger,
-            activateHidePaths: () => _hidePathsActivated = true,
+            setHidePathsActive: active => _hidePathsActivated = active,
             showThoughts: (lines, onComplete) => { _shownThoughts.Add(lines); _lastOnComplete = onComplete; },
             endGame: () => _endGameCalled = true);
     }

@@ -65,7 +65,7 @@ public class EveningRoundControllerTests
         var controller = CreateController();
         _questManager.CreateQuest("Другое", 1, questTag: "some-other-quest");
 
-        controller.LockFrontDoor();
+        Assert.That(controller.LockFrontDoor(), Is.False);
 
         Assert.That(GameState.frontDoorLocked, Is.False);
         Assert.That(_door.IsInteractionLocked, Is.False);
@@ -77,7 +77,7 @@ public class EveningRoundControllerTests
         var controller = CreateController();
         _questManager.CreateQuest("Обход", 1, questTag: "evening-walk");
 
-        controller.LockFrontDoor();
+        Assert.That(controller.LockFrontDoor(), Is.True);
 
         Assert.That(GameState.frontDoorLocked, Is.True);
         Assert.That(_door.IsInteractionLocked, Is.True);
@@ -94,6 +94,17 @@ public class EveningRoundControllerTests
 
         Assert.That(GameState.frontDoorLocked, Is.False);
         Assert.That(_door.IsInteractionLocked, Is.False);
+        Assert.That(_questManager.questList[0].currentAmount, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void LockFrontDoor_SecondCall_ReturnsFalseAndDoesNotAddProgressTwice()
+    {
+        var controller = CreateController();
+        _questManager.CreateQuest("Обход", 1, questTag: "evening-walk");
+
+        Assert.That(controller.LockFrontDoor(), Is.True);
+        Assert.That(controller.LockFrontDoor(), Is.False, "повторное нажатие на щеколду ничего не делает");
         Assert.That(_questManager.questList[0].currentAmount, Is.EqualTo(1));
     }
 }

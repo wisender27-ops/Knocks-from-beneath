@@ -85,6 +85,10 @@ public class PlayerController : MonoBehaviour
 
     private void HandleMovement()
     {
+        // Кат-сцены (CinematicMonsterGrab) выключают CharacterController, пока держат игрока.
+        // Без этой проверки Move() на выключенном контроллере сыпет ошибкой каждый кадр.
+        if (controller == null || !controller.enabled) return;
+
         // Используем GetAxisRaw для мгновенного считывания нажатий
         float x = Input.GetAxisRaw("Horizontal");
         float z = Input.GetAxisRaw("Vertical");

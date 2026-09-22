@@ -118,4 +118,48 @@ public class PickupControllerTests
         // eating a pie) is about to Destroy() the object anyway.
         Assert.That(_itemGo.GetComponent<Rigidbody>().useGravity, Is.False);
     }
+
+    // Регресс: игрок стоял в комнатной зоне с коробкой в руках, жал E — и коробка просто
+    // падала. PickableItem.activeZone ставится по OnTriggerEnter и обнуляется любым
+    // OnTriggerExit, так что по дороге ссылка терялась. Теперь зона ищется ещё и напрямую
+    // в момент нажатия.
+    [Test]
+    public void HandleInteractPressed_PlacesItem_EvenWhenActiveZoneWasNeverSet()
+    {
+        var zoneGo = new GameObject("Zone");
+        var slotGo = new GameObject("Slot");
+        var questGo = new GameObject("QuestManager");
+        try
+        {
+            zoneGo.transform.position = new Vector3(100f, 0f, 100f);
+            var trigger = zoneGo.AddComponent<BoxCollider>();
+            trigger.isTrigger = true;
+            trigger.size = Vector3.one * 3f;
+
+            var zone = zoneGo.AddComponent<PlacementZone>();
+            slotGo.transform.position = new Vector3(100f, 0f, 100f);
+            zone.slots = new System.Collections.Generic.List<Transform> { slotGo.transform };
+            zone.progressQuestTags = new string[0];
+
+            QuestManager.Instance = questGo.AddComponent<QuestManager>();
+
+            _itemGo.AddComponent<PickableItem>(); // activeZone намеренно остаётся null
+            _itemGo.transform.position = new Vector3(100f, 0f, 100f);
+            _holdPointGo.transform.position = _itemGo.transform.position;
+            Physics.SyncTransforms();
+
+            Assert.That(_pickup.TryGrab(_itemGo), Is.True);
+            _pickup.HandleInteractPressed();
+
+            Assert.That(_pickup.GetHeldObject(), Is.Null, "предмет должен уйти в зону, а не остаться в руках");
+            Assert.That(_itemGo.transform.position, Is.EqualTo(slotGo.transform.position));
+        }
+        finally
+        {
+            QuestManager.Instance = null;
+            Object.DestroyImmediate(questGo);
+            Object.DestroyImmediate(slotGo);
+            Object.DestroyImmediate(zoneGo);
+        }
+    }
 }

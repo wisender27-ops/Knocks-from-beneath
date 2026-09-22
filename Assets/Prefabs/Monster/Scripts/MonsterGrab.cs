@@ -26,12 +26,19 @@ public class CinematicMonsterGrab : MonoBehaviour
     private float seed;
     private GameObject activePlayer;
     private readonly List<MonoBehaviour> disabledPlayerScripts = new List<MonoBehaviour>();
-    private bool playerControllerWasEnabled;
     private Vector3 cameraPositionBeforeCinematic;
     private Quaternion cameraRotationBeforeCinematic;
     private bool cameraTransformCaptured;
 
     void OnDisable()
+    {
+        if (isPlaying)
+            StopCinematic();
+    }
+
+    // Объект могут уничтожить посреди сцены (MonsterWatcherManager убирает фигуру по
+    // своему таймеру) — управление игроку надо вернуть в любом случае.
+    void OnDestroy()
     {
         if (isPlaying)
             StopCinematic();
@@ -79,7 +86,7 @@ public class CinematicMonsterGrab : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        if (hasTriggered || other == null) return;
+        if (hasTriggered || isPlaying || other == null) return;
 
         Transform playerRoot = other.transform.root;
         if (playerRoot == null || !playerRoot.CompareTag("Player")) return;
@@ -128,7 +135,6 @@ public class CinematicMonsterGrab : MonoBehaviour
         if (!state)
         {
             disabledPlayerScripts.Clear();
-            playerControllerWasEnabled = controller != null && controller.enabled;
             if (controller != null) controller.enabled = false;
 
             MonoBehaviour[] scripts = player.GetComponentsInChildren<MonoBehaviour>();
@@ -143,8 +149,14 @@ public class CinematicMonsterGrab : MonoBehaviour
             return;
         }
 
+        // Раньше здесь возвращалось запомненное значение. Если на момент захвата контроллер
+        // уже был выключен (другая кат-сцена, телепорт в кровать, повторный вход в триггер),
+        // запоминалось false — и игрок навсегда оставался с работающими скриптами движения,
+        // но выключенным CharacterController: камера крутится, шаг не делается, а консоль
+        // каждый кадр пишет "Move called on inactive controller". Кат-сцена не имеет права
+        // оставить игрока без возможности ходить.
         if (controller != null)
-            controller.enabled = playerControllerWasEnabled;
+            controller.enabled = true;
 
         foreach (var script in disabledPlayerScripts)
         {
