@@ -393,9 +393,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: -90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 27300882}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -3341,7 +3345,7 @@ Transform:
   m_GameObject: {fileID: 310716143}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 7.8530006, y: 3.3254802, z: 0.7289963}
+  m_LocalPosition: {x: 7.8530006, y: 3.412, z: 0.7289963}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -8862,7 +8866,7 @@ Transform:
   m_GameObject: {fileID: 692115717}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.4129982, y: 4.0094795, z: -2.9209976}
+  m_LocalPosition: {x: 0.4129982, y: 3.9527, z: -2.9209976}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -20974,9 +20978,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: -90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 1049615087}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -36706,7 +36714,7 @@ Transform:
   m_GameObject: {fileID: 2128074432}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.07300186, y: 1.01848, z: -2.524002}
+  m_LocalPosition: {x: -0.07300186, y: 0.9978, z: -2.524002}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -45765,6 +45773,58 @@ MeshRenderer:
   m_SortingOrder: 0
   m_MaskInteraction: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!114 &910070000000000001
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8368672641815037925}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad9dac0883eda034ba6469526cb5afaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KnocksFromBeneath.Door
+  angleRotation: -95
+  openSpeed: 7
+  automaticOpenSpeed: 4
+  mouseSensitivity: 3
+  rotationAxis: 1
+  interactionLocked: 0
+  useOuterEdgeHinge: 1
+  hingeAtMaximumWorldX: 1
+  addGateCollider: 1
+  sfxSource: {fileID: 0}
+  doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
+  volumeMultiplier: 1.5
+  minVelocityThreshold: 2
+  _isOpen: 0
+--- !u!114 &910070000000000002
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1484727074344903046}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ad9dac0883eda034ba6469526cb5afaf, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::KnocksFromBeneath.Door
+  angleRotation: 95
+  openSpeed: 7
+  automaticOpenSpeed: 4
+  mouseSensitivity: 3
+  rotationAxis: 1
+  interactionLocked: 0
+  useOuterEdgeHinge: 1
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 1
+  sfxSource: {fileID: 0}
+  doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
+  volumeMultiplier: 1.5
+  minVelocityThreshold: 2
+  _isOpen: 0
 --- !u!4 &916094634192241357
 Transform:
   m_ObjectHideFlags: 0
@@ -87912,9 +87972,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: -90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 5696299203813715297}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -89071,9 +89135,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: 90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 5831933271741327453}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -92325,9 +92393,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: 90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 6176780796768861068}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -95602,9 +95674,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: 90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 6560339198073330696}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -96035,9 +96111,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: 90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 6591590296106035189}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -102559,9 +102639,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: 90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 7222206742911158773}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -104740,9 +104824,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: 90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 7455745085458782361}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -111080,9 +111168,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: -90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 8146849547124944294}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -114999,9 +115091,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: -125
   openSpeed: 10
+  automaticOpenSpeed: 4
   mouseSensitivity: 3
   rotationAxis: 2
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 0}
   doorCreakClip: {fileID: 0}
   volumeMultiplier: 1.5
@@ -116105,9 +116201,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: -90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 8719936586397271447}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -116648,9 +116748,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: -90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 8747176889132289513}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -118150,9 +118254,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: -90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 8918280150008172502}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -119958,9 +120066,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Door
   angleRotation: 90
   openSpeed: 3
+  automaticOpenSpeed: 4
   mouseSensitivity: 10
   rotationAxis: 1
   interactionLocked: 0
+  useOuterEdgeHinge: 0
+  hingeAtMaximumWorldX: 0
+  addGateCollider: 0
   sfxSource: {fileID: 9132277117663369900}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
@@ -120986,53 +121098,3 @@ SceneRoots:
   - {fileID: 573090836}
   - {fileID: 395855701}
   - {fileID: 680718991}
---- !u!114 &910070000000000001
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8368672641815037925}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ad9dac0883eda034ba6469526cb5afaf, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::KnocksFromBeneath.Door
-  angleRotation: -95
-  openSpeed: 7
-  mouseSensitivity: 3
-  rotationAxis: 1
-  interactionLocked: 0
-  useOuterEdgeHinge: 1
-  hingeAtMaximumWorldX: 1
-  addGateCollider: 1
-  sfxSource: {fileID: 0}
-  doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
-  volumeMultiplier: 1.5
-  minVelocityThreshold: 2
-  _isOpen: 0
---- !u!114 &910070000000000002
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1484727074344903046}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ad9dac0883eda034ba6469526cb5afaf, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::KnocksFromBeneath.Door
-  angleRotation: 95
-  openSpeed: 7
-  mouseSensitivity: 3
-  rotationAxis: 1
-  interactionLocked: 0
-  useOuterEdgeHinge: 1
-  hingeAtMaximumWorldX: 0
-  addGateCollider: 1
-  sfxSource: {fileID: 0}
-  doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
-  volumeMultiplier: 1.5
-  minVelocityThreshold: 2
-  _isOpen: 0

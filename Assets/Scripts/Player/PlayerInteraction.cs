@@ -72,6 +72,13 @@ public class PlayerInteraction : MonoBehaviour
         {
             GameObject hitObj = hit.transform.gameObject;
 
+            FloorLogic floor = hit.transform.GetComponentInParent<FloorLogic>();
+            if (floor != null)
+            {
+                floor.TryStartBreak(inventory);
+                return;
+            }
+
             // 0. КУЧКА МУСОРА
             TrashPile trashPile = hitObj.GetComponent<TrashPile>();
             if (trashPile != null)
@@ -213,31 +220,26 @@ public class PlayerInteraction : MonoBehaviour
         if (item == null || inventory == null)
             return;
 
-        // Check if we can pick up this item - it should be required by the active quest
-        if (!CanPickUpItem(item))
+        QuestManager questManager = QuestManager.Instance;
+        if (questManager == null || !questManager.IsItemRequired(item.itemType))
         {
             Debug.Log($"[Inventory] Cannot pick up {item.itemType.ToString()} - required item is not needed for current quest!");
             return;
         }
 
         string itemId = item.itemType.ToString();
-        if (!inventory.AddItem(itemId))
+        bool alreadyOwned = inventory.HasItem(itemId);
+        if (!alreadyOwned && !inventory.AddItem(itemId))
             return;
 
+        item.gameObject.SetActive(false);
+        Destroy(item.gameObject);
+
+        questManager.AddProgress(1);
         inventory.Equip(itemId);
 
-        if (InventoryUI.Instance != null)
+        if (!alreadyOwned && InventoryUI.Instance != null)
             InventoryUI.Instance.AddItem(itemId);
-
-        if (QuestManager.Instance != null && QuestManager.Instance.IsItemRequired(item.itemType))
-            QuestManager.Instance.AddProgress(1);
-
-        Destroy(item.gameObject);
-    }
-
-    bool CanPickUpItem(SimpleItem item)
-    {
-        return item != null && QuestManager.Instance != null && QuestManager.Instance.IsItemRequired(item.itemType);
     }
 
     public GameObject GetHeldObject()

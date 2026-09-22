@@ -39,6 +39,15 @@ public class QuestManagerTests
     }
 
     [Test]
+    public void IsItemRequired_ReturnsFalseForRestoredCompletedQuest()
+    {
+        _manager.CreateQuest("Найти фонарик", 1, questTag: "flashlight-find");
+        _manager.questList[0].currentAmount = 1;
+
+        Assert.That(_manager.IsItemRequired(ItemType.Flashlight), Is.False);
+    }
+
+    [Test]
     public void AddProgress_IgnoresNonPositiveAmount()
     {
         _manager.CreateQuest("Найти молоток", 2, questTag: "hammer-find");

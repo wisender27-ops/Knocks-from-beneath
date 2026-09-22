@@ -47,6 +47,14 @@ namespace KnocksFromBeneath
         public IReadOnlyList<InventoryEntry> Entries => entries;
         public string EquippedItemId => equippedItemId;
 
+        public bool HasItem(string id)
+        {
+            return FindEntry(id) != null ||
+                   (id == "Crowbar" && hasCrowbar) ||
+                   (id == "Flashlight" && hasFlashlight) ||
+                   (id == "Hammer" && hasHammer);
+        }
+
         private void Start()
         {
             if (crowbarInHand != null) crowbarAnim = crowbarInHand.GetComponent<Animator>();
@@ -211,8 +219,6 @@ namespace KnocksFromBeneath
             if (!Physics.Raycast(ray, out RaycastHit hit, hitDistance, interactableLayer)) return;
             BreakableObject breakable = hit.collider.GetComponent<BreakableObject>();
             if (breakable != null) breakable.Break();
-            FloorLogic floor = hit.collider.GetComponent<FloorLogic>();
-            if (floor != null) floor.Break();
         }
     }
 

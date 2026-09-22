@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace KnocksFromBeneath
@@ -5,79 +6,171 @@ namespace KnocksFromBeneath
 
 public class FloorLogic : MonoBehaviour
 {
-    private Animator anim;
-    private Collider myCollider;
+    public enum BreakState { Available, Playing, Completed }
 
-    [Header("Визуал")]
-    public GameObject visualModel; // Перетащи сюда объект с 3D-моделью досок
+    [Header("Постановочная сцена")]
+    [SerializeField] private Animator sequenceAnimator;
+    [SerializeField] private string playTrigger = "Play";
+    [SerializeField, Min(0.1f)] private float fallbackDuration = 4f;
+    [SerializeField] private GameObject intactBoard;
+    [SerializeField] private GameObject animatedBoard;
+    [SerializeField] private GameObject hole;
+    [SerializeField] private GameObject worldCrowbar;
+    [SerializeField] private Collider boardCollider;
+    [SerializeField] private Collider interactionCollider;
 
     [Header("Связи")]
-    [SerializeField] private GameObject knockController; // Объект со скриптом RandomKnock
-    [SerializeField] private GameObject holeEventTrigger; // Триггер для Этапа 3 (лицо/фонарик)
-    [SerializeField] private AudioSource breakAudio;      // Звук хруста дерева
+    [SerializeField] private GameObject knockController;
+    [SerializeField] private GameObject holeEventTrigger;
+    [SerializeField] private AudioSource audioSource;
+    [SerializeField] private AudioClip pryClip;
+    [SerializeField] private AudioClip breakClip;
 
     [Header("Состояние пола")]
-    public bool isBroken = false;
+    [SerializeField] private BreakState state;
+    public bool isBroken;
+    public BreakState State => state;
 
     [Header("Привязка к квесту")]
     [Tooltip("Пол ломается только пока активен квест с этим тегом — иначе лом бьёт по полу вхолостую.")]
     [SerializeField] private string requiredQuestTag = "break-floor";
 
-    void Start()
+    private Coroutine fallbackRoutine;
+
+    void Awake()
     {
-        anim = GetComponent<Animator>();
-        myCollider = GetComponent<Collider>();
+        if (sequenceAnimator == null) sequenceAnimator = GetComponent<Animator>();
+        if (boardCollider == null) boardCollider = GetComponent<Collider>();
+
+        if (isBroken || state == BreakState.Completed) ApplyCompletedState();
+        else ApplyAvailableState();
     }
 
+    public bool CanStartBreak(PlayerInventory inventory)
+    {
+        return state == BreakState.Available &&
+               inventory != null && inventory.HasItem("Crowbar") &&
+               QuestManager.Instance != null && QuestManager.Instance.IsQuestActive(requiredQuestTag);
+    }
+
+    public bool TryStartBreak(PlayerInventory inventory)
+    {
+        if (!CanStartBreak(inventory)) return false;
+
+        state = BreakState.Playing;
+        if (interactionCollider != null) interactionCollider.enabled = false;
+        SetActive(intactBoard, false);
+        SetActive(animatedBoard, true);
+        SetActive(worldCrowbar, true);
+
+        if (sequenceAnimator != null)
+        {
+            sequenceAnimator.ResetTrigger(playTrigger);
+            sequenceAnimator.SetTrigger(playTrigger);
+        }
+
+        fallbackRoutine = StartCoroutine(CompleteAfterDelay());
+        return true;
+    }
+
+    // Совместимость со старыми UnityEvent. Новое взаимодействие вызывает TryStartBreak().
     public void Break()
     {
-        if (isBroken) return;
+        PlayerInventory inventory = FindFirstObjectByType<PlayerInventory>();
+        TryStartBreak(inventory);
+    }
 
-        // Ломается только когда квест на это реально активен. Без этой проверки игрок может
-        // сломать пол ломом раньше, чем квест "Вскрыть доски" вообще создан (например, пока ещё
-        // идёт диалог после подбора лома) — тогда квест создастся уже поверх сломанного пола,
-        // повторно сломать нельзя (см. guard выше), и прогресс встаёт намертво.
-        if (QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive(requiredQuestTag))
-            return;
+    public void BeginPry()
+    {
+        if (state != BreakState.Playing) return;
+        SetActive(intactBoard, false);
+        SetActive(animatedBoard, true);
+        SetActive(worldCrowbar, true);
+    }
 
-        // 1. Анимация и физика
-        if (anim != null) anim.SetTrigger("Break");
-        if (myCollider != null) myCollider.enabled = false;
+    public void PlayPrySound() => PlayOneShot(pryClip);
+    public void PlayBreakSound() => PlayOneShot(breakClip);
 
-        // 2. Звуковой эффект
-        if (breakAudio != null) breakAudio.Play();
+    public void OpenHole()
+    {
+        if (state != BreakState.Playing) return;
+        if (boardCollider != null) boardCollider.enabled = false;
+        SetActive(hole, true);
+        if (holeEventTrigger != null) holeEventTrigger.SetActive(true);
+        if (knockController != null) knockController.SetActive(false);
+    }
 
-        // 3. ОСТАНОВКА СТУКА (Важно для атмосферы)
-        if (knockController != null)
-        {
-            knockController.SetActive(false);
-        }
+    public void CompleteBreak()
+    {
+        if (state == BreakState.Completed) return;
+        if (fallbackRoutine != null) StopCoroutine(fallbackRoutine);
+        fallbackRoutine = null;
 
-        // 4. ПОДГОТОВКА ЭТАПА 3
-        if (holeEventTrigger != null)
-        {
-            // Включаем логику, которая начнет следить, светит ли игрок в дыру
-            holeEventTrigger.SetActive(true);
-        }
+        bool awardProgress = state == BreakState.Playing;
+        ApplyCompletedState();
 
-        if (visualModel != null) visualModel.SetActive(false); // Прячем доски
-
-        isBroken = true;
-
-        if (QuestManager.Instance != null)
+        if (awardProgress && QuestManager.Instance != null)
             QuestManager.Instance.AddProgress(1);
     }
 
     public void Fix()
     {
-        // Метод Fix нам понадобится в самом конце игры (Этап 4)
-        if (!isBroken) return;
+        if (state != BreakState.Completed) return;
 
-        if (anim != null) anim.SetTrigger("Fix");
-        if (myCollider != null) myCollider.enabled = true;
-
+        state = BreakState.Available;
         isBroken = false;
-        Debug.Log("Пол заколочен монстром!");
+        ApplyAvailableState();
+    }
+
+    private IEnumerator CompleteAfterDelay()
+    {
+        yield return new WaitForSeconds(fallbackDuration);
+        CompleteBreak();
+    }
+
+    private void ApplyAvailableState()
+    {
+        state = BreakState.Available;
+        isBroken = false;
+        SetActive(intactBoard, true);
+        SetActive(animatedBoard, false);
+        SetActive(hole, false);
+        SetActive(worldCrowbar, false);
+        if (boardCollider != null) boardCollider.enabled = true;
+        if (interactionCollider != null) interactionCollider.enabled = true;
+        if (holeEventTrigger != null) holeEventTrigger.SetActive(false);
+    }
+
+    private void ApplyCompletedState()
+    {
+        state = BreakState.Completed;
+        isBroken = true;
+        SetActive(intactBoard, false);
+        SetActive(animatedBoard, false);
+        SetActive(hole, true);
+        SetActive(worldCrowbar, false);
+        if (boardCollider != null) boardCollider.enabled = false;
+        if (interactionCollider != null) interactionCollider.enabled = false;
+        if (holeEventTrigger != null) holeEventTrigger.SetActive(true);
+        if (knockController != null) knockController.SetActive(false);
+    }
+
+    private void PlayOneShot(AudioClip clip)
+    {
+        if (audioSource != null && clip != null) audioSource.PlayOneShot(clip);
+    }
+
+    private void SetActive(GameObject target, bool active)
+    {
+        if (target == null) return;
+        if (target != gameObject)
+        {
+            target.SetActive(active);
+            return;
+        }
+
+        Renderer[] renderers = target.GetComponents<Renderer>();
+        for (int i = 0; i < renderers.Length; i++) renderers[i].enabled = active;
     }
 }
 }

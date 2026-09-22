@@ -12,6 +12,8 @@ public class FloorLogicTests
     private QuestManager _questManager;
     private GameObject _floorGo;
     private FloorLogic _floor;
+    private GameObject _inventoryGo;
+    private PlayerInventory _inventory;
 
     [SetUp]
     public void SetUp()
@@ -25,12 +27,16 @@ public class FloorLogicTests
 
         _floorGo = new GameObject("Floor");
         _floor = _floorGo.AddComponent<FloorLogic>();
+        _inventoryGo = new GameObject("Inventory");
+        _inventory = _inventoryGo.AddComponent<PlayerInventory>();
+        _inventory.hasCrowbar = true;
     }
 
     [TearDown]
     public void TearDown()
     {
         QuestManager.Instance = null;
+        Object.DestroyImmediate(_inventoryGo);
         Object.DestroyImmediate(_floorGo);
         Object.DestroyImmediate(_questManagerGo);
     }
@@ -40,7 +46,7 @@ public class FloorLogicTests
     {
         // Симулируем окно между "лом подобран" и "квест на пол создан":
         // никакого активного квеста ещё нет.
-        _floor.Break();
+        _floor.TryStartBreak(_inventory);
 
         Assert.That(_floor.isBroken, Is.False,
             "пол не должен ломаться, пока квест 'break-floor' не активен");
@@ -51,7 +57,7 @@ public class FloorLogicTests
     {
         _questManager.CreateQuest("Найти лом", 1, questTag: "crowbar-find");
 
-        _floor.Break();
+        _floor.TryStartBreak(_inventory);
 
         Assert.That(_floor.isBroken, Is.False);
     }
@@ -61,7 +67,9 @@ public class FloorLogicTests
     {
         _questManager.CreateQuest("Вскрыть доски на кухне", 1, questTag: "break-floor");
 
-        _floor.Break();
+        Assert.That(_floor.TryStartBreak(_inventory), Is.True);
+        Assert.That(_floor.State, Is.EqualTo(FloorLogic.BreakState.Playing));
+        _floor.CompleteBreak();
 
         Assert.That(_floor.isBroken, Is.True);
         Assert.That(_questManager.questList[0].currentAmount, Is.EqualTo(1));
@@ -72,8 +80,10 @@ public class FloorLogicTests
     {
         _questManager.CreateQuest("Вскрыть доски на кухне", 1, questTag: "break-floor");
 
-        _floor.Break();
-        _floor.Break(); // повторный удар по уже сломанному полу
+        _floor.TryStartBreak(_inventory);
+        _floor.CompleteBreak();
+        Assert.That(_floor.TryStartBreak(_inventory), Is.False);
+        _floor.CompleteBreak();
 
         Assert.That(_questManager.questList[0].currentAmount, Is.EqualTo(1),
             "второй удар не должен начислять прогресс повторно");

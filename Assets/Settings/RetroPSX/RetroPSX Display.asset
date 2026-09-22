@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fc01f046bfb31a3d3904b8bced4cdfa3, type: 3}
   m_Name: RetroPSX Display
   m_EditorClassIdentifier: RetroPSX.Runtime::RetroPSX.RetroDisplayProfile
-  enabled: 1
+  enabled: 0
   scanlines: 0.16
   maskStrength: 0.14
   maskMode: 2

@@ -253,7 +253,6 @@ public class IntroSequence : MonoBehaviour
                 break;
             case DebugStoryStage.StartBreakFloor:
                 if (playerInventory != null) playerInventory.hasFlashlight = true;
-                if (playerInventory != null) playerInventory.hasCrowbar = true;
                 SetupBreakFloorQuest();
                 break;
             case DebugStoryStage.StartLookInHole:

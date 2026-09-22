@@ -145,7 +145,10 @@ public class QuestManager : MonoBehaviour
                 return false;
         }
 
-        return IsQuestActive(requiredQuestTag);
+        if (!IsQuestActive(requiredQuestTag)) return false;
+
+        QuestData activeQuest = questList[currentQuestIndex];
+        return activeQuest != null && activeQuest.currentAmount < activeQuest.requiredAmount;
     }
 
     void NotifyActiveQuestTagIfChanged(bool force = false)

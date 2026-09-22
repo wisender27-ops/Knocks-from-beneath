@@ -95,8 +95,15 @@ public class CrosshairJuice : MonoBehaviour
 
         if (Physics.Raycast(ray, out hit, interaction.interactionDistance, interaction.interactableLayer))
         {
+            FloorLogic floor = hit.collider.GetComponentInParent<FloorLogic>();
+            if (floor != null && floor.CanStartBreak(interaction.inventory))
+            {
+                hittingSomething = true;
+                _targetHint = "Нажмите E, чтобы сломать пол";
+            }
+
             MicrowaveInteractable microwave = hit.collider.GetComponentInParent<MicrowaveInteractable>();
-            if (microwave != null)
+            if (!hittingSomething && microwave != null)
             {
                 // Готовый пирог внутри: подсказываем открыть дверцу или достать.
                 if (microwave.IsPieReadyToTake())
