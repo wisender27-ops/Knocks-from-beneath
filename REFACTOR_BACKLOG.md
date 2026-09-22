@@ -276,6 +276,39 @@
   на скриншотах пришлось добавлять временный точечный свет — сами по себе объекты в игре ночью
   будут заметно темнее, чем на этих референсных кадрах.
 
+### 2026-09-23 — Смок-тест в Play Mode + чистка пустых слотов скриптов
+- Коммит: см. следующий коммит в git log.
+- По просьбе автора («есть ли ещё работа, делал ли смок-тест») прогнал живой Play Mode прямо в
+  редакторе через `Unity_RunCommand` (`EditorApplication.isPlaying = true`) — впервые в этом
+  проекте у Claude получилось запустить игру, а не только headless-компиляцию/EditMode-тесты.
+  Итог: **0 ошибок и исключений** при инициализации — все синглтоны (`QuestManager`, `MonsterTimer`,
+  `ThoughtManager`, `EndingScreen` — новый компонент из T-21, `MonsterWatcherManager`), сам
+  `IntroSequence` и `FrontDoorLockInteractable` поднялись штатно. `IntroSequence.StartIntro()`
+  (через `Invoke(..., 1.0f)`) не успел сработать за время проверки — у Play Mode без фокуса окна
+  `Time.timeSinceLevelLoad` почти не растёт (безголовый прогон через MCP, не полноценная игровая
+  сессия), это ограничение окружения, не баг.
+- **Попутно нашёл и почистил 2 пустых слота скриптов** (предупреждения "referenced script is
+  missing" в консоли при старте), оба — старые хвосты, не от моей сегодняшней работы (проверил по
+  GUID и git log):
+  - `Assets/Prefabs/Player 1.prefab` — висел компонент от одного из скриптов, удалённых ещё в
+    `f83f93d` ("remove dead scripts: TestTrigger, BedSleepTrigger, Quest", задолго до этой сессии).
+  - `Main.unity`, объект `Main Plot/NightTrigger` — компонент `NightStartTrigger`
+    (`m_EditorClassIdentifier: Assembly-CSharp::...`, т.е. до пространства имён/рефактора)
+    — сам механизм уже отключён комментарием в `IntroSequence.cs` ("nightStartTrigger.SetActive
+    убрано — кровать всегда видна"), а компонент на сцене просто забыли снять.
+  - Правка — `GameObjectUtility.RemoveMonoBehavioursWithMissingScript` через `Unity_RunCommand`,
+    для префаба — `PrefabUtility.LoadPrefabContents`/`SaveAsPrefabAsset`, для сцены — на месте
+    + `EditorSceneManager.SaveOpenScenes()`. Полный повторный скан сцены после правки — 0 пустых
+    слотов.
+- Автор также спросил, не появляются ли декоративные предметы (лампы/корзины/еда) в комнате
+  раньше времени, до распаковки коробки. Проверил напрямую в редакторе: все 9 объектов
+  (`BoxZone_*_Lamp/Basket/Berries/Pizza/Flower`, `DecorZone_*_Revealed_1`) имеют `activeSelf=False`
+  по умолчанию — `RoomRevealZone.RevealItems()` включает их только после `PlacementZone`. T-23
+  трогал только позиции/повороты этих объектов, не активность — логика "появляется из коробки"
+  не пострадала.
+- Проверено: EditMode-тесты через `TestRunnerApi` — все зелёные кроме уже известного несвязанного
+  `SimpleItemTests` (см. T-21). Headless-компиляция — OK.
+
 ### 2026-09-19 — T-00 — Базовая линия
 - Коммит: `df19216`
 - Сделано: переписан формат этого файла (без «код пишешь сам»), тикеты T-01/T-03/T-04 отмечены выполненными по факту кода, а не по чек-боксам напарника.

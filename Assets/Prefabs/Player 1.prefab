@@ -75,7 +75,7 @@ Light:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2449777546184476491}
   m_Enabled: 1
-  serializedVersion: 12
+  serializedVersion: 13
   m_Type: 0
   m_Color: {r: 1, g: 0.90588236, b: 0.6745098, a: 1}
   m_Intensity: 10
@@ -127,7 +127,7 @@ Light:
   m_UseBoundingSphereOverride: 0
   m_UseViewFrustumForShadowCasterCull: 1
   m_ForceVisible: 0
-  m_ShadowRadius: 0
+  m_ShapeRadius: 0
   m_ShadowAngle: 0
   m_LightUnit: 1
   m_LuxAtDistance: 1
@@ -710,7 +710,6 @@ GameObject:
   - component: {fileID: 5488520371020052481}
   - component: {fileID: 7823618464097104269}
   - component: {fileID: 2823292275584632969}
-  - component: {fileID: 5415811283140767451}
   - component: {fileID: 2565123186235401928}
   - component: {fileID: 978900651322779947}
   - component: {fileID: 5954389153785715289}
@@ -865,18 +864,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::PlayerDoorOpen
   playerCamera: {fileID: 4832567280206308402}
   playerController: {fileID: 978900651322779947}
---- !u!114 &5415811283140767451
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5252321440651522271}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5c69f885068fd8548bb71967aac3ecd0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::TestTrigger
 --- !u!114 &2565123186235401928
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -889,6 +876,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 4b569337032b42e4c863570c72cfefce, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInventory
+  database: {fileID: 0}
+  switchCooldown: 0.25
   hasCrowbar: 0
   hasFlashlight: 0
   hasHammer: 0
@@ -960,6 +949,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CrosshairJuice
   cursorImage: {fileID: 0}
   interaction: {fileID: 1446724500322916429}
+  hintText: {fileID: 0}
   scaleSpeed: 10
   defaultScale: 1
   interactScale: 1.5
@@ -975,7 +965,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 41c3ae4e5cd79cc4fa8e2f1556c9dbd3, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerInteraction
   playerCamera: {fileID: 4832567280206308402}
   interactionDistance: 2
@@ -984,31 +974,8 @@ MonoBehaviour:
     m_Bits: 65
   inventory: {fileID: 2565123186235401928}
   pickup: {fileID: 28288219378}
---- !u!114 &28288219378
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5252321440651522271}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: ab718d8263dc4e94ab1de8318943fb66, type: 3}
-  m_Name:
-  m_EditorClassIdentifier: Assembly-CSharp::PickupController
-  playerCamera: {fileID: 4832567280206308402}
-  holdPoint: {fileID: 23803228917073536}
-  followSpeed: 20
-  maxHoldDistance: 2.2
-  throwForce: 15
-  throwTorqueRandomness: 5
-  dropForwardImpulse: 2
-  heldRigidbodyDamping: 15
-  releasedRigidbodyDamping: 0.05
-  shakeIntensity: 0.1
-  shakeDuration: 0.15
-  fovKickAmount: 3
-  fovReturnSpeed: 5
+  defaultPieEatDuration: 5
+  actionAudioSource: {fileID: 0}
 --- !u!82 &4082443097780501385
 AudioSource:
   m_ObjectHideFlags: 0
@@ -1106,6 +1073,32 @@ AudioSource:
     m_PreInfinity: 2
     m_PostInfinity: 2
     m_RotationOrder: 4
+--- !u!114 &28288219378
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5252321440651522271}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab718d8263dc4e94ab1de8318943fb66, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PickupController
+  playerCamera: {fileID: 4832567280206308402}
+  holdPoint: {fileID: 23803228917073536}
+  followSpeed: 20
+  maxHoldDistance: 2.2
+  placementSearchRadius: 2.5
+  throwForce: 15
+  throwTorqueRandomness: 5
+  dropForwardImpulse: 2
+  heldRigidbodyDamping: 15
+  releasedRigidbodyDamping: 0.05
+  shakeIntensity: 0.1
+  shakeDuration: 0.15
+  fovKickAmount: 3
+  fovReturnSpeed: 5
 --- !u!1 &7838897261436705113
 GameObject:
   m_ObjectHideFlags: 0
