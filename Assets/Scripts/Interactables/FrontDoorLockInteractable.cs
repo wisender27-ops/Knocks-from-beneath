@@ -1,3 +1,4 @@
+using System.Collections;
 using UnityEngine;
 
 namespace KnocksFromBeneath
@@ -16,6 +17,9 @@ public class FrontDoorLockInteractable : MonoBehaviour
 
     [Tooltip("Насколько (в локальных координатах засова) щеколда уезжает, когда дверь заперта.")]
     [SerializeField] private Vector3 lockedLocalOffset = new Vector3(0f, 0f, 0.035f);
+
+    [Tooltip("Сколько секунд едет засов — T-21: раньше телепортировался мгновенно.")]
+    [SerializeField] private float slideDuration = 0.25f;
 
     [Header("Звук")]
     [SerializeField] private AudioSource lockAudioSource;
@@ -55,11 +59,26 @@ public class FrontDoorLockInteractable : MonoBehaviour
     void ShowLocked()
     {
         CaptureOpenPosition();
-        if (bolt != null && _capturedOpenPosition)
-            bolt.localPosition = _openLocalPosition + lockedLocalOffset;
 
         if (lockAudioSource != null && lockSfx != null)
             lockAudioSource.PlayOneShot(lockSfx);
+
+        if (bolt != null && _capturedOpenPosition)
+            StartCoroutine(SlideRoutine(_openLocalPosition + lockedLocalOffset));
+    }
+
+    IEnumerator SlideRoutine(Vector3 target)
+    {
+        Vector3 start = bolt.localPosition;
+        float t = 0f;
+        float duration = Mathf.Max(0.01f, slideDuration);
+        while (t < duration)
+        {
+            t += Time.deltaTime;
+            bolt.localPosition = Vector3.Lerp(start, target, t / duration);
+            yield return null;
+        }
+        bolt.localPosition = target;
     }
 }
 }

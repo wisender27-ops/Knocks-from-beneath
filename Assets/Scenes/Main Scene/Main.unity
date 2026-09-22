@@ -334,7 +334,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 27162289}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 4300000, guid: 5303662829df7404cbe2ed759123950e, type: 2}
 --- !u!1 &27300880
 GameObject:
   m_ObjectHideFlags: 0
@@ -50085,6 +50085,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.FrontDoorLockInteractable
   bolt: {fileID: 2081371722}
   lockedLocalOffset: {x: 0.060001392, y: 0, z: 0}
+  slideDuration: 0.25
   lockAudioSource: {fileID: 1195810646}
   lockSfx: {fileID: 8300000, guid: 8f0684576896b364688ef52c03ffad48, type: 3}
 --- !u!65 &1195810648
@@ -60116,7 +60117,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1637160814}
-  m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+  m_Mesh: {fileID: 4300000, guid: 1a71ad9d8e0860b469eeff95743c3dbb, type: 2}
 --- !u!1 &1646907184 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: -7641649476296836059, guid: 2a67684986f42914aa9361ae5fd1ed85, type: 3}
