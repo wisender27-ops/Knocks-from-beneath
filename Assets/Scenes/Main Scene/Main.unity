@@ -481,7 +481,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad9dac0883eda034ba6469526cb5afaf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Door
-  angleRotation: -90
+  angleRotation: 90
   openSpeed: 3
   automaticOpenSpeed: 4
   mouseSensitivity: 10
@@ -3511,7 +3511,6 @@ GameObject:
   - component: {fileID: 287657972}
   - component: {fileID: 287657975}
   - component: {fileID: 287657974}
-  - component: {fileID: 287657973}
   m_Layer: 0
   m_Name: DecorZone_Hallway
   m_TagString: Untagged
@@ -3537,20 +3536,6 @@ Transform:
   - {fileID: 1231019710}
   m_Father: {fileID: 1704092562}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &287657973
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 287657971}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ef018ce62fd5c94e8e029b7b41ce27d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.RoomRevealZone
-  itemsToReveal:
-  - {fileID: 989499827}
 --- !u!114 &287657974
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -3570,6 +3555,8 @@ MonoBehaviour:
       m_Calls: []
   progressQuestTags:
   - room-decoration
+  itemsToReveal:
+  - {fileID: 989499827}
 --- !u!65 &287657975
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -7480,7 +7467,6 @@ GameObject:
   - component: {fileID: 525039384}
   - component: {fileID: 525039387}
   - component: {fileID: 525039386}
-  - component: {fileID: 525039385}
   m_Layer: 0
   m_Name: BoxZone_LivingRoom
   m_TagString: Untagged
@@ -7507,21 +7493,6 @@ Transform:
   - {fileID: 852915482}
   m_Father: {fileID: 831175947}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &525039385
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 525039383}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ef018ce62fd5c94e8e029b7b41ce27d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.RoomRevealZone
-  itemsToReveal:
-  - {fileID: 890086476}
-  - {fileID: 1130210882}
 --- !u!114 &525039386
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7554,6 +7525,27 @@ MonoBehaviour:
   progressQuestTags:
   - box-delivery
   - box-collect
+  itemsToReveal:
+  - {fileID: 6929545832431560504}
+  - {fileID: 5601942239408470531}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6542478410369357402}
+  - {fileID: 7451570620814788863}
+  - {fileID: 4913031402853763194}
+  - {fileID: 7493118418025083040}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
+  - {fileID: 6838705434059810949}
 --- !u!65 &525039387
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -9203,6 +9195,10 @@ PrefabInstance:
     - target: {fileID: 919132149155446097, guid: 1c1a3ce055579f2478689d6f931271c3, type: 3}
       propertyPath: m_Layer
       value: 6
+      objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 1c1a3ce055579f2478689d6f931271c3, type: 3}
+      propertyPath: m_IsActive
+      value: 1
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -23110,7 +23106,6 @@ GameObject:
   - component: {fileID: 786391898}
   - component: {fileID: 786391901}
   - component: {fileID: 786391900}
-  - component: {fileID: 786391899}
   m_Layer: 0
   m_Name: DecorZone_Kitchen
   m_TagString: Untagged
@@ -23136,20 +23131,6 @@ Transform:
   - {fileID: 1074502307}
   m_Father: {fileID: 1704092562}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &786391899
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 786391897}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ef018ce62fd5c94e8e029b7b41ce27d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.RoomRevealZone
-  itemsToReveal:
-  - {fileID: 1975977573}
 --- !u!114 &786391900
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23169,6 +23150,8 @@ MonoBehaviour:
       m_Calls: []
   progressQuestTags:
   - room-decoration
+  itemsToReveal:
+  - {fileID: 1975977573}
 --- !u!65 &786391901
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -23518,7 +23501,6 @@ GameObject:
   - component: {fileID: 813833076}
   - component: {fileID: 813833079}
   - component: {fileID: 813833078}
-  - component: {fileID: 813833077}
   m_Layer: 0
   m_Name: DecorZone_LivingRoom
   m_TagString: Untagged
@@ -23544,20 +23526,6 @@ Transform:
   - {fileID: 221066624}
   m_Father: {fileID: 1704092562}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &813833077
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 813833075}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ef018ce62fd5c94e8e029b7b41ce27d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.RoomRevealZone
-  itemsToReveal:
-  - {fileID: 364833702}
 --- !u!114 &813833078
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -23577,6 +23545,8 @@ MonoBehaviour:
       m_Calls: []
   progressQuestTags:
   - room-decoration
+  itemsToReveal:
+  - {fileID: 364833702}
 --- !u!65 &813833079
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -29265,7 +29235,6 @@ GameObject:
   - component: {fileID: 874050234}
   - component: {fileID: 874050237}
   - component: {fileID: 874050236}
-  - component: {fileID: 874050235}
   m_Layer: 0
   m_Name: BoxZone_Kitchen
   m_TagString: Untagged
@@ -29292,21 +29261,6 @@ Transform:
   - {fileID: 763858206}
   m_Father: {fileID: 831175947}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &874050235
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 874050233}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ef018ce62fd5c94e8e029b7b41ce27d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.RoomRevealZone
-  itemsToReveal:
-  - {fileID: 1904272585}
-  - {fileID: 1647484952}
 --- !u!114 &874050236
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -29339,6 +29293,9 @@ MonoBehaviour:
   progressQuestTags:
   - box-delivery
   - box-collect
+  itemsToReveal:
+  - {fileID: 1904272585}
+  - {fileID: 1647484952}
 --- !u!65 &874050237
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -53033,7 +52990,7 @@ GameObject:
   - component: {fileID: 1308116749}
   - component: {fileID: 1308116748}
   m_Layer: 0
-  m_Name: Spot Light (6)
+  m_Name: lightGarageFront
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -58507,7 +58464,7 @@ GameObject:
   - component: {fileID: 1556818496}
   - component: {fileID: 1556818495}
   m_Layer: 0
-  m_Name: Spot Light (5)
+  m_Name: lightGarageBack
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -61672,7 +61629,6 @@ GameObject:
   - component: {fileID: 1757560365}
   - component: {fileID: 1757560368}
   - component: {fileID: 1757560367}
-  - component: {fileID: 1757560366}
   m_Layer: 0
   m_Name: BoxZone_Bedroom
   m_TagString: Untagged
@@ -61699,21 +61655,6 @@ Transform:
   - {fileID: 1192043572}
   m_Father: {fileID: 831175947}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1757560366
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1757560364}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8ef018ce62fd5c94e8e029b7b41ce27d, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.RoomRevealZone
-  itemsToReveal:
-  - {fileID: 1206552942}
-  - {fileID: 745849285}
 --- !u!114 &1757560367
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -61746,6 +61687,9 @@ MonoBehaviour:
   progressQuestTags:
   - box-delivery
   - box-collect
+  itemsToReveal:
+  - {fileID: 1206552942}
+  - {fileID: 745849285}
 --- !u!65 &1757560368
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -70692,7 +70636,7 @@ Transform:
   m_GameObject: {fileID: 2128074432}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.24282837, y: 0.99347997, z: -2.3979263}
+  m_LocalPosition: {x: -0.02, y: 0.99347997, z: -2.3979263}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -123255,7 +123199,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad9dac0883eda034ba6469526cb5afaf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Door
-  angleRotation: 90
+  angleRotation: -90
   openSpeed: 3
   automaticOpenSpeed: 4
   mouseSensitivity: 10
@@ -150346,7 +150290,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ad9dac0883eda034ba6469526cb5afaf, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Door
-  angleRotation: -90
+  angleRotation: 90
   openSpeed: 3
   automaticOpenSpeed: 4
   mouseSensitivity: 10

@@ -9,18 +9,46 @@ public class PlacementZone : MonoBehaviour
 {
     public List<Transform> slots; // Сюда перетащи Slot_1, Slot_2, Slot_3
 
-    [Tooltip("Срабатывает на каждую успешно установленную коробку — например, RoomRevealZone на этом же объекте.")]
+    [Tooltip("Срабатывает на каждую успешно установленную коробку — для внешних слушателей (звук, партиклы и т.п.).")]
     public UnityEvent onBoxPlaced = new UnityEvent();
 
     [Tooltip("Теги квестов, которым эта зона засчитывает прогресс. Коробки дня 1 — box-delivery/box-collect, декор дня 2 — room-decoration.")]
     public string[] progressQuestTags = { "box-delivery", "box-collect" };
 
+    [Tooltip("Предметы комнаты — скрываются при старте сцены и появятся при установке коробки в эту зону.")]
+    [SerializeField] private GameObject[] itemsToReveal;
+
     private bool[] isSlotOccupied;
+    private bool _revealed;
 
     void Awake()
     {
         // Инициализируем массив "занятости" по количеству слотов
         isSlotOccupied = new bool[slots != null ? slots.Count : 0];
+        HideItems();
+    }
+
+    void HideItems()
+    {
+        if (itemsToReveal == null) return;
+        for (int i = 0; i < itemsToReveal.Length; i++)
+        {
+            if (itemsToReveal[i] != null)
+                itemsToReveal[i].SetActive(false);
+        }
+    }
+
+    public void RevealItems()
+    {
+        if (_revealed) return;
+        _revealed = true;
+
+        if (itemsToReveal == null) return;
+        for (int i = 0; i < itemsToReveal.Length; i++)
+        {
+            if (itemsToReveal[i] != null)
+                itemsToReveal[i].SetActive(true);
+        }
     }
 
     // Тот самый метод, который вызывает игрок
@@ -92,6 +120,7 @@ public class PlacementZone : MonoBehaviour
         }
 
         onBoxPlaced?.Invoke();
+        RevealItems();
     }
 
     bool IsProgressQuest(string questTag)
