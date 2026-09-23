@@ -103,6 +103,21 @@ public class PlacementZoneTests
     }
 
     [Test]
+    public void DecorationPlacement_RequiresActiveQuestAndShowsOnlyMatchingZone()
+    {
+        var zone = CreateZone("room-decoration");
+        zone.ConfigureQuestPlacement("room-decoration");
+        SetActiveQuest("box-delivery", 1);
+
+        Assert.That(zone.AcceptsQuest("box-delivery"), Is.False);
+        Assert.That(zone.AcceptsQuest("room-decoration"), Is.True);
+        Assert.That(zone.TryPlaceBox(_box, _slotGo.transform.position), Is.False);
+
+        SetActiveQuest("room-decoration", 1);
+        Assert.That(zone.TryPlaceBox(_box, _slotGo.transform.position), Is.True);
+    }
+
+    [Test]
     public void TryPlaceBox_DoesNotAddProgress_ForOtherQuestTag()
     {
         var zone = CreateZone("box-delivery", "box-collect");

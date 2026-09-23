@@ -57,16 +57,26 @@ public class PlacementZone : MonoBehaviour
             zones[i].HideItems();
     }
     private bool _preciseBoxPlacement;
+    private string _placementQuestTag;
     private GameObject _boxPreview;
     private Material _previewMaterial;
 
     public void ConfigureBoxQuestPlacement(bool enabled)
     {
-        _preciseBoxPlacement = enabled;
-        if (!enabled) HideBoxPreview();
+        ConfigureQuestPlacement(enabled ? "box-delivery" : null);
+    }
+
+    public void ConfigureQuestPlacement(string questTag)
+    {
+        _placementQuestTag = questTag;
+        _preciseBoxPlacement = !string.IsNullOrEmpty(questTag);
+        if (!_preciseBoxPlacement) HideBoxPreview();
     }
 
     public bool IsBoxQuestPlacement => _preciseBoxPlacement;
+
+    public bool AcceptsQuest(string questTag) =>
+        _placementQuestTag == questTag && IsProgressQuest(questTag);
 
     public bool IsPlayerNearFreeSlot(Vector3 playerPosition, float distance)
     {
@@ -287,7 +297,7 @@ public class PlacementZone : MonoBehaviour
 
         if (_preciseBoxPlacement && (!playerPosition.HasValue ||
             (!IsPlayerNearFreeSlot(playerPosition.Value, 1.8f) && !IsPlayerNearFreeSlot(box.transform.position, 1.8f)) ||
-            QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive("box-delivery")))
+            QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive(_placementQuestTag)))
             return false;
 
         // Защита на случай, если Awake() ещё не отработал (в EditMode-тестах AddComponent

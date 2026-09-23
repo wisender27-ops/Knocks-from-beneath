@@ -66,6 +66,20 @@ public class RoomDecorationControllerTests
     }
 
     [Test]
+    public void SetupDecorationQuest_ConfiguresPlacementPreviews()
+    {
+        var controller = CreateController();
+        var zone = _zones[0].AddComponent<PlacementZone>();
+        zone.progressQuestTags = new[] { "room-decoration" };
+
+        controller.SetupDecorationQuest();
+        Assert.That(zone.AcceptsQuest("room-decoration"), Is.True);
+
+        _recorder.LastQuestCompleteCallback.Invoke();
+        Assert.That(zone.AcceptsQuest("room-decoration"), Is.False);
+    }
+
+    [Test]
     public void QuestCompletion_DeactivatesZonesAndChainsToOnDecorationFinished()
     {
         var controller = CreateController();

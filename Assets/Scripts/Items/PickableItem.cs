@@ -6,6 +6,7 @@ namespace KnocksFromBeneath
 public class PickableItem : MonoBehaviour
 {
     public PlacementZone activeZone; // Зона, в которой сейчас находится эта коробка
+    public string placementQuestTag;
 
     private void OnTriggerEnter(Collider other)
     {

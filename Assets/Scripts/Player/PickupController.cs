@@ -43,7 +43,7 @@ public class PickupController : MonoBehaviour
     private Quaternion _heldRotationOffset = Quaternion.identity;
     private float _defaultFov;
     private Vector3 _defaultCamLocalPos;
-    private PlacementZone[] _boxQuestZones;
+    private PlacementZone[] _questPlacementZones;
 
     void Start()
     {
@@ -102,19 +102,25 @@ public class PickupController : MonoBehaviour
 
         _heldItemScript = obj.GetComponent<PickableItem>();
         CollectableItem collectable = obj.GetComponent<CollectableItem>();
-        if (collectable != null &&
-            collectable.currentItemType == CollectableItem.ItemType.Box &&
-            QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("box-delivery"))
+        string questTag = collectable != null && collectable.currentItemType == CollectableItem.ItemType.Box
+            ? "box-delivery"
+            : _heldItemScript != null ? _heldItemScript.placementQuestTag : null;
+        if (!string.IsNullOrEmpty(questTag) && QuestManager.Instance != null &&
+            QuestManager.Instance.IsQuestActive(questTag))
         {
             IntroSequence intro = FindAnyObjectByType<IntroSequence>();
-            if (intro != null && intro.roomZones != null)
+            GameObject[] zoneObjects = intro == null ? null :
+                questTag == "box-delivery" ? intro.roomZones : intro.decorationZones;
+            if (zoneObjects != null)
             {
-                _boxQuestZones = new PlacementZone[intro.roomZones.Length];
-                for (int i = 0; i < intro.roomZones.Length; i++)
+                _questPlacementZones = new PlacementZone[zoneObjects.Length];
+                for (int i = 0; i < zoneObjects.Length; i++)
                 {
-                    if (intro.roomZones[i] == null) continue;
-                    _boxQuestZones[i] = intro.roomZones[i].GetComponent<PlacementZone>();
-                    if (_boxQuestZones[i] != null) _boxQuestZones[i].ShowBoxPreview(obj);
+                    if (zoneObjects[i] == null) continue;
+                    PlacementZone zone = zoneObjects[i].GetComponent<PlacementZone>();
+                    if (zone == null || !zone.AcceptsQuest(questTag)) continue;
+                    _questPlacementZones[i] = zone;
+                    zone.ShowBoxPreview(obj);
                 }
             }
         }
@@ -145,11 +151,11 @@ public class PickupController : MonoBehaviour
     // пробуем поставить в зону размещения, иначе просто роняем.
     public void HandleInteractPressed()
     {
-        if (_boxQuestZones != null)
+        if (_questPlacementZones != null)
         {
             PlacementZone closest = null;
             float bestDistance = float.MaxValue;
-            foreach (PlacementZone candidate in _boxQuestZones)
+            foreach (PlacementZone candidate in _questPlacementZones)
             {
                 if (candidate == null ||
                     (!candidate.IsPlayerNearFreeSlot(transform.position, 1.8f) &&
@@ -250,7 +256,7 @@ public class PickupController : MonoBehaviour
 
     void ClearHeldObject(bool restartParticles = true)
     {
-        ClearBoxQuestPreviews();
+        ClearQuestPlacementPreviews();
         if (_heldObj != null && restartParticles)
         {
             // Включаем частицы обратно когда отпускаем объект
@@ -268,7 +274,7 @@ public class PickupController : MonoBehaviour
     // съеден в PlayerInteraction) — просто забываем о нём, без физики и частиц.
     public void ForceClearHeld()
     {
-        ClearBoxQuestPreviews();
+        ClearQuestPlacementPreviews();
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
@@ -349,7 +355,7 @@ public class PickupController : MonoBehaviour
     {
         if (_heldObj == null) return null;
 
-        ClearBoxQuestPreviews();
+        ClearQuestPlacementPreviews();
 
         GameObject released = _heldObj;
         Rigidbody releasedRb = _heldObjRb;
@@ -369,12 +375,12 @@ public class PickupController : MonoBehaviour
         return released;
     }
 
-    void ClearBoxQuestPreviews()
+    void ClearQuestPlacementPreviews()
     {
-        if (_boxQuestZones == null) return;
-        foreach (PlacementZone zone in _boxQuestZones)
+        if (_questPlacementZones == null) return;
+        foreach (PlacementZone zone in _questPlacementZones)
             if (zone != null) zone.HideBoxPreview();
-        _boxQuestZones = null;
+        _questPlacementZones = null;
     }
 }
 }
