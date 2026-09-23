@@ -29,6 +29,8 @@ public class FrontDoorLockInteractable : MonoBehaviour
     private bool _capturedOpenPosition;
     private bool _locked;
 
+    public bool CanInteract => !_locked;
+
     void Awake()
     {
         CaptureOpenPosition();

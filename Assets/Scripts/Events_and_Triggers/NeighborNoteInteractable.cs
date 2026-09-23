@@ -14,6 +14,8 @@ public class NeighborNoteInteractable : MonoBehaviour
 
     private bool _used;
 
+    public bool CanInteract => !_used;
+
     public void Interact()
     {
         if (_used) return;
