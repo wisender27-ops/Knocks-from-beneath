@@ -106,7 +106,17 @@ public class Rotator : MonoBehaviour
 
         if (fanClip != null)
         {
-            timer += Time.deltaTime;
+            // AudioSource.pitch меняет скорость воспроизведения клипа: реальная позиция
+            // в клипе продвигается на Time.deltaTime * pitch, а не на Time.deltaTime.
+            // Таймер копил чистое время — на pitch 1.2 клип успевал доиграть необрезанный
+            // хвост до переключения (щелчок/провал громкости), на pitch 0.5 переключение
+            // срабатывало, когда клип прошёл только половину пути. Считаем таймер в
+            // "времени клипа", а не вwall-clock секундах.
+            float speedRatio = maxSpeed > 0f ? currentSpeed / maxSpeed : 0f;
+            float targetFullVolume = speedRatio * maxVolume;
+            float targetPitch = Mathf.Lerp(minPitch, maxPitch, speedRatio);
+
+            timer += Time.deltaTime * Mathf.Max(0.01f, targetPitch);
 
             if (useCrossfadeLoop && timer >= effectiveLength - crossfadeTime)
             {
@@ -115,10 +125,6 @@ public class Rotator : MonoBehaviour
                 if (activeSourceA) { sourceA.time = 0; sourceA.Play(); }
                 else { sourceB.time = 0; sourceB.Play(); }
             }
-
-            float speedRatio = maxSpeed > 0f ? currentSpeed / maxSpeed : 0f;
-            float targetFullVolume = speedRatio * maxVolume;
-            float targetPitch = Mathf.Lerp(minPitch, maxPitch, speedRatio);
 
             if (useCrossfadeLoop)
             {
