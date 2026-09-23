@@ -89,6 +89,10 @@ public class PlayerController : MonoBehaviour
         // Без этой проверки Move() на выключенном контроллере сыпет ошибкой каждый кадр.
         if (controller == null || !controller.enabled) return;
 
+        // isCameraLocked раньше блокировал только HandleLook() — HoleEventController.Paralyze
+        // и BranchEndingController рассчитывают, что игрок в это время не может ходить.
+        if (isCameraLocked) return;
+
         // Используем GetAxisRaw для мгновенного считывания нажатий
         float x = Input.GetAxisRaw("Horizontal");
         float z = Input.GetAxisRaw("Vertical");
