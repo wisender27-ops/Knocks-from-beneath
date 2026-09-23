@@ -71,33 +71,33 @@ public class MonsterTimer : MonoBehaviour
 
     IEnumerator TimerRoutine()
     {
+        // Раньше при timerText == null таймер сразу вызывал OnTimerExpired() — отсутствие
+        // текстового поля в инспекторе обнуляло весь 30-секундный отсчёт, и игровая логика
+        // (концовка "не успел") зависела от косметической UI-ссылки. Теперь отсчёт всегда
+        // идёт полные timerDuration секунд, а обновление текста — отдельный необязательный шаг.
         _isRunning = true;
         float remaining = timerDuration;
 
-        if (timerText == null)
-        {
-            _isRunning = false;
-            OnTimerExpired();
-            yield break;
-        }
-
         while (remaining > 0)
         {
-            // Текст меняет цвет — белый → жёлтый → красный
-            if (remaining > yellowThreshold)
-                timerText.color = Color.white;
-            else if (remaining > redThreshold)
-                timerText.color = Color.yellow;
-            else
-                timerText.color = Color.red;
+            if (timerText != null)
+            {
+                // Текст меняет цвет — белый → жёлтый → красный
+                if (remaining > yellowThreshold)
+                    timerText.color = Color.white;
+                else if (remaining > redThreshold)
+                    timerText.color = Color.yellow;
+                else
+                    timerText.color = Color.red;
 
-            timerText.text = $"Монстр вылезет из дыры через {Mathf.CeilToInt(remaining)} секунд";
+                timerText.text = $"Монстр вылезет из дыры через {Mathf.CeilToInt(remaining)} секунд";
+            }
             remaining -= Time.deltaTime;
             yield return null;
         }
 
         // Таймер истёк
-        timerText.text = "";
+        if (timerText != null) timerText.text = "";
         OnTimerExpired();
     }
 
@@ -107,13 +107,19 @@ public class MonsterTimer : MonoBehaviour
         if (audioSource != null && monsterEscapeClip != null)
             audioSource.PlayOneShot(monsterEscapeClip);
 
-        // Надпись на экране
+        // Порядок важен: сначала публикуем событие. Оно синхронно резолвит концовку
+        // "НЕ УСПЕЛ" (BranchEndingController.TryResolve), которая заодно и глушит таймер
+        // через StopTimer() -> StopAllCoroutines() — раньше ShowFinalMessage() уже была
+        // запущена К ЭТОМУ моменту и обрывалась на первом же слове в тот же кадр. Таймер
+        // на этой строке уже и так закончился сам (мы внутри его собственного завершения),
+        // так что более ранний StopTimer() тут безвреден — а корутину сообщения стартуем
+        // ПОСЛЕ, когда её уже точно никто не убьёт в этом кадре.
+        GameEvents.OnMonsterTimerExpired?.Invoke();
+
         if (timerText != null)
             StartCoroutine(ShowFinalMessage());
-
-        // Четвёртая концовка ночи 2 (T-21) — игрок не успел заколотить дыру вовремя.
-        // Подписчик (IntroSequence) сам решает, актуально ли это прямо сейчас.
-        GameEvents.OnMonsterTimerExpired?.Invoke();
+        else
+            _isRunning = false; // ShowFinalMessage() сама сбросит флаг в конце, если запустилась
     }
 
     IEnumerator ShowFinalMessage()
@@ -121,17 +127,19 @@ public class MonsterTimer : MonoBehaviour
         timerText.fontSize = finalMessageFontSize;
         timerText.color = Color.red;
 
-        // Каждое слово появляется отдельно с паузой
-        timerText.text = "ТЕБЕ.";
+        // Раньше текст ("ТЕБЕ. НУЖНО. ЗАКОЛОТИТЬ. ДЫРУ.") звучал как инструкция к действию —
+        // ровно в момент, когда действовать уже поздно. Заменил на реакцию на провал,
+        // не пересекающуюся по смыслу с последующей репликой "Не успел." в концовке.
+        timerText.text = "ПОЗДНО.";
         yield return new WaitForSeconds(finalMessageWordDelay);
 
-        timerText.text = "ТЕБЕ. НУЖНО.";
+        timerText.text = "ПОЗДНО. ОНО ВЫШЛО.";
         yield return new WaitForSeconds(finalMessageWordDelay);
 
-        timerText.text = "ТЕБЕ. НУЖНО. ЗАКОЛОТИТЬ.";
+        timerText.text = "ПОЗДНО. ОНО ВЫШЛО. ОНО СВОБОДНО.";
         yield return new WaitForSeconds(finalMessageWordDelay);
 
-        timerText.text = "ТЕБЕ. НУЖНО. ЗАКОЛОТИТЬ. ДЫРУ.";
+        timerText.text = "ПОЗДНО. ОНО ВЫШЛО. ОНО СВОБОДНО. БЕГИ.";
         yield return new WaitForSeconds(finalMessageHoldDuration);
 
         // Убираем надпись
