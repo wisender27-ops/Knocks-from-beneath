@@ -4198,6 +4198,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 348532177}
+  - component: {fileID: 340425760}
   - component: {fileID: 348532179}
   - component: {fileID: 348532178}
   m_Layer: 5
@@ -4338,6 +4339,19 @@ MeshCollider:
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
+--- !u!114 &340425760
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 340425752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac2c8af55c06fa947b7eeb68871a8560, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.CollectableItem
+  currentItemType: 1
   m_ExcludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -22717,6 +22731,7 @@ MonoBehaviour:
 --- !u!43 &775208410
 Mesh:
   m_ObjectHideFlags: 0
+  - component: {fileID: 773914198}
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
@@ -22857,6 +22872,19 @@ Mesh:
       m_Start: 0
       m_Data: 
       m_BitSize: 0
+--- !u!114 &773914198
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 773914190}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac2c8af55c06fa947b7eeb68871a8560, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.CollectableItem
+  currentItemType: 1
     m_Weights:
       m_NumItems: 0
       m_Data: 
@@ -59935,6 +59963,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
+  - component: {fileID: 1603163759}
   m_LocalScale: {x: 0.19, y: 0.040000003, z: 0.035000004}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -60075,6 +60104,19 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
+--- !u!114 &1603163759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1603163751}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ac2c8af55c06fa947b7eeb68871a8560, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.CollectableItem
+  currentItemType: 1
   m_GameObject: {fileID: 1692629350}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}

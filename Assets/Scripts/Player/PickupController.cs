@@ -42,6 +42,7 @@ public class PickupController : MonoBehaviour
     private int _originalLayer;
     private Quaternion _heldRotationOffset = Quaternion.identity;
     private float _defaultFov;
+    private PlacementZone[] _boxQuestZones;
 
     void Start()
     {
@@ -87,6 +88,23 @@ public class PickupController : MonoBehaviour
         }
 
         _heldItemScript = obj.GetComponent<PickableItem>();
+        CollectableItem collectable = obj.GetComponent<CollectableItem>();
+        if (collectable != null &&
+            collectable.currentItemType == CollectableItem.ItemType.Box &&
+            QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("box-delivery"))
+        {
+            IntroSequence intro = FindAnyObjectByType<IntroSequence>();
+            if (intro != null && intro.roomZones != null)
+            {
+                _boxQuestZones = new PlacementZone[intro.roomZones.Length];
+                for (int i = 0; i < intro.roomZones.Length; i++)
+                {
+                    if (intro.roomZones[i] == null) continue;
+                    _boxQuestZones[i] = intro.roomZones[i].GetComponent<PlacementZone>();
+                    if (_boxQuestZones[i] != null) _boxQuestZones[i].ShowBoxPreview(obj);
+                }
+            }
+        }
         _heldRotationOffset = Quaternion.Inverse(holdPoint.rotation) * obj.transform.rotation;
 
         _originalLayer = _heldObj.layer;
@@ -114,6 +132,23 @@ public class PickupController : MonoBehaviour
     // пробуем поставить в зону размещения, иначе просто роняем.
     public void HandleInteractPressed()
     {
+        if (_boxQuestZones != null)
+        {
+            PlacementZone closest = null;
+            float bestDistance = float.MaxValue;
+            foreach (PlacementZone candidate in _boxQuestZones)
+            {
+                if (candidate == null ||
+                    (!candidate.IsPlayerNearFreeSlot(transform.position, 1.8f) &&
+                     !candidate.IsPlayerNearFreeSlot(_heldObj.transform.position, 1.8f))) continue;
+                float distance = (candidate.transform.position - transform.position).sqrMagnitude;
+                if (distance < bestDistance) { closest = candidate; bestDistance = distance; }
+            }
+            if (closest != null && closest.TryPlaceBox(_heldObj, transform.position)) ClearHeldObject(false);
+            else DropObject();
+            return;
+        }
+
         PlacementZone zone = _heldItemScript != null ? _heldItemScript.activeZone : null;
 
         // PickableItem.activeZone ставится по OnTriggerEnter и обнуляется любым OnTriggerExit —
@@ -182,9 +217,10 @@ public class PickupController : MonoBehaviour
         ClearHeldObject();
     }
 
-    void ClearHeldObject()
+    void ClearHeldObject(bool restartParticles = true)
     {
-        if (_heldObj != null)
+        ClearBoxQuestPreviews();
+        if (_heldObj != null && restartParticles)
         {
             // Включаем частицы обратно когда отпускаем объект
             ParticleSystem ps = _heldObj.GetComponentInChildren<ParticleSystem>();
@@ -201,6 +237,7 @@ public class PickupController : MonoBehaviour
     // съеден в PlayerInteraction) — просто забываем о нём, без физики и частиц.
     public void ForceClearHeld()
     {
+        ClearBoxQuestPreviews();
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
@@ -276,6 +313,8 @@ public class PickupController : MonoBehaviour
     {
         if (_heldObj == null) return null;
 
+        ClearBoxQuestPreviews();
+
         GameObject released = _heldObj;
         Rigidbody releasedRb = _heldObjRb;
 
@@ -292,6 +331,14 @@ public class PickupController : MonoBehaviour
         ParticleSystem ps = released.GetComponentInChildren<ParticleSystem>();
         if (ps != null) ps.Play();
         return released;
+    }
+
+    void ClearBoxQuestPreviews()
+    {
+        if (_boxQuestZones == null) return;
+        foreach (PlacementZone zone in _boxQuestZones)
+            if (zone != null) zone.HideBoxPreview();
+        _boxQuestZones = null;
     }
 }
 }
