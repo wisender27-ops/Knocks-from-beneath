@@ -22,6 +22,21 @@ public class TrashManager : MonoBehaviour
     private int _collectedCount;
     private bool _bagSpawnStarted;
 
+    // Раньше требуемое число мусора в квесте (3) было захардкожено отдельно в
+    // MoveInChoresController.SetupTrashQuest — совпадало с trashPiles.Length только
+    // случайно. Теперь квест берёт число прямо отсюда (не считая пустых слотов массива).
+    public int PileCount
+    {
+        get
+        {
+            if (trashPiles == null) return 0;
+            int count = 0;
+            for (int i = 0; i < trashPiles.Length; i++)
+                if (trashPiles[i] != null) count++;
+            return count;
+        }
+    }
+
     void Awake()
     {
         Instance = this;
@@ -67,28 +82,48 @@ public class TrashManager : MonoBehaviour
 
     IEnumerator SpawnBagRoutine()
     {
-        // Спавним мешок мусора, он падает сверху
+        // Спавним мешок мусора, он падает сверху. Раньше отсутствие Camera.main (camera == null)
+        // обрывало ВСЮ корутину через yield break — GameEvents.OnTrashDeliveryReady ниже
+        // никогда не вызывался, и квест "Вынести мусорный мешок" не мог начаться (софтлок).
+        // Теперь неудачный спавн мешка не мешает уведомлению о готовности квеста.
         if (trashBagPrefab != null)
         {
             Camera camera = Camera.main;
             if (camera == null)
-                yield break;
+            {
+                Debug.LogWarning("[TrashManager] Camera.main не найдена — мешок не заспавнен, но квест продолжится.");
+            }
+            else
+            {
+                Transform player = camera.transform;
+                Vector3 forwardDir = player.forward;
+                forwardDir.y = 0f;
+                if (forwardDir.sqrMagnitude < 0.0001f) forwardDir = Vector3.forward;
+                forwardDir.Normalize();
 
-            Transform player = camera.transform;
-            Vector3 spawnPos = player.position + player.forward * 1.2f;
-            spawnPos.y = player.position.y - 1f;
-            Vector3 spawnPosHigh = spawnPos + Vector3.up * 1.5f;
+                // Раньше мешок ставился на фиксированные 1.2 м вперёд без проверки
+                // препятствий: если игрок смотрел в стену/окно, мешок оказывался за ней,
+                // и квест доставки было не выполнить. Раскастом укорачиваем дистанцию
+                // до ближайшей преграды.
+                float forwardDist = 1.2f;
+                if (Physics.Raycast(player.position, forwardDir, out RaycastHit wallHit, forwardDist, ~0, QueryTriggerInteraction.Ignore))
+                    forwardDist = Mathf.Max(0.3f, wallHit.distance - 0.3f);
 
-            GameObject bag = Instantiate(trashBagPrefab, spawnPosHigh, Quaternion.identity);
+                Vector3 spawnPos = player.position + forwardDir * forwardDist;
+                spawnPos.y = player.position.y - 1f;
+                Vector3 spawnPosHigh = spawnPos + Vector3.up * 1.5f;
 
-            CollectableItem item = bag.GetComponent<CollectableItem>();
-            if (item == null) item = bag.AddComponent<CollectableItem>();
-            item.currentItemType = CollectableItem.ItemType.Trash;
+                GameObject bag = Instantiate(trashBagPrefab, spawnPosHigh, Quaternion.identity);
 
-            Rigidbody rb = bag.GetComponent<Rigidbody>();
-            if (rb == null) rb = bag.AddComponent<Rigidbody>();
-            rb.useGravity = true;
-            rb.linearDamping = 2f;
+                CollectableItem item = bag.GetComponent<CollectableItem>();
+                if (item == null) item = bag.AddComponent<CollectableItem>();
+                item.currentItemType = CollectableItem.ItemType.Trash;
+
+                Rigidbody rb = bag.GetComponent<Rigidbody>();
+                if (rb == null) rb = bag.AddComponent<Rigidbody>();
+                rb.useGravity = true;
+                rb.linearDamping = 2f;
+            }
         }
 
         // Ждём 3 секунды перед мыслями игрока
