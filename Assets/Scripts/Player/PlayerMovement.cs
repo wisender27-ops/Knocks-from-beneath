@@ -89,6 +89,8 @@ public class PlayerController : MonoBehaviour
         // Без этой проверки Move() на выключенном контроллере сыпет ошибкой каждый кадр.
         if (controller == null || !controller.enabled) return;
 
+        if (isCameraLocked) return;
+
         float x = (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) ? 1f : 0f)
                 - (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) ? 1f : 0f);
         float z = (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow) ? 1f : 0f)

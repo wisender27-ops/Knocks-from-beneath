@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using System.Collections;
 using System.Collections.Generic;
 
 namespace KnocksFromBeneath
@@ -17,6 +18,19 @@ public class PlacementZone : MonoBehaviour
 
     [Tooltip("Предметы комнаты — скрываются при старте сцены и появятся при установке коробки в эту зону.")]
     [SerializeField] private GameObject[] itemsToReveal;
+
+    [Header("Постепенная распаковка")]
+    [Tooltip("Пауза между появлением соседних предметов, сек. При 40+ предметах в зоне держи небольшой (0.1-0.15), иначе распаковка затянется.")]
+    [SerializeField] private float revealInterval = 0.12f;
+
+    [Tooltip("Длительность 'поп'-анимации одного предмета (рост от нуля с небольшим перехлёстом), сек.")]
+    [SerializeField] private float revealPopDuration = 0.3f;
+
+    [Tooltip("Звук 'поп' при появлении каждого предмета. Необязателен — без клипа просто тихо. Проигрывается с лёгким случайным питчем для разнообразия.")]
+    [SerializeField] private AudioClip revealPopSound;
+
+    [Range(0f, 1f)]
+    [SerializeField] private float revealPopVolume = 0.5f;
 
     private bool[] isSlotOccupied;
     private bool _revealed;
@@ -146,11 +160,115 @@ public class PlacementZone : MonoBehaviour
         _revealed = true;
 
         if (itemsToReveal == null) return;
+
+        // Активируем все предметы сразу (важно для квестов/тестов, которые проверяют
+        // activeSelf сразу после вызова), но с нулевым масштабом — видимый "рост" каждого
+        // предмета запускаем с задержкой по очереди, чтобы 20+ вещей не выпрыгивали разом.
+        // Целевой масштаб (в т.ч. отрицательный — у зеркальных мешей) запоминаем до обнуления.
+        var toAnimate = new List<(Transform t, Vector3 targetScale)>(itemsToReveal.Length);
         for (int i = 0; i < itemsToReveal.Length; i++)
         {
-            if (itemsToReveal[i] != null)
-                itemsToReveal[i].SetActive(true);
+            var go = itemsToReveal[i];
+            if (go == null) continue;
+
+            var t = go.transform;
+            Vector3 targetScale = t.localScale;
+            t.localScale = Vector3.zero;
+            go.SetActive(true);
+            toAnimate.Add((t, targetScale));
         }
+
+        // Крутим анимацию на отдельном persistent-раннере, а не на StartCoroutine(this):
+        // если это последняя коробка из трёх, MoveInChoresController.OnBoxFinished()
+        // синхронно выключает GameObject этой же зоны прямо внутри AddProgress() —
+        // ДО того, как мы сюда дошли (см. FinalizePlacement: AddProgress → RevealItems).
+        // StartCoroutine на уже выключенном GameObject тихо ничего не запускает, и
+        // предметы навсегда остаются с нулевым масштабом. Раннер никогда не выключается
+        // вместе с зоной, так что анимация всегда доигрывает до конца независимо от того,
+        // в каком порядке игрок расставил коробки.
+        RevealRunner.StartCoroutine(RevealSequence(toAnimate));
+    }
+
+    IEnumerator RevealSequence(List<(Transform t, Vector3 targetScale)> items)
+    {
+        for (int i = 0; i < items.Count; i++)
+        {
+            var (t, targetScale) = items[i];
+            if (t != null)
+            {
+                RevealRunner.StartCoroutine(PopIn(t, targetScale));
+                PlayPopSound(t.position);
+            }
+
+            if (i < items.Count - 1 && revealInterval > 0f)
+                yield return new WaitForSeconds(revealInterval);
+        }
+    }
+
+    private static PlacementZoneRevealRunner _revealRunner;
+    private static PlacementZoneRevealRunner RevealRunner
+    {
+        get
+        {
+            if (_revealRunner == null)
+            {
+                var go = new GameObject("~PlacementZoneRevealRunner");
+                go.hideFlags = HideFlags.HideAndDontSave;
+                if (Application.isPlaying)
+                    Object.DontDestroyOnLoad(go);
+                _revealRunner = go.AddComponent<PlacementZoneRevealRunner>();
+            }
+            return _revealRunner;
+        }
+    }
+
+    // Пустой MonoBehaviour-хост исключительно для StartCoroutine — сам по себе ничего не
+    // делает и никогда не выключается вместе с конкретной зоной.
+    private class PlacementZoneRevealRunner : MonoBehaviour { }
+
+    IEnumerator PopIn(Transform t, Vector3 targetScale)
+    {
+        if (revealPopDuration <= 0f)
+        {
+            if (t != null) t.localScale = targetScale;
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < revealPopDuration)
+        {
+            if (t == null) yield break;
+            elapsed += Time.deltaTime;
+            float p = Mathf.Clamp01(elapsed / revealPopDuration);
+            float eased = EaseOutBack(p);
+            t.localScale = targetScale * eased;
+            yield return null;
+        }
+
+        if (t != null) t.localScale = targetScale;
+    }
+
+    static float EaseOutBack(float x)
+    {
+        const float c1 = 1.70158f;
+        const float c3 = c1 + 1f;
+        float p = x - 1f;
+        return 1f + c3 * p * p * p + c1 * p * p;
+    }
+
+    void PlayPopSound(Vector3 position)
+    {
+        if (revealPopSound == null) return;
+
+        var sfxGo = new GameObject("RevealPopSFX");
+        sfxGo.transform.position = position;
+        var src = sfxGo.AddComponent<AudioSource>();
+        src.clip = revealPopSound;
+        src.pitch = Random.Range(0.92f, 1.08f);
+        src.volume = revealPopVolume;
+        src.spatialBlend = 1f;
+        src.Play();
+        Destroy(sfxGo, revealPopSound.length / src.pitch + 0.1f);
     }
 
     // Тот самый метод, который вызывает игрок
@@ -158,6 +276,24 @@ public class PlacementZone : MonoBehaviour
     {
         if (box == null || slots == null)
             return false;
+
+        // Зону могли выключить, пока предмет ещё физически стоял в её триггере —
+        // PickableItem.activeZone тогда остаётся висеть на скрытой зоне (Unity не шлёт
+        // OnTriggerExit при деактивации). Раньше TryPlaceBox это никак не проверял.
+        if (!isActiveAndEnabled)
+            return false;
+
+        // Раньше принимался ЛЮБОЙ Pickable-предмет: пирог, продукты из холодильника,
+        // декор дня 2 — всё это засчитывало прогресс квеста коробок и намертво "прибивало"
+        // сюжетный предмет в слоте (тег Untagged, PickableItem выключается), ломая
+        // дальнейший сюжет (например квест "Достать пирог"). Для зон, считающих прогресс
+        // day-1 квестам box-delivery/box-collect, требуем реальную коробку.
+        if (RequiresBoxItemType())
+        {
+            var collectable = box.GetComponent<CollectableItem>();
+            if (collectable == null || collectable.currentItemType != CollectableItem.ItemType.Box)
+                return false;
+        }
 
         if (_preciseBoxPlacement && (!playerPosition.HasValue ||
             (!IsPlayerNearFreeSlot(playerPosition.Value, 1.8f) && !IsPlayerNearFreeSlot(box.transform.position, 1.8f)) ||
@@ -237,6 +373,17 @@ public class PlacementZone : MonoBehaviour
 
         onBoxPlaced?.Invoke();
         RevealItems();
+    }
+
+    bool RequiresBoxItemType()
+    {
+        if (progressQuestTags == null) return false;
+        for (int i = 0; i < progressQuestTags.Length; i++)
+        {
+            if (progressQuestTags[i] == "box-delivery" || progressQuestTags[i] == "box-collect")
+                return true;
+        }
+        return false;
     }
 
     bool IsProgressQuest(string questTag)

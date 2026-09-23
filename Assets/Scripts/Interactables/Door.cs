@@ -167,7 +167,13 @@ public class Door : MonoBehaviour
         previousRotationY = currentAxisAngle;
         previousWorldRotation = transform.rotation;
 
-        ManageCreakSound(smoothDoorVelocity);
+        // Пока играет фидбек-тряска запертой двери — не считаем это "настоящим" скрипом:
+        // RattleRoutine крутит currentOffset ради ощущения "заперто", у неё свой звук
+        // (lockedRattleClip), и generic-детектор скорости не должен на неё реагировать —
+        // иначе дёргание ЛЮБОЙ запертой двери (в т.ч. дверцы микроволновки) могло спавнить
+        // эмбиент-монстра через тот же путь, что обычный скрип двери.
+        if (!_isRattling)
+            ManageCreakSound(smoothDoorVelocity);
 
         // Обновляем состояние галочки без вызова сеттера, чтобы просто видеть статус в инспекторе
         // Но лучше оставить управление за пользователем через свойство выше.
@@ -255,6 +261,10 @@ public class Door : MonoBehaviour
 
     private void ForceClose()
     {
+        // isOpen-сеттер закрывает дверь только если её не держат (см. свойство выше) —
+        // если игрок в этот момент как раз тянул дверь руками, "принудительное" закрытие
+        // на ночь молча ничего не делало. Сначала отпускаем захват, потом закрываем.
+        isBeingHeld = false;
         isOpen = false; // Используем твое свойство, оно само запустит звук и анимацию
     }
 
@@ -316,17 +326,27 @@ public class Door : MonoBehaviour
     // T-21: раньше попытка открыть запертую дверь не давала игроку никакой реакции — тишина,
     // будто дверь просто не заметила клик. Дёргаем ручку и проигрываем звук, чтобы "заперто"
     // читалось физически, а не только по отсутствию отклика.
+    private Coroutine _rattleCoroutine;
+    private bool _isRattling;
+
     public void PlayLockedFeedback()
     {
         if (!interactionLocked) return;
         if (sfxSource != null && lockedRattleClip != null)
             sfxSource.PlayOneShot(lockedRattleClip);
-        StopCoroutine(nameof(RattleRoutine));
-        StartCoroutine(RattleRoutine());
+
+        // StopCoroutine(string) останавливает только корутины, запущенные через
+        // StartCoroutine(string) — эта запущена через StartCoroutine(IEnumerator), так что
+        // старый вызов ничего не останавливал, и при частом дёргании тряски накладывались
+        // друг на друга. Храним ссылку на Coroutine и останавливаем именно её.
+        if (_rattleCoroutine != null)
+            StopCoroutine(_rattleCoroutine);
+        _rattleCoroutine = StartCoroutine(RattleRoutine());
     }
 
     IEnumerator RattleRoutine()
     {
+        _isRattling = true;
         float t = 0f;
         while (t < rattleDuration)
         {
@@ -336,6 +356,8 @@ public class Door : MonoBehaviour
             yield return null;
         }
         currentOffset = 0f;
+        _isRattling = false;
+        _rattleCoroutine = null;
     }
 }
 }

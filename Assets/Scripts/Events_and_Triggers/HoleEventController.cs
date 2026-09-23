@@ -32,6 +32,20 @@ public class HoleEventController : MonoBehaviour
     private Light _flashlightLight;
     private Camera _playerCam;
 
+    // Контроллер выключен до ночи 2 (его включает сюжет), поэтому Start() выключенного
+    // объекта не вызывается — monsterFace.SetActive(false) в Start() не срабатывает, и
+    // фигура монстра под полом кухни видна/слышна с самого запуска игры. Прячем её при
+    // загрузке сцены независимо от активности контроллера — тот же приём, что
+    // PlacementZone.HideAllRevealItemsAtBoot.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    static void HideAllMonsterFacesAtBoot()
+    {
+        var controllers = FindObjectsByType<HoleEventController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        for (int i = 0; i < controllers.Length; i++)
+            if (controllers[i].monsterFace != null)
+                controllers[i].monsterFace.SetActive(false);
+    }
+
     void Start()
     {
         if (monsterFace != null) monsterFace.SetActive(false);
@@ -117,7 +131,11 @@ public class HoleEventController : MonoBehaviour
 
         if (inventory == null || _flashlightLight == null || _playerCam == null)
         {
-            _eventStarted = false;
+            // Раньше тут сбрасывался _eventStarted, и Update() тут же перезапускал корутину
+            // на следующем кадре (лишний триггер уже засчитан) — вечный цикл рестартов,
+            // пока отсутствует ссылка. Это не временная проблема, а неверная настройка —
+            // оставляем событие "использованным" и просто предупреждаем в консоли.
+            Debug.LogWarning($"[HoleEventController] '{name}': не хватает ссылок (inventory/flashlight/playerCam) — событие отменено без повтора.");
             yield break;
         }
 

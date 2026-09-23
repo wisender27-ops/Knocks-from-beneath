@@ -1,6 +1,9 @@
 using UnityEngine;
 using System.Collections.Generic;
 
+namespace KnocksFromBeneath
+{
+
 public class CinematicMonsterGrab : MonoBehaviour
 {
     [Header("Monster")]
@@ -137,10 +140,13 @@ public class CinematicMonsterGrab : MonoBehaviour
             disabledPlayerScripts.Clear();
             if (controller != null) controller.enabled = false;
 
+            // Camera — не MonoBehaviour (это Behaviour), поэтому она никогда не попадёт
+            // в GetComponentsInChildren<MonoBehaviour>() и проверка "script is Camera" тут
+            // не имела смысла (всегда false). Отключаем все скрипты игрока как есть.
             MonoBehaviour[] scripts = player.GetComponentsInChildren<MonoBehaviour>();
             foreach (var script in scripts)
             {
-                if (script != this && !(script is Camera) && script.enabled)
+                if (script != this && script.enabled)
                 {
                     script.enabled = false;
                     disabledPlayerScripts.Add(script);
@@ -170,4 +176,6 @@ public class CinematicMonsterGrab : MonoBehaviour
 // Compatibility class for prefabs serialized with the original file name.
 public sealed class MonsterGrab : CinematicMonsterGrab
 {
+}
+
 }

@@ -104,7 +104,7 @@ public sealed class BranchEndingController
         _lockCamera?.Invoke(true);
 
         if (MonsterWatcherManager.Instance != null && _playerTransform != null)
-            MonsterWatcherManager.Instance.SpawnWatcher(_playerTransform.position);
+            MonsterWatcherManager.Instance.SpawnWatcher(_playerTransform.position, forced: true);
 
         yield return new WaitForSeconds(1.5f);
 

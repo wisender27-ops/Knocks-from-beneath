@@ -24,6 +24,9 @@ public class StoveInteractable : MonoBehaviour
     private bool _isCooking;
     private bool _isReady;
 
+    public bool IsCooking => _isCooking;
+    public bool IsReady => _isReady;
+
     void Start()
     {
         if (readyMealObject != null) readyMealObject.SetActive(false);
@@ -64,6 +67,9 @@ public class StoveInteractable : MonoBehaviour
 
         _isCooking = false;
         _isReady = true;
+
+        var intro = FindFirstObjectByType<IntroSequence>();
+        intro?.OnDinnerCooked();
     }
 }
 }

@@ -24,12 +24,14 @@ public class CrosshairJuice : MonoBehaviour
     private Vector3 _targetScale;
     private Color _targetColor;
     private string _targetHint = "";
+    private IntroSequence _intro;
 
     void Start()
     {
         _targetScale = Vector3.one * defaultScale;
         _targetColor = defaultColor;
         if (hintText != null) hintText.text = "";
+        _intro = FindFirstObjectByType<IntroSequence>();
     }
 
     void Update()
@@ -58,7 +60,8 @@ public class CrosshairJuice : MonoBehaviour
             PieQuestItem heldPie = heldObj.GetComponent<PieQuestItem>();
             if (heldPie == null) return;
 
-            IntroSequence intro = FindFirstObjectByType<IntroSequence>();
+            if (_intro == null) _intro = FindFirstObjectByType<IntroSequence>();
+            IntroSequence intro = _intro;
             if (intro == null) return;
 
             // Подсказка на поедание пирога в любом месте, когда он уже согрет и квест активен
@@ -71,7 +74,7 @@ public class CrosshairJuice : MonoBehaviour
             // Подсказка на установку пирога в микроволновку только при наведении и открытой дверце
             Ray heldRay = interaction.playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
             RaycastHit heldHit;
-            if (!Physics.Raycast(heldRay, out heldHit, interaction.interactionDistance, interaction.interactableLayer))
+            if (!Physics.Raycast(heldRay, out heldHit, interaction.interactionDistance, interaction.interactableLayer, QueryTriggerInteraction.Ignore))
                 return;
 
             MicrowaveInteractable microwave = heldHit.collider.GetComponentInParent<MicrowaveInteractable>();
@@ -93,7 +96,7 @@ public class CrosshairJuice : MonoBehaviour
         RaycastHit hit;
         bool hittingSomething = false;
 
-        if (Physics.Raycast(ray, out hit, interaction.interactionDistance, interaction.interactableLayer))
+        if (Physics.Raycast(ray, out hit, interaction.interactionDistance, interaction.interactableLayer, QueryTriggerInteraction.Ignore))
         {
             FloorLogic floor = hit.collider.GetComponentInParent<FloorLogic>();
             if (floor != null && floor.CanStartBreak(interaction.inventory))
@@ -127,7 +130,8 @@ public class CrosshairJuice : MonoBehaviour
                 hittingSomething = true;
                 _targetHint = "E — взять";
             }
-            else if (!hittingSomething && hit.collider.GetComponent<TrashPile>() != null)
+            else if (!hittingSomething && hit.collider.GetComponent<TrashPile>() != null
+                     && QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("trash-collect"))
             {
                 hittingSomething = true;
                 _targetHint = "E — собрать";
@@ -141,6 +145,36 @@ public class CrosshairJuice : MonoBehaviour
             {
                 hittingSomething = true;
                 _targetHint = "E — открыть";
+            }
+            else if (!hittingSomething && hit.collider.GetComponent<IngredientItem>() != null
+                     && QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("dinner-ingredients"))
+            {
+                hittingSomething = true;
+                _targetHint = "E — собрать";
+            }
+            else if (!hittingSomething && hit.collider.GetComponentInParent<StoveInteractable>() is StoveInteractable stove)
+            {
+                if (_intro == null) _intro = FindFirstObjectByType<IntroSequence>();
+                if (stove.IsReady)
+                {
+                    hittingSomething = true;
+                    _targetHint = "E — забрать ужин";
+                }
+                else if (!stove.IsCooking && _intro != null && _intro.CanCookDinner())
+                {
+                    hittingSomething = true;
+                    _targetHint = "E — готовить";
+                }
+            }
+            else if (!hittingSomething && hit.collider.GetComponentInParent<NeighborNoteInteractable>() is NeighborNoteInteractable note && note.CanInteract)
+            {
+                hittingSomething = true;
+                _targetHint = "E — посмотреть";
+            }
+            else if (!hittingSomething && hit.collider.GetComponentInParent<FrontDoorLockInteractable>() is FrontDoorLockInteractable frontLock && frontLock.CanInteract)
+            {
+                hittingSomething = true;
+                _targetHint = "E — запереть засов";
             }
             else if (!hittingSomething && hit.collider.CompareTag("Pickable"))
             {

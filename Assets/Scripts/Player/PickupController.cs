@@ -42,12 +42,16 @@ public class PickupController : MonoBehaviour
     private int _originalLayer;
     private Quaternion _heldRotationOffset = Quaternion.identity;
     private float _defaultFov;
+    private Vector3 _defaultCamLocalPos;
     private PlacementZone[] _questPlacementZones;
 
     void Start()
     {
         if (playerCamera != null)
+        {
             _defaultFov = playerCamera.fieldOfView;
+            _defaultCamLocalPos = playerCamera.transform.localPosition;
+        }
     }
 
     void FixedUpdate()
@@ -61,6 +65,15 @@ public class PickupController : MonoBehaviour
         StopAllCoroutines();
         if (_heldObj != null)
             Release();
+
+        // Если StopAllCoroutines() оборвал ShakeAndKick() посреди тряски/кика FOV — тряска
+        // сама по себе не успевала откатить позицию камеры и FOV. Возвращаем к исходным
+        // значениям явно, а не полагаемся на то, что корутина доиграет до конца.
+        if (playerCamera != null)
+        {
+            playerCamera.transform.localPosition = _defaultCamLocalPos;
+            playerCamera.fieldOfView = _defaultFov;
+        }
     }
 
     public GameObject GetHeldObject()
@@ -147,6 +160,7 @@ public class PickupController : MonoBehaviour
                 if (candidate == null ||
                     (!candidate.IsPlayerNearFreeSlot(transform.position, 1.8f) &&
                      !candidate.IsPlayerNearFreeSlot(_heldObj.transform.position, 1.8f))) continue;
+                if (!HasLineOfSight(_heldObj.transform.position, candidate.transform.position)) continue;
                 float distance = (candidate.transform.position - transform.position).sqrMagnitude;
                 if (distance < bestDistance) { closest = candidate; bestDistance = distance; }
             }
@@ -186,6 +200,10 @@ public class PickupController : MonoBehaviour
             PlacementZone zone = around[i].GetComponentInParent<PlacementZone>();
             if (zone == null || !zone.isActiveAndEnabled) continue;
 
+            // Раньше бралась просто ближайшая зона в радиусе, без проверки стен между —
+            // предмет у стены телепортировался в зону соседней комнаты. Требуем видимость.
+            if (!HasLineOfSight(_heldObj.transform.position, zone.transform.position)) continue;
+
             float distance = (zone.transform.position - _heldObj.transform.position).sqrMagnitude;
             if (distance < closestDistance)
             {
@@ -194,6 +212,19 @@ public class PickupController : MonoBehaviour
             }
         }
         return closest;
+    }
+
+    // Луч между предметом и зоной размещения, игнорируя сам предмет в руках (слой HeldItem)
+    // и триггеры (сами зоны — триггеры, иначе они бы всегда "перекрывали" сами себя).
+    bool HasLineOfSight(Vector3 from, Vector3 to)
+    {
+        Vector3 delta = to - from;
+        float dist = delta.magnitude;
+        if (dist <= 0.05f) return true;
+
+        int heldItemLayer = LayerMask.NameToLayer("HeldItem");
+        int mask = heldItemLayer >= 0 ? ~(1 << heldItemLayer) : ~0;
+        return !Physics.Raycast(from, delta / dist, dist - 0.05f, mask, QueryTriggerInteraction.Ignore);
     }
 
     private void RestoreHeldRigidbody(Rigidbody rb, bool resetInterpolation)
@@ -274,6 +305,8 @@ public class PickupController : MonoBehaviour
 
     void ThrowObject()
     {
+        if (_heldObj == null || _heldObjRb == null) return;
+
         Rigidbody rbToThrow = _heldObjRb;
         GameObject objToThrow = _heldObj;
 
@@ -291,7 +324,10 @@ public class PickupController : MonoBehaviour
 
     private System.Collections.IEnumerator ShakeAndKick()
     {
-        Vector3 originalPos = playerCamera.transform.localPosition;
+        // Берём кэшированную "стояночную" позицию, а не текущую transform.localPosition:
+        // если предыдущий ShakeAndKick был оборван на середине (повторный быстрый бросок),
+        // текущая позиция уже смещена тряской, и от неё накапливался бы дрейф.
+        Vector3 originalPos = _defaultCamLocalPos;
         float elapsed = 0.0f;
 
         playerCamera.fieldOfView = _defaultFov + fovKickAmount;

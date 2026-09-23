@@ -37,6 +37,9 @@ namespace KnocksFromBeneath
         public LayerMask interactableLayer;
         public float damageDelay = 0.2f;
 
+        [Tooltip("Нужен, чтобы ЛКМ с физическим предметом в руках (например коробкой) бросал именно его, а не заодно включал/выключал фонарик или бил ломом. Если не задан — пробуем найти автоматически.")]
+        [SerializeField] private PickupController physicalPickup;
+
         private readonly List<InventoryEntry> entries = new List<InventoryEntry>(8);
         private float lastSwitchTime = -1f;
         private int currentItemIndex;
@@ -58,6 +61,7 @@ namespace KnocksFromBeneath
         private void Start()
         {
             if (crowbarInHand != null) crowbarAnim = crowbarInHand.GetComponent<Animator>();
+            if (physicalPickup == null) physicalPickup = GetComponentInParent<PickupController>();
             SetHeldObjectsInactive();
             ImportLegacyState();
         }
@@ -81,6 +85,12 @@ namespace KnocksFromBeneath
                 SwitchToSlot((currentItemIndex + (scroll > 0f ? 1 : -1) + entries.Count) % entries.Count);
 
             if (!Input.GetMouseButtonDown(0)) return;
+
+            // ЛКМ с физическим предметом в руках (коробка и т.п.) — это бросок, обрабатывает
+            // PickupController/PlayerInteraction. Раньше этот метод не знал о физическом
+            // захвате и одновременно бил ломом/щёлкал фонариком при том же клике.
+            if (physicalPickup != null && physicalPickup.GetHeldObject() != null) return;
+
             if (crowbarInHand != null && crowbarInHand.activeSelf) PerformCrowbarAttack();
             else if (flashlightInHand != null && flashlightInHand.activeSelf) ToggleFlashlight();
         }
@@ -148,7 +158,6 @@ namespace KnocksFromBeneath
             if (itemName == "Crowbar" && hasCrowbar && crowbarInHand != null) crowbarInHand.SetActive(true);
             else if (itemName == "Flashlight" && hasFlashlight && flashlightInHand != null) flashlightInHand.SetActive(true);
             else if (itemName == "Hammer" && hasHammer && hammerInHand != null) hammerInHand.SetActive(true);
-            if (InventoryUI.Instance != null) InventoryUI.Instance.SetActiveSlot(itemName);
         }
 
         private void SwitchToSlot(int slotIndex)

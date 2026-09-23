@@ -27,9 +27,6 @@ public class HammerTrap : MonoBehaviour
         inv.AddItem("Hammer");
         inv.Equip("Hammer");
 
-        if (InventoryUI.Instance != null)
-            InventoryUI.Instance.AddItem("Hammer");
-
         QuestManager.Instance.AddProgress(1);
 
         if (LightingManager.Instance != null)

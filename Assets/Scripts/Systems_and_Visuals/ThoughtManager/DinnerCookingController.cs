@@ -37,9 +37,22 @@ public sealed class DinnerCookingController
     void OnIngredientsCollected()
     {
         CanCook = true;
+        // Как и в PieQuestController, следующий шаг сразу становится квестом — иначе
+        // после сбора продуктов на экране не остаётся вообще никакой подсказки (баг:
+        // "квест собрать продукты выполнен, а дальше тишина, новый квест не дали").
+        _createQuest("Приготовить ужин на плите", 1, null, "dinner-cook");
         _showThoughts(new string[] {
             "Хватит. Пора готовить."
         }, null);
+    }
+
+    // Вызывается из StoveInteractable через IntroSequence.OnDinnerCooked(), когда готовка
+    // на плите завершилась — тот же паттерн прямого вызова следующего шага, что
+    // MicrowaveInteractable использует для OnPiePlacedInMicrowave (шаг одноразовый,
+    // без AddProgress).
+    public void OnDinnerCooked()
+    {
+        _createQuest("Съесть ужин", 1, null, "dinner-eat");
     }
 
     // Вызывается из StoveInteractable через IntroSequence.OnDinnerEaten() —

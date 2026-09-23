@@ -34,9 +34,13 @@ public sealed class MoveInChoresController
 
     public void SetupTrashQuest()
     {
+        int amount = 3; // запасное значение, если TrashManager почему-то недоступен
         if (TrashManager.Instance != null)
+        {
             TrashManager.Instance.Initialize();
-        _createQuest("Собрать мусор по дому", 3, OnTrashCollected, "trash-collect");
+            amount = Mathf.Max(1, TrashManager.Instance.PileCount);
+        }
+        _createQuest("Собрать мусор по дому", amount, OnTrashCollected, "trash-collect");
     }
 
     void OnTrashCollected()
