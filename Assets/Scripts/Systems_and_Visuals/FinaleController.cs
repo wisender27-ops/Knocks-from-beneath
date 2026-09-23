@@ -59,10 +59,15 @@ public class FinaleController : MonoBehaviour
 
     IEnumerator PushedIntoHoleRoutine(PlayerController pc)
     {
-        // 1. Отключаем управление игроком
+        // 1. Отключаем управление игроком. isCameraLocked уже блокирует и ходьбу (см.
+        // PlayerController.HandleMovement), но ~0.9 с между этим моментом и отключением
+        // CharacterController в шаге 5 PlayerDoorOpen/PickupController оставались активны —
+        // игрок мог зацепиться за дверь или бросить/поднять предмет посреди кат-сцены.
         pc.isCameraLocked = true;
         if (pc.GetComponent<PlayerInventory>() != null) pc.GetComponent<PlayerInventory>().enabled = false;
         if (pc.GetComponent<PlayerInteraction>() != null) pc.GetComponent<PlayerInteraction>().enabled = false;
+        if (pc.GetComponentInChildren<PlayerDoorOpen>() != null) pc.GetComponentInChildren<PlayerDoorOpen>().enabled = false;
+        if (pc.GetComponentInChildren<PickupController>() != null) pc.GetComponentInChildren<PickupController>().enabled = false;
 
         Camera playerCam = pc.GetComponentInChildren<Camera>();
         CharacterController cc = pc.GetComponent<CharacterController>();
