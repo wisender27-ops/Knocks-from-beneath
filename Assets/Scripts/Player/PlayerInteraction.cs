@@ -237,9 +237,6 @@ public class PlayerInteraction : MonoBehaviour
 
         questManager.AddProgress(1);
         inventory.Equip(itemId);
-
-        if (!alreadyOwned && InventoryUI.Instance != null)
-            InventoryUI.Instance.AddItem(itemId);
     }
 
     public GameObject GetHeldObject()

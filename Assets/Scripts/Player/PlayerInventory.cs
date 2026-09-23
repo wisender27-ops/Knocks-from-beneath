@@ -148,7 +148,6 @@ namespace KnocksFromBeneath
             if (itemName == "Crowbar" && hasCrowbar && crowbarInHand != null) crowbarInHand.SetActive(true);
             else if (itemName == "Flashlight" && hasFlashlight && flashlightInHand != null) flashlightInHand.SetActive(true);
             else if (itemName == "Hammer" && hasHammer && hammerInHand != null) hammerInHand.SetActive(true);
-            if (InventoryUI.Instance != null) InventoryUI.Instance.SetActiveSlot(itemName);
         }
 
         private void SwitchToSlot(int slotIndex)
