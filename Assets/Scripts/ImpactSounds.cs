@@ -14,33 +14,32 @@ public class ImpactSounds : MonoBehaviour
 
     [Header("Тайминги")]
     [SerializeField] private float cooldown = 0.1f; // Защита от спама
-    private float _lastPlayTime;
+    private float _nextPlayTime;
 
     private void OnCollisionEnter(Collision collision)
     {
-        // 1. Проверка кулдауна
-        if (Time.time < _lastPlayTime + cooldown) return;
+        if (gameObject.layer == LayerMask.NameToLayer("HeldItem")) return;
+        if (Time.time < _nextPlayTime) return;
 
-        // 2. Проверка массива (чтобы не было ошибок в консоли)
         if (impactSource == null || clips == null || clips.Length == 0) return;
 
-        float speed = collision.relativeVelocity.magnitude;
-
-        if (speed > minVelocity)
+        float speed = 0f;
+        for (int i = 0; i < collision.contactCount; i++)
         {
-            _lastPlayTime = Time.time;
-
-            // Выбираем звук
-            AudioClip clip = clips[Random.Range(0, clips.Length)];
-
-            // 3. Рандомим питч (от 0.9 до 1.1) — это даст ОГРОМНУЮ разницу в сочности
-            impactSource.pitch = Random.Range(0.9f, 1.1f);
-
-            // Громкость
-            float volume = Mathf.Clamp01(speed * volumeMultiplier);
-
-            impactSource.PlayOneShot(clip, volume);
+            float normalSpeed = Mathf.Abs(Vector3.Dot(collision.relativeVelocity, collision.GetContact(i).normal));
+            speed = Mathf.Max(speed, normalSpeed);
         }
+
+        if (speed <= minVelocity) return;
+
+        AudioClip clip = clips[Random.Range(0, clips.Length)];
+        if (clip == null) return;
+
+        float pitch = Random.Range(0.9f, 1.1f);
+        impactSource.pitch = pitch;
+        float volume = Mathf.Clamp01((speed - minVelocity) * volumeMultiplier);
+        impactSource.PlayOneShot(clip, volume);
+        _nextPlayTime = Time.time + Mathf.Max(cooldown, clip.length / pitch);
     }
 }
 }

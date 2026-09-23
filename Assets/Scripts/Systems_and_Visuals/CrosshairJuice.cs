@@ -147,7 +147,7 @@ public class CrosshairJuice : MonoBehaviour
                 hittingSomething = true;
                 _targetHint = "E — взять";
             }
-            else if (!hittingSomething && hit.collider.GetComponent<BedSleepInteractable>() != null)
+            else if (!hittingSomething && hit.collider.TryGetComponent(out BedSleepInteractable bed) && bed.CanInteract)
             {
                 hittingSomething = true;
                 _targetHint = "E — лечь спать";

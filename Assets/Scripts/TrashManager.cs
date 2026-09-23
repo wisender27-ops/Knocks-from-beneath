@@ -67,10 +67,6 @@ public class TrashManager : MonoBehaviour
 
     IEnumerator SpawnBagRoutine()
     {
-        // Звук стука
-        if (floorKnockSource != null && floorKnockClip != null)
-            floorKnockSource.PlayOneShot(floorKnockClip);
-
         // Спавним мешок мусора, он падает сверху
         if (trashBagPrefab != null)
         {
@@ -100,18 +96,27 @@ public class TrashManager : MonoBehaviour
 
         if (ThoughtManager.Instance == null)
         {
+            PlayFloorKnock();
             GameEvents.OnTrashDeliveryReady?.Invoke();
             yield break;
         }
 
-        ThoughtManager.Instance.ShowThoughts(new string[] {
+        ThoughtManager.Instance.ShowThoughts(new[] {
             "...Что это было?",
             "Странный звук. Нужно проверить.",
             "Может, это с кухни."
-        }, () =>
+        }, () => GameEvents.OnTrashDeliveryReady?.Invoke(), onStart: PlayFloorKnock);
+    }
+
+    private void PlayFloorKnock()
+    {
+        if (floorKnockSource == null || !floorKnockSource.isActiveAndEnabled || floorKnockClip == null)
         {
-            GameEvents.OnTrashDeliveryReady?.Invoke();
-        });
+            Debug.LogWarning("[TrashManager] Источник или клип стука недоступен.", this);
+            return;
+        }
+
+        floorKnockSource.PlayOneShot(floorKnockClip);
     }
 }
 }

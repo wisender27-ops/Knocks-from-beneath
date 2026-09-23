@@ -76,6 +76,15 @@ public sealed class MoveInChoresController
     public void OnBoxFinished()
     {
         SetRoomZonesActive(false);
+        if (_roomZones != null)
+        {
+            foreach (GameObject roomZone in _roomZones)
+            {
+                if (roomZone == null) continue;
+                PlacementZone zone = roomZone.GetComponent<PlacementZone>();
+                if (zone != null) zone.RemovePlacedQuestBoxesAfter(5f);
+            }
+        }
         _showThoughts(new string[] {
             "Спина отваливается.",
             "Надо хоть что-то поесть перед сном.",
@@ -89,7 +98,11 @@ public sealed class MoveInChoresController
         for (int i = 0; i < _roomZones.Length; i++)
         {
             if (_roomZones[i] != null)
+            {
+                PlacementZone zone = _roomZones[i].GetComponent<PlacementZone>();
+                if (zone != null) zone.ConfigureBoxQuestPlacement(active);
                 _roomZones[i].SetActive(active);
+            }
         }
     }
 }

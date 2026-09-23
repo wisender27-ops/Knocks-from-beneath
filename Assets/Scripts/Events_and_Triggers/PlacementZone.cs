@@ -34,6 +34,14 @@ public class PlacementZone : MonoBehaviour
 
     private bool[] isSlotOccupied;
     private bool _revealed;
+    private readonly List<GameObject> _placedQuestBoxes = new List<GameObject>();
+
+    public void RemovePlacedQuestBoxesAfter(float delay)
+    {
+        foreach (GameObject box in _placedQuestBoxes)
+            if (box != null) Destroy(box, delay);
+        _placedQuestBoxes.Clear();
+    }
 
     // Зоны в сцене изначально выключены (их включает MoveInChoresController/
     // RoomDecorationController по ходу сюжета) — Awake() выключенного GameObject не
@@ -44,10 +52,80 @@ public class PlacementZone : MonoBehaviour
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void HideAllRevealItemsAtBoot()
     {
-        var zones = FindObjectsByType<PlacementZone>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        var zones = FindObjectsByType<PlacementZone>(FindObjectsInactive.Include);
         for (int i = 0; i < zones.Length; i++)
             zones[i].HideItems();
     }
+    private bool _preciseBoxPlacement;
+    private GameObject _boxPreview;
+    private Material _previewMaterial;
+
+    public void ConfigureBoxQuestPlacement(bool enabled)
+    {
+        _preciseBoxPlacement = enabled;
+        if (!enabled) HideBoxPreview();
+    }
+
+    public bool IsBoxQuestPlacement => _preciseBoxPlacement;
+
+    public bool IsPlayerNearFreeSlot(Vector3 playerPosition, float distance)
+    {
+        if (!isActiveAndEnabled || slots == null) return false;
+        for (int i = 0; i < slots.Count; i++)
+            if ((isSlotOccupied == null || i >= isSlotOccupied.Length || !isSlotOccupied[i]) &&
+                slots[i] != null && Vector3.Distance(playerPosition, slots[i].position) <= distance)
+                return true;
+        return false;
+    }
+
+    public void ShowBoxPreview(GameObject box)
+    {
+        HideBoxPreview();
+        if (!_preciseBoxPlacement || !isActiveAndEnabled || box == null || slots == null) return;
+
+        Transform slot = null;
+        for (int i = 0; i < slots.Count; i++)
+            if ((isSlotOccupied == null || i >= isSlotOccupied.Length || !isSlotOccupied[i]) && slots[i] != null)
+            { slot = slots[i]; break; }
+        if (slot == null) return;
+
+        Shader shader = Shader.Find("Sprites/Default");
+        if (shader == null) return;
+        _previewMaterial = new Material(shader) { color = new Color(0.45f, 0.9f, 1f, 0.38f) };
+        _boxPreview = new GameObject("Box placement preview");
+        _boxPreview.transform.SetPositionAndRotation(slot.position, slot.rotation);
+        _boxPreview.transform.localScale = box.transform.lossyScale;
+
+        foreach (MeshRenderer source in box.GetComponentsInChildren<MeshRenderer>())
+        {
+            MeshFilter filter = source.GetComponent<MeshFilter>();
+            if (filter == null || filter.sharedMesh == null) continue;
+            GameObject part = new GameObject("Preview mesh");
+            part.transform.SetParent(_boxPreview.transform, false);
+            part.transform.localPosition = box.transform.InverseTransformPoint(source.transform.position);
+            part.transform.localRotation = Quaternion.Inverse(box.transform.rotation) * source.transform.rotation;
+            part.transform.localScale = new Vector3(
+                source.transform.lossyScale.x / box.transform.lossyScale.x,
+                source.transform.lossyScale.y / box.transform.lossyScale.y,
+                source.transform.lossyScale.z / box.transform.lossyScale.z);
+            part.AddComponent<MeshFilter>().sharedMesh = filter.sharedMesh;
+            MeshRenderer previewRenderer = part.AddComponent<MeshRenderer>();
+            Material[] materials = new Material[source.sharedMaterials.Length];
+            for (int i = 0; i < materials.Length; i++) materials[i] = _previewMaterial;
+            previewRenderer.sharedMaterials = materials;
+            previewRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        }
+    }
+
+    public void HideBoxPreview()
+    {
+        if (_boxPreview != null) Destroy(_boxPreview);
+        if (_previewMaterial != null) Destroy(_previewMaterial);
+        _boxPreview = null;
+        _previewMaterial = null;
+    }
+
+    void OnDisable() => HideBoxPreview();
 
     void Awake()
     {
@@ -184,9 +262,14 @@ public class PlacementZone : MonoBehaviour
     }
 
     // Тот самый метод, который вызывает игрок
-    public bool TryPlaceBox(GameObject box)
+    public bool TryPlaceBox(GameObject box, Vector3? playerPosition = null)
     {
         if (box == null || slots == null)
+            return false;
+
+        if (_preciseBoxPlacement && (!playerPosition.HasValue ||
+            (!IsPlayerNearFreeSlot(playerPosition.Value, 1.8f) && !IsPlayerNearFreeSlot(box.transform.position, 1.8f)) ||
+            QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive("box-delivery")))
             return false;
 
         // Защита на случай, если Awake() ещё не отработал (в EditMode-тестах AddComponent
@@ -226,6 +309,15 @@ public class PlacementZone : MonoBehaviour
 
         // 3. Слот теперь занят
         isSlotOccupied[index] = true;
+        if (_preciseBoxPlacement)
+        {
+            _placedQuestBoxes.Add(box);
+            foreach (ItemGlow glow in box.GetComponentsInChildren<ItemGlow>(true))
+                glow.enabled = false;
+            foreach (ParticleSystem particles in box.GetComponentsInChildren<ParticleSystem>(true))
+                particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        }
+        HideBoxPreview();
 
         // --- ВОТ ЭТА СТРОЧКА ОТКЛЮЧАЕТ ВЗАИМОДЕЙСТВИЕ ---
         box.tag = "Untagged"; // Меняем тег на стандартный, который не "берется"
