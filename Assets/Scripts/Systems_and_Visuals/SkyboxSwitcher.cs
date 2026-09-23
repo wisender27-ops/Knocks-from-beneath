@@ -23,9 +23,6 @@ public class SkyboxSwitcher : MonoBehaviour
     private Color dayAmbientLight;
     private Color dayFogColor;
     private float dayAmbientIntensity;
-    private LightmapData[] dayLightmaps;
-    private LightProbes sceneLightProbes;
-    private SphericalHarmonicsL2[] dayProbes;
 
     void Start()
     {
@@ -33,10 +30,6 @@ public class SkyboxSwitcher : MonoBehaviour
         dayAmbientLight = RenderSettings.ambientLight;
         dayAmbientIntensity = RenderSettings.ambientIntensity;
         dayFogColor = RenderSettings.fogColor;
-        dayLightmaps = LightmapSettings.lightmaps;
-        sceneLightProbes = LightmapSettings.lightProbes;
-        if (sceneLightProbes != null)
-            dayProbes = sceneLightProbes.bakedProbes;
         lastState = isDayTime;
         UpdateEnvironment();
     }
@@ -65,12 +58,15 @@ public class SkyboxSwitcher : MonoBehaviour
         RenderSettings.ambientIntensity = isDayTime ? dayAmbientIntensity : 1f;
         RenderSettings.fogColor = isDayTime ? dayFogColor : new Color(0.008f, 0.01f, 0.018f);
 
-        // Дневные карты света и проба иначе продолжают освещать сцену ночью.
-        LightmapSettings.lightmaps = isDayTime ? dayLightmaps : System.Array.Empty<LightmapData>();
-        if (sceneLightProbes != null && dayProbes != null)
-            sceneLightProbes.bakedProbes = isDayTime
-                ? dayProbes
-                : new SphericalHarmonicsL2[dayProbes.Length];
+        // ВНИМАНИЕ: раньше тут ночью подменяли LightmapSettings.lightmaps на пустой массив
+        // и зануляли lightProbes.bakedProbes, чтобы дневная запечённая подсветка не "просвечивала"
+        // ночью. Но у статичных объектов (Contribute GI, например газон grass_soil_*) остаётся
+        // ссылка на m_LightmapIndex в уже несуществующий (пустой) массив лайтмап — рендерер
+        // не получает освещения и объект визуально пропадает, пока не наступит день. Дневная
+        // запечённая карта света физически не меняется от переключения времени суток само по
+        // себе — реальную смену настроения ночью и так обеспечивают ambientLight/ambientIntensity/
+        // fogColor/reflectionIntensity и сама смена directional light (lightDay/lightNight) ниже,
+        // поэтому обнулять лайтмапы и пробы не нужно.
 
         // 3. Обновляем освещение сцены
         DynamicGI.UpdateEnvironment();
