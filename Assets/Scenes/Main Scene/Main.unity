@@ -2976,6 +2976,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.PickableItem
   activeZone: {fileID: 0}
+  placementQuestTag: room-decoration
 --- !u!54 &221066626
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -43829,6 +43830,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.PickableItem
   activeZone: {fileID: 0}
+  placementQuestTag: room-decoration
 --- !u!54 &1074502309
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -50574,6 +50576,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.PickableItem
   activeZone: {fileID: 0}
+  placementQuestTag: room-decoration
 --- !u!54 &1231019712
 Rigidbody:
   m_ObjectHideFlags: 0

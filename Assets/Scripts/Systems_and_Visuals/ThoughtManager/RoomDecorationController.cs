@@ -48,8 +48,10 @@ public sealed class RoomDecorationController
         if (_decorationZones == null) return;
         for (int i = 0; i < _decorationZones.Length; i++)
         {
-            if (_decorationZones[i] != null)
-                _decorationZones[i].SetActive(active);
+            if (_decorationZones[i] == null) continue;
+            _decorationZones[i].SetActive(active);
+            PlacementZone zone = _decorationZones[i].GetComponent<PlacementZone>();
+            if (zone != null) zone.ConfigureQuestPlacement(active ? "room-decoration" : null);
         }
     }
 }
