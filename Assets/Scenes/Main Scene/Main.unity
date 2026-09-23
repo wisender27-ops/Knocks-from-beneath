@@ -94289,6 +94289,10 @@ PrefabInstance:
       propertyPath: m_LocalRotation.z
       value: -0
       objectReference: {fileID: 0}
+    - target: {fileID: 4096507058454560695, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 59.211
+      objectReference: {fileID: 0}
     - target: {fileID: 4832567280206308402, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: m_TargetTexture
       value: 
@@ -102727,7 +102731,7 @@ MeshRenderer:
   m_ProbeAnchor: {fileID: 0}
   m_LightProbeVolumeOverride: {fileID: 0}
   m_ScaleInLightmap: 0.75
-  m_ReceiveGI: 2
+  m_ReceiveGI: 1
   m_PreserveUVs: 0
   m_IgnoreNormalsForChartDetection: 0
   m_ImportantGI: 0
@@ -110723,7 +110727,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8707987500817125387}
-  m_Mesh: {fileID: 4100990999036510659, guid: 24031b3214b03cc4ab8acdc5750b00a4, type: 3}
+  m_Mesh: {fileID: 4300000, guid: 221a5a6df679f6e4595ff127358098f2, type: 2}
 --- !u!23 &4356218282168217462
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -149885,7 +149889,7 @@ GameObject:
   m_TagString: Wood
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
-  m_StaticEditorFlags: 64
+  m_StaticEditorFlags: 65
   m_IsActive: 1
 --- !u!23 &8712650690995774319
 MeshRenderer:
