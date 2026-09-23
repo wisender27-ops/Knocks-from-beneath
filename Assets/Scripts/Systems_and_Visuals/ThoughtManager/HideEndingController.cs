@@ -127,7 +127,7 @@ public sealed class HideEndingController
     void SpawnWatcherNearPlayer()
     {
         if (MonsterWatcherManager.Instance == null || _playerTransform == null) return;
-        MonsterWatcherManager.Instance.SpawnWatcher(_playerTransform.position);
+        MonsterWatcherManager.Instance.SpawnWatcher(_playerTransform.position, forced: true);
     }
 
     IEnumerator AmbushRoutine(int zoneIndex)
