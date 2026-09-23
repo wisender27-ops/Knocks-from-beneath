@@ -27,10 +27,13 @@ public class PlayerInteraction : MonoBehaviour
 
         if (_isEatingPie) return;
 
-        GameObject held = pickup != null ? pickup.GetHeldObject() : null;
-
+        // held запрашивается заново для каждой кнопки, а не один раз в начале кадра:
+        // если в этом же кадре E успел бросить/поставить предмет (HandleInteractPressed),
+        // проверка ЛКМ ниже раньше видела устаревшее "не пусто" и звала
+        // HandleThrowPressed() на уже пустых руках -> NRE в PickupController.ThrowObject.
         if (Input.GetKeyDown(KeyCode.E))
         {
+            GameObject held = pickup != null ? pickup.GetHeldObject() : null;
             if (held == null)
             {
                 PerformInteraction();
@@ -48,8 +51,12 @@ public class PlayerInteraction : MonoBehaviour
             }
         }
 
-        if (Input.GetMouseButtonDown(0) && held != null && pickup != null)
-            pickup.HandleThrowPressed();
+        if (Input.GetMouseButtonDown(0))
+        {
+            GameObject heldNow = pickup != null ? pickup.GetHeldObject() : null;
+            if (heldNow != null)
+                pickup.HandleThrowPressed();
+        }
     }
 
     void OnDisable()
@@ -113,7 +120,10 @@ public class PlayerInteraction : MonoBehaviour
 
             // 4. ФИЗИЧЕСКИЙ ЗАХВАТ
             if (hitObj.CompareTag("Pickable") && pickup != null)
+            {
                 pickup.TryGrab(hitObj);
+                return;
+            }
 
             // 5. КРОВАТЬ ДЛЯ СНА
             BedSleepInteractable bed = hitObj.GetComponent<BedSleepInteractable>();

@@ -16,6 +16,7 @@ public class PlayerDoorOpen : MonoBehaviour
     private float mouseMovement;
     private const float TapDuration = 0.22f;
     private const float TapMouseTolerance = 0.1f;
+    private int _doorRaycastMask;
 
     void Start()
     {
@@ -24,6 +25,11 @@ public class PlayerDoorOpen : MonoBehaviour
         {
             playerController = GetComponentInParent<PlayerController>();
         }
+
+        // Исключаем слой HeldItem — иначе предмет в руках (или триггер-зона установки)
+        // перехватывает луч раньше двери, стоящей за ним.
+        int heldItemLayer = LayerMask.NameToLayer("HeldItem");
+        _doorRaycastMask = heldItemLayer >= 0 ? ~(1 << heldItemLayer) : ~0;
     }
 
     void Update()
@@ -31,13 +37,19 @@ public class PlayerDoorOpen : MonoBehaviour
         if (playerCamera == null)
             return;
 
+        // Не хватаемся за новую дверь, если камера уже заблокирована кем-то другим
+        // (финал, кат-сцена, открытый инвентарь) — иначе KeyUp ниже снимет чужую
+        // блокировку и, например, во время концовки камера разблокируется на E двери,
+        // а с открытым инвентарём начнёт вращаться на паузе.
+        bool cameraLockedByOther = currentHeldDoor == null && playerController != null && playerController.isCameraLocked;
+
         // 1. НАЖАЛИ КНОПКУ: Ищем дверь, хватаем её и лочим камеру
-        if (Input.GetKeyDown(KeyCode.E))
+        if (!cameraLockedByOther && Input.GetKeyDown(KeyCode.E))
         {
             Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit, distance))
+            if (Physics.Raycast(ray, out hit, distance, _doorRaycastMask, QueryTriggerInteraction.Ignore))
             {
                 Door door = hit.collider.GetComponentInParent<Door>();
                 if (door != null)
@@ -85,14 +97,16 @@ public class PlayerDoorOpen : MonoBehaviour
 
     void OnDisable()
     {
+        // Снимаем блокировку камеры только если её поставили мы (держали дверь) — иначе
+        // чужая блокировка (финал, инвентарь) снимается тем, что этот компонент выключили.
         if (currentHeldDoor != null)
         {
             currentHeldDoor.StopHolding();
             currentHeldDoor = null;
-        }
 
-        if (playerController != null)
-            playerController.isCameraLocked = false;
+            if (playerController != null)
+                playerController.isCameraLocked = false;
+        }
     }
 
     // T-21: Door.IsInteractionLocked обслуживает и входную дверь (заперта на вечернем обходе
