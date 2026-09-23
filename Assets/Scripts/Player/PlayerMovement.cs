@@ -3,9 +3,12 @@ using UnityEngine;
 namespace KnocksFromBeneath
 {
 
+[DefaultExecutionOrder(10000)]
 [RequireComponent(typeof(CharacterController))]
 public class PlayerController : MonoBehaviour
 {
+    private const float MaxCameraNearClip = 0.03f;
+    private const float CameraWallMargin = 0.01f;
     [Header("Movement")]
     public float walkSpeed = 2f;
     public float runSpeed = 4f;
@@ -51,6 +54,8 @@ public class PlayerController : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
         cam = GetComponentInChildren<Camera>();
+        if (cam != null)
+            cam.nearClipPlane = Mathf.Min(cam.nearClipPlane, MaxCameraNearClip);
         currentStamina = maxStamina;
         currentCameraY = standingCameraY;
 
@@ -66,6 +71,29 @@ public class PlayerController : MonoBehaviour
     {
         HandleLook();
         HandleMovement();
+    }
+
+    void LateUpdate()
+    {
+        if (controller == null || !controller.enabled || cam == null || isCameraLocked)
+            return;
+
+        // Вся ближняя плоскость камеры должна оставаться внутри капсулы, а не только её центр.
+        float halfFovTangent = Mathf.Tan(cam.fieldOfView * 0.5f * Mathf.Deg2Rad);
+        float near = cam.nearClipPlane;
+        float frustumRadius = near * Mathf.Sqrt(1f + halfFovTangent * halfFovTangent * (1f + cam.aspect * cam.aspect));
+        float safeRadius = Mathf.Max(0f, controller.radius - controller.skinWidth - frustumRadius - CameraWallMargin);
+
+        Vector3 cameraLocal = transform.InverseTransformPoint(cam.transform.position);
+        Vector3 center = controller.center;
+        float halfSegment = Mathf.Max(0f, controller.height * 0.5f - controller.radius);
+        Vector3 closestAxisPoint = new Vector3(
+            center.x,
+            Mathf.Clamp(cameraLocal.y, center.y - halfSegment, center.y + halfSegment),
+            center.z);
+
+        Vector3 safeLocal = closestAxisPoint + Vector3.ClampMagnitude(cameraLocal - closestAxisPoint, safeRadius);
+        cam.transform.position = transform.TransformPoint(safeLocal);
     }
 
     private void HandleLook()
@@ -205,6 +233,7 @@ public class PlayerController : MonoBehaviour
 }
 
 // Compatibility class for prefabs serialized with the original file name.
+[DefaultExecutionOrder(10000)]
 public sealed class PlayerMovement : PlayerController
 {
 }
