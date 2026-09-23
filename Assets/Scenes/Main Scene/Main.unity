@@ -94417,10 +94417,6 @@ PrefabInstance:
       propertyPath: database
       value: 
       objectReference: {fileID: 11400000, guid: b7244b21a66b59347ac97a814583ba25, type: 2}
-    - target: {fileID: 2565123186235401928, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
-      propertyPath: hasCrowbar
-      value: 1
-      objectReference: {fileID: 0}
     - target: {fileID: 4082443097780501385, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: m_Resource
       value: 
