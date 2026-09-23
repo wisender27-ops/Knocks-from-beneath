@@ -267,6 +267,24 @@ public class PlacementZone : MonoBehaviour
         if (box == null || slots == null)
             return false;
 
+        // Зону могли выключить, пока предмет ещё физически стоял в её триггере —
+        // PickableItem.activeZone тогда остаётся висеть на скрытой зоне (Unity не шлёт
+        // OnTriggerExit при деактивации). Раньше TryPlaceBox это никак не проверял.
+        if (!isActiveAndEnabled)
+            return false;
+
+        // Раньше принимался ЛЮБОЙ Pickable-предмет: пирог, продукты из холодильника,
+        // декор дня 2 — всё это засчитывало прогресс квеста коробок и намертво "прибивало"
+        // сюжетный предмет в слоте (тег Untagged, PickableItem выключается), ломая
+        // дальнейший сюжет (например квест "Достать пирог"). Для зон, считающих прогресс
+        // day-1 квестам box-delivery/box-collect, требуем реальную коробку.
+        if (RequiresBoxItemType())
+        {
+            var collectable = box.GetComponent<CollectableItem>();
+            if (collectable == null || collectable.currentItemType != CollectableItem.ItemType.Box)
+                return false;
+        }
+
         if (_preciseBoxPlacement && (!playerPosition.HasValue ||
             (!IsPlayerNearFreeSlot(playerPosition.Value, 1.8f) && !IsPlayerNearFreeSlot(box.transform.position, 1.8f)) ||
             QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive("box-delivery")))
@@ -345,6 +363,17 @@ public class PlacementZone : MonoBehaviour
 
         onBoxPlaced?.Invoke();
         RevealItems();
+    }
+
+    bool RequiresBoxItemType()
+    {
+        if (progressQuestTags == null) return false;
+        for (int i = 0; i < progressQuestTags.Length; i++)
+        {
+            if (progressQuestTags[i] == "box-delivery" || progressQuestTags[i] == "box-collect")
+                return true;
+        }
+        return false;
     }
 
     bool IsProgressQuest(string questTag)

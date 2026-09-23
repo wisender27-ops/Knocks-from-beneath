@@ -35,6 +35,11 @@ public class PlacementZoneTests
         zone.progressQuestTags = progressTags;
 
         _box = new GameObject("Box");
+        // TryPlaceBox теперь для зон box-delivery/box-collect требует реальную коробку
+        // (CollectableItem.ItemType.Box) — тестовый объект должен вести себя как настоящая
+        // коробка, иначе тесты на прогресс/слоты ломаются на этой не связанной с ними проверке.
+        var collectable = _box.AddComponent<CollectableItem>();
+        collectable.currentItemType = CollectableItem.ItemType.Box;
         return zone;
     }
 
