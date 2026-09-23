@@ -589,6 +589,11 @@ public class IntroSequence : MonoBehaviour
         return _dinner.CanCook;
     }
 
+    public void OnDinnerCooked()
+    {
+        _dinner.OnDinnerCooked();
+    }
+
     public void OnDinnerEaten()
     {
         _dinner.OnDinnerEaten();

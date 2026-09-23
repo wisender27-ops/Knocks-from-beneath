@@ -64,6 +64,9 @@ public class StoveInteractable : MonoBehaviour
 
         _isCooking = false;
         _isReady = true;
+
+        var intro = FindFirstObjectByType<IntroSequence>();
+        intro?.OnDinnerCooked();
     }
 }
 }
