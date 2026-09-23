@@ -32,11 +32,13 @@ public class ThoughtManager : MonoBehaviour
     {
         public readonly string[] lines;
         public readonly Action onComplete;
+        public readonly Action onStart;
 
-        public ThoughtRequest(string[] lines, Action onComplete)
+        public ThoughtRequest(string[] lines, Action onComplete, Action onStart)
         {
             this.lines = lines;
             this.onComplete = onComplete;
+            this.onStart = onStart;
         }
     }
 
@@ -59,7 +61,7 @@ public class ThoughtManager : MonoBehaviour
     // Главная функция, которую мы вызываем из IntroSequence
     // lines - список фраз
     // onComplete - действие, которое выполнится в самом конце (например, выдача квеста)
-    public void ShowThoughts(string[] lines, Action onComplete = null)
+    public void ShowThoughts(string[] lines, Action onComplete = null, Action onStart = null)
     {
         if (lines == null || lines.Length == 0)
         {
@@ -69,16 +71,17 @@ public class ThoughtManager : MonoBehaviour
 
         if (_isDisplaying)
         {
-            _pendingRequests.Enqueue(new ThoughtRequest(lines, onComplete));
+            _pendingRequests.Enqueue(new ThoughtRequest(lines, onComplete, onStart));
             return;
         }
 
-        StartCoroutine(DisplaySequence(lines, onComplete));
+        StartCoroutine(DisplaySequence(lines, onComplete, onStart));
     }
 
-    private IEnumerator DisplaySequence(string[] lines, Action onComplete)
+    private IEnumerator DisplaySequence(string[] lines, Action onComplete, Action onStart)
     {
         _isDisplaying = true;
+        onStart?.Invoke();
 
         if (textCanvas == null || thoughtText == null)
         {
@@ -135,7 +138,7 @@ public class ThoughtManager : MonoBehaviour
         if (!_isDisplaying && _pendingRequests.Count > 0)
         {
             ThoughtRequest next = _pendingRequests.Dequeue();
-            StartCoroutine(DisplaySequence(next.lines, next.onComplete));
+            StartCoroutine(DisplaySequence(next.lines, next.onComplete, next.onStart));
         }
     }
 }
