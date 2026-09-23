@@ -89,9 +89,10 @@ public class PlayerController : MonoBehaviour
         // Без этой проверки Move() на выключенном контроллере сыпет ошибкой каждый кадр.
         if (controller == null || !controller.enabled) return;
 
-        // Используем GetAxisRaw для мгновенного считывания нажатий
-        float x = Input.GetAxisRaw("Horizontal");
-        float z = Input.GetAxisRaw("Vertical");
+        float x = (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) ? 1f : 0f)
+                - (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) ? 1f : 0f);
+        float z = (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow) ? 1f : 0f)
+                - (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow) ? 1f : 0f);
         
         bool isMoving = Mathf.Abs(x) > 0.1f || Mathf.Abs(z) > 0.1f;
         bool crouchKeyHeld = Input.GetKey(KeyCode.LeftControl);
