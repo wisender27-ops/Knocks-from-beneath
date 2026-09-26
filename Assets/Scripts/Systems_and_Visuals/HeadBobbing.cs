@@ -86,7 +86,8 @@ public class HeadBobbing : MonoBehaviour
     {
         RaycastHit hit;
         // Стреляем лучом вниз, чтобы понять, на чем стоим
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, 2.0f))
+        // (слой-блокер исключён: калитка под ногами не должна менять звук шага)
+        if (Physics.Raycast(transform.position, Vector3.down, out hit, 2.0f, PhysicsMasks.RaycastDefault))
         {
             AudioClip[] selectedArray = null;
 

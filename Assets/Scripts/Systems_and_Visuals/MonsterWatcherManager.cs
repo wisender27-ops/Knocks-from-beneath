@@ -156,7 +156,9 @@ public class MonsterWatcherManager : MonoBehaviour
         if (dist <= 0.01f) return true;
 
         // Луч чуть короче полной дистанции, чтобы не цепляться за коллайдер самой точки.
-        return !Physics.Raycast(from, delta / dist, dist - 0.1f, ~0, QueryTriggerInteraction.Ignore);
+        // Маска без слоя-блокера: калитка держит физику, но не должна прятать цель
+        // от монстра (иначе он "теряет" игрока из-за декоративного пропа).
+        return !Physics.Raycast(from, delta / dist, dist - 0.1f, PhysicsMasks.RaycastAll, QueryTriggerInteraction.Ignore);
     }
 }
 }

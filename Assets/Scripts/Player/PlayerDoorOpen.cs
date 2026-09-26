@@ -27,9 +27,13 @@ public class PlayerDoorOpen : MonoBehaviour
         }
 
         // Исключаем слой HeldItem — иначе предмет в руках (или триггер-зона установки)
-        // перехватывает луч раньше двери, стоящей за ним.
+        // перехватывает луч раньше двери, стояющей за ним.
         int heldItemLayer = LayerMask.NameToLayer("HeldItem");
-        _doorRaycastMask = heldItemLayer >= 0 ? ~(1 << heldItemLayer) : ~0;
+        int mask = heldItemLayer >= 0 ? ~(1 << heldItemLayer) : ~0;
+        // И слой DoorNoRaycast: калитка garden_gate_01 (и подобные блокеры) должна
+        // держать физику, но не перехватывать луч — иначе она висела бы перед
+        // настоящей дверью и E открывал бы пустоту вместо створки.
+        _doorRaycastMask = PhysicsMasks.WithoutNoRaycast(mask);
     }
 
     void Update()

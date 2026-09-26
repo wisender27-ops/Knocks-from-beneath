@@ -225,7 +225,7 @@ namespace KnocksFromBeneath
             Camera camera = Camera.main;
             if (camera == null) return;
             Ray ray = camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0f));
-            if (!Physics.Raycast(ray, out RaycastHit hit, hitDistance, interactableLayer)) return;
+            if (!Physics.Raycast(ray, out RaycastHit hit, hitDistance, PhysicsMasks.WithoutNoRaycast(interactableLayer))) return;
             BreakableObject breakable = hit.collider.GetComponent<BreakableObject>();
             if (breakable != null) breakable.Break();
         }

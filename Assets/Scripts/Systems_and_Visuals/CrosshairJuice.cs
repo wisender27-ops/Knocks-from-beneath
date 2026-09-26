@@ -74,7 +74,7 @@ public class CrosshairJuice : MonoBehaviour
             // Подсказка на установку пирога в микроволновку только при наведении и открытой дверце
             Ray heldRay = interaction.playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
             RaycastHit heldHit;
-            if (!Physics.Raycast(heldRay, out heldHit, interaction.interactionDistance, interaction.interactableLayer, QueryTriggerInteraction.Ignore))
+            if (!Physics.Raycast(heldRay, out heldHit, interaction.interactionDistance, PhysicsMasks.WithoutNoRaycast(interaction.interactableLayer), QueryTriggerInteraction.Ignore))
                 return;
 
             MicrowaveInteractable microwave = heldHit.collider.GetComponentInParent<MicrowaveInteractable>();
@@ -96,7 +96,7 @@ public class CrosshairJuice : MonoBehaviour
         RaycastHit hit;
         bool hittingSomething = false;
 
-        if (Physics.Raycast(ray, out hit, interaction.interactionDistance, interaction.interactableLayer, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(ray, out hit, interaction.interactionDistance, PhysicsMasks.WithoutNoRaycast(interaction.interactableLayer), QueryTriggerInteraction.Ignore))
         {
             FloorLogic floor = hit.collider.GetComponentInParent<FloorLogic>();
             if (floor != null && floor.CanStartBreak(interaction.inventory))

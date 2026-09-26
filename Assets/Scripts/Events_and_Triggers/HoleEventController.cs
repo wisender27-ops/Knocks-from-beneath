@@ -113,7 +113,7 @@ public class HoleEventController : MonoBehaviour
 
         Ray ray = _playerCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
-        if (Physics.Raycast(ray, out hit, lookDistance))
+        if (Physics.Raycast(ray, out hit, lookDistance, PhysicsMasks.RaycastDefault))
             return hit.collider.CompareTag("FloorBoards");
         return false;
     }

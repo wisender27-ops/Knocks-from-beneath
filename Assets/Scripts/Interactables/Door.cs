@@ -25,6 +25,14 @@ public class Door : MonoBehaviour
     [SerializeField] private bool hingeAtMaximumWorldX;
     [SerializeField] private bool addGateCollider;
 
+    [Header("Сдвижная калитка (вместо поворота)")]
+    [Tooltip("Дверь не вращается на петле, а уезжает вбок по направляющей (American barn gate).")]
+    [SerializeField] private bool slideInsteadOfSwing;
+    [Tooltip("Мировое направление сдвига. По умолчанию определяется автоматически: вдоль мировой оси X.")]
+    [SerializeField] private Vector3 slideWorldDirection = Vector3.zero;
+    [Tooltip("На сколько метров сдвинуть створку в открытом состоянии.")]
+    [SerializeField] private float slideDistance = 1.15f;
+
     [Header("Настройки звука (Скрип)")]
     public AudioSource sfxSource;
     public AudioClip doorCreakClip;
@@ -70,6 +78,8 @@ public class Door : MonoBehaviour
     private Quaternion closedWorldRotation;
     private Vector3 hingeWorldPosition;
     private Quaternion previousWorldRotation;
+    private Vector3 slideDirection = Vector3.left;   //Resolved direction of the sliding gate (world space)
+    private Vector3 previousWorldPosition;
 
     void Awake()
     {
@@ -98,6 +108,21 @@ public class Door : MonoBehaviour
         closedWorldPosition = transform.position;
         closedWorldRotation = transform.rotation;
         previousWorldRotation = closedWorldRotation;
+        previousWorldPosition = closedWorldPosition;
+        if (slideInsteadOfSwing)
+        {
+            // The panel is aligned along world X, so the rail runs along world X too.
+            // An explicit direction wins; otherwise fall back to the sign that actually
+            // has free space (the closed side is blocked by the house wall).
+            if (slideWorldDirection.sqrMagnitude > 0.0001f)
+            {
+                slideDirection = slideWorldDirection.normalized;
+            }
+            else
+            {
+                slideDirection = HasSlideRoom(Vector3.left) ? Vector3.left : Vector3.right;
+            }
+        }
         if (useOuterEdgeHinge)
         {
             Renderer gateRenderer = GetComponent<Renderer>();
@@ -137,7 +162,18 @@ public class Door : MonoBehaviour
 
         // Плавный поворот к целевому смещению
         targetAxisAngle = baseAxisAngle + currentOffset;
-        if (useOuterEdgeHinge)
+        if (slideInsteadOfSwing)
+        {
+            // American barn gate: the panel slides along the rail, rotation is untouched.
+            // currentOffset is reused as a 0..1 progress value so StartHolding/StopHolding,
+            // the creak detector and ForceClose keep working unchanged.
+            float progress = Mathf.Clamp01(currentOffset / Mathf.Max(Mathf.Abs(angleRotation), 0.0001f));
+            Vector3 targetPosition = closedWorldPosition + slideDirection * (slideDistance * progress);
+            float speed = isBeingHeld ? openSpeed : automaticOpenSpeed;
+            float smoothing = 1f - Mathf.Exp(-speed * Time.deltaTime);
+            transform.position = Vector3.Lerp(transform.position, targetPosition, smoothing);
+        }
+        else if (useOuterEdgeHinge)
         {
             Quaternion swing = Quaternion.AngleAxis(currentOffset, Vector3.up);
             Quaternion targetRotation = swing * closedWorldRotation;
@@ -159,12 +195,15 @@ public class Door : MonoBehaviour
         // Расчет скорости для звука
         float currentAxisAngle = GetAxisAngle(transform.localEulerAngles);
         float deltaRot = Mathf.DeltaAngle(previousRotationY, currentAxisAngle);
-        float rawVelocity = useOuterEdgeHinge
-            ? Quaternion.Angle(previousWorldRotation, transform.rotation) / Mathf.Max(Time.deltaTime, 0.0001f)
-            : Mathf.Abs(deltaRot) / Mathf.Max(Time.deltaTime, 0.0001f);
+        float rawVelocity = slideInsteadOfSwing
+            ? Vector3.Distance(transform.position, previousWorldPosition) / Mathf.Max(Time.deltaTime, 0.0001f)
+            : (useOuterEdgeHinge
+                ? Quaternion.Angle(previousWorldRotation, transform.rotation) / Mathf.Max(Time.deltaTime, 0.0001f)
+                : Mathf.Abs(deltaRot) / Mathf.Max(Time.deltaTime, 0.0001f));
 
         smoothDoorVelocity = Mathf.Lerp(smoothDoorVelocity, rawVelocity, Time.deltaTime * 10f);
         previousRotationY = currentAxisAngle;
+        previousWorldPosition = transform.position;
         previousWorldRotation = transform.rotation;
 
         // Пока играет фидбек-тряска запертой двери — не считаем это "настоящим" скрипом:
@@ -206,6 +245,28 @@ public class Door : MonoBehaviour
 
             currentOffset = Mathf.Clamp(currentOffset + moveStep, min, max);
         }
+    }
+
+    // Проверяет, есть ли свободное место для сдвига створки в указанную мировую сторону.
+    // Без этого автоматический выбор стороны угадал бы и уткнулся в стену дома.
+    private bool HasSlideRoom(Vector3 direction)
+    {
+        Collider self = GetComponent<Collider>();
+        if (self == null) return true;
+
+        Bounds bounds = self.bounds;
+        Vector3 half = bounds.extents * 0.95f;
+        for (float d = 0.1f; d <= slideDistance; d += 0.1f)
+        {
+            Vector3 probe = bounds.center + direction * d;
+            Collider[] hits = Physics.OverlapBox(probe, half, transform.rotation, PhysicsMasks.AllLayers, QueryTriggerInteraction.Ignore);
+            foreach (Collider hit in hits)
+            {
+                if (hit == self || hit.transform.IsChildOf(transform)) continue;
+                return false;
+            }
+        }
+        return true;
     }
 
     private void ManageCreakSound(float velocity)

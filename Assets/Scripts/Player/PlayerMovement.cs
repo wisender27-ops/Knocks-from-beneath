@@ -215,7 +215,7 @@ public class PlayerController : MonoBehaviour
             headCheckPos,
             checkRadius,
             ceilingOverlaps,
-            Physics.AllLayers,
+            PhysicsMasks.AllLayers,
             QueryTriggerInteraction.Ignore);
 
         for (int i = 0; i < overlapCount; i++)

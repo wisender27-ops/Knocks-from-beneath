@@ -75,7 +75,7 @@ public class PlayerInteraction : MonoBehaviour
         Ray ray = GetCenterScreenRay();
         RaycastHit hit;
 
-        if (Physics.Raycast(ray, out hit, interactionDistance, interactableLayer, QueryTriggerInteraction.Ignore))
+        if (Physics.Raycast(ray, out hit, interactionDistance, PhysicsMasks.WithoutNoRaycast(interactableLayer), QueryTriggerInteraction.Ignore))
         {
             GameObject hitObj = hit.transform.gameObject;
 
@@ -191,7 +191,7 @@ public class PlayerInteraction : MonoBehaviour
     {
         Ray ray = GetCenterScreenRay();
         RaycastHit hit;
-        if (!Physics.Raycast(ray, out hit, interactionDistance, interactableLayer, QueryTriggerInteraction.Ignore))
+        if (!Physics.Raycast(ray, out hit, interactionDistance, PhysicsMasks.WithoutNoRaycast(interactableLayer), QueryTriggerInteraction.Ignore))
             return false;
 
         MicrowaveInteractable microwave = hit.transform.GetComponentInParent<MicrowaveInteractable>();

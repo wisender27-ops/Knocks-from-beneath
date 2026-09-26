@@ -191,7 +191,7 @@ public class PickupController : MonoBehaviour
         if (_heldObj == null) return null;
 
         Collider[] around = Physics.OverlapSphere(
-            _heldObj.transform.position, placementSearchRadius, ~0, QueryTriggerInteraction.Collide);
+            _heldObj.transform.position, placementSearchRadius, PhysicsMasks.AllLayers, QueryTriggerInteraction.Collide);
 
         PlacementZone closest = null;
         float closestDistance = float.MaxValue;
@@ -224,7 +224,9 @@ public class PickupController : MonoBehaviour
 
         int heldItemLayer = LayerMask.NameToLayer("HeldItem");
         int mask = heldItemLayer >= 0 ? ~(1 << heldItemLayer) : ~0;
-        return !Physics.Raycast(from, delta / dist, dist - 0.05f, mask, QueryTriggerInteraction.Ignore);
+        // Слой-блокер (DoorNoRaycast) не должен считаться препятствием для предмета:
+        // предмет должен перелетать/проноситься через калитку, а не упираться в её луч.
+        return !Physics.Raycast(from, delta / dist, dist - 0.05f, PhysicsMasks.WithoutNoRaycast(mask), QueryTriggerInteraction.Ignore);
     }
 
     private void RestoreHeldRigidbody(Rigidbody rb, bool resetInterpolation)

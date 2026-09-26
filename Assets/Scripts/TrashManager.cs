@@ -106,7 +106,7 @@ public class TrashManager : MonoBehaviour
                 // и квест доставки было не выполнить. Раскастом укорачиваем дистанцию
                 // до ближайшей преграды.
                 float forwardDist = 1.2f;
-                if (Physics.Raycast(player.position, forwardDir, out RaycastHit wallHit, forwardDist, ~0, QueryTriggerInteraction.Ignore))
+                if (Physics.Raycast(player.position, forwardDir, out RaycastHit wallHit, forwardDist, PhysicsMasks.RaycastAll, QueryTriggerInteraction.Ignore))
                     forwardDist = Mathf.Max(0.3f, wallHit.distance - 0.3f);
 
                 Vector3 spawnPos = player.position + forwardDir * forwardDist;
