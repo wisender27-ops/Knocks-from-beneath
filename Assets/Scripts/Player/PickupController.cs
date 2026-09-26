@@ -44,6 +44,7 @@ public class PickupController : MonoBehaviour
     private float _defaultFov;
     private Vector3 _defaultCamLocalPos;
     private PlacementZone[] _questPlacementZones;
+    private float _nextPlacementRefresh;
 
     void Start()
     {
@@ -54,10 +55,104 @@ public class PickupController : MonoBehaviour
         }
     }
 
+    // Квест на расстановку коробок мог запуститься ПОЗЖЕ, чем игрок взял коробку
+    // в руки (например, взял её до сбора мусора). Старый код искал зоны и показывал
+    // превью ОДИН раз — в момент захвата, и только если квест к этому моменту уже
+    // был активен. Не повезло — и больше зоны не появлялись: игрок держал коробку,
+    // E не работал, подсказки не было, а квест Later всё ждал коробок.
+    //
+    // Теперь пока держим квестовый предмет, зоны и превью пересобираются каждый
+    // кадр: как только квест стартует, места появятся сами.
     void FixedUpdate()
     {
         if (_heldObj != null && _heldObjRb != null && holdPoint != null)
             MovePhysicsObject();
+
+        RefreshQuestPlacementIfNeeded();
+    }
+
+    /// <summary>
+    /// Построить зоны размещения для квестового предмета в руках.
+    /// Работает и когда квест ещё не начат: превью просто не покажется, но как
+    /// только квест станет активным, места появятся (см. RefreshQuestPlacementIfNeeded).
+    /// </summary>
+    private void TrySetupQuestPlacementZones(CollectableItem collectable)
+    {
+        string questTag = collectable != null && collectable.currentItemType == CollectableItem.ItemType.Box
+            ? "box-delivery"
+            : _heldItemScript != null ? _heldItemScript.placementQuestTag : null;
+        if (string.IsNullOrEmpty(questTag)) return;
+
+        IntroSequence intro = FindAnyObjectByType<IntroSequence>();
+        GameObject[] zoneObjects = intro == null ? null :
+            questTag == "box-delivery" ? intro.roomZones : intro.decorationZones;
+        if (zoneObjects == null) return;
+
+        PlacementZone[] zones = new PlacementZone[zoneObjects.Length];
+        bool any = false;
+        for (int i = 0; i < zoneObjects.Length; i++)
+        {
+            if (zoneObjects[i] == null) continue;
+            PlacementZone zone = zoneObjects[i].GetComponent<PlacementZone>();
+            if (zone == null || !zone.AcceptsQuest(questTag)) continue;
+            zones[i] = zone;
+            any = true;
+        }
+
+        if (!any) return;
+
+        _questPlacementZones = zones;
+        ShowQuestPreviews();
+    }
+
+    /// <summary>
+    /// Если квест стартовал, пока предмет уже в руках, — достроить зоны сейчас.
+    /// Дёшево: работает только когда предмет в руках, а пересборка идёт не чаще
+    /// раза в 0.25 с и только когда реально что-то изменилось.
+    /// </summary>
+    private void RefreshQuestPlacementIfNeeded()
+    {
+        if (_heldObj == null) return;
+
+        if (_questPlacementZones != null && AreZonesUsable(_questPlacementZones)) return;
+
+        if (Time.unscaledTime < _nextPlacementRefresh) return;
+        _nextPlacementRefresh = Time.unscaledTime + 0.25f;
+
+        // Квест не начат — ждём. Показывать превью раньше времени нельзя: зоны
+        // ещё выключены, ShowBoxPreview всё равно ничего не нарисует.
+        QuestManager quests = QuestManager.Instance;
+        if (quests == null) return;
+
+        CollectableItem collectable = _heldObj.GetComponent<CollectableItem>();
+        string questTag = collectable != null && collectable.currentItemType == CollectableItem.ItemType.Box
+            ? "box-delivery"
+            : _heldItemScript != null ? _heldItemScript.placementQuestTag : null;
+        if (string.IsNullOrEmpty(questTag) || !quests.IsQuestActive(questTag)) return;
+
+        TrySetupQuestPlacementZones(collectable);
+    }
+
+    /// <summary>Зоны на месте и готовы принимать предмет (квест активен, зоны включены).</summary>
+    private static bool AreZonesUsable(PlacementZone[] zones)
+    {
+        if (zones == null) return false;
+        for (int i = 0; i < zones.Length; i++)
+        {
+            if (zones[i] == null) continue;
+            if (zones[i].isActiveAndEnabled) return true;
+        }
+        return false;
+    }
+
+    private void ShowQuestPreviews()
+    {
+        if (_questPlacementZones == null || _heldObj == null) return;
+        for (int i = 0; i < _questPlacementZones.Length; i++)
+        {
+            if (_questPlacementZones[i] == null) continue;
+            _questPlacementZones[i].ShowBoxPreview(_heldObj);
+        }
     }
 
     void OnDisable()
@@ -102,28 +197,9 @@ public class PickupController : MonoBehaviour
 
         _heldItemScript = obj.GetComponent<PickableItem>();
         CollectableItem collectable = obj.GetComponent<CollectableItem>();
-        string questTag = collectable != null && collectable.currentItemType == CollectableItem.ItemType.Box
-            ? "box-delivery"
-            : _heldItemScript != null ? _heldItemScript.placementQuestTag : null;
-        if (!string.IsNullOrEmpty(questTag) && QuestManager.Instance != null &&
-            QuestManager.Instance.IsQuestActive(questTag))
-        {
-            IntroSequence intro = FindAnyObjectByType<IntroSequence>();
-            GameObject[] zoneObjects = intro == null ? null :
-                questTag == "box-delivery" ? intro.roomZones : intro.decorationZones;
-            if (zoneObjects != null)
-            {
-                _questPlacementZones = new PlacementZone[zoneObjects.Length];
-                for (int i = 0; i < zoneObjects.Length; i++)
-                {
-                    if (zoneObjects[i] == null) continue;
-                    PlacementZone zone = zoneObjects[i].GetComponent<PlacementZone>();
-                    if (zone == null || !zone.AcceptsQuest(questTag)) continue;
-                    _questPlacementZones[i] = zone;
-                    zone.ShowBoxPreview(obj);
-                }
-            }
-        }
+
+        TrySetupQuestPlacementZones(collectable);
+
         _heldRotationOffset = Quaternion.Inverse(holdPoint.rotation) * obj.transform.rotation;
 
         _originalLayer = _heldObj.layer;

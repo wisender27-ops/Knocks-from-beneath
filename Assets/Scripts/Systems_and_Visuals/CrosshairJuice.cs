@@ -40,6 +40,67 @@ public class CrosshairJuice : MonoBehaviour
         ApplyJuice();
     }
 
+    /// <summary>
+    /// Подсказка "Нажмите E, чтобы установить коробку" для квестовых предметов
+    /// на расстановку. Показывается, только когда игрок действительно стоит
+    /// рядом со свободным местом и видит его (иначе подсказка вводила бы в
+    /// заблуждение — «нажми E» не сработает).
+    /// </summary>
+    private bool TryGetBoxPlacementHint(GameObject heldObj)
+    {
+        CollectableItem collectable = heldObj.GetComponent<CollectableItem>();
+        bool isQuestItem = collectable != null || heldObj.GetComponent<PickableItem>() != null;
+        if (!isQuestItem) return false;
+
+        // Квест на расстановку должен быть активен, иначе ставить некуда.
+        QuestManager quests = QuestManager.Instance;
+        string questTag = collectable != null && collectable.currentItemType == CollectableItem.ItemType.Box
+            ? "box-delivery"
+            : heldObj.GetComponent<PickableItem>() != null
+                ? heldObj.GetComponent<PickableItem>().placementQuestTag
+                : null;
+        if (quests == null || string.IsNullOrEmpty(questTag) || !quests.IsQuestActive(questTag))
+            return false;
+
+        PlacementZone[] zones = FindActiveQuestZones(questTag);
+        if (zones == null) return false;
+
+        Vector3 playerPosition = transform.position;
+        for (int i = 0; i < zones.Length; i++)
+        {
+            PlacementZone zone = zones[i];
+            if (zone == null || !zone.isActiveAndEnabled) continue;
+            if (!zone.IsPlayerNearFreeSlot(playerPosition, 1.8f) &&
+                !zone.IsPlayerNearFreeSlot(heldObj.transform.position, 1.8f))
+                continue;
+
+            _targetHint = "Нажмите E, чтобы установить коробку";
+            return true;
+        }
+
+        // Зоны есть и квест активен, но игрок ещё не у места — подсказываем
+        // дорогу, чтобы предмет в руках не выглядел бесполезным.
+        _targetHint = "Отнесите коробку к месту";
+        return true;
+    }
+
+    private static PlacementZone[] FindActiveQuestZones(string questTag)
+    {
+        IntroSequence intro = UnityEngine.Object.FindAnyObjectByType<IntroSequence>();
+        if (intro == null) return null;
+        GameObject[] zoneObjects = questTag == "box-delivery" ? intro.roomZones : intro.decorationZones;
+        if (zoneObjects == null) return null;
+
+        var result = new System.Collections.Generic.List<PlacementZone>(zoneObjects.Length);
+        for (int i = 0; i < zoneObjects.Length; i++)
+        {
+            if (zoneObjects[i] == null) continue;
+            PlacementZone zone = zoneObjects[i].GetComponent<PlacementZone>();
+            if (zone != null) result.Add(zone);
+        }
+        return result.Count > 0 ? result.ToArray() : null;
+    }
+
     void CheckUnderCursor()
     {
         if (interaction == null || interaction.playerCamera == null)
@@ -56,6 +117,13 @@ public class CrosshairJuice : MonoBehaviour
             _targetScale = Vector3.zero;
             _targetColor = new Color(defaultColor.r, defaultColor.g, defaultColor.b, 0);
             _targetHint = "";
+
+            // Коробка (и любой предмет квеста на расстановку) — подсказываем E,
+            // когда игрок дошёл до зоны с местом. Раньше этой ветки не было
+            // вообще: предмет в руках гасил прицел и подсказку, и игрок с
+            // коробкой в руках не видел ни слова о том, что куда-то её надо
+            // поставить.
+            if (TryGetBoxPlacementHint(heldObj)) return;
 
             PieQuestItem heldPie = heldObj.GetComponent<PieQuestItem>();
             if (heldPie == null) return;
