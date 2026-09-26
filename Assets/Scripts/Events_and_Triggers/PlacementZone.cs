@@ -186,6 +186,9 @@ public class PlacementZone : MonoBehaviour
         // предметы навсегда остаются с нулевым масштабом. Раннер никогда не выключается
         // вместе с зоной, так что анимация всегда доигрывает до конца независимо от того,
         // в каком порядке игрок расставил коробки.
+        //
+        // Сам "поп" живёт в PopScaleAnimator — тем же эффектом пользуется, например,
+        // мусорный мешок в TrashManager.
         RevealRunner.StartCoroutine(RevealSequence(toAnimate));
     }
 
@@ -196,8 +199,8 @@ public class PlacementZone : MonoBehaviour
             var (t, targetScale) = items[i];
             if (t != null)
             {
-                RevealRunner.StartCoroutine(PopIn(t, targetScale));
-                PlayPopSound(t.position);
+                PopScaleAnimator.Play(t, targetScale, revealPopDuration);
+                PopScaleAnimator.PlayPopSound(t.position, revealPopSound, revealPopVolume);
             }
 
             if (i < items.Count - 1 && revealInterval > 0f)
@@ -225,51 +228,6 @@ public class PlacementZone : MonoBehaviour
     // Пустой MonoBehaviour-хост исключительно для StartCoroutine — сам по себе ничего не
     // делает и никогда не выключается вместе с конкретной зоной.
     private class PlacementZoneRevealRunner : MonoBehaviour { }
-
-    IEnumerator PopIn(Transform t, Vector3 targetScale)
-    {
-        if (revealPopDuration <= 0f)
-        {
-            if (t != null) t.localScale = targetScale;
-            yield break;
-        }
-
-        float elapsed = 0f;
-        while (elapsed < revealPopDuration)
-        {
-            if (t == null) yield break;
-            elapsed += Time.deltaTime;
-            float p = Mathf.Clamp01(elapsed / revealPopDuration);
-            float eased = EaseOutBack(p);
-            t.localScale = targetScale * eased;
-            yield return null;
-        }
-
-        if (t != null) t.localScale = targetScale;
-    }
-
-    static float EaseOutBack(float x)
-    {
-        const float c1 = 1.70158f;
-        const float c3 = c1 + 1f;
-        float p = x - 1f;
-        return 1f + c3 * p * p * p + c1 * p * p;
-    }
-
-    void PlayPopSound(Vector3 position)
-    {
-        if (revealPopSound == null) return;
-
-        var sfxGo = new GameObject("RevealPopSFX");
-        sfxGo.transform.position = position;
-        var src = sfxGo.AddComponent<AudioSource>();
-        src.clip = revealPopSound;
-        src.pitch = Random.Range(0.92f, 1.08f);
-        src.volume = revealPopVolume;
-        src.spatialBlend = 1f;
-        src.Play();
-        Destroy(sfxGo, revealPopSound.length / src.pitch + 0.1f);
-    }
 
     // Тот самый метод, который вызывает игрок
     public bool TryPlaceBox(GameObject box, Vector3? playerPosition = null)
