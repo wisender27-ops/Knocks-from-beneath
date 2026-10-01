@@ -1,0 +1,3 @@
+interface:
+  display_name: "KFB project-stage-detect"
+  short_description: "Unity brownfield project-stage-detect workflow"

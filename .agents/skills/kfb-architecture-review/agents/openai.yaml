@@ -1,0 +1,3 @@
+interface:
+  display_name: "KFB architecture-review"
+  short_description: "Unity brownfield architecture-review workflow"

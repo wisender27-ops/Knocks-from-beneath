@@ -1,0 +1,18 @@
+# Project-only settings; inherit model, permissions, and unrelated tools.
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 4
+
+[mcp_servers.unity-mcp]
+command = "unity"
+args = ["mcp", "--project-path", "C:/claude/knocks-from-beneath/Knocks-from-beneath"]
+enabled = true
+startup_timeout_sec = 30
+tool_timeout_sec = 120
+
+# Existing user-global duplicate connections are left intact for other projects.
+[mcp_servers.unity_mcp]
+enabled = false
+
+[mcp_servers.unityMCP]
+enabled = false

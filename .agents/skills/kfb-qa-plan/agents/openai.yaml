@@ -1,0 +1,3 @@
+interface:
+  display_name: "KFB qa-plan"
+  short_description: "Unity brownfield qa-plan workflow"
