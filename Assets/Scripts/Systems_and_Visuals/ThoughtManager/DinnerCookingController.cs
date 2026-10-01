@@ -15,17 +15,20 @@ public sealed class DinnerCookingController
     private readonly Action<string, int, UnityAction, string> _createQuest;
     private readonly Action<string[], Action> _showThoughts;
     private readonly Action _onDinnerFinished;
+    private readonly Action<string> _recordCompletion;
 
     public bool CanCook { get; private set; }
 
     public DinnerCookingController(
         Action<string, int, UnityAction, string> createQuest,
         Action<string[], Action> showThoughts,
-        Action onDinnerFinished)
+        Action onDinnerFinished,
+        Action<string> recordCompletion = null)
     {
         _createQuest = createQuest;
         _showThoughts = showThoughts;
         _onDinnerFinished = onDinnerFinished;
+        _recordCompletion = recordCompletion;
     }
 
     public void SetupIngredientQuest()
@@ -52,6 +55,7 @@ public sealed class DinnerCookingController
     // без AddProgress).
     public void OnDinnerCooked()
     {
+        _recordCompletion?.Invoke("dinner-cook");
         _createQuest("Съесть ужин", 1, null, "dinner-eat");
     }
 
@@ -59,6 +63,7 @@ public sealed class DinnerCookingController
     // тот же паттерн тонкого проброса, что CanPlacePieInMicrowave/OnPiePlacedInMicrowave.
     public void OnDinnerEaten()
     {
+        _recordCompletion?.Invoke("dinner-eat");
         CanCook = false;
         _showThoughts(new string[] {
             "Уже намного лучше."

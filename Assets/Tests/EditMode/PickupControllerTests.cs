@@ -36,6 +36,32 @@ public class PickupControllerTests
     }
 
     [Test]
+    public void ColdPie_UsesPhysicalCarry()
+    {
+        _itemGo.AddComponent<PieQuestItem>();
+        var collider = _itemGo.AddComponent<BoxCollider>();
+        Assert.That(_pickup.TryGrab(_itemGo), Is.True);
+        Assert.That(_itemGo.transform.parent, Is.Null);
+        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.False);
+        Assert.That(collider.enabled, Is.True);
+    }
+
+    [Test]
+    public void HeatedPie_UsesViewPoseAndRestoresPhysicsOnRelease()
+    {
+        _itemGo.AddComponent<PieQuestItem>().isHeated = true;
+        var collider = _itemGo.AddComponent<BoxCollider>();
+        Assert.That(_pickup.TryGrab(_itemGo), Is.True);
+        Assert.That(_itemGo.transform.parent, Is.EqualTo(_cameraGo.transform));
+        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.True);
+        Assert.That(collider.enabled, Is.False);
+        _pickup.Release();
+        Assert.That(_itemGo.transform.parent, Is.Null);
+        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.False);
+        Assert.That(collider.enabled, Is.True);
+    }
+
+    [Test]
     public void TryGrab_FailsWithoutRigidbody()
     {
         var noRb = new GameObject("NoRb");

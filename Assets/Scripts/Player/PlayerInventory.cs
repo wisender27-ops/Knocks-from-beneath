@@ -70,7 +70,7 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
-            if (RetroInventoryScreen.IsAnyOpen) return;
+            if (RetroInventoryScreen.IsAnyOpen || Time.timeScale == 0f) return;
 
             if (Time.time - lastSwitchTime >= switchCooldown)
             {
@@ -121,7 +121,11 @@ namespace KnocksFromBeneath
             if (entry.Definition.IsEquippable)
             {
                 if (equippedItemId == entry.Definition.Id) Unequip();
-                else Equip(entry.Definition.Id);
+                else
+                {
+                    if (!CanEquip(entry.Definition.Id)) return false;
+                    Equip(entry.Definition.Id);
+                }
                 return true;
             }
 
@@ -139,7 +143,7 @@ namespace KnocksFromBeneath
         public void Equip(string id)
         {
             InventoryEntry entry = FindEntry(id);
-            if (entry == null || !entry.Definition.IsEquippable) return;
+            if (entry == null || !entry.Definition.IsEquippable || !CanEquip(id)) return;
             equippedItemId = id;
             ActivateItem(id);
             Changed?.Invoke();
@@ -150,6 +154,15 @@ namespace KnocksFromBeneath
             equippedItemId = string.Empty;
             ActivateItem(string.Empty);
             Changed?.Invoke();
+        }
+
+        private bool CanEquip(string id)
+        {
+            if (physicalPickup == null) physicalPickup = GetComponentInParent<PickupController>();
+            if (physicalPickup != null && physicalPickup.GetHeldObject() != null) return false;
+            return (id == "Crowbar" && hasCrowbar && crowbarInHand != null) ||
+                   (id == "Flashlight" && hasFlashlight && flashlightInHand != null) ||
+                   (id == "Hammer" && hasHammer && hammerInHand != null);
         }
 
         public void ActivateItem(string itemName)

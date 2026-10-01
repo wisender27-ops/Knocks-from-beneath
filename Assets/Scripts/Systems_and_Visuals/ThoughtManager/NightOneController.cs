@@ -21,6 +21,7 @@ public sealed class NightOneController
     private readonly Action _onNightFinished;
 
     private bool _fogBeforeNight;
+    private bool _isRunning;
 
     private const float FadeDuration = 1.5f;
     private const float KnockWindowSeconds = 6f; // окно активности RandomKnock — при его min/maxDelay (2-5с) даёт максимум пару стуков
@@ -45,6 +46,8 @@ public sealed class NightOneController
 
     public void Run()
     {
+        if (_isRunning) return;
+        _isRunning = true;
         _startCoroutine(RunRoutine());
     }
 
@@ -68,16 +71,37 @@ public sealed class NightOneController
 
         _showThoughts(new string[] {
             "Тихо.",
-            "Показалось, наверное."
+            "Показалось, наверное.",
+            "Попробую снова уснуть."
         }, OnCalmNightFinished);
     }
 
     void OnCalmNightFinished()
     {
+        _startCoroutine(WakeUpInMorning());
+    }
+
+    IEnumerator WakeUpInMorning()
+    {
+        yield return Fade(0f, 1f);
+        _teleportToBed?.Invoke();
+        yield return new WaitForSeconds(2f);
+
+        // SkyboxSwitcher применяет состояние в Update — оставляем кадр под чёрным экраном.
         if (_skySwitcher != null) _skySwitcher.isDayTime = true;
         RenderSettings.fog = _fogBeforeNight;
         GameEvents.OnDayStarted?.Invoke();
-        _onNightFinished?.Invoke();
+        yield return null;
+        yield return Fade(1f, 0f);
+
+        _showThoughts(new string[] {
+            "Уже утро.",
+            "Больше ничего не слышно. Пора заняться домом."
+        }, () =>
+        {
+            _isRunning = false;
+            _onNightFinished?.Invoke();
+        });
     }
 
     IEnumerator Fade(float from, float to)

@@ -41,6 +41,10 @@ public class Door : MonoBehaviour
     [SerializeField] private float volumeMultiplier = 1.5f;
     [SerializeField] private float minVelocityThreshold = 2f;
 
+    [Header("Сюжетное закрытие (без звука)")]
+    [Tooltip("Дверь закрывается сама, когда игрок ложится спать. Такое закрытие не должно звучать: скрип и спуск эмбиент-монстра — технические детали перехода, игрок их не должен слышать.")]
+    [SerializeField] private bool muteCreakOnAutoClose = true;
+
     [Header("Заперто (T-21)")]
     [Tooltip("Звук, когда игрок пытается открыть запертую дверь. Если не задан — просто дёргается без звука.")]
     [SerializeField] private AudioClip lockedRattleClip;
@@ -211,8 +215,19 @@ public class Door : MonoBehaviour
         // (lockedRattleClip), и generic-детектор скорости не должен на неё реагировать —
         // иначе дёргание ЛЮБОЙ запертой двери (в т.ч. дверцы микроволновки) могло спавнить
         // эмбиент-монстра через тот же путь, что обычный скрип двери.
-        if (!_isRattling)
+        //
+        // _suppressCreak добавляет второе исключение: сюжетное закрытие на ночь.
+        // Пока створка реально не доехала (currentOffset != 0), скрип не считается —
+        // иначе игрок услышал бы все двери дома в момент ухода ко сну.
+        if (!_isRattling && !(_suppressCreak && currentOffset != 0f))
             ManageCreakSound(smoothDoorVelocity);
+
+        // Створка доехала — снимаем подавление, двери снова «живые».
+        if (_suppressCreak && currentOffset == 0f)
+        {
+            _suppressCreak = false;
+            smoothDoorVelocity = 0f;
+        }
 
         // Обновляем состояние галочки без вызова сеттера, чтобы просто видеть статус в инспекторе
         // Но лучше оставить управление за пользователем через свойство выше.
@@ -273,6 +288,16 @@ public class Door : MonoBehaviour
     {
         if (sfxSource == null || doorCreakClip == null) return;
 
+        // Сюжетное закрытие на ночь: скрип не должен быть слышен вообще.
+        // Стоит ДАЖЕ если флаг почему-то ещё не снят — лучше лишний кадр
+        // тишины, чем щелчок скрипа в момент перехода.
+        if (_suppressCreak)
+        {
+            sfxSource.volume = 0f;
+            if (sfxSource.isPlaying) sfxSource.Pause();
+            return;
+        }
+
         if (velocity > minVelocityThreshold)
         {
             if (!sfxSource.isPlaying)
@@ -326,8 +351,26 @@ public class Door : MonoBehaviour
         // если игрок в этот момент как раз тянул дверь руками, "принудительное" закрытие
         // на ночь молча ничего не делало. Сначала отпускаем захват, потом закрываем.
         isBeingHeld = false;
-        isOpen = false; // Используем твое свойство, оно само запустит звук и анимацию
+
+        // Сюжетное закрытие на ночь — БЕЗ ЗВУКА.
+        //
+        // Раньше здесь просто ставилось isOpen = false, и обычная анимация закрытия
+        // разгоняла створку до скорости выше minVelocityThreshold. Дальше
+        // ManageCreakSound считал это скрипом: включался AudioSource, и вдобавок
+        // TriggerMonsterEvent() выпускал эмбиент-монстра. Игрок в момент ухода
+        // ко сну слышал скрип всех дверей дома — чисто технический артефакт
+        // перехода, который ломает атмосферу.
+        //
+        // Теперь на время сюжетного закрытия скрип гасится. Обычные действия
+        // игрока (сам открыл/закрыл дверь, дёрнул запертую) звучат как раньше.
+        _suppressCreak = muteCreakOnAutoClose;
+        isOpen = false;
+        // Сбрасываем сглаженную скорость: пока дверь закрывается, детектор скрипа
+        // не должен накопить её заново и выстрелить звуком уже после снятия флага.
+        smoothDoorVelocity = 0f;
     }
+
+    private bool _suppressCreak;
 
     private void TriggerMonsterEvent()
     {

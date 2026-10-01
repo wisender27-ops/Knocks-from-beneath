@@ -23,7 +23,8 @@ public enum DebugStoryStage
     StartFinale,
     // Развилка ночи 2 (T-19/T-20) — сразу после выхода монстра из дыры,
     // все три пути открыты.
-    StartBranchEndings
+    StartBranchEndings,
+    StartPieMicrowaveQuest
 }
 
 public class IntroSequence : MonoBehaviour
@@ -114,7 +115,8 @@ public class IntroSequence : MonoBehaviour
         _pieQuest = new PieQuestController(
             pieObject, microwaveZone,
             CreateQuest, ShowThoughts, IsQuestActive,
-            onDinnerFinished: SetupGoToBedQuest);
+            onDinnerFinished: SetupGoToBedQuest,
+            recordCompletion: tag => { QuestManager.Instance?.RecordQuestCompletion(tag); });
 
         _moveInChores = new MoveInChoresController(
             trashZone, roomZones,
@@ -127,7 +129,8 @@ public class IntroSequence : MonoBehaviour
 
         _dinner = new DinnerCookingController(
             CreateQuest, ShowThoughts,
-            onDinnerFinished: _eveningRound.SetupEveningWalkQuest);
+            onDinnerFinished: _eveningRound.SetupEveningWalkQuest,
+            recordCompletion: tag => { QuestManager.Instance?.RecordQuestCompletion(tag); });
 
         _decoration = new RoomDecorationController(
             decorationZones, CreateQuest, ShowThoughts,
@@ -238,7 +241,9 @@ public class IntroSequence : MonoBehaviour
     {
         Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
-        if (startStage >= DebugStoryStage.StartKitchenNoise)
+        // Ночные стадии занимают отдельный непрерывный диапазон enum.
+        // Новые дневные debug-стадии добавляются после StartBranchEndings.
+        if (startStage >= DebugStoryStage.StartKitchenNoise && startStage <= DebugStoryStage.StartBranchEndings)
         {
             if (skySwitcher != null) skySwitcher.isDayTime = false;
             RenderSettings.fog = false;
@@ -250,6 +255,9 @@ public class IntroSequence : MonoBehaviour
         {
             case DebugStoryStage.StartBoxQuest:
                 _moveInChores.SetupBoxQuest();
+                break;
+            case DebugStoryStage.StartPieMicrowaveQuest:
+                _pieQuest.SetupMicrowaveQuest();
                 break;
             case DebugStoryStage.StartDay2Decoration:
                 _decoration.SetupDecorationQuest();

@@ -31,6 +31,16 @@ namespace KnocksFromBeneath
         private RenderTexture previewTexture;
         private Texture2D noiseTexture;
         private GameObject previewObject;
+        private InventoryItemDefinition previewDefinition;
+        private bool isInspecting;
+        private bool draggingPreview;
+        private Vector3 lastMousePosition;
+        private float previewZoom = 1f;
+        private TextMeshProUGUI titleText;
+        private TextMeshProUGUI leftArrowText;
+        private TextMeshProUGUI rightArrowText;
+        private TextMeshProUGUI feedbackText;
+        private float feedbackUntil;
         private readonly List<Material> previewMaterials = new List<Material>(4);
         private PlayerController playerController;
         private PlayerInteraction playerInteraction;
@@ -70,14 +80,13 @@ namespace KnocksFromBeneath
 
         private void OnDestroy()
         {
+            ClearPreview();
             if (previewTexture != null)
             {
                 previewTexture.Release();
                 Destroy(previewTexture);
             }
             if (noiseTexture != null) Destroy(noiseTexture);
-            for (int i = 0; i < previewMaterials.Count; i++) Destroy(previewMaterials[i]);
-            previewMaterials.Clear();
         }
 
         private void Update()
@@ -90,13 +99,25 @@ namespace KnocksFromBeneath
 
             if (!isOpen) return;
 
-            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Z)) Close();
+            if (Input.GetKeyDown(KeyCode.Escape) || Input.GetKeyDown(KeyCode.Z))
+            {
+                if (isInspecting) SetInspection(false); else Close();
+                return;
+            }
+            if (Input.GetKeyDown(KeyCode.C) && inventory.Entries.Count > 0) SetInspection(!isInspecting);
+            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) UseSelected();
+            if (isInspecting) UpdateInspection();
             else if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) SelectRelative(-1);
             else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) SelectRelative(1);
-            else if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) UseSelected();
 
-            if (previewObject != null)
+            if (previewObject != null && !isInspecting)
                 previewObject.transform.Rotate(Vector3.up, rotationSpeed * Time.unscaledDeltaTime, Space.World);
+
+            if (feedbackUntil > 0f && Time.unscaledTime >= feedbackUntil)
+            {
+                feedbackText.text = string.Empty;
+                feedbackUntil = 0f;
+            }
 
             group.alpha = 0.97f + Mathf.Sin(Time.unscaledTime * 43f) * 0.025f;
             float noiseOffset = Mathf.Repeat(Time.unscaledTime * 7.3f, 1f);
@@ -105,7 +126,9 @@ namespace KnocksFromBeneath
 
         private void Open()
         {
-            if (inventory == null || isOpen) return;
+            if (inventory == null || isOpen || IsAnyOpen || Time.timeScale == 0f ||
+                (playerInteraction != null && playerInteraction.IsEatingPie) ||
+                (playerController != null && playerController.isCameraLocked)) return;
             isOpen = true;
             IsAnyOpen = true;
             previousTimeScale = Time.timeScale;
@@ -121,6 +144,7 @@ namespace KnocksFromBeneath
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             SetVisible(true);
+            SetInspection(false);
             ClampSelection();
             Refresh();
         }
@@ -137,6 +161,10 @@ namespace KnocksFromBeneath
             Cursor.lockState = previousCursorLock;
             Cursor.visible = previousCursorVisible;
             SetVisible(false);
+            SetInspection(false);
+            ClearPreview();
+            feedbackText.text = string.Empty;
+            feedbackUntil = 0f;
         }
 
         private void SelectRelative(int direction)
@@ -144,15 +172,78 @@ namespace KnocksFromBeneath
             int count = inventory.Entries.Count;
             if (count == 0) return;
             selectedIndex = (selectedIndex + direction + count) % count;
+            feedbackText.text = string.Empty;
+            feedbackUntil = 0f;
             Refresh();
         }
 
         private void UseSelected()
         {
+            if (inventory == null || selectedIndex < 0 || selectedIndex >= inventory.Entries.Count) return;
+            InventoryItemDefinition definition = inventory.Entries[selectedIndex].Definition;
+            bool wasEquipped = inventory.EquippedItemId == definition.Id;
             if (inventory.UseItemAt(selectedIndex))
             {
                 ClampSelection();
                 Refresh();
+                feedbackText.text = definition.IsEquippable
+                    ? (wasEquipped ? "UNEQUIPPED: " : "EQUIPPED: ") + definition.DisplayName
+                    : "USED: " + definition.DisplayName;
+            }
+            else feedbackText.text = "CANNOT USE THIS ITEM HERE";
+            feedbackUntil = Time.unscaledTime + 3f;
+        }
+
+        private void SetInspection(bool value)
+        {
+            isInspecting = value;
+            draggingPreview = false;
+            titleText.text = value ? "-  EXAMINE  -" : "-  INVENTORY  -";
+            titleText.rectTransform.anchoredPosition = value ? new Vector2(0f, -12f) : new Vector2(0f, -39f);
+            leftArrowText.gameObject.SetActive(!value);
+            rightArrowText.gameObject.SetActive(!value);
+            nameText.rectTransform.anchoredPosition = value ? new Vector2(350f, -76f) : new Vector2(24f, -86f);
+            nameText.rectTransform.sizeDelta = value ? new Vector2(266f, 34f) : new Vector2(592f, 30f);
+            descriptionText.rectTransform.anchoredPosition = value ? new Vector2(350f, -116f) : new Vector2(24f, -126f);
+            descriptionText.rectTransform.sizeDelta = value ? new Vector2(266f, 152f) : new Vector2(236f, 142f);
+            previewImage.rectTransform.anchoredPosition = value ? new Vector2(-150f, 16f) : new Vector2(132f, -8f);
+            previewImage.rectTransform.sizeDelta = value ? new Vector2(280f, 224f) : new Vector2(240f, 192f);
+            previewZoom = 1f;
+            if (previewObject != null) previewObject.transform.localScale = Vector3.one;
+            Refresh();
+        }
+
+        private void UpdateInspection()
+        {
+            if (previewObject == null) return;
+            float yaw = (Input.GetKey(KeyCode.RightArrow) || Input.GetKey(KeyCode.D) ? 1f : 0f)
+                - (Input.GetKey(KeyCode.LeftArrow) || Input.GetKey(KeyCode.A) ? 1f : 0f);
+            float pitch = (Input.GetKey(KeyCode.DownArrow) || Input.GetKey(KeyCode.S) ? 1f : 0f)
+                - (Input.GetKey(KeyCode.UpArrow) || Input.GetKey(KeyCode.W) ? 1f : 0f);
+            yaw *= 90f * Time.unscaledDeltaTime;
+            pitch *= 90f * Time.unscaledDeltaTime;
+            if (Input.GetMouseButtonDown(0))
+            {
+                draggingPreview = RectTransformUtility.RectangleContainsScreenPoint(previewImage.rectTransform, Input.mousePosition);
+                lastMousePosition = Input.mousePosition;
+            }
+            if (!Input.GetMouseButton(0)) draggingPreview = false;
+            if (draggingPreview)
+            {
+                Vector3 delta = Input.mousePosition - lastMousePosition;
+                yaw += delta.x * 0.4f;
+                pitch -= delta.y * 0.4f;
+                lastMousePosition = Input.mousePosition;
+            }
+            previewObject.transform.Rotate(Vector3.up, yaw, Space.World);
+            previewObject.transform.Rotate(Vector3.right, pitch, Space.World);
+            previewZoom = Mathf.Clamp(previewZoom + Input.mouseScrollDelta.y * 0.1f, 0.6f, 1.5f);
+            previewObject.transform.localScale = Vector3.one * previewZoom;
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                previewObject.transform.rotation = Quaternion.identity;
+                previewZoom = 1f;
+                previewObject.transform.localScale = Vector3.one;
             }
         }
 
@@ -173,7 +264,8 @@ namespace KnocksFromBeneath
 
             if (!hasItems)
             {
-                actionText.text = "EXIT: Z";
+                if (isInspecting) SetInspection(false);
+                actionText.text = "EXIT: Z / TAB";
                 ReplacePreview(null);
                 return;
             }
@@ -182,35 +274,51 @@ namespace KnocksFromBeneath
             bool equipped = inventory.EquippedItemId == entry.Definition.Id;
             nameText.text = entry.Definition.DisplayName + "  " + entry.Quantity + "/" + entry.Definition.MaxStack;
             descriptionText.text = entry.Definition.Description;
-            if (entry.Definition.IsEquippable)
-                actionText.text = (equipped ? "UNEQUIP: SPACE" : "EQUIP: SPACE") + "   ||   EXIT: Z";
-            else
-                actionText.text = "USE: SPACE   ||   EXIT: Z";
+            string useAction = entry.Definition.IsEquippable ? (equipped ? "UNEQUIP" : "EQUIP") : "USE";
+            actionText.text = isInspecting
+                ? "DRAG / WASD: ROTATE   WHEEL: ZOOM   R: RESET\n" + useAction + ": SPACE / ENTER   BACK: C / Z / ESC   EXIT: TAB"
+                : "SELECT: A / D   EXAMINE: C\n" + useAction + ": SPACE / ENTER   EXIT: Z / ESC / TAB";
             ReplacePreview(entry.Definition);
         }
 
         private void ReplacePreview(InventoryItemDefinition definition)
         {
-            if (previewObject != null) Destroy(previewObject);
-            for (int i = 0; i < previewMaterials.Count; i++) Destroy(previewMaterials[i]);
-            previewMaterials.Clear();
-            previewObject = null;
+            if (previewDefinition == definition) return;
+            ClearPreview();
+            previewDefinition = definition;
             if (definition == null || definition.PreviewPrefab == null) return;
 
             Vector3 previewCenter = new Vector3(0f, -1000f, PreviewDistance);
             previewObject = new GameObject("InventoryPreview_" + definition.Id);
-            previewObject.transform.position = previewCenter;
-            previewObject.name = "InventoryPreview_" + definition.Id;
+            previewObject.SetActive(false);
+            previewObject.transform.SetParent(transform, false);
+            previewObject.transform.SetPositionAndRotation(previewCenter, Quaternion.identity);
 
             GameObject model = Instantiate(definition.PreviewPrefab, previewObject.transform);
+            // Disabled scripts still receive Awake on activation; strip only the inactive clone.
+            MonoBehaviour[] scripts = model.GetComponentsInChildren<MonoBehaviour>(true);
+            for (int i = scripts.Length - 1; i >= 0; i--)
+                if (scripts[i] != null) DestroyImmediate(scripts[i]);
+            // A RequireComponent dependency can reject removal. Never activate a surviving script.
+            if (model.GetComponentsInChildren<MonoBehaviour>(true).Length > 0) return;
+            Behaviour[] behaviours = model.GetComponentsInChildren<Behaviour>(true);
+            for (int i = 0; i < behaviours.Length; i++) behaviours[i].enabled = false;
+            ParticleSystem[] particles = model.GetComponentsInChildren<ParticleSystem>(true);
+            for (int i = 0; i < particles.Length; i++) particles[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            model.SetActive(true);
             model.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(12f, 25f, 0f));
             SetLayerRecursively(previewObject.transform, PreviewLayer);
             PreparePreviewMaterials(model, definition.PreviewTextureOverride);
 
-            Collider[] colliders = model.GetComponentsInChildren<Collider>();
+            Collider[] colliders = model.GetComponentsInChildren<Collider>(true);
             for (int i = 0; i < colliders.Length; i++) colliders[i].enabled = false;
-            Rigidbody[] bodies = model.GetComponentsInChildren<Rigidbody>();
-            for (int i = 0; i < bodies.Length; i++) bodies[i].isKinematic = true;
+            Rigidbody[] bodies = model.GetComponentsInChildren<Rigidbody>(true);
+            for (int i = 0; i < bodies.Length; i++)
+            {
+                bodies[i].isKinematic = true;
+                bodies[i].detectCollisions = false;
+            }
+            previewObject.SetActive(true);
 
             Bounds bounds = CalculateBounds(model);
             float visibleHeight = 2f * PreviewDistance * Mathf.Tan(previewCamera.fieldOfView * 0.5f * Mathf.Deg2Rad);
@@ -222,6 +330,20 @@ namespace KnocksFromBeneath
 
             bounds = CalculateBounds(model);
             model.transform.position += previewCenter - bounds.center;
+            previewZoom = 1f;
+        }
+
+        private void ClearPreview()
+        {
+            if (previewObject != null)
+            {
+                previewObject.SetActive(false);
+                Destroy(previewObject);
+            }
+            for (int i = 0; i < previewMaterials.Count; i++) Destroy(previewMaterials[i]);
+            previewMaterials.Clear();
+            previewObject = null;
+            previewDefinition = null;
         }
 
         private void BuildInterface()
@@ -263,14 +385,17 @@ namespace KnocksFromBeneath
             contentFitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             contentFitter.aspectRatio = ReferenceWidth / ReferenceHeight;
 
-            CreateText("Title", frame, "-  INVENTORY  -", 23f, TextAlignmentOptions.Center, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -39f), new Vector2(360f, 42f));
-            CreateText("LeftArrow", frame, "<", 28f, TextAlignmentOptions.Center, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(155f, -77f), new Vector2(40f, 40f));
-            CreateText("RightArrow", frame, ">", 28f, TextAlignmentOptions.Center, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-155f, -77f), new Vector2(40f, 40f));
+            titleText = CreateText("Title", frame, "-  INVENTORY  -", 23f, TextAlignmentOptions.Center, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -39f), new Vector2(360f, 42f));
+            leftArrowText = CreateText("LeftArrow", frame, "<", 28f, TextAlignmentOptions.Center, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(155f, -45f), new Vector2(40f, 40f));
+            rightArrowText = CreateText("RightArrow", frame, ">", 28f, TextAlignmentOptions.Center, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-155f, -45f), new Vector2(40f, 40f));
 
             nameText = CreateText("ItemName", frame, string.Empty, 19f, TextAlignmentOptions.Left, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(18f, -112f), new Vector2(160f, 34f));
             descriptionText = CreateText("Description", frame, string.Empty, 18f, TextAlignmentOptions.TopLeft, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(18f, -148f), new Vector2(160f, 132f));
             descriptionText.textWrappingMode = TextWrappingModes.Normal;
-            descriptionText.lineSpacing = -8f;
+            descriptionText.lineSpacing = 0f;
+            descriptionText.enableAutoSizing = true;
+            descriptionText.fontSizeMin = 12f;
+            descriptionText.fontSizeMax = 18f;
 
             previewImage = CreateRawImage("Preview", frame, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(300f, 235f));
             previewTexture = new RenderTexture(320, 256, 16, RenderTextureFormat.ARGB32) { name = "InventoryPreviewRT", filterMode = FilterMode.Point };
@@ -278,7 +403,8 @@ namespace KnocksFromBeneath
             previewImage.texture = previewTexture;
 
             emptyText = CreateText("Empty", frame, "INVENTORY IS EMPTY", 20f, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(400f, 50f));
-            actionText = CreateText("Actions", frame, "EXIT: Z", 18f, TextAlignmentOptions.Center, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 20f), new Vector2(500f, 38f));
+            feedbackText = CreateText("Feedback", frame, string.Empty, 14f, TextAlignmentOptions.Center, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 64f), new Vector2(592f, 24f));
+            actionText = CreateText("Actions", frame, "EXIT: Z", 13f, TextAlignmentOptions.Center, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 16f), new Vector2(608f, 42f));
 
             BuildPreviewStage();
         }

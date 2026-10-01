@@ -45,6 +45,16 @@ public class PickupController : MonoBehaviour
     private Vector3 _defaultCamLocalPos;
     private PlacementZone[] _questPlacementZones;
     private float _nextPlacementRefresh;
+    private PieQuestItem _heldPieView;
+    private bool _pieOriginalIsKinematic;
+    private bool _pieOriginalUseGravity;
+    private RigidbodyConstraints _pieOriginalConstraints;
+    private RigidbodyInterpolation _pieOriginalInterpolation;
+    private float _pieOriginalLinearDamping;
+    private float _pieOriginalAngularDamping;
+    private Vector3 _pieOriginalWorldScale;
+    private Collider[] _pieColliders;
+    private bool[] _pieColliderStates;
 
     void Start()
     {
@@ -88,6 +98,7 @@ public class PickupController : MonoBehaviour
             questTag == "box-delivery" ? intro.roomZones : intro.decorationZones;
         if (zoneObjects == null) return;
 
+        GameObject item = _heldObj;
         PlacementZone[] zones = new PlacementZone[zoneObjects.Length];
         bool any = false;
         for (int i = 0; i < zoneObjects.Length; i++)
@@ -95,6 +106,11 @@ public class PickupController : MonoBehaviour
             if (zoneObjects[i] == null) continue;
             PlacementZone zone = zoneObjects[i].GetComponent<PlacementZone>();
             if (zone == null || !zone.AcceptsQuest(questTag)) continue;
+            // Зона подходит только под СВОЙ предмет: у декора дня 2 у каждого
+            // предмета своя зона. Без этой проверки превью рисовалось сразу во
+            // всех трёх слотах — игрок видел три копии взятой вещи и не понимал,
+            // куда её ставить.
+            if (item == null || !zone.AcceptsItem(item)) continue;
             zones[i] = zone;
             any = true;
         }
@@ -197,6 +213,22 @@ public class PickupController : MonoBehaviour
 
         _heldItemScript = obj.GetComponent<PickableItem>();
         CollectableItem collectable = obj.GetComponent<CollectableItem>();
+
+        PieQuestItem pie = obj.GetComponent<PieQuestItem>();
+        _heldPieView = pie != null && pie.isHeated ? pie : null;
+        if (_heldPieView != null)
+        {
+            Transform pieViewAnchor = playerCamera != null ? playerCamera.transform : holdPoint;
+            CapturePiePhysicsState();
+            _heldObjRb.linearVelocity = Vector3.zero;
+            _heldObjRb.angularVelocity = Vector3.zero;
+            _heldObjRb.isKinematic = true;
+            _heldObjRb.useGravity = false;
+            _pieOriginalWorldScale = obj.transform.lossyScale;
+            obj.transform.SetParent(pieViewAnchor, false);
+            obj.transform.localScale = DivideScale(_pieOriginalWorldScale * _heldPieView.heldScale, pieViewAnchor.lossyScale);
+            _heldPieView.AttachToView(pieViewAnchor);
+        }
 
         TrySetupQuestPlacementZones(collectable);
 
@@ -318,14 +350,68 @@ public class PickupController : MonoBehaviour
             rb.interpolation = RigidbodyInterpolation.None;
     }
 
+    private void CapturePiePhysicsState()
+    {
+        _pieOriginalIsKinematic = _heldObjRb.isKinematic;
+        _pieOriginalUseGravity = _heldObjRb.useGravity;
+        _pieOriginalConstraints = _heldObjRb.constraints;
+        _pieOriginalInterpolation = _heldObjRb.interpolation;
+        _pieOriginalLinearDamping = _heldObjRb.linearDamping;
+        _pieOriginalAngularDamping = _heldObjRb.angularDamping;
+        _pieColliders = _heldObj.GetComponentsInChildren<Collider>(true);
+        _pieColliderStates = new bool[_pieColliders.Length];
+        for (int i = 0; i < _pieColliders.Length; i++)
+        {
+            _pieColliderStates[i] = _pieColliders[i].enabled;
+            _pieColliders[i].enabled = false;
+        }
+    }
+
+    private static Vector3 DivideScale(Vector3 value, Vector3 divisor)
+    {
+        return new Vector3(
+            divisor.x == 0f ? value.x : value.x / divisor.x,
+            divisor.y == 0f ? value.y : value.y / divisor.y,
+            divisor.z == 0f ? value.z : value.z / divisor.z);
+    }
+
+    private void RestorePieForWorld(GameObject pieObject, Rigidbody rb)
+    {
+        if (pieObject == null) return;
+        if (_heldPieView != null) _heldPieView.DetachFromView();
+        pieObject.transform.SetParent(null, true);
+        pieObject.transform.localScale = _pieOriginalWorldScale;
+        for (int i = 0; _pieColliders != null && i < _pieColliders.Length; i++)
+            if (_pieColliders[i] != null) _pieColliders[i].enabled = _pieColliderStates[i];
+
+        if (rb != null)
+        {
+            rb.isKinematic = _pieOriginalIsKinematic;
+            rb.useGravity = _pieOriginalUseGravity;
+            rb.constraints = _pieOriginalConstraints;
+            rb.interpolation = _pieOriginalInterpolation;
+            rb.linearDamping = _pieOriginalLinearDamping;
+            rb.angularDamping = _pieOriginalAngularDamping;
+            if (!rb.isKinematic && rb.useGravity) rb.WakeUp();
+        }
+
+        _heldPieView = null;
+        _pieColliders = null;
+        _pieColliderStates = null;
+    }
+
     void DropObject()
     {
         if (_heldObj == null) return;
 
         _heldObj.layer = _originalLayer;
-        _heldObj.transform.SetParent(null);
-
-        RestoreHeldRigidbody(_heldObjRb, true);
+        if (_heldPieView != null)
+            RestorePieForWorld(_heldObj, _heldObjRb);
+        else
+        {
+            _heldObj.transform.SetParent(null);
+            RestoreHeldRigidbody(_heldObjRb, true);
+        }
         if (_heldObjRb != null && playerCamera != null)
             _heldObjRb.AddForce(playerCamera.transform.forward * dropForwardImpulse, ForceMode.Impulse);
 
@@ -335,6 +421,8 @@ public class PickupController : MonoBehaviour
     void ClearHeldObject(bool restartParticles = true)
     {
         ClearQuestPlacementPreviews();
+        if (_heldPieView != null)
+            RestorePieForWorld(_heldObj, _heldObjRb);
         if (_heldObj != null && restartParticles)
         {
             // Включаем частицы обратно когда отпускаем объект
@@ -345,6 +433,7 @@ public class PickupController : MonoBehaviour
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
+        _heldPieView = null;
         _heldRotationOffset = Quaternion.identity;
     }
 
@@ -356,10 +445,14 @@ public class PickupController : MonoBehaviour
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
+        _heldPieView = null;
+        _pieColliders = null;
+        _pieColliderStates = null;
     }
 
     void MovePhysicsObject()
     {
+        if (_heldPieView != null) return;
         Vector3 targetPos = holdPoint.position;
         Vector3 currentPos = _heldObj.transform.position;
 
@@ -389,7 +482,13 @@ public class PickupController : MonoBehaviour
         GameObject objToThrow = _heldObj;
 
         objToThrow.layer = _originalLayer;
-        RestoreHeldRigidbody(rbToThrow, true);
+        if (_heldPieView != null)
+            RestorePieForWorld(objToThrow, rbToThrow);
+        else
+        {
+            objToThrow.transform.SetParent(null);
+            RestoreHeldRigidbody(rbToThrow, true);
+        }
 
         ClearHeldObject();
 
@@ -439,13 +538,18 @@ public class PickupController : MonoBehaviour
         Rigidbody releasedRb = _heldObjRb;
 
         released.layer = _originalLayer;
-        released.transform.SetParent(null);
-
-        RestoreHeldRigidbody(releasedRb, true);
+        if (_heldPieView != null)
+            RestorePieForWorld(released, releasedRb);
+        else
+        {
+            released.transform.SetParent(null);
+            RestoreHeldRigidbody(releasedRb, true);
+        }
 
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
+        _heldPieView = null;
         _heldRotationOffset = Quaternion.identity;
 
         ParticleSystem ps = released.GetComponentInChildren<ParticleSystem>();

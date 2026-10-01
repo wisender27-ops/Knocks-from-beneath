@@ -15,6 +15,7 @@ public class PlayerInteraction : MonoBehaviour
     public PickupController pickup;
 
     private bool _isEatingPie = false;
+    public bool IsEatingPie => _isEatingPie;
     [SerializeField] private float defaultPieEatDuration = 5f;
 
     [Header("Звуки действий")]
@@ -136,7 +137,7 @@ public class PlayerInteraction : MonoBehaviour
             MicrowaveInteractable microwave = hit.transform.GetComponentInParent<MicrowaveInteractable>();
             if (microwave != null)
             {
-                microwave.Interact();
+                microwave.Interact(hit.transform.GetComponentInParent<Door>() == microwave.microwaveDoor);
                 return;
             }
 
@@ -198,19 +199,33 @@ public class PlayerInteraction : MonoBehaviour
         if (microwave == null)
             return false;
 
-        microwave.Interact();
+        microwave.Interact(hit.transform.GetComponentInParent<Door>() == microwave.microwaveDoor);
         return true;
     }
 
     System.Collections.IEnumerator EatPieRoutine(PieQuestItem pie)
     {
         _isEatingPie = true;
+        pie.BeginEatingView();
 
         if (actionAudioSource != null && pie.eatSfx != null)
             actionAudioSource.PlayOneShot(pie.eatSfx);
 
         float eatDuration = pie.eatDuration > 0f ? pie.eatDuration : defaultPieEatDuration;
-        yield return new WaitForSeconds(eatDuration);
+        float bringDuration = Mathf.Min(0.45f, eatDuration * 0.2f);
+        yield return AnimatePieEating(pie, 0f, 1f, 0f, 0f, bringDuration);
+
+        int biteCount = pie.EatingBiteCount;
+        const float biteMotionDuration = 0.38f;
+        const float biteChunkDuration = 0.18f;
+        float pauseDuration = Mathf.Max(0f, (eatDuration - bringDuration - biteCount * (biteMotionDuration + biteChunkDuration)) / biteCount);
+        for (int i = 0; i < biteCount; i++)
+        {
+            yield return AnimatePieEating(pie, 0.82f, 1.12f, 0f, 1f, biteMotionDuration * 0.5f);
+            yield return pie.ConsumeBite(i, playerCamera, biteChunkDuration);
+            yield return AnimatePieEating(pie, 1.12f, 0.82f, 1f, 0f, biteMotionDuration * 0.5f);
+            if (pauseDuration > 0f) yield return new WaitForSeconds(pauseDuration);
+        }
 
         GameObject pieObj = pie.gameObject;
         if (pieObj != null)
@@ -222,6 +237,28 @@ public class PlayerInteraction : MonoBehaviour
         GameEvents.OnPieEaten?.Invoke();
 
         _isEatingPie = false;
+    }
+
+    private static System.Collections.IEnumerator AnimatePieEating(
+        PieQuestItem pie, float fromForward, float toForward, float fromDip, float toDip, float duration)
+    {
+        if (pie == null) yield break;
+        if (duration <= 0f)
+        {
+            pie.SetEatingView(toForward, toDip);
+            yield break;
+        }
+
+        float elapsed = 0f;
+        while (elapsed < duration)
+        {
+            float t = Mathf.Clamp01(elapsed / duration);
+            t = t * t * (3f - 2f * t);
+            pie.SetEatingView(Mathf.Lerp(fromForward, toForward, t), Mathf.Lerp(fromDip, toDip, t));
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        if (pie != null) pie.SetEatingView(toForward, toDip);
     }
 
     // --- ЛОГИКА ИНВЕНТАРЯ ---
