@@ -70,9 +70,9 @@ public sealed class NightOneController
         yield return Fade(1f, 0f);
 
         _showThoughts(new string[] {
-            "Тихо.",
-            "Показалось, наверное.",
-            "Попробую снова уснуть."
+            "Опять этот стук...",
+            "Нет. Не накручивай себя.",
+            "Затихло же. Надо спать."
         }, OnCalmNightFinished);
     }
 
@@ -95,8 +95,8 @@ public sealed class NightOneController
         yield return Fade(1f, 0f);
 
         _showThoughts(new string[] {
-            "Уже утро.",
-            "Больше ничего не слышно. Пора заняться домом."
+            "Ну вот, дожил до утра.",
+            "Сейчас тихо. А дел всё ещё до хрена."
         }, () =>
         {
             _isRunning = false;

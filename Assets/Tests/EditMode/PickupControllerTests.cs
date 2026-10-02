@@ -4,6 +4,12 @@ using KnocksFromBeneath;
 
 public class PickupControllerTests
 {
+    private static object InvokePrivate(object target, string method)
+    {
+        return target.GetType().GetMethod(method,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(target, null);
+    }
+
     private GameObject _playerGo;
     private GameObject _cameraGo;
     private GameObject _holdPointGo;
@@ -33,6 +39,45 @@ public class PickupControllerTests
         Object.DestroyImmediate(_holdPointGo);
         Object.DestroyImmediate(_cameraGo);
         Object.DestroyImmediate(_playerGo);
+    }
+
+    [Test]
+    public void ThrowShake_UsesNormalizedCameraPoseInsteadOfStartupHeight()
+    {
+        _cameraGo.transform.localPosition = Vector3.up * 2.24f;
+        InvokePrivate(_pickup, "Start");
+        _cameraGo.transform.localPosition = Vector3.zero;
+        var effect = (System.Collections.IEnumerator)InvokePrivate(_pickup, "ShakeAndKick");
+        Assert.That(effect.MoveNext(), Is.True);
+        Assert.That(_cameraGo.transform.localPosition.magnitude, Is.LessThanOrEqualTo(_pickup.shakeIntensity * 1.42f));
+        InvokePrivate(_pickup, "ResetCameraShake");
+        Assert.That(_cameraGo.transform.localPosition, Is.EqualTo(Vector3.zero));
+    }
+
+    [Test]
+    public void ThrowShake_RepeatedInterruptionRestoresPoseWithoutDrift()
+    {
+        InvokePrivate(_pickup, "Start");
+        Vector3 pose = new Vector3(0.02f, -0.1f, 0.03f);
+        _cameraGo.transform.localPosition = pose;
+        for (int i = 0; i < 20; i++)
+        {
+            var effect = (System.Collections.IEnumerator)InvokePrivate(_pickup, "ShakeAndKick");
+            Assert.That(effect.MoveNext(), Is.True);
+            InvokePrivate(_pickup, "ResetCameraShake");
+            Assert.That(_cameraGo.transform.localPosition, Is.EqualTo(pose));
+        }
+    }
+
+    [Test]
+    public void DisableWithoutShake_PreservesCurrentCameraPose()
+    {
+        _cameraGo.transform.localPosition = Vector3.up * 2.24f;
+        InvokePrivate(_pickup, "Start");
+        Vector3 pose = new Vector3(0.02f, 0f, 0.03f);
+        _cameraGo.transform.localPosition = pose;
+        InvokePrivate(_pickup, "OnDisable");
+        Assert.That(_cameraGo.transform.localPosition, Is.EqualTo(pose));
     }
 
     [Test]

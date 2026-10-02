@@ -62,48 +62,37 @@ public class CrosshairJuice : MonoBehaviour
         if (quests == null || string.IsNullOrEmpty(questTag) || !quests.IsQuestActive(questTag))
             return false;
 
-        PlacementZone[] zones = FindActiveQuestZones(questTag);
+        PickableItem pickable = heldObj.GetComponent<PickableItem>();
+        if (_intro == null) _intro = FindFirstObjectByType<IntroSequence>();
+        GameObject[] zones = _intro == null ? null :
+            questTag == "box-delivery" ? _intro.roomZones : _intro.decorationZones;
         if (zones == null) return false;
 
-        Vector3 playerPosition = transform.position;
+        bool matchingTarget = false;
         for (int i = 0; i < zones.Length; i++)
         {
-            PlacementZone zone = zones[i];
-            if (zone == null || !zone.isActiveAndEnabled) continue;
-            if (!zone.IsPlayerNearFreeSlot(playerPosition, 1.8f) &&
-                !zone.IsPlayerNearFreeSlot(heldObj.transform.position, 1.8f))
-                continue;
+            PlacementZone zone = zones[i] != null ? zones[i].GetComponent<PlacementZone>() : null;
+            if (zone == null || !zone.AcceptsQuest(questTag) || !zone.AcceptsItem(heldObj) ||
+                !zone.TryGetFreeSlot(out _)) continue;
+            matchingTarget = true;
+            if (interaction.pickup == null || !interaction.pickup.CanPlaceInZone(zone)) continue;
 
-            _targetHint = "Нажмите E, чтобы установить коробку";
+            _targetHint = questTag == "room-decoration"
+                ? $"E — поставить {pickable.displayName} на место"
+                : "E — установить коробку";
             return true;
         }
 
-        // Зоны есть и квест активен, но игрок ещё не у места — подсказываем
-        // дорогу, чтобы предмет в руках не выглядел бесполезным.
-        _targetHint = "Отнесите коробку к месту";
+        if (!matchingTarget) return false;
+        _targetHint = questTag == "room-decoration" && !string.IsNullOrEmpty(pickable.destinationHint)
+            ? pickable.destinationHint
+            : "Отнесите коробку к месту";
         return true;
-    }
-
-    private static PlacementZone[] FindActiveQuestZones(string questTag)
-    {
-        IntroSequence intro = UnityEngine.Object.FindAnyObjectByType<IntroSequence>();
-        if (intro == null) return null;
-        GameObject[] zoneObjects = questTag == "box-delivery" ? intro.roomZones : intro.decorationZones;
-        if (zoneObjects == null) return null;
-
-        var result = new System.Collections.Generic.List<PlacementZone>(zoneObjects.Length);
-        for (int i = 0; i < zoneObjects.Length; i++)
-        {
-            if (zoneObjects[i] == null) continue;
-            PlacementZone zone = zoneObjects[i].GetComponent<PlacementZone>();
-            if (zone != null) result.Add(zone);
-        }
-        return result.Count > 0 ? result.ToArray() : null;
     }
 
     void CheckUnderCursor()
     {
-        if (interaction == null || interaction.playerCamera == null)
+        if (interaction == null || interaction.playerCamera == null || interaction.IsBreakingLock)
         {
             _targetScale = Vector3.one * defaultScale;
             _targetColor = defaultColor;
@@ -164,13 +153,42 @@ public class CrosshairJuice : MonoBehaviour
         RaycastHit hit;
         bool hittingSomething = false;
 
-        if (Physics.Raycast(ray, out hit, interaction.interactionDistance, PhysicsMasks.WithoutNoRaycast(interaction.interactableLayer), QueryTriggerInteraction.Ignore))
+        if (interaction.TryGetInteractionHit(out hit))
         {
             FloorLogic floor = hit.collider.GetComponentInParent<FloorLogic>();
             if (floor != null && floor.CanStartBreak(interaction.inventory))
             {
                 hittingSomething = true;
                 _targetHint = "Нажмите E, чтобы сломать пол";
+            }
+
+            // Люк в подвал. Проверка идёт ДО всех остальных веток и по GetComponentInParent,
+            // как в PlayerInteraction.PerformInteraction: коллайдеры створок висят на
+            // дочерних MetalHatchPanel, а сам BasementHatch — на корне люка. Без этого
+            // ветка ловила только пустоту, и подсказка у люка не появлялась.
+            //
+            // Текст зависит от состояния: заперто (нужен лом) / не вскрыто / вскрыто
+            // (закрыть). Ссылка нужна и в случае, когда смотришь на сам замок, а не на
+            // створки, — тогда родителем коллайдера будет BasementHatchLock.
+            BasementHatchLock hatchLock = hit.collider.GetComponentInParent<BasementHatchLock>();
+            BasementHatch hatch = hatchLock == null
+                ? hit.collider.GetComponentInParent<BasementHatch>()
+                : hatchLock.GetComponentInParent<BasementHatch>();
+
+            if (!hittingSomething && (hatch != null || hatchLock != null))
+            {
+                hittingSomething = true;
+                if (_intro == null) _intro = FindFirstObjectByType<IntroSequence>();
+                if (_intro != null && _intro.CanBoardBasement(hatch))
+                    _targetHint = "Нажмите E, чтобы заколотить люк";
+                else if (hatch != null && hatch.IsOpen)
+                    _targetHint = "Нажмите E, чтобы закрыть дверь";
+                else if (hatchLock != null && hatchLock.IsLocked && QuestManager.Instance != null &&
+                    QuestManager.Instance.IsQuestActive(hatchLock.RequiredQuestTag))
+                    _targetHint = hatchLock.CanStartBreak(interaction)
+                        ? "Нажмите E, чтобы сломать замок" : "Подойдите ближе к замку";
+                else
+                    _targetHint = "Нажмите E, чтобы открыть дверь";
             }
 
             MicrowaveInteractable microwave = hit.collider.GetComponentInParent<MicrowaveInteractable>();
@@ -209,26 +227,26 @@ public class CrosshairJuice : MonoBehaviour
                 hittingSomething = true;
                 _targetHint = "E — включить/выключить";
             }
-            else if (!hittingSomething && hit.collider.GetComponent<Door>() != null)
+            else if (!hittingSomething && hit.collider.GetComponentInParent<Door>() != null)
             {
                 hittingSomething = true;
                 _targetHint = "E — открыть";
             }
-            else if (!hittingSomething && hit.collider.GetComponent<IngredientItem>() != null
+            else if (!hittingSomething && hit.collider.GetComponentInParent<IngredientItem>() != null
                      && QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("dinner-ingredients"))
             {
                 hittingSomething = true;
                 _targetHint = "E — собрать";
             }
+            else if (!hittingSomething && hit.collider.GetComponentInParent<DinnerMealInteractable>() is DinnerMealInteractable meal && meal.CanInteract)
+            {
+                hittingSomething = true;
+                _targetHint = "E — съесть ужин";
+            }
             else if (!hittingSomething && hit.collider.GetComponentInParent<StoveInteractable>() is StoveInteractable stove)
             {
                 if (_intro == null) _intro = FindFirstObjectByType<IntroSequence>();
-                if (stove.IsReady)
-                {
-                    hittingSomething = true;
-                    _targetHint = "E — забрать ужин";
-                }
-                else if (!stove.IsCooking && _intro != null && _intro.CanCookDinner())
+                if (!stove.IsReady && !stove.IsCooking && _intro != null && _intro.CanCookDinner())
                 {
                     hittingSomething = true;
                     _targetHint = "E — готовить";
@@ -247,7 +265,10 @@ public class CrosshairJuice : MonoBehaviour
             else if (!hittingSomething && hit.collider.CompareTag("Pickable"))
             {
                 hittingSomething = true;
-                _targetHint = "E — взять";
+                PickableItem pickable = hit.collider.GetComponent<PickableItem>();
+                _targetHint = pickable != null && pickable.placementQuestTag == "room-decoration"
+                    ? $"E — поднять {pickable.displayName}"
+                    : "E — взять";
             }
             else if (!hittingSomething && hit.collider.TryGetComponent(out BedSleepInteractable bed) && bed.CanInteract)
             {

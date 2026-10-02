@@ -24,7 +24,15 @@ public enum DebugStoryStage
     // Развилка ночи 2 (T-19/T-20) — сразу после выхода монстра из дыры,
     // все три пути открыты.
     StartBranchEndings,
-    StartPieMicrowaveQuest
+    StartPieMicrowaveQuest,
+    StartTrashQuest,
+    StartTrashDeliveryQuest,
+    StartPieQuest,
+    StartPieEatQuest,
+    StartGoToBed,
+    StartNightOne,
+    StartDinnerCook,
+    StartDinnerEat
 }
 
 public class IntroSequence : MonoBehaviour
@@ -69,8 +77,8 @@ public class IntroSequence : MonoBehaviour
     public GameObject pieObject;
     public GameObject microwaveZone;
 
-    [Header("День 2 — расстановка вещей (T-14)")]
-    [Tooltip("Зоны для мелких декоративных предметов дня 2 — та же PlacementZone+RoomRevealZone, что и коробки дня 1, отдельный набор.")]
+    [Header("День 2 — разбросанные вещи на кухне (T-14)")]
+    [Tooltip("У каждой кухонной вещи одна зона возврата на её прежнее место.")]
     public GameObject[] decorationZones;
 
     [Header("День 2 — вечерний обход (T-17)")]
@@ -241,29 +249,65 @@ public class IntroSequence : MonoBehaviour
     {
         Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
-        // Ночные стадии занимают отдельный непрерывный диапазон enum.
-        // Новые дневные debug-стадии добавляются после StartBranchEndings.
-        if (startStage >= DebugStoryStage.StartKitchenNoise && startStage <= DebugStoryStage.StartBranchEndings)
+        if (startStage != DebugStoryStage.None && startStage != DebugStoryStage.StartTrashQuest &&
+            startStage != DebugStoryStage.StartTrashDeliveryQuest && startStage != DebugStoryStage.StartBoxQuest && roomZones != null)
+        {
+            if (TrashManager.Instance != null && TrashManager.Instance.trashPiles != null)
+                foreach (GameObject pile in TrashManager.Instance.trashPiles)
+                    if (pile != null) pile.SetActive(false);
+            foreach (GameObject zone in roomZones)
+                if (zone != null) zone.GetComponent<PlacementZone>()?.RevealItemsForDebug();
+        }
+
+        if (IsNightDebugStage(startStage))
         {
             if (skySwitcher != null) skySwitcher.isDayTime = false;
             RenderSettings.fog = false;
             if (knockController != null) knockController.SetActive(true);
             TeleportPlayerToBed();
         }
+        if (IsNightDebugStage(startStage) && startStage != DebugStoryStage.StartNight)
+            GameEvents.OnNightStarted?.Invoke();
 
         switch (startStage)
         {
+            case DebugStoryStage.StartTrashQuest:
+                _moveInChores.SetupTrashQuest();
+                break;
+            case DebugStoryStage.StartTrashDeliveryQuest:
+                _moveInChores.StartTrashDeliveryQuest();
+                break;
             case DebugStoryStage.StartBoxQuest:
                 _moveInChores.SetupBoxQuest();
                 break;
+            case DebugStoryStage.StartPieQuest:
+                _pieQuest.SetupTakePieQuest();
+                break;
             case DebugStoryStage.StartPieMicrowaveQuest:
                 _pieQuest.SetupMicrowaveQuest();
+                break;
+            case DebugStoryStage.StartPieEatQuest:
+                _pieQuest.SetupEatQuest();
+                break;
+            case DebugStoryStage.StartGoToBed:
+                SetupGoToBedQuest();
+                break;
+            case DebugStoryStage.StartNightOne:
+                _nightOne.Run();
                 break;
             case DebugStoryStage.StartDay2Decoration:
                 _decoration.SetupDecorationQuest();
                 break;
             case DebugStoryStage.StartDay2Dinner:
                 _dinner.SetupIngredientQuest();
+                break;
+            case DebugStoryStage.StartDinnerCook:
+                _dinner.SetupCookDinnerDebug();
+                FindFirstObjectByType<StoveInteractable>()?.ResetForCookDebug();
+                break;
+            case DebugStoryStage.StartDinnerEat:
+                _dinner.SetupEatDinnerDebug();
+                FindFirstObjectByType<StoveInteractable>()?.SetReadyForDebug();
                 break;
             case DebugStoryStage.StartDay2Evening:
                 _eveningRound.SetupEveningWalkQuest();
@@ -279,29 +323,72 @@ public class IntroSequence : MonoBehaviour
                 SetupFlashlightQuest();
                 break;
             case DebugStoryStage.StartCrowbarQuest:
-                if (playerInventory != null) playerInventory.hasFlashlight = true;
+                GrantDebugItem("Flashlight");
                 SetupCrowbarQuest();
                 break;
             case DebugStoryStage.StartBreakFloor:
-                if (playerInventory != null) playerInventory.hasFlashlight = true;
-                SetupBreakFloorQuest();
+                // Раньше эта стадия ломала пол на кухне (FloorLogic.SetCompletedForDebug).
+                // Кухонной дыры в сюжете больше нет — стадия теперь прыгает к замку люка.
+                GrantDebugItem("Flashlight");
+                SetupPryLockQuest();
                 break;
             case DebugStoryStage.StartLookInHole:
-                if (playerInventory != null) playerInventory.hasFlashlight = true;
+                GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
                 SetupLookInHoleQuest();
                 break;
             case DebugStoryStage.StartHammerQuest:
+                GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
+                FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
                 SetupHammerQuest();
                 break;
             case DebugStoryStage.StartFinale:
+                GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
+                GrantDebugItem("Hammer");
+                FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
                 OnHammerPickedUp();
                 break;
             case DebugStoryStage.StartBranchEndings:
+                GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
+                FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
                 if (MonsterTimer.Instance != null)
                     MonsterTimer.Instance.StartTimer();
                 _branchEnding.Activate();
                 break;
         }
+    }
+
+    static bool IsNightDebugStage(DebugStoryStage stage)
+    {
+        switch (stage)
+        {
+            case DebugStoryStage.StartNight:
+            case DebugStoryStage.StartKitchenNoise:
+            case DebugStoryStage.StartFlashlightQuest:
+            case DebugStoryStage.StartCrowbarQuest:
+            case DebugStoryStage.StartBreakFloor:
+            case DebugStoryStage.StartLookInHole:
+            case DebugStoryStage.StartHammerQuest:
+            case DebugStoryStage.StartFinale:
+            case DebugStoryStage.StartBranchEndings:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    void GrantDebugItem(string itemId)
+    {
+        if (playerInventory == null || playerInventory.HasItem(itemId)) return;
+        if (playerInventory.AddItem(itemId)) return;
+
+        // Keep debug entry usable in scenes where the inventory database is not assigned.
+        if (itemId == "Flashlight") playerInventory.hasFlashlight = true;
+        else if (itemId == "Crowbar") playerInventory.hasCrowbar = true;
+        else if (itemId == "Hammer") playerInventory.hasHammer = true;
     }
 
     // =====================================================================
@@ -333,15 +420,15 @@ public class IntroSequence : MonoBehaviour
     void StartIntro()
     {
         ShowThoughts(new string[] {
-            "Наконец-то - своё жильё.",
-            "Хоть и прошлые хозяева его конечно засрали."
+            "Ну вот. Свой дом. Может, хоть здесь будет спокойно.",
+            "Семья съехала, а срач оставила мне. Спасибо."
         }, _moveInChores.SetupTrashQuest);
     }
 
     void SetupGoToBedQuest()
     {
         // nightStartTrigger.SetActive(true) убрано — кровать всегда видна
-        CreateQuest("Пойти к кровати", 1, OnGoToBedFinished, "go-to-bed");
+        CreateQuest("Лечь спать", 1, OnGoToBedFinished, "go-to-bed");
     }
 
     public void OnBedTriggerReached()
@@ -405,9 +492,9 @@ public class IntroSequence : MonoBehaviour
         }
 
         ShowThoughts(new string[] {
-            "...?",
-            "Что это было?..",
-            "Я только въехал. Почему оно не пропало."
+            "Опять этот стук.",
+            "Да чтоб тебя... Я же уехал.",
+            "Ладно. На этот раз выясню, откуда он."
         }, SetupSearchNoiseQuest);
     }
 
@@ -419,7 +506,7 @@ public class IntroSequence : MonoBehaviour
     void SetupSearchNoiseQuest()
     {
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(true);
-        CreateQuest("Проверить источник шума", 1, OnKitchenQuestCompleted);
+        CreateQuest("Проверить шум на кухне", 1, OnKitchenQuestCompleted);
     }
 
     public void OnKitchenTriggerReached()
@@ -435,9 +522,9 @@ public class IntroSequence : MonoBehaviour
         // стучать всю оставшуюся ночь, включая сцену у дыры и развилку концовок.
         if (knockController != null) knockController.SetActive(false);
         ShowThoughts(new string[] {
-            "Под полом.",
-            "Прямо подо мной.",
-            "Без света я туда не полезу."
+            "Стук идёт снизу. Из подвала.",
+            "Только бы не та же история...",
+            "Без фонаря я туда не полезу."
         }, SetupFlashlightQuest);
     }
 
@@ -450,13 +537,36 @@ public class IntroSequence : MonoBehaviour
 
     public void OnFlashlightPickedUp()
     {
+        // Раньше здесь стояло «Теперь бы лом» — реплика была верна для старого порядка,
+        // где лом искался сразу после фонаря. Теперь лом нужен только ПОСЛЕ отказа на
+        // запертом люке, поэтому реплика ведёт наружу, а не к лому.
         ShowThoughts(new string[] {
-            "Свет есть.",
-            "Теперь бы лом."
+            "Хоть не в темноте шариться.",
+            "Вход в подвал снаружи. Пойду проверю люк."
+        }, SetupHatchQuest);
+    }
+
+    // --- 5. Идём к подвалу и пробуем открыть ---
+    // Ночь 2 перестроена вокруг уличного люка: игрок берёт фонарик, выходит на улицу,
+    // пробует E на створках и получает отказ — замок. Только после этого он идёт за ломом.
+    // Прежний шаг «вскрыть доски на кухне» (break-floor) удалён целиком вместе с
+    // FloorLogic: он вёл в кухонную дыру, а скример обслуживает подвал, и игрок ломал пол
+    // ради квеста, который засчитывался в другом конце карты.
+    void SetupHatchQuest()
+    {
+        CreateQuest("Проверить люк подвала снаружи", 1, OnHatchLockedFound, "open-basement");
+    }
+
+    // Игрок нажал E на запертом люке — засчитываем шаг и отправляем за ломом.
+    public void OnHatchLockedFound()
+    {
+        ShowThoughts(new string[] {
+            "Ещё и замок.",
+            "Ключа нет. Придётся найти лом."
         }, SetupCrowbarQuest);
     }
 
-    // --- 5. Поиск лома ---
+    // --- 6. Поиск лома ---
     void SetupCrowbarQuest()
     {
         if (crowbarItem != null) crowbarItem.SetActive(true);
@@ -466,31 +576,34 @@ public class IntroSequence : MonoBehaviour
     public void OnCrowbarPickedUp()
     {
         ShowThoughts(new string[] {
-            "Нашёл.",
-            "Ненавижу это чувство."
-        }, SetupBreakFloorQuest);
+            "Этим замок можно сорвать.",
+            "Ночью вскрывать собственный подвал. Отличный переезд."
+        }, SetupPryLockQuest);
     }
 
-    // --- 6. Пробить пол ---
-    void SetupBreakFloorQuest()
+    // --- 7. Вскрыть замок люка ---
+    void SetupPryLockQuest()
     {
-        CreateQuest("Вскрыть доски на кухне", 1, OnFloorBroken, "break-floor");
+        CreateQuest("Сорвать замок с люка подвала", 1, OnHatchLockPried, "pry-hatch-lock");
     }
 
-    public void OnFloorBroken()
+    public void OnHatchLockPried()
     {
         ShowThoughts(new string[] {
-            "Ничего не видно.",
-            "Ладно хоть фонарик взял."
+            "Теперь можно открыть люк.",
+            "Сперва посветить на лестницу. Вслепую туда не полезу."
         }, SetupLookInHoleQuest);
     }
 
-    // --- 7. Заглянуть в дыру ---
+    // --- 8. Открыть створки и посветить вниз ---
     void SetupLookInHoleQuest()
     {
-        CreateQuest("Заглянуть в дыру", 1, OnHoleEventFinished);
+        CreateQuest("Открыть подвал и осветить лестницу", 1, OnHoleEventFinished);
         if (holeEventController != null)
+        {
+            holeEventController.gameObject.SetActive(true);
             holeEventController.enabled = true;
+        }
     }
 
     // =====================================================================
@@ -508,10 +621,10 @@ public class IntroSequence : MonoBehaviour
     public void OnHoleEventFinished()
     {
         ShowThoughts(new string[] {
-            "НЕТ.",
-            "Эта тварь выскочила прямо на меня.",
-            "Нужно заколотить её.",
-            "Прямо сейчас."
+            "Оно исчезло.",
+            "Нет. Я не стану опять от него бежать.",
+            "Заколочу люк. И всё. Больше не вылезет.",
+            "Нужен молоток."
         }, () =>
         {
             if (MonsterTimer.Instance != null)
@@ -572,14 +685,31 @@ public class IntroSequence : MonoBehaviour
     // --- 9. Молоток и финал ---
     public void OnHammerPickedUp()
     {
+        MonsterTimer.Instance?.PauseTimer();
         ShowThoughts(new string[] {
-            "Взял.",
-            "Я всё исправлю."
+            "Заколочу. И наконец всё закончится.",
+            "Надо вернуться к люку."
         }, () =>
         {
             if (finaleTrigger != null) finaleTrigger.SetActive(true);
-            CreateQuest("Закрыть дыру", 1);
+            CreateQuest("Заколотить люк подвала", 1, questTag: "board-basement");
+            MonsterTimer.Instance?.ResumeTimer();
         });
+    }
+
+    public bool CanBoardBasement(BasementHatch hatch)
+    {
+        return hatch != null && holeEventController != null &&
+            hatch == holeEventController.basementHatch && playerInventory != null &&
+            playerInventory.hasHammer && IsQuestActive("board-basement");
+    }
+
+    public bool TryBoardBasement(BasementHatch hatch)
+    {
+        if (!CanBoardBasement(hatch) || finaleTrigger == null || playerTransform == null) return false;
+        FinaleController finale = finaleTrigger.GetComponent<FinaleController>();
+        return finale != null && finale.BeginBoarding(
+            playerTransform.GetComponent<PlayerController>(), _branchEnding.DeadlineExpired);
     }
 
     // --- Квест с пирогом: внешний контракт (MicrowaveInteractable, CrosshairJuice,

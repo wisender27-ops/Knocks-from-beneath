@@ -16,6 +16,13 @@ public class PlayerInteraction : MonoBehaviour
 
     private bool _isEatingPie = false;
     public bool IsEatingPie => _isEatingPie;
+    public bool IsBreakingLock { get; private set; }
+    public static bool IsLockSequencePlaying { get; private set; }
+    public void SetLockBreaking(bool value)
+    {
+        IsBreakingLock = value;
+        IsLockSequencePlaying = value;
+    }
     [SerializeField] private float defaultPieEatDuration = 5f;
 
     [Header("Звуки действий")]
@@ -26,7 +33,7 @@ public class PlayerInteraction : MonoBehaviour
         if (playerCamera == null)
             return;
 
-        if (_isEatingPie) return;
+        if (_isEatingPie || IsBreakingLock || RetroInventoryScreen.IsAnyOpen || Time.timeScale == 0f) return;
 
         // held запрашивается заново для каждой кнопки, а не один раз в начале кадра:
         // если в этом же кадре E успел бросить/поставить предмет (HandleInteractPressed),
@@ -71,6 +78,14 @@ public class PlayerInteraction : MonoBehaviour
         return playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
     }
 
+    public bool TryGetInteractionHit(out RaycastHit hit)
+    {
+        hit = default;
+        return playerCamera != null && Physics.Raycast(GetCenterScreenRay(), out hit,
+            interactionDistance, PhysicsMasks.WithoutNoRaycast(interactableLayer),
+            QueryTriggerInteraction.Ignore);
+    }
+
     void PerformInteraction()
     {
         Ray ray = GetCenterScreenRay();
@@ -79,6 +94,33 @@ public class PlayerInteraction : MonoBehaviour
         if (Physics.Raycast(ray, out hit, interactionDistance, PhysicsMasks.WithoutNoRaycast(interactableLayer), QueryTriggerInteraction.Ignore))
         {
             GameObject hitObj = hit.transform.gameObject;
+
+            BasementHatchLock hatchLock = hit.transform.GetComponentInParent<BasementHatchLock>();
+            if (hatchLock != null && hatchLock.IsLocked && QuestManager.Instance != null &&
+                QuestManager.Instance.IsQuestActive(hatchLock.RequiredQuestTag))
+            {
+                hatchLock.TryStartBreak(this);
+                return;
+            }
+
+            BasementHatch hatch = hit.transform.GetComponentInParent<BasementHatch>();
+            if (hatch != null)
+            {
+                IntroSequence intro = hatch.GetComponentInParent<IntroSequence>();
+                if (intro == null) intro = FindFirstObjectByType<IntroSequence>();
+                if (intro != null && intro.CanBoardBasement(hatch))
+                {
+                    intro.TryBoardBasement(hatch);
+                    return;
+                }
+                // Пока замок цел, створки не поедут — но шаг сюжета засчитывается: игрок
+                // выяснил, что люк заперт, и теперь знает, что нужен лом. Без этого
+                // квест open-basement было бы нечем закрыть, и цепочка вставала бы.
+                if (!hatch.TryOpen() && QuestManager.Instance != null
+                    && QuestManager.Instance.IsQuestActive("open-basement"))
+                    QuestManager.Instance.AddProgress(1);
+                return;
+            }
 
             FloorLogic floor = hit.transform.GetComponentInParent<FloorLogic>();
             if (floor != null)
@@ -142,10 +184,17 @@ public class PlayerInteraction : MonoBehaviour
             }
 
             // 6. ПРОДУКТЫ НА УЖИН (день 2, T-15)
-            IngredientItem ingredient = hitObj.GetComponent<IngredientItem>();
+            IngredientItem ingredient = hit.transform.GetComponentInParent<IngredientItem>();
             if (ingredient != null)
             {
                 ingredient.Collect();
+                return;
+            }
+
+            DinnerMealInteractable meal = hit.transform.GetComponentInParent<DinnerMealInteractable>();
+            if (meal != null)
+            {
+                meal.Interact();
                 return;
             }
 

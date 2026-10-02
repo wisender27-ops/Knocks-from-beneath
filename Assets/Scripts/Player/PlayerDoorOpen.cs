@@ -10,30 +10,23 @@ public class PlayerDoorOpen : MonoBehaviour
     // Ссылка на твой контроллер
     [SerializeField] private PlayerController playerController;
 
-    private float distance = 3.0f;
+    private PlayerInteraction interaction;
     private Door currentHeldDoor;
     private float pressTime;
     private float mouseMovement;
     private const float TapDuration = 0.22f;
     private const float TapMouseTolerance = 0.1f;
-    private int _doorRaycastMask;
+
 
     void Start()
     {
+        interaction = GetComponentInParent<PlayerInteraction>();
         // Пытаемся найти контроллер автоматически, если забыли перетащить в инспекторе
         if (playerController == null)
         {
             playerController = GetComponentInParent<PlayerController>();
         }
 
-        // Исключаем слой HeldItem — иначе предмет в руках (или триггер-зона установки)
-        // перехватывает луч раньше двери, стояющей за ним.
-        int heldItemLayer = LayerMask.NameToLayer("HeldItem");
-        int mask = heldItemLayer >= 0 ? ~(1 << heldItemLayer) : ~0;
-        // И слой DoorNoRaycast: калитка garden_gate_01 (и подобные блокеры) должна
-        // держать физику, но не перехватывать луч — иначе она висела бы перед
-        // настоящей дверью и E открывал бы пустоту вместо створки.
-        _doorRaycastMask = PhysicsMasks.WithoutNoRaycast(mask);
     }
 
     void Update()
@@ -50,10 +43,10 @@ public class PlayerDoorOpen : MonoBehaviour
         // 1. НАЖАЛИ КНОПКУ: Ищем дверь, хватаем её и лочим камеру
         if (!cameraLockedByOther && Input.GetKeyDown(KeyCode.E))
         {
-            Ray ray = playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
+
             RaycastHit hit;
 
-            if (Physics.Raycast(ray, out hit, distance, _doorRaycastMask, QueryTriggerInteraction.Ignore))
+            if (interaction != null && interaction.enabled && interaction.TryGetInteractionHit(out hit))
             {
                 Door door = hit.collider.GetComponentInParent<Door>();
                 if (door != null)
@@ -126,7 +119,7 @@ public class PlayerDoorOpen : MonoBehaviour
         if (intro == null || door != intro.frontDoor) return;
 
         if (ThoughtManager.Instance != null)
-            ThoughtManager.Instance.ShowThoughts(new string[] { "Заперто.", "Я сам вчера закрыл." });
+            ThoughtManager.Instance.ShowThoughts(new string[] { "Чёрт, заперто.", "Сам же перед сном задвинул засов." });
     }
 }
 }

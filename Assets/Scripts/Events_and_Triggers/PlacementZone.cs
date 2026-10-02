@@ -60,6 +60,10 @@ public class PlacementZone : MonoBehaviour
     private string _placementQuestTag;
     private GameObject _boxPreview;
     private Material _previewMaterial;
+    private Vector3 _previewAimPoint;
+
+    public Vector3 PlacementAimPoint(Transform slot) =>
+        _boxPreview != null ? _previewAimPoint : slot.position + Vector3.up * 0.1f;
 
     public void ConfigureBoxQuestPlacement(bool enabled)
     {
@@ -94,11 +98,27 @@ public class PlacementZone : MonoBehaviour
     {
         if (item == null) return false;
         var pickable = item.GetComponent<PickableItem>();
+        if (_placementQuestTag == "room-decoration")
+            return pickable != null && pickable.placementQuestTag == "room-decoration" &&
+                   pickable.designatedZone == this;
         if (pickable != null && pickable.designatedZone != null)
             return pickable.designatedZone == this;
 
         // Предмет без назначенной зоны подходит любой (коробки дня 1).
         return true;
+    }
+
+    public bool TryGetFreeSlot(out Transform slot)
+    {
+        slot = null;
+        if (!isActiveAndEnabled || slots == null) return false;
+        for (int i = 0; i < slots.Count; i++)
+        {
+            if (slots[i] == null || (isSlotOccupied != null && i < isSlotOccupied.Length && isSlotOccupied[i])) continue;
+            slot = slots[i];
+            return true;
+        }
+        return false;
     }
 
     public bool IsPlayerNearFreeSlot(Vector3 playerPosition, float distance)
@@ -130,7 +150,7 @@ public class PlacementZone : MonoBehaviour
         Shader shader = Shader.Find("Sprites/Default");
         if (shader == null) return;
         _previewMaterial = new Material(shader) { color = new Color(0.45f, 0.9f, 1f, 0.38f) };
-        _boxPreview = new GameObject("Box placement preview");
+        _boxPreview = new GameObject("Item placement preview");
         Quaternion previewRotation = slot.rotation;
         // Превью сажаем тем же способом, что и настоящую установку: если слот —
         // FurnitureSlot, смещаем копию так, чтобы низ меша лёг на маркер. Иначе
@@ -142,6 +162,9 @@ public class PlacementZone : MonoBehaviour
             : slot.position;
         _boxPreview.transform.SetPositionAndRotation(previewPivot, previewRotation);
         _boxPreview.transform.localScale = box.transform.lossyScale;
+
+        Bounds previewBounds = new Bounds();
+        bool hasPreviewBounds = false;
 
         foreach (MeshRenderer source in box.GetComponentsInChildren<MeshRenderer>())
         {
@@ -161,7 +184,11 @@ public class PlacementZone : MonoBehaviour
             for (int i = 0; i < materials.Length; i++) materials[i] = _previewMaterial;
             previewRenderer.sharedMaterials = materials;
             previewRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            previewRenderer.receiveShadows = false;
+            if (!hasPreviewBounds) { previewBounds = previewRenderer.bounds; hasPreviewBounds = true; }
+            else previewBounds.Encapsulate(previewRenderer.bounds);
         }
+        _previewAimPoint = hasPreviewBounds ? previewBounds.center : slot.position + Vector3.up * 0.1f;
     }
 
     public void HideBoxPreview()
@@ -227,6 +254,14 @@ public class PlacementZone : MonoBehaviour
         // Сам "поп" живёт в PopScaleAnimator — тем же эффектом пользуется, например,
         // мусорный мешок в TrashManager.
         RevealRunner.StartCoroutine(RevealSequence(toAnimate));
+    }
+
+    public void RevealItemsForDebug()
+    {
+        _revealed = true;
+        if (itemsToReveal == null) return;
+        foreach (GameObject item in itemsToReveal)
+            if (item != null) item.SetActive(true);
     }
 
     IEnumerator RevealSequence(List<(Transform t, Vector3 targetScale)> items)
@@ -325,9 +360,16 @@ public class PlacementZone : MonoBehaviour
         if (box == null || slots == null || index < 0 || index >= slots.Count || slots[index] == null)
             return;
 
-        // 1. Убиваем физику
         Rigidbody rb = box.GetComponent<Rigidbody>();
-        if (rb != null) {
+        if (rb != null)
+        {
+            // Удержание использует MovePosition: сбрасываем интерполяцию перед телепортацией.
+            rb.interpolation = RigidbodyInterpolation.None;
+            if (!rb.isKinematic)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
             rb.isKinematic = true;
             rb.useGravity = false;
         }
@@ -350,6 +392,12 @@ public class PlacementZone : MonoBehaviour
         else
         {
             box.transform.SetPositionAndRotation(slots[index].position, slots[index].rotation);
+        }
+
+        if (rb != null)
+        {
+            rb.position = box.transform.position;
+            rb.rotation = box.transform.rotation;
         }
 
         // 3. Слот теперь занят

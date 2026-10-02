@@ -74,6 +74,15 @@ public sealed class PieQuestController
         _createQuest("Поставить пирог в микроволновку", 1, OnPiePlacedInMicrowave, "pie-microwave");
     }
 
+    public void SetupEatQuest()
+    {
+        _isPieTaken = true;
+        _isPieHeated = true;
+        if (_pieObject != null) _pieObject.SetActive(true);
+        if (_microwaveZone != null) _microwaveZone.SetActive(false);
+        _createQuest("Съесть пирог", 1, OnPieEaten, "pie-eat");
+    }
+
     public void OnPiePlacedInMicrowave()
     {
         _recordCompletion?.Invoke("pie-microwave");
@@ -86,8 +95,8 @@ public sealed class PieQuestController
     {
         _recordCompletion?.Invoke("pie-eat");
         _showThoughts(new string[] {
-            "Уже легче.",
-            "Теперь можно поспать."
+            "Хоть поел нормально.",
+            "Всё. На сегодня с меня хватит."
         }, _onDinnerFinished);
     }
 

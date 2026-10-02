@@ -11,6 +11,29 @@ public class PickableItem : MonoBehaviour
     [Tooltip("Зона, которой ПРЕДНАЗНАЧЕН этот предмет. Для квеста с разными предметами (декор дня 2) у каждого своя: лампа — в одну комнату, цветок — в другую. Пусто = предмет подходит любой зоне этого квеста (коробки дня 1).")]
     public PlacementZone designatedZone;
 
+    [Header("Подсказка при переноске")]
+    public string displayName = "предмет";
+    public string destinationHint;
+    public Transform scatteredPose;
+    private bool _preparedForQuest;
+
+    public void PrepareForPlacementQuest()
+    {
+        if (_preparedForQuest || scatteredPose == null) return;
+        _preparedForQuest = true;
+        transform.SetParent(null, true);
+        gameObject.SetActive(true);
+        transform.SetPositionAndRotation(scatteredPose.position, scatteredPose.rotation);
+        tag = "Pickable";
+        Rigidbody body = GetComponent<Rigidbody>();
+        if (body == null) return;
+        body.isKinematic = false;
+        body.useGravity = true;
+        body.linearVelocity = Vector3.zero;
+        body.angularVelocity = Vector3.zero;
+        body.constraints = RigidbodyConstraints.FreezeRotation;
+    }
+
     private void OnTriggerEnter(Collider other)
     {
         PlacementZone zone = other.GetComponent<PlacementZone>();

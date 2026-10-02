@@ -42,7 +42,9 @@ public class PickupController : MonoBehaviour
     private int _originalLayer;
     private Quaternion _heldRotationOffset = Quaternion.identity;
     private float _defaultFov;
-    private Vector3 _defaultCamLocalPos;
+    private Vector3 _shakeCameraLocalPos;
+    private bool _isShaking;
+    private bool _cameraEffectsInitialized;
     private PlacementZone[] _questPlacementZones;
     private float _nextPlacementRefresh;
     private PieQuestItem _heldPieView;
@@ -55,13 +57,16 @@ public class PickupController : MonoBehaviour
     private Vector3 _pieOriginalWorldScale;
     private Collider[] _pieColliders;
     private bool[] _pieColliderStates;
+    private bool _heldKitchenItem;
+    private Collider[] _kitchenColliders;
+    private bool[] _kitchenColliderStates;
 
     void Start()
     {
         if (playerCamera != null)
         {
             _defaultFov = playerCamera.fieldOfView;
-            _defaultCamLocalPos = playerCamera.transform.localPosition;
+            _cameraEffectsInitialized = true;
         }
     }
 
@@ -177,14 +182,9 @@ public class PickupController : MonoBehaviour
         if (_heldObj != null)
             Release();
 
-        // Если StopAllCoroutines() оборвал ShakeAndKick() посреди тряски/кика FOV — тряска
-        // сама по себе не успевала откатить позицию камеры и FOV. Возвращаем к исходным
-        // значениям явно, а не полагаемся на то, что корутина доиграет до конца.
-        if (playerCamera != null)
-        {
-            playerCamera.transform.localPosition = _defaultCamLocalPos;
+        ResetCameraShake();
+        if (playerCamera != null && _cameraEffectsInitialized)
             playerCamera.fieldOfView = _defaultFov;
-        }
     }
 
     public GameObject GetHeldObject()
@@ -213,6 +213,21 @@ public class PickupController : MonoBehaviour
 
         _heldItemScript = obj.GetComponent<PickableItem>();
         CollectableItem collectable = obj.GetComponent<CollectableItem>();
+
+        _heldKitchenItem = _heldItemScript != null && _heldItemScript.placementQuestTag == "room-decoration";
+        if (_heldKitchenItem)
+        {
+            _heldObjRb.linearVelocity = Vector3.zero;
+            _heldObjRb.angularVelocity = Vector3.zero;
+            _heldObjRb.isKinematic = true;
+            _kitchenColliders = obj.GetComponentsInChildren<Collider>(true);
+            _kitchenColliderStates = new bool[_kitchenColliders.Length];
+            for (int i = 0; i < _kitchenColliders.Length; i++)
+            {
+                _kitchenColliderStates[i] = _kitchenColliders[i].enabled;
+                _kitchenColliders[i].enabled = false;
+            }
+        }
 
         PieQuestItem pie = obj.GetComponent<PieQuestItem>();
         _heldPieView = pie != null && pie.isHeated ? pie : null;
@@ -259,21 +274,19 @@ public class PickupController : MonoBehaviour
     // пробуем поставить в зону размещения, иначе просто роняем.
     public void HandleInteractPressed()
     {
+        if (_heldObj == null) return;
         if (_questPlacementZones != null)
         {
             PlacementZone closest = null;
             float bestDistance = float.MaxValue;
             foreach (PlacementZone candidate in _questPlacementZones)
             {
-                if (candidate == null ||
-                    (!candidate.IsPlayerNearFreeSlot(transform.position, 1.8f) &&
-                     !candidate.IsPlayerNearFreeSlot(_heldObj.transform.position, 1.8f))) continue;
-                if (!HasLineOfSight(_heldObj.transform.position, candidate.transform.position)) continue;
+                if (!CanPlaceInZone(candidate)) continue;
                 float distance = (candidate.transform.position - transform.position).sqrMagnitude;
                 if (distance < bestDistance) { closest = candidate; bestDistance = distance; }
             }
             if (closest != null && closest.TryPlaceBox(_heldObj, transform.position)) ClearHeldObject(false);
-            else DropObject();
+            else if (_heldItemScript == null || _heldItemScript.placementQuestTag != "room-decoration") DropObject();
             return;
         }
 
@@ -292,6 +305,24 @@ public class PickupController : MonoBehaviour
             return;
         }
         DropObject();
+    }
+
+    public bool CanPlaceInZone(PlacementZone zone)
+    {
+        if (_heldObj == null || zone == null || !zone.AcceptsItem(_heldObj) ||
+            !zone.TryGetFreeSlot(out Transform slot)) return false;
+        if (!zone.IsPlayerNearFreeSlot(transform.position, 1.8f) &&
+            !zone.IsPlayerNearFreeSlot(_heldObj.transform.position, 1.8f)) return false;
+
+        Vector3 origin = playerCamera != null ? playerCamera.transform.position : _heldObj.transform.position;
+        Vector3 aimPoint = zone.PlacementAimPoint(slot);
+        if (playerCamera != null)
+        {
+            Vector3 viewport = playerCamera.WorldToViewportPoint(aimPoint);
+            if (viewport.z <= 0f || viewport.x < 0f || viewport.x > 1f || viewport.y < 0f || viewport.y > 1f)
+                return false;
+        }
+        return HasLineOfSight(origin, aimPoint);
     }
 
     PlacementZone FindPlacementZoneNearHeldObject()
@@ -421,6 +452,11 @@ public class PickupController : MonoBehaviour
     void ClearHeldObject(bool restartParticles = true)
     {
         ClearQuestPlacementPreviews();
+        for (int i = 0; _kitchenColliders != null && i < _kitchenColliders.Length; i++)
+            if (_kitchenColliders[i] != null) _kitchenColliders[i].enabled = _kitchenColliderStates[i];
+        _kitchenColliders = null;
+        _kitchenColliderStates = null;
+        _heldKitchenItem = false;
         if (_heldPieView != null)
             RestorePieForWorld(_heldObj, _heldObjRb);
         if (_heldObj != null && restartParticles)
@@ -453,6 +489,13 @@ public class PickupController : MonoBehaviour
     void MovePhysicsObject()
     {
         if (_heldPieView != null) return;
+        if (_heldKitchenItem)
+        {
+            float t = Mathf.Clamp01(Time.fixedDeltaTime * followSpeed);
+            _heldObjRb.MovePosition(Vector3.Lerp(_heldObjRb.position, holdPoint.position, t));
+            _heldObjRb.MoveRotation(Quaternion.Slerp(_heldObjRb.rotation, holdPoint.rotation * _heldRotationOffset, t));
+            return;
+        }
         Vector3 targetPos = holdPoint.position;
         Vector3 currentPos = _heldObj.transform.position;
 
@@ -496,15 +539,26 @@ public class PickupController : MonoBehaviour
         rbToThrow.AddTorque(new Vector3(Random.value, Random.value, Random.value) * throwTorqueRandomness, ForceMode.Impulse);
 
         StopAllCoroutines();
+        ResetCameraShake();
         StartCoroutine(ShakeAndKick());
+    }
+
+    private void ResetCameraShake()
+    {
+        if (!_isShaking) return;
+        if (playerCamera != null)
+            playerCamera.transform.localPosition = _shakeCameraLocalPos;
+        _isShaking = false;
     }
 
     private System.Collections.IEnumerator ShakeAndKick()
     {
-        // Берём кэшированную "стояночную" позицию, а не текущую transform.localPosition:
-        // если предыдущий ShakeAndKick был оборван на середине (повторный быстрый бросок),
-        // текущая позиция уже смещена тряской, и от неё накапливался бы дрейф.
-        Vector3 originalPos = _defaultCamLocalPos;
+        if (playerCamera == null) yield break;
+        // Start выполняется до нормализации высоты в PlayerController.LateUpdate.
+        // Снимаем актуальную позу после сброса предыдущего эффекта, а не стартовую.
+        _shakeCameraLocalPos = playerCamera.transform.localPosition;
+        _isShaking = true;
+        Vector3 originalPos = _shakeCameraLocalPos;
         float elapsed = 0.0f;
 
         playerCamera.fieldOfView = _defaultFov + fovKickAmount;
@@ -518,7 +572,7 @@ public class PickupController : MonoBehaviour
             yield return null;
         }
 
-        playerCamera.transform.localPosition = originalPos;
+        ResetCameraShake();
 
         while (Mathf.Abs(playerCamera.fieldOfView - _defaultFov) > FovSnapThreshold)
         {

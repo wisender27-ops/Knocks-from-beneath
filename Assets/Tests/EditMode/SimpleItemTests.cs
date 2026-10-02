@@ -1,5 +1,6 @@
 using KnocksFromBeneath;
 using NUnit.Framework;
+using System.Reflection;
 using UnityEngine;
 
 public class SimpleItemTests
@@ -16,20 +17,26 @@ public class SimpleItemTests
     {
         _managerObject = new GameObject("QuestManager");
         _manager = _managerObject.AddComponent<QuestManager>();
+        QuestManager.Instance = _manager;
 
         _itemObject = new GameObject("Quest Item");
         _collider = _itemObject.AddComponent<BoxCollider>();
         _renderer = _itemObject.AddComponent<MeshRenderer>();
         _item = _itemObject.AddComponent<SimpleItem>();
         _item.itemType = ItemType.Hammer;
-        _item.RefreshAvailability();
+        const BindingFlags flags = BindingFlags.Instance | BindingFlags.NonPublic;
+        typeof(SimpleItem).GetMethod("Awake", flags).Invoke(_item, null);
+        typeof(SimpleItem).GetMethod("OnEnable", flags).Invoke(_item, null);
     }
 
     [TearDown]
     public void TearDown()
     {
+        if (_item != null)
+            typeof(SimpleItem).GetMethod("OnDisable", BindingFlags.Instance | BindingFlags.NonPublic).Invoke(_item, null);
         Object.DestroyImmediate(_itemObject);
         Object.DestroyImmediate(_managerObject);
+        QuestManager.Instance = null;
     }
 
     [Test]

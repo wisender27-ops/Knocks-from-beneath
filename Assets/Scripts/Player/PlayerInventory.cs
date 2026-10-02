@@ -241,6 +241,10 @@ namespace KnocksFromBeneath
             if (!Physics.Raycast(ray, out RaycastHit hit, hitDistance, PhysicsMasks.WithoutNoRaycast(interactableLayer))) return;
             BreakableObject breakable = hit.collider.GetComponent<BreakableObject>();
             if (breakable != null) breakable.Break();
+            // Замок на люке в подвал ломается тем же ударом. GetComponentInParent — коллайдер
+            // замка может стоять на накладке, а сам BasementHatchLock на родителе.
+            BasementHatchLock hatchLock = hit.collider.GetComponentInParent<BasementHatchLock>();
+            if (hatchLock != null) hatchLock.Break(this);
         }
     }
 

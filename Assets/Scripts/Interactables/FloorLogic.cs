@@ -122,6 +122,13 @@ public class FloorLogic : MonoBehaviour
         ApplyAvailableState();
     }
 
+    public void SetCompletedForDebug()
+    {
+        if (fallbackRoutine != null) StopCoroutine(fallbackRoutine);
+        fallbackRoutine = null;
+        ApplyCompletedState();
+    }
+
     private IEnumerator CompleteAfterDelay()
     {
         yield return new WaitForSeconds(fallbackDuration);

@@ -11,6 +11,14 @@ public class HoleEventController : MonoBehaviour
     public AudioSource jumpscareAudio;
     public PlayerInventory inventory;
 
+    [Header("Подвал")]
+    public BasementHatch basementHatch;
+    public Transform basementLookTarget;
+    public Transform basementRushTarget;
+    public Transform basementMonsterHead;
+    private Coroutine _basementRoutine;
+    public BasementScareSequence basementScare;
+
     [Header("Настройки")]
     public float lookDistance = 3f;
     public float minTimeToTrigger = 0.8f;  // Уменьшили — меньше времени
@@ -52,6 +60,7 @@ public class HoleEventController : MonoBehaviour
         if (inventory != null) _flashlightLight = inventory.flashlightLightSource;
         _playerCam = Camera.main;
         _triggerTime = Random.Range(minTimeToTrigger, maxTimeToTrigger);
+        if (basementScare != null) basementScare.Prepare();
     }
 
     void Update()
@@ -61,6 +70,22 @@ public class HoleEventController : MonoBehaviour
         bool isFlashlightOn = inventory.hasFlashlight &&
                               _flashlightLight != null &&
                               _flashlightLight.enabled;
+
+        if (basementLookTarget != null)
+        {
+            if (!isFlashlightOn || !IsPlayerLookingAtHole())
+            {
+                _lookTimer = 0f;
+                return;
+            }
+            _lookTimer += Time.deltaTime;
+            if (_lookTimer >= _triggerTime)
+            {
+                _eventStarted = true;
+                _basementRoutine = StartCoroutine(BasementSequence());
+            }
+            return;
+        }
 
         if (IsPlayerLookingAtHole())
         {
@@ -110,6 +135,19 @@ public class HoleEventController : MonoBehaviour
     bool IsPlayerLookingAtHole()
     {
         if (_playerCam == null) return false;
+        if (basementLookTarget != null)
+        {
+            if (basementHatch == null || !basementHatch.IsOpen || _flashlightLight == null) return false;
+            Vector3 target = basementLookTarget.position;
+            Vector3 toTarget = target - _playerCam.transform.position;
+            if (toTarget.sqrMagnitude > lookDistance * lookDistance) return false;
+            if (Vector3.Angle(_playerCam.transform.forward, toTarget) > 20f) return false;
+            Vector3 beam = target - _flashlightLight.transform.position;
+            if (beam.sqrMagnitude > _flashlightLight.range * _flashlightLight.range) return false;
+            if (Vector3.Angle(_flashlightLight.transform.forward, beam) > _flashlightLight.spotAngle * 0.5f) return false;
+            return !Physics.Linecast(_flashlightLight.transform.position, target,
+                PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
+        }
 
         Ray ray = _playerCam.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
         RaycastHit hit;
@@ -123,6 +161,27 @@ public class HoleEventController : MonoBehaviour
         if (tensionAudioSource == null || tensionSounds == null || tensionSounds.Length == 0) return;
         AudioClip clip = tensionSounds[Random.Range(0, tensionSounds.Length)];
         tensionAudioSource.PlayOneShot(clip);
+    }
+
+    IEnumerator BasementSequence()
+    {
+        if (basementScare == null)
+        {
+            Debug.LogError("[HoleEventController] Basement scare is not configured.", this);
+            yield break;
+        }
+        yield return basementScare.Play(_playerCam, inventory);
+        _basementRoutine = null;
+        if (!basementScare.Completed) yield break;
+        if (QuestManager.Instance != null) QuestManager.Instance.AddProgress(1);
+        enabled = false;
+    }
+
+    void OnDisable()
+    {
+        if (_basementRoutine != null) StopCoroutine(_basementRoutine);
+        _basementRoutine = null;
+        if (basementScare != null) basementScare.Restore();
     }
 
     IEnumerator TheVoidSequence()

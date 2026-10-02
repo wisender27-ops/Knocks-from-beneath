@@ -4,12 +4,7 @@ using UnityEngine;
 namespace KnocksFromBeneath
 {
 
-// Засов на входной двери (T-17) — отдельный от самого открывания Interact()-объект:
-// висит не на полотне двери, а на самой щеколде, чтобы "открыть дверь" и "запереть дверь"
-// были разными точками наведения. Реальная блокировка (Door.SetInteractionLocked) и флаг
-// GameState.frontDoorLocked выставляются в EveningRoundController, сюда попадает только
-// тонкий проброс через IntroSequence — тот же паттерн, что StoveInteractable.
-// Сам компонент отвечает лишь за видимую реакцию: щеколда уезжает в закрытое положение.
+// Старый компонент засова сохранён для ссылок сцены; взаимодействие отключено.
 public class FrontDoorLockInteractable : MonoBehaviour
 {
     [Tooltip("Подвижная часть щеколды. Если не задана — видимой реакции не будет, логика замка не изменится.")]
@@ -29,7 +24,7 @@ public class FrontDoorLockInteractable : MonoBehaviour
     private bool _capturedOpenPosition;
     private bool _locked;
 
-    public bool CanInteract => !_locked;
+    public bool CanInteract => false;
 
     void Awake()
     {
@@ -45,13 +40,12 @@ public class FrontDoorLockInteractable : MonoBehaviour
 
     public void Interact()
     {
-        if (_locked) return;
+        if (!CanInteract) return;
 
         var intro = FindFirstObjectByType<IntroSequence>();
         if (intro == null) return;
 
-        // Запереть можно только во время вечернего обхода — решает EveningRoundController,
-        // здесь только реагируем на его ответ.
+        // Сохранённый путь старого взаимодействия, недоступный после отключения засова.
         if (!intro.OnFrontDoorLocked()) return;
 
         _locked = true;

@@ -52,7 +52,7 @@ namespace KnocksFromBeneath
         [SerializeField] private Color markerColor = new Color(0.35f, 0.85f, 1f, 0.22f);
 
         [Tooltip("Показывать маркер в геймплее. Выключи, если не хочешь видеть кубы в игре, но в сцене они останутся.")]
-        [SerializeField] private bool visibleInGame = true;
+        [SerializeField] private bool visibleInGame = false;
 
         [Header("Поведение")]
         [Tooltip("Держать предмет за нижнюю грань его меша вместо пивота. Без этого FBX-модели с пивотом в центре уезжают в пол или висят в воздухе. Почти всегда нужно включено.")]
@@ -133,7 +133,10 @@ namespace KnocksFromBeneath
 
         void OnEnable() => ApplyVisuals();
         void OnValidate() => ApplyVisuals();
-        void LateUpdate() => ApplyVisuals();
+        void LateUpdate()
+        {
+            if (!Application.isPlaying) ApplyVisuals();
+        }
 
         /// <summary>
         /// Создаёт/обновляет полупрозрачный куб. Идемпотентно: можно звать каждый
@@ -224,14 +227,29 @@ namespace KnocksFromBeneath
         public Vector3 GetItemPlacementPosition(Transform item, Quaternion placementRotation)
         {
             if (item == null || !sitOnBottomOfMesh) return transform.position;
-
-            Vector3 localBottom = GetLocalBottomOffset(item);
-            if (localBottom == Vector3.zero) return transform.position;
-
-            // Куда сместится пивот предмета относительно нижней грани его меша
-            // при повороте placementRotation (мировые оси).
-            Vector3 offset = placementRotation * Vector3.Scale(localBottom, item.transform.lossyScale);
-            return transform.position - offset + Vector3.down * surfaceGap;
+            Bounds rotatedBounds = new Bounds();
+            bool hasBounds = false;
+            // Imported meshes can have a rotated pivot. Find the bottom of the
+            // target orientation, rather than treating mesh.bounds.min as a pivot.
+            foreach (MeshFilter filter in item.GetComponentsInChildren<MeshFilter>(true))
+            {
+                if (filter.sharedMesh == null) continue;
+                Bounds bounds = filter.sharedMesh.bounds;
+                for (int corner = 0; corner < 8; corner++)
+                {
+                    Vector3 point = new Vector3(
+                        (corner & 1) == 0 ? bounds.min.x : bounds.max.x,
+                        (corner & 2) == 0 ? bounds.min.y : bounds.max.y,
+                        (corner & 4) == 0 ? bounds.min.z : bounds.max.z);
+                    Vector3 localPoint = item.InverseTransformPoint(filter.transform.TransformPoint(point));
+                    point = placementRotation * Vector3.Scale(localPoint, item.lossyScale);
+                    if (!hasBounds) { rotatedBounds = new Bounds(point, Vector3.zero); hasBounds = true; }
+                    else rotatedBounds.Encapsulate(point);
+                }
+            }
+            if (!hasBounds) return transform.position;
+            Vector3 bottomCenter = new Vector3(rotatedBounds.center.x, rotatedBounds.min.y, rotatedBounds.center.z);
+            return transform.position - bottomCenter + Vector3.up * surfaceGap;
         }
 
         /// <summary>
