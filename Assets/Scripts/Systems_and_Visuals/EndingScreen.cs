@@ -24,6 +24,7 @@ public class EndingScreen : MonoBehaviour
 
     void Awake()
     {
+        FadeTransitionPresentation.Ensure(fadeScreen)?.Allow(titleText);
         Instance = this;
         if (titleText != null) titleText.text = "";
     }

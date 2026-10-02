@@ -120,6 +120,7 @@ public class IntroSequence : MonoBehaviour
 
     void Awake()
     {
+        FadeTransitionPresentation.Ensure(fadeScreen);
         _pieQuest = new PieQuestController(
             pieObject, microwaveZone,
             CreateQuest, ShowThoughts, IsQuestActive,

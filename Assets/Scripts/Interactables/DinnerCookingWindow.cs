@@ -27,7 +27,7 @@ namespace KnocksFromBeneath
 
         public bool Open(Action onComplete, Action onCancel)
         {
-            if (open || attemptUsed || Time.timeScale == 0f || QuestJournalScreen.IsAnyOpen || RetroInventoryScreen.IsAnyOpen)
+            if (FadeTransitionPresentation.IsActive || open || attemptUsed || Time.timeScale == 0f || QuestJournalScreen.IsAnyOpen || RetroInventoryScreen.IsAnyOpen)
                 return false;
             player = FindFirstObjectByType<PlayerController>();
             if (player != null && player.isCameraLocked) return false;

@@ -23,6 +23,7 @@ public class FinaleController : MonoBehaviour
 
     private bool isEndingTriggered = false;
 
+    void Awake() => FadeTransitionPresentation.Ensure(fadeScreen);
 
     public bool BeginBoarding(PlayerController pc, bool deadlineExpired)
     {

@@ -92,7 +92,7 @@ namespace KnocksFromBeneath
 
         public void Open()
         {
-            if (manager == null || IsOpen || closing || IsAnyOpen || Time.timeScale == 0f ||
+            if (FadeTransitionPresentation.IsActive || manager == null || IsOpen || closing || IsAnyOpen || Time.timeScale == 0f ||
                 RetroInventoryScreen.IsAnyOpen ||
                 (playerController != null && playerController.isCameraLocked) ||
                 (playerInteraction != null && playerInteraction.IsEatingPie)) return;

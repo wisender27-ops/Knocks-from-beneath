@@ -127,7 +127,7 @@ namespace KnocksFromBeneath
 
         private void Open()
         {
-            if (inventory == null || isOpen || IsAnyOpen || Time.timeScale == 0f ||
+            if (FadeTransitionPresentation.IsActive || inventory == null || isOpen || IsAnyOpen || Time.timeScale == 0f ||
                 (playerInteraction != null && playerInteraction.IsEatingPie) ||
                 (playerController != null && playerController.isCameraLocked)) return;
             isOpen = true;
