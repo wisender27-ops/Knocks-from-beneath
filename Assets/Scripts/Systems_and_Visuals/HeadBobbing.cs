@@ -3,12 +3,26 @@ using UnityEngine;
 namespace KnocksFromBeneath
 {
 
+// Порядок 10010 — ПОСЛЕ PlayerController (10000) и ДО ProtagonistBody (10020).
+// Раньше атрибута не было, поэтому Update() выполнялся в порядке 0, то есть ДО
+// PlayerController, и компонент читал controller.velocity прошлого кадра — до того,
+// как CharacterController.Move() её обновил. На беге (4 м/с) это давало постоянное
+// отставание покачивания на кадр, и голова шла позади тела. 10010 ставит нас ровно
+// между: скорость уже актуальна, но тело/руки ещё не пересчитали позу.
+[DefaultExecutionOrder(10010)]
 public class HeadBobbing : MonoBehaviour
 {
     [Header("Настройки веса")]
     public float walkSpeed = 10f;
-    public float bobIntensity = 0.15f; // Увеличил, чтобы было заметно
-    public float tiltIntensity = 2.0f; // Наклон в стороны
+
+    // Высоту камеры задаёт PlayerController.
+    [Range(0f, 0.3f)]
+    public float bobIntensity = 0f;
+
+    // Наклон задаётся в ГРАДУСАХ (Quaternion.Euler). Диапазон узкий сознательно:
+    // это микропокачивание, а не крен.
+    [Range(0f, 3f)]
+    public float tiltIntensity = 0.45f;
 
     [Header("Инерция")]
     public float smoothness = 6f; // Насколько "вязко" движется голова
@@ -17,6 +31,10 @@ public class HeadBobbing : MonoBehaviour
     private Vector3 _targetPos;
     private Quaternion _targetRot;
     private Vector3 _initialLocalPos;
+    // Исходный наклон узла. Без него в покое камера возвращалась в Quaternion.identity,
+    // то есть выравнивалась по мировым осям, и при остановке/приседании дёргалась,
+    // а на наклонённой камере ещё и «отъезжала». Теперь покой — это возврат К ИСХОДНОЙ позе.
+    private Quaternion _initialLocalRot;
     private CharacterController _controller;
 
     [Header("Звуки шагов")]
@@ -33,7 +51,8 @@ public class HeadBobbing : MonoBehaviour
         _controller = GetComponentInParent<CharacterController>();
         _initialLocalPos = transform.localPosition;
         _targetPos = _initialLocalPos;
-        _targetRot = transform.localRotation;
+        _initialLocalRot = transform.localRotation;
+        _targetRot = _initialLocalRot;
     }
 
     void Update()
@@ -73,12 +92,21 @@ public class HeadBobbing : MonoBehaviour
         {
             _timer = 0;
             _targetPos = _initialLocalPos;
-            _targetRot = Quaternion.identity;
+            // К ИСХОДНОМУ наклону, а не в identity: иначе при остановке и смене позы
+            // камера выравнивалась по мировым осям и дёргалась.
+            _targetRot = _initialLocalRot;
         }
 
-        // Плавное следование за целью (вязкость)
-        float smoothing = Mathf.Clamp01(Time.deltaTime * Mathf.Max(0f, smoothness));
-        transform.localPosition = Vector3.Lerp(transform.localPosition, _targetPos, smoothing);
+        // Экспоненциальное сглаживание вместо Mathf.Lerp(a, b, dt * k).
+        // Вариант с dt в множителе НЕ инвариантен к частоте кадров: на 30 fps
+        // t=0.267, на 144 fps t=0.056 — на слабой машине камера догоняла тело
+        // заметно медленнее. 1 - exp(-k*dt) даёт одинаковую постоянную времени
+        // при любом FPS (k = скорость реакции, 1/с).
+        float smoothing = 1f - Mathf.Exp(-Mathf.Max(0f, smoothness) * Time.deltaTime);
+        Vector3 position = Vector3.Lerp(transform.localPosition, _targetPos, smoothing);
+        // Высоту CameraOffset задаёт контроллер, включая удержание двери.
+        position.y = transform.localPosition.y;
+        transform.localPosition = position;
         transform.localRotation = Quaternion.Slerp(transform.localRotation, _targetRot, smoothing);
     }
 

@@ -1,0 +1,52 @@
+{
+  "blend": "C:\\claude\\knocks-from-beneath\\Knocks-from-beneath\\ArtSource\\CH_ReferenceSurvivor\\CH_ReferenceSurvivor_review.blend",
+  "mode": "material",
+  "engine": "cycles",
+  "bbox_min": [
+    -0.3984615206718445,
+    -0.17299999296665192,
+    0.0010000106412917376
+  ],
+  "bbox_max": [
+    0.3984615206718445,
+    0.1850000023841858,
+    1.7999999523162842
+  ],
+  "size_xyz": [
+    0.796923041343689,
+    0.3579999804496765,
+    1.7989999055862427
+  ],
+  "objects": [
+    "CH_ReferenceSurvivor_Body_LOD0"
+  ],
+  "renders": {
+    "front": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/06_rig/reference\\material_front.png",
+      "az_el_lens": [
+        0,
+        0,
+        0
+      ],
+      "distance": 4.178999990224838
+    },
+    "side": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/06_rig/reference\\material_side.png",
+      "az_el_lens": [
+        90,
+        0,
+        0
+      ],
+      "distance": 4.3984615206718445
+    },
+    "threequarter": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/06_rig/reference\\material_threequarter.png",
+      "az_el_lens": [
+        35,
+        15,
+        50
+      ],
+      "distance": 3.215267923867536
+    }
+  }
+}

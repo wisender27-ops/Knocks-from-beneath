@@ -1,0 +1,6 @@
+Unity 6000.4.4f1: valid Humanoid Avatar
+CH_ReferenceSurvivor_Body_LOD0: 8324 triangles; 14593 engine vertices; 52 bones; 1 submesh
+Body_LOD1: 4578 triangles; 11132 engine vertices; 52 bones; 1 submesh
+Body_LOD2: 2246 triangles; 6080 engine vertices; 52 bones; 1 submesh
+Prefab has 3 LODs and CapsuleCollider; Humanoid pose and BakeMesh checked in editor.
+Animation clips not supplied: intended to be added through Mixamo. Service upload and scene Play Mode not tested.

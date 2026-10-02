@@ -1,0 +1,18 @@
+# Hatch lock materials (low-poly padlock)
+# Generated from make_hatch_lock.py
+
+newmtl LockSteel
+Ka 0.000 0.000 0.000
+Kd 0.550 0.550 0.570
+Ks 0.350 0.350 0.380
+Ns 60.000
+d 1.0
+illum 2
+
+newmtl LockSteelDark
+Ka 0.000 0.000 0.000
+Kd 0.330 0.330 0.350
+Ks 0.250 0.250 0.270
+Ns 40.000
+d 1.0
+illum 2

@@ -1,0 +1,110 @@
+{
+  "source": "https://www.mixamo.com/",
+  "downloadDate": "2026-10-02",
+  "sourceCharacter": "Paladin J Nordstrom",
+  "format": "FBX for Unity",
+  "skin": "Without Skin",
+  "fps": 30,
+  "reduction": "none",
+  "retarget": "Each source has its own Humanoid Avatar; target is survivor Avatar",
+  "clips": [
+    {
+      "clip": "RunForward",
+      "mixamoName": "Standard Run",
+      "mirrored": false,
+      "inPlace": true,
+      "sha256": "B201B09E5F81FA96C321668AA527E01558C0553FABC3FF8F2AC68752A2C82EBD"
+    },
+    {
+      "clip": "StrafeRight",
+      "mixamoName": "Right Strafe Walking",
+      "mirrored": false,
+      "inPlace": true,
+      "sha256": "7ADE1CD318321ED05596EAC07D1A38872D7948C9605642D3731B77D0EFC5CC6D"
+    },
+    {
+      "clip": "CrouchIdle",
+      "mixamoName": "Crouch Idle",
+      "mirrored": false,
+      "inPlace": false,
+      "sha256": "4A559E4095C165D7D95DAA5CFBCB0263FE5774C3A1B3E15273AF18CE2908F57A"
+    },
+    {
+      "clip": "WalkBackward",
+      "mixamoName": "Walking Backwards",
+      "mirrored": false,
+      "inPlace": true,
+      "sha256": "8EAA779A3A29DCB8C6431D5F457F4D32C992C0B2227EA46BA1BEC943057CE64F"
+    },
+    {
+      "clip": "WalkForward",
+      "mixamoName": "Standard Walk",
+      "mirrored": false,
+      "inPlace": true,
+      "sha256": "BA0445E098498E46432E28BE6C021D238A6E23E80E4096D26798BA11E9A4D469"
+    },
+    {
+      "clip": "CrouchForward",
+      "mixamoName": "Crouch Walk Forward",
+      "mirrored": false,
+      "inPlace": true,
+      "sha256": "7334F11AA925419933A14A0E221E380311344BB93A9C5B36FA3AA622EABB8B20"
+    },
+    {
+      "clip": "CrouchLeft",
+      "mixamoName": "Crouch Walk Left",
+      "mirrored": false,
+      "inPlace": true,
+      "sha256": "458DDAD3C16B51F1489785ACE52F2D1319A3FACE0104CD14112D023650ACC90E"
+    },
+    {
+      "clip": "CrouchBackward",
+      "mixamoName": "Crouch Walk Back",
+      "mirrored": false,
+      "inPlace": true,
+      "sha256": "8E5FA235593A84E2A8690B5A96FC0CE3242B717382C7E98C1B9EBE1C007EDFF9"
+    },
+    {
+      "clip": "CrouchRight",
+      "mixamoName": "Crouch Walk Right",
+      "mirrored": false,
+      "inPlace": true,
+      "sha256": "3F6C87A2B0FC5EF7713966B9F98D89DE45E79FBBCE6F9BCC8D7579155DD0895B"
+    },
+    {
+      "clip": "RunRight",
+      "mixamoName": "Standing Run Left",
+      "mirrored": true,
+      "inPlace": true,
+      "sha256": "5C87D9C1F4FF7BCB8B8D3FFCFFF3CA02F622D126F7FB2D0EAE56B893BDBA8009"
+    },
+    {
+      "clip": "StrafeLeft",
+      "mixamoName": "Left Strafe Walking",
+      "mirrored": false,
+      "inPlace": true,
+      "sha256": "3FB8D51E74335778BFFEE88BE8920EEDD5377E64F15707BDA4F1941B5F125677"
+    },
+    {
+      "clip": "RunBackward",
+      "mixamoName": "Unarmed Run Back",
+      "mirrored": false,
+      "inPlace": true,
+      "sha256": "F644620A634CC5279D2978C24958B51039EE458416A84E1AF7F884F0427BACE4"
+    },
+    {
+      "clip": "Idle",
+      "mixamoName": "Breathing Idle",
+      "mirrored": false,
+      "inPlace": false,
+      "sha256": "BAE17196CB03A404366D9142BEE1B5BAD33DE515F55E294D17B21C27B5A67DA4"
+    },
+    {
+      "clip": "RunLeft",
+      "mixamoName": "Standing Run Left",
+      "mirrored": false,
+      "inPlace": true,
+      "sha256": "8A09C3E487F9D555FCC6625EC790B2A39CE5DF50DCD8D392F52B68BB8AA0B220"
+    }
+  ]
+}

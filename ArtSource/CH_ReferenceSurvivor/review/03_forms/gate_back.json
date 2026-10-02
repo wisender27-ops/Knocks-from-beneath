@@ -1,0 +1,21 @@
+{
+  "view": "back",
+  "az": 180.0,
+  "matte": "C:\\claude\\knocks-from-beneath\\Knocks-from-beneath\\ArtSource\\CH_ReferenceSurvivor\\ref\\back_clean.png",
+  "m_per_px": 0.001865285,
+  "iou": 0.8787,
+  "ref_only_pct": 6.35,
+  "render_only_pct": 6.58,
+  "band_width_diff": [
+    -0.0114,
+    0.0413,
+    -0.001,
+    0.0072,
+    0.0248,
+    0.0093,
+    -0.0041,
+    -0.0041,
+    -0.0083,
+    -0.0103
+  ]
+}

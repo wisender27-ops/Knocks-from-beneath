@@ -1,0 +1,132 @@
+{
+  "file": "C:\\claude\\knocks-from-beneath\\Knocks-from-beneath\\ArtSource\\CH_ReferenceSurvivor\\exports\\CH_ReferenceSurvivor.fbx",
+  "errors": [],
+  "meshes": [
+    {
+      "name": "CH_ReferenceSurvivor_Body_LOD0",
+      "tris": 8324,
+      "verts": 4332,
+      "uv": true,
+      "materials": [
+        "Survivor_Atlas"
+      ],
+      "skinned": true,
+      "shape_keys": 0
+    }
+  ],
+  "armatures": [
+    {
+      "name": "CH_ReferenceSurvivor_Rig",
+      "bones": [
+        "Hips",
+        "Spine",
+        "Spine1",
+        "Spine2",
+        "Neck",
+        "Head",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "RightHandIndex1",
+        "RightHandIndex2",
+        "RightHandIndex3",
+        "RightHandMiddle1",
+        "RightHandMiddle2",
+        "RightHandMiddle3",
+        "RightHandRing1",
+        "RightHandRing2",
+        "RightHandRing3",
+        "RightHandPinky1",
+        "RightHandPinky2",
+        "RightHandPinky3",
+        "RightHandThumb1",
+        "RightHandThumb2",
+        "RightHandThumb3",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "LeftHandIndex1",
+        "LeftHandIndex2",
+        "LeftHandIndex3",
+        "LeftHandMiddle1",
+        "LeftHandMiddle2",
+        "LeftHandMiddle3",
+        "LeftHandRing1",
+        "LeftHandRing2",
+        "LeftHandRing3",
+        "LeftHandPinky1",
+        "LeftHandPinky2",
+        "LeftHandPinky3",
+        "LeftHandThumb1",
+        "LeftHandThumb2",
+        "LeftHandThumb3",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase"
+      ],
+      "roots": [
+        "Hips"
+      ]
+    }
+  ],
+  "clips": [],
+  "materials": [
+    "Survivor_Atlas"
+  ],
+  "images": [
+    {
+      "name": "Survivor_BaseColor.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "ok": true
+    },
+    {
+      "name": "Survivor_Roughness.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "ok": true
+    }
+  ],
+  "empties": [
+    {
+      "name": "SOCKET_RightHand",
+      "parent": "CH_ReferenceSurvivor_Rig",
+      "parent_bone": "RightHand"
+    },
+    {
+      "name": "SOCKET_LeftHand",
+      "parent": "CH_ReferenceSurvivor_Rig",
+      "parent_bone": "LeftHand"
+    }
+  ],
+  "bounds_m": {
+    "min": [
+      -0.8615,
+      -0.1762,
+      0.001
+    ],
+    "max": [
+      0.8615,
+      0.2068,
+      1.8
+    ],
+    "size": [
+      1.723,
+      0.383,
+      1.799
+    ]
+  },
+  "height_m": 1.799,
+  "render": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/09_roundtrip/fbx\\roundtrip_clay_threequarter.png"
+}

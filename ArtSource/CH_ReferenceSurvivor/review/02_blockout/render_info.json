@@ -1,0 +1,83 @@
+{
+  "blend": "C:\\claude\\knocks-from-beneath\\Knocks-from-beneath\\ArtSource\\CH_ReferenceSurvivor\\CH_ReferenceSurvivor_master.blend",
+  "mode": "clay",
+  "engine": "workbench",
+  "bbox_min": [
+    -0.3967742621898651,
+    -0.2081499993801117,
+    0.0010000000474974513
+  ],
+  "bbox_max": [
+    0.39112457633018494,
+    0.1850000023841858,
+    1.7999999523162842
+  ],
+  "size_xyz": [
+    0.78789883852005,
+    0.3931500017642975,
+    1.7989999055862427
+  ],
+  "objects": [
+    "CH_ReferenceSurvivor_Pelvis_LOD0",
+    "CH_ReferenceSurvivor_Shirt_LOD0",
+    "CH_ReferenceSurvivor_Jacket_LOD0",
+    "CH_ReferenceSurvivor_Neck_LOD0",
+    "CH_ReferenceSurvivor_Head_LOD0",
+    "CH_ReferenceSurvivor_Hair_LOD0",
+    "CH_ReferenceSurvivor_Hood_LOD0",
+    "CH_ReferenceSurvivor_Sleeve_R_LOD0",
+    "CH_ReferenceSurvivor_Hand_R_LOD0",
+    "CH_ReferenceSurvivor_Jeans_R_LOD0",
+    "CH_ReferenceSurvivor_Shoe_R_LOD0",
+    "CH_ReferenceSurvivor_Ear_R_LOD0",
+    "CH_ReferenceSurvivor_Sleeve_L_LOD0",
+    "CH_ReferenceSurvivor_Hand_L_LOD0",
+    "CH_ReferenceSurvivor_Jeans_L_LOD0",
+    "CH_ReferenceSurvivor_Shoe_L_LOD0",
+    "CH_ReferenceSurvivor_Ear_L_LOD0",
+    "CH_ReferenceSurvivor_Flashlight_LOD0",
+    "CH_ReferenceSurvivor_Nose_LOD0"
+  ],
+  "renders": {
+    "front": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/02_blockout\\clay_front.png",
+      "az_el_lens": [
+        0,
+        0,
+        0
+      ],
+      "distance": 4.196575000882149
+    },
+    "side": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/02_blockout\\clay_side.png",
+      "az_el_lens": [
+        90,
+        0,
+        0
+      ],
+      "distance": 4.393949419260025
+    },
+    "back": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/02_blockout\\clay_back.png",
+      "az_el_lens": [
+        180,
+        0,
+        0
+      ],
+      "distance": 4.196575000882149
+    },
+    "threequarter": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/02_blockout\\clay_threequarter.png",
+      "az_el_lens": [
+        35,
+        15,
+        50
+      ],
+      "distance": 3.236437239684164
+    },
+    "gameplay": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/02_blockout\\clay_gameplay_128px.png",
+      "subject_px": 128
+    }
+  }
+}

@@ -1,0 +1,183 @@
+{
+  "asset": "CH_ReferenceSurvivor",
+  "generated": "2026-10-02T19:01:10",
+  "blender": "5.1.2",
+  "source": "C:\\claude\\knocks-from-beneath\\Knocks-from-beneath\\ArtSource\\CH_ReferenceSurvivor\\CH_ReferenceSurvivor_rigged.blend",
+  "target_engine": "unity",
+  "units": {
+    "system": "METRIC",
+    "scale_length": 1.0,
+    "authoring_up": "Z",
+    "authoring_forward": "-Y",
+    "export_up": "Y",
+    "export_forward": "+Z",
+    "note": "glTF converts Z up to Y up; a subject facing -Y in Blender faces +Z in glTF"
+  },
+  "target_height_m": 1.8,
+  "bounds_m": {
+    "min": [
+      -0.8615,
+      -0.1762,
+      0.001
+    ],
+    "max": [
+      0.8615,
+      0.2068,
+      1.8
+    ],
+    "size": [
+      1.723,
+      0.383,
+      1.799
+    ]
+  },
+  "files": {
+    "all": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/exports/glb\\CH_ReferenceSurvivor.glb"
+  },
+  "lods": [
+    {
+      "level": 0,
+      "objects": [
+        "CH_ReferenceSurvivor_Body_LOD0"
+      ],
+      "tris": 8324
+    }
+  ],
+  "materials": [
+    "Survivor_Atlas"
+  ],
+  "textures": [
+    {
+      "name": "Survivor_BaseColor.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "colorspace": "sRGB",
+      "packed": true,
+      "filepath": "C:\\claude\\knocks-from-beneath\\Knocks-from-beneath\\ArtSource\\CH_ReferenceSurvivor\\textures\\Survivor_BaseColor.png"
+    },
+    {
+      "name": "Survivor_Roughness.png",
+      "size": [
+        1024,
+        1024
+      ],
+      "colorspace": "Non-Color",
+      "packed": true,
+      "filepath": "C:\\claude\\knocks-from-beneath\\Knocks-from-beneath\\ArtSource\\CH_ReferenceSurvivor\\textures\\Survivor_Roughness.png"
+    }
+  ],
+  "texture_contract": {
+    "basecolor": "sRGB",
+    "normal": "Non-Color, tangent space, OpenGL +Y",
+    "roughness": "Non-Color",
+    "metallic": "Non-Color",
+    "ao": "Non-Color",
+    "packed_channels": "none by default; document any ORM packing here"
+  },
+  "skeleton": [
+    {
+      "armature": "CH_ReferenceSurvivor_Rig",
+      "bones": 52,
+      "deform_bones": [
+        "Hips",
+        "Spine",
+        "Spine1",
+        "Spine2",
+        "Neck",
+        "Head",
+        "RightShoulder",
+        "RightArm",
+        "RightForeArm",
+        "RightHand",
+        "RightHandIndex1",
+        "RightHandIndex2",
+        "RightHandIndex3",
+        "RightHandMiddle1",
+        "RightHandMiddle2",
+        "RightHandMiddle3",
+        "RightHandRing1",
+        "RightHandRing2",
+        "RightHandRing3",
+        "RightHandPinky1",
+        "RightHandPinky2",
+        "RightHandPinky3",
+        "RightHandThumb1",
+        "RightHandThumb2",
+        "RightHandThumb3",
+        "LeftShoulder",
+        "LeftArm",
+        "LeftForeArm",
+        "LeftHand",
+        "LeftHandIndex1",
+        "LeftHandIndex2",
+        "LeftHandIndex3",
+        "LeftHandMiddle1",
+        "LeftHandMiddle2",
+        "LeftHandMiddle3",
+        "LeftHandRing1",
+        "LeftHandRing2",
+        "LeftHandRing3",
+        "LeftHandPinky1",
+        "LeftHandPinky2",
+        "LeftHandPinky3",
+        "LeftHandThumb1",
+        "LeftHandThumb2",
+        "LeftHandThumb3",
+        "RightUpLeg",
+        "RightLeg",
+        "RightFoot",
+        "RightToeBase",
+        "LeftUpLeg",
+        "LeftLeg",
+        "LeftFoot",
+        "LeftToeBase"
+      ],
+      "roots": [
+        "Hips"
+      ],
+      "rest_pose": "as exported"
+    }
+  ],
+  "sockets": [
+    {
+      "name": "SOCKET_LeftHand",
+      "parent": "CH_ReferenceSurvivor_Rig",
+      "parent_bone": "LeftHand",
+      "world_location": [
+        0.7953,
+        -0.0597,
+        1.4439
+      ],
+      "world_rotation_deg": [
+        -8.6,
+        -16.88,
+        -126.25
+      ],
+      "axes": "local +Y forward of the attachment, +Z up",
+      "props": {}
+    },
+    {
+      "name": "SOCKET_RightHand",
+      "parent": "CH_ReferenceSurvivor_Rig",
+      "parent_bone": "RightHand",
+      "world_location": [
+        -0.7953,
+        -0.0597,
+        1.4439
+      ],
+      "world_rotation_deg": [
+        -8.6,
+        16.88,
+        126.25
+      ],
+      "axes": "local +Y forward of the attachment, +Z up",
+      "props": {}
+    }
+  ],
+  "colliders": [],
+  "animation_contract": "animation-contract.json",
+  "inferred_from_no_reference": [],
+  "dependencies": []
+}
