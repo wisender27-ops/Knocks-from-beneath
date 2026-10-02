@@ -1,0 +1,46 @@
+{
+  "title": "Knocks from Beneath",
+  "slug": "knocks-from-beneath",
+  "short_description": "Unpack. Settle in. Find out what is knocking beneath your new home.",
+  "classification": "Games",
+  "kind": "Downloadable",
+  "release_status": "In development",
+  "genre": "Adventure",
+  "tags": [
+    "3d",
+    "atmospheric",
+    "creepy",
+    "dark",
+    "first-person",
+    "horror",
+    "psx",
+    "psychological-horror",
+    "retro",
+    "short"
+  ],
+  "uploads": [],
+  "release_date": null,
+  "price": null,
+  "cover": "media/cover.png",
+  "banner": "media/banner.png",
+  "screenshots": [
+    "media/01-creature.png",
+    "media/01-home.png",
+    "media/03-bedroom.png",
+    "media/02-kitchen.png"
+  ],
+  "theme": {
+    "background": "#0b0c0c",
+    "content_background": "#151615",
+    "text": "#e3ded2",
+    "links": "#dca66a",
+    "font": "Serif",
+    "layout": "sidebar screenshots",
+    "font_size": "Large",
+    "banner": "media/banner.png"
+  },
+  "cta": "Add to collection and follow the creator",
+  "publication_status": "published",
+  "page_url": "https://enderwis.itch.io/knocks-from-beneath",
+  "verified_at": "2026-10-03T00:38:35.073368+03:00"
+}
