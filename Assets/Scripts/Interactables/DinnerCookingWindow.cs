@@ -1,0 +1,207 @@
+using System;
+using TMPro;
+using UnityEngine;
+
+namespace KnocksFromBeneath
+{
+    public sealed class DinnerCookingWindow : MonoBehaviour
+    {
+        private GameObject root;
+        private RectTransform needle;
+        private TextMeshProUGUI title, hint;
+        private PlayerController player;
+        private PlayerInteraction interaction;
+        private Action complete, cancel;
+        private bool open, finished, cameraLocked, interactionEnabled, cursorVisible;
+        private bool started, attemptUsed;
+        private CursorLockMode cursorLock;
+        private float elapsed;
+        private const float SweepSeconds = 1.5f;
+
+        public void ResetAttempt()
+        {
+            started = false;
+            Close(false);
+            attemptUsed = false;
+        }
+
+        public bool Open(Action onComplete, Action onCancel)
+        {
+            if (open || attemptUsed || Time.timeScale == 0f || QuestJournalScreen.IsAnyOpen || RetroInventoryScreen.IsAnyOpen)
+                return false;
+            player = FindFirstObjectByType<PlayerController>();
+            if (player != null && player.isCameraLocked) return false;
+            interaction = FindFirstObjectByType<PlayerInteraction>();
+            if (root == null) Build();
+            complete = onComplete;
+            cancel = onCancel;
+            cameraLocked = player != null && player.isCameraLocked;
+            interactionEnabled = interaction != null && interaction.enabled;
+            cursorLock = Cursor.lockState;
+            cursorVisible = Cursor.visible;
+            if (player != null) player.isCameraLocked = true;
+            if (interaction != null) interaction.enabled = false;
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = false;
+            open = true;
+            root.SetActive(true);
+            ShowInstructions();
+            return true;
+        }
+
+        private void ShowInstructions()
+        {
+            elapsed = 0f;
+            finished = false;
+            started = false;
+            title.text = "ГОТОВКА — ИГРА НА РЕАКЦИЮ";
+            hint.text = "Останови указатель ПРОБЕЛОМ в золотой зоне. Попытка только одна.\nENTER — начать     ESC — выйти";
+            MoveNeedle(0f);
+        }
+
+        private void Update()
+        {
+            if (!open || Time.timeScale == 0f) return;
+            if (!started)
+            {
+                if (Input.GetKeyDown(KeyCode.Escape)) { Close(false); return; }
+                if (Input.GetKeyDown(KeyCode.Return))
+                {
+                    started = attemptUsed = true;
+                    title.text = "ПРИГОТОВИТЬ УЖИН";
+                    hint.text = "ПРОБЕЛ — остановить указатель в золотой зоне";
+                }
+                return;
+            }
+            if (finished)
+            {
+                if (Input.GetKeyDown(KeyCode.Return) || Input.GetKeyDown(KeyCode.Escape)) Close(true);
+                return;
+            }
+            elapsed += Time.deltaTime;
+            float position = Mathf.Clamp01(elapsed / SweepSeconds);
+            MoveNeedle(position);
+            if (!Input.GetKeyDown(KeyCode.Space) && position < 1f) return;
+            finished = true;
+            title.text = Quality(position);
+            hint.text = "ENTER — подать ужин";
+        }
+
+        public static string Quality(float position)
+        {
+            if (position >= 0.47f && position <= 0.55f) return "Идеально!";
+            if (position >= 0.35f && position <= 0.67f) return "Нормально";
+            return "Подгорело";
+        }
+
+        private void MoveNeedle(float position)
+        {
+            float angle = Mathf.Lerp(145f, 35f, position);
+            float radians = angle * Mathf.Deg2Rad;
+            needle.anchoredPosition = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians)) * 300f;
+            needle.localRotation = Quaternion.Euler(0f, 0f, angle - 90f);
+        }
+
+        private void Close(bool success)
+        {
+            if (!open) return;
+            open = false;
+            root.SetActive(false);
+            if (player != null) player.isCameraLocked = cameraLocked;
+            if (interaction != null) interaction.enabled = interactionEnabled;
+            Cursor.lockState = cursorLock;
+            Cursor.visible = cursorVisible;
+            // Закрытие после старта тоже расходует попытку и завершает квест готовки.
+            var callback = success || started ? complete : cancel;
+            complete = cancel = null;
+            callback?.Invoke();
+        }
+
+        private void OnDisable() => Close(false);
+        private void OnDestroy()
+        {
+            Close(false);
+            if (root != null) Destroy(root);
+        }
+
+        private void Build()
+        {
+            root = new GameObject("DinnerCooking", typeof(RectTransform), typeof(Canvas), typeof(UnityEngine.UI.CanvasScaler));
+            var canvas = root.GetComponent<Canvas>();
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 200;
+            var scaler = root.GetComponent<UnityEngine.UI.CanvasScaler>();
+            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.referenceResolution = new Vector2(1280f, 720f);
+            scaler.matchWidthOrHeight = 0.5f;
+            var shade = Rect("Shade", root.transform, Vector2.zero, Vector2.zero);
+            shade.anchorMin = Vector2.zero;
+            shade.anchorMax = Vector2.one;
+            shade.gameObject.AddComponent<UnityEngine.UI.Image>().color = new Color(0.025f, 0.025f, 0.035f, 0.6f);
+            var arc = Rect("CookingArc", root.transform, new Vector2(0f, -200f), new Vector2(700f, 700f));
+            arc.gameObject.AddComponent<DinnerCookingArc>().raycastTarget = false;
+            needle = Rect("Needle", arc, Vector2.zero, new Vector2(6f, 66f));
+            needle.gameObject.AddComponent<UnityEngine.UI.Image>().color = new Color(1f, 0.97f, 0.83f);
+            title = Label("Title", 215f, 30f);
+            hint = Label("Controls", -280f, 20f);
+        }
+
+        private static RectTransform Rect(string name, Transform parent, Vector2 position, Vector2 size)
+        {
+            var obj = new GameObject(name, typeof(RectTransform));
+            obj.transform.SetParent(parent, false);
+            var rect = (RectTransform)obj.transform;
+            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
+            rect.anchoredPosition = position;
+            rect.sizeDelta = size;
+            return rect;
+        }
+
+        private TextMeshProUGUI Label(string name, float y, float size)
+        {
+            var text = Rect(name, root.transform, new Vector2(0f, y), new Vector2(1000f, 70f))
+                .gameObject.AddComponent<TextMeshProUGUI>();
+            var manager = FindFirstObjectByType<QuestManager>();
+            if (manager != null && manager.questUiText != null) text.font = manager.questUiText.font;
+            text.fontSize = size;
+            text.alignment = TextAlignmentOptions.Center;
+            text.color = new Color(1f, 0.95f, 0.8f);
+            text.raycastTarget = false;
+            return text;
+        }
+    }
+
+    [RequireComponent(typeof(CanvasRenderer))]
+    public sealed class DinnerCookingArc : UnityEngine.UI.Graphic
+    {
+        protected override void OnPopulateMesh(UnityEngine.UI.VertexHelper mesh)
+        {
+            mesh.Clear();
+            Draw(mesh, 0f, 1f, 286f, 314f, new Color(0.2f, 0.2f, 0.24f, 0.95f));
+            Draw(mesh, 0.35f, 0.67f, 286f, 314f, new Color(0.85f, 0.86f, 0.58f));
+            Draw(mesh, 0.47f, 0.55f, 286f, 314f, new Color(1f, 0.65f, 0.18f));
+            Draw(mesh, 0f, 1f, 317f, 320f, new Color(0.96f, 0.88f, 0.7f));
+            Draw(mesh, 0f, 1f, 280f, 283f, new Color(0.96f, 0.88f, 0.7f));
+        }
+
+        private static void Draw(UnityEngine.UI.VertexHelper mesh, float start, float end,
+            float inner, float outer, Color color)
+        {
+            int segments = Mathf.Max(2, Mathf.CeilToInt((end - start) * 80f));
+            for (int i = 0; i < segments; i++)
+            {
+                float a = Mathf.Lerp(145f, 35f, Mathf.Lerp(start, end, (float)i / segments)) * Mathf.Deg2Rad;
+                float b = Mathf.Lerp(145f, 35f, Mathf.Lerp(start, end, (float)(i + 1) / segments)) * Mathf.Deg2Rad;
+                var left = new Vector2(Mathf.Cos(a), Mathf.Sin(a));
+                var right = new Vector2(Mathf.Cos(b), Mathf.Sin(b));
+                int index = mesh.currentVertCount;
+                mesh.AddVert(left * inner, color, Vector2.zero);
+                mesh.AddVert(left * outer, color, Vector2.zero);
+                mesh.AddVert(right * outer, color, Vector2.zero);
+                mesh.AddVert(right * inner, color, Vector2.zero);
+                mesh.AddTriangle(index, index + 1, index + 2);
+                mesh.AddTriangle(index, index + 2, index + 3);
+            }
+        }
+    }
+}
