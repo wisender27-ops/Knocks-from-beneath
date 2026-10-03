@@ -10,6 +10,7 @@ namespace KnocksFromBeneath
 public class ThoughtManager : MonoBehaviour
 {
     public static ThoughtManager Instance;
+    private readonly Dictionary<string, float> _interactionHintCooldowns = new Dictionary<string, float>();
 
     [Header("UI элементы")]
     [SerializeField] private TextMeshProUGUI thoughtText; // Текст из TextMeshPro
@@ -25,22 +26,6 @@ public class ThoughtManager : MonoBehaviour
     [Range(0.8f, 1.2f)][SerializeField] private float minPitch = 0.95f;
     [Range(0.8f, 1.2f)][SerializeField] private float maxPitch = 1.05f;
 
-    private bool _isDisplaying = false;
-    private readonly Queue<ThoughtRequest> _pendingRequests = new Queue<ThoughtRequest>();
-
-    private sealed class ThoughtRequest
-    {
-        public readonly string[] lines;
-        public readonly Action onComplete;
-        public readonly Action onStart;
-
-        public ThoughtRequest(string[] lines, Action onComplete, Action onStart)
-        {
-            this.lines = lines;
-            this.onComplete = onComplete;
-            this.onStart = onStart;
-        }
-    }
 
     void Awake()
     {
@@ -58,32 +43,44 @@ public class ThoughtManager : MonoBehaviour
             Instance = null;
     }
 
+    void OnDisable()
+    {
+        HideImmediately();
+    }
+
+    public void HideImmediately()
+    {
+        if (audioSource != null) audioSource.Stop();
+        if (textCanvas != null) textCanvas.SetActive(false);
+        if (thoughtText != null) thoughtText.text = "";
+    }
+
     // Главная функция, которую мы вызываем из IntroSequence
     // lines - список фраз
     // onComplete - действие, которое выполнится в самом конце (например, выдача квеста)
     public void ShowThoughts(string[] lines, Action onComplete = null, Action onStart = null)
     {
-        if (lines == null || lines.Length == 0)
-        {
-            onComplete?.Invoke();
-            return;
-        }
+        string[] snapshot = lines == null ? Array.Empty<string>() : (string[])lines.Clone();
+        NarrativeDisplayQueue.Enqueue(this, () => DisplaySequence(snapshot, onComplete, onStart));
+    }
 
-        if (_isDisplaying)
-        {
-            _pendingRequests.Enqueue(new ThoughtRequest(lines, onComplete, onStart));
-            return;
-        }
+    public bool TryShowInteractionThoughts(string key, string[] lines, float cooldown = 0.75f)
+    {
+        if (!isActiveAndEnabled || !NarrativeDisplayQueue.CanShowInteractionHint ||
+            lines == null || lines.Length == 0 || string.IsNullOrEmpty(key)) return false;
+        if (_interactionHintCooldowns.TryGetValue(key, out float nextAllowed) &&
+            Time.unscaledTime < nextAllowed) return false;
 
-        StartCoroutine(DisplaySequence(lines, onComplete, onStart));
+        // Optional reactions never accumulate behind story dialogue or quest messages.
+        ShowThoughts(lines, () => _interactionHintCooldowns[key] = Time.unscaledTime + Mathf.Max(0f, cooldown));
+        return true;
     }
 
     private IEnumerator DisplaySequence(string[] lines, Action onComplete, Action onStart)
     {
-        _isDisplaying = true;
         onStart?.Invoke();
 
-        if (textCanvas == null || thoughtText == null)
+        if (lines.Length == 0 || textCanvas == null || thoughtText == null)
         {
             FinishCurrentRequest(onComplete);
             yield break;
@@ -124,7 +121,6 @@ public class ThoughtManager : MonoBehaviour
 
         // Всё закончилось — скрываем UI
         textCanvas.SetActive(false);
-        _isDisplaying = false;
 
         // ВЫПОЛНЯЕМ ДЕЙСТВИЕ, которое передали (например, включение квеста)
         FinishCurrentRequest(onComplete);
@@ -132,14 +128,7 @@ public class ThoughtManager : MonoBehaviour
 
     private void FinishCurrentRequest(Action onComplete)
     {
-        _isDisplaying = false;
         onComplete?.Invoke();
-
-        if (!_isDisplaying && _pendingRequests.Count > 0)
-        {
-            ThoughtRequest next = _pendingRequests.Dequeue();
-            StartCoroutine(DisplaySequence(next.lines, next.onComplete, next.onStart));
-        }
     }
 }
 }

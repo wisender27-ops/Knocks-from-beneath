@@ -119,7 +119,8 @@ public class PlayerDoorOpen : MonoBehaviour
         if (intro == null || door != intro.frontDoor) return;
 
         if (ThoughtManager.Instance != null)
-            ThoughtManager.Instance.ShowThoughts(new string[] { "Чёрт, заперто.", "Сам же перед сном задвинул засов." });
+            ThoughtManager.Instance.TryShowInteractionThoughts("front-door-locked",
+                new[] { "Чёрт, заперто.", "Сам же перед сном задвинул засов." }, 5f);
     }
 }
 }

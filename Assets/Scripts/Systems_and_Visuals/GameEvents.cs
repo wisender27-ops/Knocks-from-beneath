@@ -12,6 +12,11 @@ public static class GameEvents
     // Началась ночь
     public static Action OnNightStarted;
 
+    // Ночь 2: в доме пропало питание.
+    public static Action OnNightTwoStarted;
+    public static Action OnNightTwoAwake;
+    public static Action OnPowerOutageSwitchAttempt;
+
     // Ночь кончилась и снова наступил день (NightOneController). Парный к OnNightStarted:
     // всё, что включается на ночь, должно уметь выключиться обратно.
     public static Action OnDayStarted;

@@ -32,6 +32,16 @@ public class SimpleItem : MonoBehaviour
         _renderers = GetComponentsInChildren<Renderer>(true);
         _colliders = GetComponentsInChildren<Collider>(true);
         _particles = GetComponentsInChildren<ParticleSystem>(true);
+        if (itemType == ItemType.Flashlight)
+        {
+            foreach (ItemGlow glow in GetComponentsInChildren<ItemGlow>(true)) glow.enabled = false;
+            foreach (ParticleSystem particles in _particles)
+            {
+                var main = particles.main;
+                main.playOnAwake = false;
+                particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+            }
+        }
         _rigidbody = GetComponent<Rigidbody>();
 
         _rendererStates = new bool[_renderers.Length];
@@ -77,12 +87,13 @@ public class SimpleItem : MonoBehaviour
     private void SetAvailable(bool available)
     {
         IsAvailable = available;
+        bool visible = available || itemType == ItemType.Flashlight;
 
         for (int i = 0; i < _renderers.Length; i++)
-            _renderers[i].enabled = available && _rendererStates[i];
+            _renderers[i].enabled = visible && _rendererStates[i];
 
         for (int i = 0; i < _colliders.Length; i++)
-            _colliders[i].enabled = available && _colliderStates[i];
+            _colliders[i].enabled = visible && _colliderStates[i];
 
         for (int i = 0; i < _particles.Length; i++)
         {

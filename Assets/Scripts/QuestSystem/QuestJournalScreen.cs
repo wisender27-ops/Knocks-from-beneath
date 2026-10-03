@@ -62,6 +62,7 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
+            if (CornerPeekSequence.IsPlaying) return;
             if (Input.GetKeyDown(toggleKey))
             {
                 if (IsOpen) Close(); else Open();

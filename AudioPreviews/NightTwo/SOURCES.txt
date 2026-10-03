@@ -1,0 +1,7 @@
+Lamp1 | https://freesound.org/people/Swoboman87/sounds/108459/ | http://creativecommons.org/publicdomain/zero/1.0/
+Lamp2 | https://freesound.org/people/PixelProphecy/sounds/497021/ | https://creativecommons.org/licenses/by/4.0/
+Lamp3 | https://freesound.org/people/kyles/sounds/455795/ | http://creativecommons.org/publicdomain/zero/1.0/
+Lamp4 | https://freesound.org/people/el_boss/sounds/643564/ | http://creativecommons.org/publicdomain/zero/1.0/
+Lamp5 | https://freesound.org/people/Cpfcfan10/sounds/617608/ | https://creativecommons.org/licenses/by/4.0/
+Stairs1 | https://freesound.org/people/qubodup/sounds/213956/ | http://creativecommons.org/licenses/by/3.0/
+Stairs2 | https://freesound.org/people/fuzzpapi/sounds/147345/ | http://creativecommons.org/publicdomain/zero/1.0/

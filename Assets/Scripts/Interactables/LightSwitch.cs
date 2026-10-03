@@ -9,6 +9,7 @@ public class LightSwitch : MonoBehaviour
     public Light[] lightsToControl;
     public Renderer[] lampRenderers;
     public bool isOn = true;
+    public bool turnOnAfterNightTwoWake;
 
     [Header("Настройки вентилятора (необязательно)")]
     public Rotator fanRotator;
@@ -24,13 +25,43 @@ public class LightSwitch : MonoBehaviour
     private void OnEnable()
     {
         GameEvents.OnNightStarted += ForceTurnOff;
+        GameEvents.OnNightStarted += ResetPowerGrid;
         GameEvents.OnDayStarted += ForceTurnOn;
+        GameEvents.OnNightTwoStarted += EnableNightTwoPowerTrip;
+        GameEvents.OnNightTwoAwake += TurnOnAfterNightTwoWake;
+        GameEvents.OnDayStarted += ResetPowerGrid;
     }
 
     private void OnDisable()
     {
         GameEvents.OnNightStarted -= ForceTurnOff;
+        GameEvents.OnNightStarted -= ResetPowerGrid;
         GameEvents.OnDayStarted -= ForceTurnOn;
+        GameEvents.OnNightTwoStarted -= EnableNightTwoPowerTrip;
+        GameEvents.OnNightTwoAwake -= TurnOnAfterNightTwoWake;
+        GameEvents.OnDayStarted -= ResetPowerGrid;
+    }
+
+    private static bool _nightTwoPowerTripEnabled;
+    private static bool _powerOutage;
+
+    private void EnableNightTwoPowerTrip()
+    {
+        _nightTwoPowerTripEnabled = true;
+    }
+
+    private void TurnOnAfterNightTwoWake()
+    {
+        if (!turnOnAfterNightTwoWake) return;
+        isOn = true;
+        ApplyLightState();
+    }
+
+    private void ResetPowerGrid()
+    {
+        _nightTwoPowerTripEnabled = false;
+        _powerOutage = false;
+        ApplyLightState();
     }
 
     // Метод, который сработает при наступлении темноты. Форсит ВСЕ выключатели сразу
@@ -46,6 +77,7 @@ public class LightSwitch : MonoBehaviour
 
     public void ForceTurnOn()
     {
+        if (turnOnAfterNightTwoWake) return;
         if (isOn) return;
         isOn = true;
         ApplyLightState();
@@ -71,22 +103,51 @@ public class LightSwitch : MonoBehaviour
     public void ToggleLight()
     {
         isOn = !isOn;
-        ApplyLightState();
+
         Debug.Log($"[LightSwitch] '{name}' toggled -> {(isOn ? "ON" : "OFF")} fanLinked={(fanRotator != null)}");
 
         if (switchSound != null)
         {
             switchSound.Play();
         }
+
+        if (_nightTwoPowerTripEnabled && !_powerOutage)
+            TripHousePower();
+
+        ApplyLightState();
+    }
+
+    private static void TripHousePower()
+    {
+        _powerOutage = true;
+
+        Transform houseRoot = GameObject.Find("Разный мусор")?.transform;
+        if (houseRoot != null)
+        {
+            Transform outdoorLights = houseRoot.Find("Lights outside");
+            foreach (Light lightSource in houseRoot.GetComponentsInChildren<Light>(true))
+            {
+                if (lightSource == null || (outdoorLights != null && lightSource.transform.IsChildOf(outdoorLights))) continue;
+                lightSource.enabled = false;
+            }
+        }
+
+        LightSwitch[] switches = FindObjectsByType<LightSwitch>(FindObjectsSortMode.None);
+        foreach (LightSwitch lightSwitch in switches)
+            if (lightSwitch != null) lightSwitch.ApplyLightState();
+
+        GameEvents.OnPowerOutageSwitchAttempt?.Invoke();
     }
 
     void ApplyLightState()
     {
+        bool effectiveIsOn = isOn && !_powerOutage;
+
         // 1. Управляем источниками света
         if (lightsToControl != null)
         foreach (Light l in lightsToControl)
         {
-            if (l != null) l.enabled = isOn;
+            if (l != null) l.enabled = effectiveIsOn;
         }
 
         // 2. Управляем визуальным свечением материала через MaterialPropertyBlock —
@@ -106,7 +167,7 @@ public class LightSwitch : MonoBehaviour
                     ? _originalEmissionColors[i] : Color.white;
 
                 rend.GetPropertyBlock(_propBlock);
-                _propBlock.SetColor(EmissionColor, isOn ? original : Color.black);
+                _propBlock.SetColor(EmissionColor, effectiveIsOn ? original : Color.black);
                 rend.SetPropertyBlock(_propBlock);
             }
         }
@@ -114,7 +175,7 @@ public class LightSwitch : MonoBehaviour
         // 3. Управляем вентилятором, если он привязан
         if (fanRotator != null)
         {
-            fanRotator.ToggleRotation(isOn);
+            fanRotator.ToggleRotation(effectiveIsOn);
         }
     }
 }

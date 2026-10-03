@@ -41,12 +41,13 @@ public class QuestManager : MonoBehaviour
     private QuestData _lastPresentedQuest;
     private Vector2 _toastOrigin;
     private bool _toastOriginCaptured;
-    private Coroutine _questColorRoutine;
+    private string _lastQueuedText;
     private string _lastActiveQuestTag = null;
 
     void Awake()
     {
         Instance = this;
+        HideToast();
         if (questList == null)
             questList = new List<QuestData>();
     }
@@ -197,8 +198,7 @@ public class QuestManager : MonoBehaviour
         _lastPresentedQuest = quest;
         if (quest == null)
         {
-            HideToast();
-            if (questUiText != null) questUiText.text = "";
+            _lastQueuedText = null;
             return;
         }
 
@@ -209,35 +209,32 @@ public class QuestManager : MonoBehaviour
             _toastOrigin = questUiText.rectTransform.anchoredPosition;
             _toastOriginCaptured = true;
         }
-        questUiText.text = quest.requiredAmount <= 1
+        string text = quest.requiredAmount <= 1
             ? quest.questTitle
             : $"{quest.questTitle} ({Mathf.Max(0, quest.requiredAmount - quest.currentAmount)})";
-        if (!newQuest) return;
-        HideToast();
+        if (!newQuest && text == _lastQueuedText) return;
+        _lastQueuedText = text;
         if (isActiveAndEnabled && Application.isPlaying)
-            _questColorRoutine = StartCoroutine(PlayQuestTextColorTransition());
+            NarrativeDisplayQueue.Enqueue(this, () => PlayQuestTextColorTransition(text));
     }
 
-    void HideToast()
+    public void HideToast()
     {
-        if (_questColorRoutine != null)
-        {
-            StopCoroutine(_questColorRoutine);
-            _questColorRoutine = null;
-        }
         if (questUiText == null) return;
         questUiText.color = baseQuestColor;
         questUiText.alpha = 0f;
         if (_toastOriginCaptured) questUiText.rectTransform.anchoredPosition = _toastOrigin;
     }
 
-    IEnumerator PlayQuestTextColorTransition()
+    IEnumerator PlayQuestTextColorTransition(string text)
     {
+        if (questUiText == null) yield break;
+        questUiText.text = text;
         const float fadeIn = .2f;
         const float hold = 3f;
         const float fadeOut = .45f;
         float elapsed = 0f;
-        while (elapsed < fadeIn + hold + fadeOut)
+        while (isActiveAndEnabled && questUiText != null && elapsed < fadeIn + hold + fadeOut)
         {
             elapsed += Time.deltaTime;
             float colorProgress = Mathf.Clamp01((elapsed - highlightHoldDuration) / Mathf.Max(.01f, fadeToBaseDuration));
@@ -248,9 +245,7 @@ public class QuestManager : MonoBehaviour
             questUiText.rectTransform.anchoredPosition = _toastOrigin + Vector2.up * (12f * exit);
             yield return null;
         }
-        questUiText.alpha = 0f;
-        questUiText.rectTransform.anchoredPosition = _toastOrigin;
-        _questColorRoutine = null;
+        HideToast();
     }
 }
 }

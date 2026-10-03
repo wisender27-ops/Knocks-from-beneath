@@ -45,10 +45,31 @@ namespace KnocksFromBeneath
         private int currentItemIndex;
         private string equippedItemId = string.Empty;
         private Animator crowbarAnim;
+        private ProtagonistBody protagonistBody;
+        private Transform attachedItem;
+        private Transform attachedItemOriginalParent;
+        private Vector3 attachedItemOriginalLocalPosition;
+        private Quaternion attachedItemOriginalLocalRotation;
+        private Vector3 attachedItemOriginalLocalScale;
+        private Quaternion attachedItemOriginalWorldRotation;
 
         public event Action Changed;
         public IReadOnlyList<InventoryEntry> Entries => entries;
         public string EquippedItemId => equippedItemId;
+        public bool HasEquippedItemAttachedToHand => attachedItem != null;
+        public Vector3 EquippedHandTargetPosition
+        {
+            get
+            {
+                if (attachedItem == null) return Vector3.zero;
+                Vector3 target = attachedItemOriginalParent != null
+                    ? attachedItemOriginalParent.TransformPoint(attachedItemOriginalLocalPosition)
+                    : attachedItem.position;
+                if (attachedItem == flashlightInHand?.transform)
+                    target += attachedItemOriginalWorldRotation * new Vector3(0f, -0.015f, 0.07f);
+                return target;
+            }
+        }
 
         public bool HasItem(string id)
         {
@@ -60,6 +81,10 @@ namespace KnocksFromBeneath
 
         private void Start()
         {
+            FlashlightScreenAim aim = GetComponent<FlashlightScreenAim>();
+            if (aim == null) aim = gameObject.AddComponent<FlashlightScreenAim>();
+            aim.Initialize(flashlightLightSource, GetComponentInChildren<Camera>());
+            protagonistBody = GetComponentInChildren<ProtagonistBody>(true);
             if (crowbarInHand != null) crowbarAnim = crowbarInHand.GetComponent<Animator>();
             if (physicalPickup == null) physicalPickup = GetComponentInParent<PickupController>();
             SetHeldObjectsInactive();
@@ -167,10 +192,36 @@ namespace KnocksFromBeneath
 
         public void ActivateItem(string itemName)
         {
+            RestoreEquippedItemToAnchor();
             SetHeldObjectsInactive();
-            if (itemName == "Crowbar" && hasCrowbar && crowbarInHand != null) crowbarInHand.SetActive(true);
-            else if (itemName == "Flashlight" && hasFlashlight && flashlightInHand != null) flashlightInHand.SetActive(true);
-            else if (itemName == "Hammer" && hasHammer && hammerInHand != null) hammerInHand.SetActive(true);
+            GameObject item = itemName == "Crowbar" && hasCrowbar ? crowbarInHand
+                : itemName == "Flashlight" && hasFlashlight ? flashlightInHand
+                : itemName == "Hammer" && hasHammer ? hammerInHand
+                : null;
+            if (item == null) return;
+
+            item.SetActive(true);
+            Transform hand = protagonistBody != null ? protagonistBody.RightHand : null;
+            if (hand == null) return;
+
+            attachedItem = item.transform;
+            attachedItemOriginalParent = attachedItem.parent;
+            attachedItemOriginalLocalPosition = attachedItem.localPosition;
+            attachedItemOriginalLocalRotation = attachedItem.localRotation;
+            attachedItemOriginalLocalScale = attachedItem.localScale;
+            attachedItemOriginalWorldRotation = attachedItem.rotation;
+            attachedItem.SetParent(hand, true);
+        }
+
+        private void RestoreEquippedItemToAnchor()
+        {
+            if (attachedItem == null) return;
+            attachedItem.SetParent(attachedItemOriginalParent, false);
+            attachedItem.localPosition = attachedItemOriginalLocalPosition;
+            attachedItem.localRotation = attachedItemOriginalLocalRotation;
+            attachedItem.localScale = attachedItemOriginalLocalScale;
+            attachedItem = null;
+            attachedItemOriginalParent = null;
         }
 
         private void SwitchToSlot(int slotIndex)

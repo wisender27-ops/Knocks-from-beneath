@@ -6,6 +6,10 @@ namespace KnocksFromBeneath
 
 public class Door : MonoBehaviour
 {
+    public event System.Action LockedAttempted;
+    public event System.Action Opened;
+    private bool _openingNotified;
+    private bool _detached;
     public enum RotationAxis
     {
         X,
@@ -58,6 +62,7 @@ public class Door : MonoBehaviour
         get => _isOpen;
         set
         {
+            if (_detached) return;
             if (_isOpen == value) return; // Если значение не изменилось — ничего не делаем
             _isOpen = value;
 
@@ -233,6 +238,12 @@ public class Door : MonoBehaviour
         // Но лучше оставить управление за пользователем через свойство выше.
         // Чтобы галочка в инспекторе сама не "прыгала", пока ты тянешь дверь:
         if (isBeingHeld) _isOpen = Mathf.Abs(currentOffset) > 5f;
+        if (!_isRattling && Mathf.Abs(currentOffset) > 5f && !_openingNotified)
+        {
+            _openingNotified = true;
+            Opened?.Invoke();
+        }
+        if (!_isRattling && Mathf.Abs(currentOffset) < 0.5f) _openingNotified = false;
     }
 
     // Это позволит видеть изменения в инспекторе Unity в реальном времени
@@ -320,18 +331,104 @@ public class Door : MonoBehaviour
 
     public void CloseDoor()
     {
+        if (_detached) return;
         currentOffset = 0f;
         _isOpen = false;
     }
 
     public void OpenDoor()
     {
+        if (_detached) return;
         currentOffset = angleRotation;
         _isOpen = true;
     }
 
+    public void BurstOpen()
+    {
+        if (_detached) return;
+        SetInteractionLocked(false);
+        isBeingHeld = false;
+        _suppressCreak = true;
+        if (sfxSource != null) sfxSource.Stop();
+        StartCoroutine(BurstOpenRoutine());
+    }
+
+    public void BreakOffHinges(Vector3 outward, AudioClip breakClip, AudioClip landingClip)
+    {
+        if (_detached) return;
+        _detached = true;
+        StopAllCoroutines();
+        isBeingHeld = false;
+        interactionLocked = false;
+        _isOpen = true;
+        _openingNotified = true;
+        _suppressCreak = true;
+        if (sfxSource != null) sfxSource.Stop();
+        enabled = false;
+
+        transform.SetParent(null, true);
+        foreach (Collider existing in GetComponentsInChildren<Collider>(true))
+            existing.enabled = false;
+
+        BoxCollider leafCollider = gameObject.AddComponent<BoxCollider>();
+        MeshFilter mesh = GetComponent<MeshFilter>();
+        if (mesh != null && mesh.sharedMesh != null)
+        {
+            leafCollider.center = mesh.sharedMesh.bounds.center;
+            leafCollider.size = mesh.sharedMesh.bounds.size;
+        }
+        else
+        {
+            // Renderer bounds are in world space; transform all corners for a rotated leaf.
+            Renderer leafRenderer = GetComponentInChildren<Renderer>();
+            if (leafRenderer != null)
+            {
+                Bounds world = leafRenderer.bounds;
+                Bounds local = new Bounds(transform.InverseTransformPoint(world.center), Vector3.zero);
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 corner = world.center + Vector3.Scale(world.extents,
+                        new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                    local.Encapsulate(transform.InverseTransformPoint(corner));
+                }
+                leafCollider.center = local.center;
+                leafCollider.size = local.size;
+            }
+        }
+        leafCollider.isTrigger = false;
+        Rigidbody body = GetComponent<Rigidbody>();
+        if (body == null) body = gameObject.AddComponent<Rigidbody>();
+        body.isKinematic = true;
+        body.useGravity = true;
+        body.mass = 25f;
+        body.constraints = RigidbodyConstraints.None;
+        body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        body.interpolation = RigidbodyInterpolation.Interpolate;
+        leafCollider.enabled = false;
+        DetachedDoorImpact impact = gameObject.AddComponent<DetachedDoorImpact>();
+        impact.Initialize(breakClip, landingClip, detachedLandingCenter, Quaternion.Euler(detachedLandingEuler),
+            leafCollider, body);
+    }
+
+    [Header("Постановочное выбивание двери")]
+    [SerializeField] private Vector3 detachedLandingCenter = new Vector3(-39.27f, 0.36f, 121.3f);
+    [SerializeField] private Vector3 detachedLandingEuler = new Vector3(0f, 18f, 0f);
+
+    private IEnumerator BurstOpenRoutine()
+    {
+        float previousSpeed = automaticOpenSpeed;
+        automaticOpenSpeed = 28f;
+        OpenDoor();
+        yield return new WaitForSeconds(0.35f);
+        automaticOpenSpeed = previousSpeed;
+        smoothDoorVelocity = 0f;
+        _suppressCreak = false;
+    }
+
     public void ToggleDoor()
     {
+        if (_detached) return;
+        if (interactionLocked) { PlayLockedFeedback(); return; }
         isOpen = !isOpen; // Используем свойство
     }
 
@@ -411,6 +508,7 @@ public class Door : MonoBehaviour
 
     public void SetInteractionLocked(bool isLocked)
     {
+        if (_detached) return;
         interactionLocked = isLocked;
         if (interactionLocked)
         {
@@ -421,6 +519,7 @@ public class Door : MonoBehaviour
 
     public void StartHolding()
     {
+        if (_detached) return;
         if (interactionLocked) return;
         isBeingHeld = true;
     }
@@ -436,6 +535,7 @@ public class Door : MonoBehaviour
     public void PlayLockedFeedback()
     {
         if (!interactionLocked) return;
+        LockedAttempted?.Invoke();
         if (sfxSource != null && lockedRattleClip != null)
             sfxSource.PlayOneShot(lockedRattleClip);
 

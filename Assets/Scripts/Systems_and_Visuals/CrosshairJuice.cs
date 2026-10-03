@@ -26,6 +26,24 @@ public class CrosshairJuice : MonoBehaviour
     private string _targetHint = "";
     private IntroSequence _intro;
 
+    void OnEnable()
+    {
+        NarrativeDisplayQueue.InteractionHintAvailabilityChanged += OnHintAvailabilityChanged;
+        OnHintAvailabilityChanged(NarrativeDisplayQueue.CanShowInteractionHint);
+    }
+
+    void OnDisable()
+    {
+        NarrativeDisplayQueue.InteractionHintAvailabilityChanged -= OnHintAvailabilityChanged;
+        if (hintText != null) hintText.text = "";
+    }
+
+    private void OnHintAvailabilityChanged(bool available)
+    {
+        // Hide immediately, even when a monologue starts after this frame's HUD Update.
+        if (!available && hintText != null) hintText.text = "";
+    }
+
     void Start()
     {
         _targetScale = Vector3.one * defaultScale;
@@ -292,6 +310,9 @@ public class CrosshairJuice : MonoBehaviour
 
     void ApplyJuice()
     {
+        if (hintText != null)
+            hintText.text = NarrativeDisplayQueue.CanShowInteractionHint ? _targetHint : "";
+
         if (cursorImage == null)
             return;
 
@@ -300,9 +321,6 @@ public class CrosshairJuice : MonoBehaviour
         cursorImage.color = Color.Lerp(
             cursorImage.color, _targetColor, Time.deltaTime * scaleSpeed);
 
-        // Текст подсказки
-        if (hintText != null)
-            hintText.text = _targetHint;
     }
 }
 }
