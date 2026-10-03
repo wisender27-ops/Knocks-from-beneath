@@ -728,6 +728,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &27300884
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -4096,6 +4098,7 @@ MonoBehaviour:
   lightsToControl: []
   lampRenderers: []
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 1715147204}
   switchSound: {fileID: 178050407}
 --- !u!65 &178050409
@@ -4979,6 +4982,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 3488350151703088717}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 207573809}
 --- !u!65 &207573811
@@ -5299,7 +5303,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2127076965}
+  - {fileID: 742693602}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6281,6 +6285,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 276576039}
   m_Mesh: {fileID: 5169198934608203653, guid: 24031b3214b03cc4ab8acdc5750b00a4, type: 3}
+--- !u!21 &277304179
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Unlit/Color
+  m_Shader: {fileID: 10755, guid: 0000000000000000f000000000000000, type: 0}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats: []
+    m_Colors:
+    - _Color: {r: 0.35, g: 0.85, b: 1, a: 0.22}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &280158369
 GameObject:
   m_ObjectHideFlags: 0
@@ -6597,6 +6630,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 6288864390735878597}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 288242645}
 --- !u!65 &288242647
@@ -7222,6 +7256,8 @@ MonoBehaviour:
   displayName: "\u043F\u0440\u0435\u0434\u043C\u0435\u0442"
   destinationHint: 
   scatteredPose: {fileID: 0}
+  primaryHandGrip: {fileID: 0}
+  secondaryHandGrip: {fileID: 0}
 --- !u!114 &340425755
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -10051,7 +10087,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 1250856927}
+  - {fileID: 277304179}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -10216,6 +10252,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 1140560529634194363}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 476870170}
 --- !u!65 &476870172
@@ -10857,6 +10894,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 4329397099235309860}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 507401605}
 --- !u!65 &507401607
@@ -12953,11 +12991,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -42.597
+      value: -47.268
       objectReference: {fileID: 0}
     - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -0.114
+      value: 0.87
       objectReference: {fileID: 0}
     - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
       propertyPath: m_LocalPosition.z
@@ -13463,15 +13501,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c1a3ce055579f2478689d6f931271c3, type: 3}
       propertyPath: m_LocalPosition.x
-      value: -0.2543335
+      value: 2.744
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c1a3ce055579f2478689d6f931271c3, type: 3}
       propertyPath: m_LocalPosition.y
-      value: 0.9594799
+      value: 4.233
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c1a3ce055579f2478689d6f931271c3, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 2.053955
+      value: 5.199
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: 1c1a3ce055579f2478689d6f931271c3, type: 3}
       propertyPath: m_LocalRotation.w
@@ -13555,7 +13593,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 636986142}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 1438245718}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -14396,6 +14434,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 672920738}
   m_Mesh: {fileID: -915864327268288270, guid: 24031b3214b03cc4ab8acdc5750b00a4, type: 3}
+--- !u!21 &679145277
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Unlit/Color
+  m_Shader: {fileID: 10755, guid: 0000000000000000f000000000000000, type: 0}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats: []
+    m_Colors:
+    - _Color: {r: 0.35, g: 0.85, b: 1, a: 0.22}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!43 &679935168
 Mesh:
   m_ObjectHideFlags: 0
@@ -16039,6 +16106,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 8890223151586085607}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 732462366}
 --- !u!65 &732462365
@@ -16164,6 +16232,35 @@ Transform:
   m_CorrespondingSourceObject: {fileID: -8679921383154817045, guid: 2a67684986f42914aa9361ae5fd1ed85, type: 3}
   m_PrefabInstance: {fileID: 1259459091}
   m_PrefabAsset: {fileID: 0}
+--- !u!21 &742693602
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Unlit/Color
+  m_Shader: {fileID: 10755, guid: 0000000000000000f000000000000000, type: 0}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats: []
+    m_Colors:
+    - _Color: {r: 0.35, g: 0.85, b: 1, a: 0.22}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1 &745308778
 GameObject:
   m_ObjectHideFlags: 0
@@ -16314,6 +16411,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 5083787342080436327}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 745308780}
 --- !u!65 &745308782
@@ -26993,6 +27091,8 @@ MonoBehaviour:
   displayName: "\u043F\u0440\u0435\u0434\u043C\u0435\u0442"
   destinationHint: 
   scatteredPose: {fileID: 0}
+  primaryHandGrip: {fileID: 0}
+  secondaryHandGrip: {fileID: 0}
 --- !u!114 &773914193
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -27726,6 +27826,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 4203011615687203035}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 784636210}
 --- !u!65 &784636212
@@ -41283,6 +41384,7 @@ MonoBehaviour:
   - {fileID: 4120452405117148782}
   - {fileID: 6283938490412877135}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 930307851}
 --- !u!65 &930307853
@@ -41789,6 +41891,7 @@ MonoBehaviour:
   - {fileID: 1316438596683075}
   - {fileID: 4045155598089784140}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 947878753}
 --- !u!65 &947878752
@@ -43396,6 +43499,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 6481410201993538551}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 1018105473}
 --- !u!65 &1018105472
@@ -49171,6 +49275,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!23 &1049615085
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -52025,35 +52131,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1162800116}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!21 &1163377323
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Unlit/Color
-  m_Shader: {fileID: 10755, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs: []
-    m_Ints: []
-    m_Floats: []
-    m_Colors:
-    - _Color: {r: 0.35, g: 0.85, b: 1, a: 0.22}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &1163611938
 GameObject:
   m_ObjectHideFlags: 0
@@ -58822,35 +58899,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1247928376}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!21 &1250856927
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Unlit/Color
-  m_Shader: {fileID: 10755, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs: []
-    m_Ints: []
-    m_Floats: []
-    m_Colors:
-    - _Color: {r: 0.35, g: 0.85, b: 1, a: 0.22}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1001 &1259459091
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -60562,7 +60610,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IntroSequence
   useDebugSkip: 1
-  startStage: 20
+  startStage: 4
   playerTransform: {fileID: 7074124332312789236}
   playerInventory: {fileID: 6977330415233415940}
   skySwitcher: {fileID: 1354149399}
@@ -60570,6 +60618,8 @@ MonoBehaviour:
   nightTrigger: {fileID: 1239044495}
   nightSpawnPosition: {x: -43.6446, y: 4.1584897, z: 107.86489}
   nightSpawnRotation: {x: 0, y: 90, z: 0}
+  nightTwoBedSpawnPosition: {x: -43, y: 4.16, z: 118.6}
+  nightTwoSpawnRotation: {x: 0, y: 140, z: 0}
   trashZone: {fileID: 8033556}
   roomZones:
   - {fileID: 525039383}
@@ -61416,6 +61466,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 7152388442901534330}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 1314181016}
 --- !u!65 &1314181018
@@ -61551,7 +61602,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a965e11c158867a4e853ef60bc5ee52e, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 2.765
+      value: 2.849
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a965e11c158867a4e853ef60bc5ee52e, type: 3}
       propertyPath: m_LocalPosition.y
@@ -61559,7 +61610,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a965e11c158867a4e853ef60bc5ee52e, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 4.479
+      value: 4.347
       objectReference: {fileID: 0}
     - target: {fileID: -8679921383154817045, guid: a965e11c158867a4e853ef60bc5ee52e, type: 3}
       propertyPath: m_LocalRotation.w
@@ -62719,6 +62770,7 @@ MonoBehaviour:
   - {fileID: 7208562969671624438}
   - {fileID: 8063122393651513859}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 1356300791}
 --- !u!65 &1356300790
@@ -63778,6 +63830,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 4583916535727840995}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 1405073019}
 --- !u!65 &1405073018
@@ -64265,6 +64318,19 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1433937670}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!134 &1438245718
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!1 &1440785549
 GameObject:
   m_ObjectHideFlags: 0
@@ -64963,7 +65029,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 1163377323}
+  - {fileID: 679145277}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -65461,6 +65527,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 4244514063509654306}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 1484029754}
 --- !u!65 &1484029756
@@ -69699,6 +69766,8 @@ MonoBehaviour:
   displayName: "\u043F\u0440\u0435\u0434\u043C\u0435\u0442"
   destinationHint: 
   scatteredPose: {fileID: 0}
+  primaryHandGrip: {fileID: 0}
+  secondaryHandGrip: {fileID: 0}
 --- !u!114 &1603163754
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -83806,35 +83875,6 @@ Transform:
   - {fileID: 2142845272}
   m_Father: {fileID: 286274491}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!21 &2127076965
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Unlit/Color
-  m_Shader: {fileID: 10755, guid: 0000000000000000f000000000000000, type: 0}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs: []
-    m_Ints: []
-    m_Floats: []
-    m_Colors:
-    - _Color: {r: 0.35, g: 0.85, b: 1, a: 0.22}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &2128008261
 GameObject:
   m_ObjectHideFlags: 0
@@ -84562,6 +84602,19 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2142845271}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!134 &2142893131
+PhysicsMaterial:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: 
+  serializedVersion: 2
+  m_DynamicFriction: 0.6
+  m_StaticFriction: 0.6
+  m_Bounciness: 0
+  m_FrictionCombine: 0
+  m_BounceCombine: 0
 --- !u!1 &1044343860091688
 GameObject:
   m_ObjectHideFlags: 0
@@ -87825,7 +87878,7 @@ Transform:
   m_GameObject: {fileID: 9203712807774155768}
   serializedVersion: 2
   m_LocalRotation: {x: -0.6259857, y: -0.32884946, z: -0.32884955, w: 0.62598556}
-  m_LocalPosition: {x: -3.761497, y: 4.6990676, z: -2.4415002}
+  m_LocalPosition: {x: -3.753, y: 4.6990676, z: -2.503}
   m_LocalScale: {x: 28.979332, y: 28.979332, z: 28.979332}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -93120,6 +93173,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!4 &916094634192241357
 Transform:
   m_ObjectHideFlags: 0
@@ -123351,6 +123406,8 @@ MonoBehaviour:
   destinationHint: "\u0412\u0435\u0440\u043D\u0438\u0442\u0435 \u043A\u0440\u0443\u0436\u043A\u0443
     \u043A \u043A\u043E\u0444\u0435\u0432\u0430\u0440\u043A\u0435"
   scatteredPose: {fileID: 526326940}
+  primaryHandGrip: {fileID: 0}
+  secondaryHandGrip: {fileID: 0}
 --- !u!4 &4257779377523448533
 Transform:
   m_ObjectHideFlags: 0
@@ -135497,6 +135554,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &5696299203813715296
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -136711,6 +136770,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!82 &5831933271741327453
 AudioSource:
   m_ObjectHideFlags: 0
@@ -139977,6 +140038,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &6176780796768861066
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -142604,13 +142667,13 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 7726796111515308920}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.6192735, y: -0.34132156, z: -0.3413216, w: 0.6192734}
-  m_LocalPosition: {x: -3.627093, y: 4.6007113, z: -3.3290515}
+  m_LocalRotation: {x: -0.69456345, y: 0.1325957, z: 0.1325957, w: 0.69456345}
+  m_LocalPosition: {x: -3.558, y: 4.6007113, z: -4.12}
   m_LocalScale: {x: 100, y: 100, z: 100}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 543450651638328036}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: -90, y: 79.34, z: -57.724}
 --- !u!4 &6507414775217364418
 Transform:
   m_ObjectHideFlags: 0
@@ -143267,6 +143330,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &6560339198073330695
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -143712,6 +143777,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &6591590296106035188
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -149120,7 +149187,7 @@ BoxCollider:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1413307267978372860}
-  m_Material: {fileID: 0}
+  m_Material: {fileID: 2142893131}
   m_IncludeLayers:
     serializedVersion: 2
     m_Bits: 0
@@ -150272,6 +150339,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!82 &7222206742911158773
 AudioSource:
   m_ObjectHideFlags: 0
@@ -152465,6 +152534,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!82 &7455745085458782361
 AudioSource:
   m_ObjectHideFlags: 0
@@ -154493,6 +154564,8 @@ MonoBehaviour:
   destinationHint: "\u0412\u0435\u0440\u043D\u0438\u0442\u0435 \u0441\u043A\u043E\u0432\u043E\u0440\u043E\u0434\u0443
     \u043D\u0430 \u043F\u043B\u0438\u0442\u0443"
   scatteredPose: {fileID: 1804600932}
+  primaryHandGrip: {fileID: 0}
+  secondaryHandGrip: {fileID: 0}
 --- !u!1 &7667841137833972138
 GameObject:
   m_ObjectHideFlags: 0
@@ -158134,6 +158207,8 @@ MonoBehaviour:
   destinationHint: "\u0412\u0435\u0440\u043D\u0438\u0442\u0435 \u043A\u0440\u044B\u0448\u043A\u0443
     \u043D\u0430 \u043A\u0430\u0441\u0442\u0440\u044E\u043B\u044E"
   scatteredPose: {fileID: 1581304200}
+  primaryHandGrip: {fileID: 0}
+  secondaryHandGrip: {fileID: 0}
 --- !u!23 &8063122393651513859
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -158976,6 +159051,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!82 &8146849547124944294
 AudioSource:
   m_ObjectHideFlags: 0
@@ -162928,6 +163005,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &8585057639115902841
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -164045,6 +164124,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!82 &8719936586397271447
 AudioSource:
   m_ObjectHideFlags: 0
@@ -164599,6 +164680,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &8747176889132289512
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -166248,6 +166331,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &8918280150008172501
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -168068,6 +168153,8 @@ MonoBehaviour:
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!82 &9132277117663369900
 AudioSource:
   m_ObjectHideFlags: 0
