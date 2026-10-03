@@ -15,6 +15,11 @@ public class PickableItem : MonoBehaviour
     public string displayName = "предмет";
     public string destinationHint;
     public Transform scatteredPose;
+
+    [Header("Хват при переноске")]
+    [Tooltip("Необязательные центры ладоней: +Z внутрь поверхности, +Y вдоль пальцев. Без точек хват вычисляется по коллайдерам любого предмета.")]
+    public Transform primaryHandGrip;
+    public Transform secondaryHandGrip;
     private bool _preparedForQuest;
 
     public void PrepareForPlacementQuest()

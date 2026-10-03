@@ -2,6 +2,7 @@
   "name": "KnocksFromBeneath.Runtime",
   "rootNamespace": "",
   "references": [
+    "Unity.Animation.Rigging",
     "Unity.TextMeshPro",
     "RetroPSX.Runtime"
   ],

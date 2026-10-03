@@ -49,6 +49,12 @@ public class PlayerController : MonoBehaviour
         ? Vector3.ProjectOnPlane(controller.velocity, Vector3.up) : Vector3.zero;
     public bool IsCrouching => isCrouching;
     public bool IsRunning => wasRunningLastFrame;
+    public void StopMotion()
+    {
+        horizontalVelocity = Vector3.zero;
+        verticalVelocity = 0f;
+        wasRunningLastFrame = false;
+    }
     private Vector3 horizontalVelocity;
     private readonly Collider[] ceilingOverlaps = new Collider[16];
 

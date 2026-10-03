@@ -1145,6 +1145,7 @@ MonoBehaviour:
   leftSoleNormal: {x: -0.31373867, y: -0.35052723, z: -0.88243914}
   rightSoleNormal: {x: 0.31373867, y: -0.35052723, z: -0.88243914}
   rightWristBoneOffset: {x: -0.72729, y: -0.0865008, z: -0.6802464, w: -0.02883617}
+  firstPersonArmsMesh: {fileID: 4300000, guid: 4d9621f6eb265e34c984efaebfc40081, type: 2}
 --- !u!205 &2017762945998106933
 LODGroup:
   m_ObjectHideFlags: 0

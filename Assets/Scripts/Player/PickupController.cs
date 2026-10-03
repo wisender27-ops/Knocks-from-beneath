@@ -39,6 +39,14 @@ public class PickupController : MonoBehaviour
     private GameObject _heldObj;
     private Rigidbody _heldObjRb;
     private PickableItem _heldItemScript;
+    private Transform handSocket;
+    private bool _heldObjectAttachedToHand;
+    private bool _heldObjectUsesTwoHandGrip;
+    private Vector3 _primaryGripLocalPosition;
+    private Vector3 _secondaryGripLocalPosition;
+    private Quaternion _primaryGripLocalRotation, _secondaryGripLocalRotation;
+    private Vector3 _carryCenterLocal;
+    private float _carryDepth;
     private int _originalLayer;
     private Quaternion _heldRotationOffset = Quaternion.identity;
     private float _defaultFov;
@@ -63,6 +71,8 @@ public class PickupController : MonoBehaviour
 
     void Start()
     {
+        ProtagonistBody body = GetComponentInChildren<ProtagonistBody>();
+        handSocket = body != null ? body.RightHand : null;
         if (playerCamera != null)
         {
             _defaultFov = playerCamera.fieldOfView;
@@ -192,6 +202,19 @@ public class PickupController : MonoBehaviour
         return _heldObj;
     }
 
+    public bool IsHeldObjectAttachedToHand => _heldObjectAttachedToHand && _heldObj != null;
+    public bool IsHeldObjectTwoHanded => _heldObjectUsesTwoHandGrip && _heldObj != null;
+    public Vector3 PrimaryHandGripTarget => _heldObj != null
+        ? _heldObj.transform.TransformPoint(_primaryGripLocalPosition) : Vector3.zero;
+    public Vector3 SecondaryHandGripTarget => _heldObj != null
+        ? _heldObj.transform.TransformPoint(_secondaryGripLocalPosition)
+        : Vector3.zero;
+    public Quaternion HeldHandRotationTarget => PrimaryGripRotation;
+    public Quaternion PrimaryGripRotation => _heldObj != null
+        ? _heldObj.transform.rotation * _primaryGripLocalRotation : Quaternion.identity;
+    public Quaternion SecondaryGripRotation => _heldObj != null
+        ? _heldObj.transform.rotation * _secondaryGripLocalRotation : Quaternion.identity;
+
     public bool TryGrab(GameObject obj)
     {
         if (obj == null || _heldObj != null || holdPoint == null) return false;
@@ -204,6 +227,7 @@ public class PickupController : MonoBehaviour
     void GrabPhysicsObject(GameObject obj)
     {
         _heldObj = obj;
+        _heldObjectAttachedToHand = false;
         _heldObjRb = obj.GetComponent<Rigidbody>();
         if (_heldObjRb == null)
         {
@@ -213,6 +237,9 @@ public class PickupController : MonoBehaviour
 
         _heldItemScript = obj.GetComponent<PickableItem>();
         CollectableItem collectable = obj.GetComponent<CollectableItem>();
+        PieQuestItem pie = obj.GetComponent<PieQuestItem>();
+        _heldPieView = pie != null && pie.isHeated ? pie : null;
+        CacheHandGripPoints(obj, _heldItemScript);
 
         _heldKitchenItem = _heldItemScript != null && _heldItemScript.placementQuestTag == "room-decoration";
         if (_heldKitchenItem)
@@ -229,8 +256,6 @@ public class PickupController : MonoBehaviour
             }
         }
 
-        PieQuestItem pie = obj.GetComponent<PieQuestItem>();
-        _heldPieView = pie != null && pie.isHeated ? pie : null;
         if (_heldPieView != null)
         {
             Transform pieViewAnchor = playerCamera != null ? playerCamera.transform : holdPoint;
@@ -243,11 +268,20 @@ public class PickupController : MonoBehaviour
             obj.transform.SetParent(pieViewAnchor, false);
             obj.transform.localScale = DivideScale(_pieOriginalWorldScale * _heldPieView.heldScale, pieViewAnchor.lossyScale);
             _heldPieView.AttachToView(pieViewAnchor);
+            for (int i = 0; i < _pieColliders.Length; i++)
+                if (_pieColliders[i] != null) _pieColliders[i].enabled = _pieColliderStates[i];
+            Physics.SyncTransforms();
+            CacheHandGripPoints(obj, _heldItemScript);
+            for (int i = 0; i < _pieColliders.Length; i++)
+                if (_pieColliders[i] != null) _pieColliders[i].enabled = false;
         }
 
         TrySetupQuestPlacementZones(collectable);
 
-        _heldRotationOffset = Quaternion.Inverse(holdPoint.rotation) * obj.transform.rotation;
+        Vector3 horizontalForward = Vector3.ProjectOnPlane(holdPoint.forward, Vector3.up);
+        Quaternion pickupFrame = horizontalForward.sqrMagnitude > .0001f
+            ? Quaternion.LookRotation(horizontalForward, Vector3.up) : holdPoint.rotation;
+        _heldRotationOffset = Quaternion.Inverse(pickupFrame) * obj.transform.rotation;
 
         _originalLayer = _heldObj.layer;
         int heldLayer = LayerMask.NameToLayer("HeldItem");
@@ -469,6 +503,7 @@ public class PickupController : MonoBehaviour
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
+        _heldObjectAttachedToHand = false;
         _heldPieView = null;
         _heldRotationOffset = Quaternion.identity;
     }
@@ -481,6 +516,7 @@ public class PickupController : MonoBehaviour
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
+        _heldObjectAttachedToHand = false;
         _heldPieView = null;
         _pieColliders = null;
         _pieColliderStates = null;
@@ -488,28 +524,140 @@ public class PickupController : MonoBehaviour
 
     void MovePhysicsObject()
     {
-        if (_heldPieView != null) return;
+        if (_heldPieView != null || _heldObjectAttachedToHand) return;
+        Quaternion targetRotation = holdPoint.rotation * _heldRotationOffset;
+        Vector3 targetPos = GetHeldRootTargetPosition(targetRotation);
         if (_heldKitchenItem)
         {
             float t = Mathf.Clamp01(Time.fixedDeltaTime * followSpeed);
-            _heldObjRb.MovePosition(Vector3.Lerp(_heldObjRb.position, holdPoint.position, t));
-            _heldObjRb.MoveRotation(Quaternion.Slerp(_heldObjRb.rotation, holdPoint.rotation * _heldRotationOffset, t));
+            _heldObjRb.MovePosition(Vector3.Lerp(_heldObjRb.position, targetPos, t));
+            _heldObjRb.MoveRotation(Quaternion.Slerp(_heldObjRb.rotation, targetRotation, t));
             return;
         }
-        Vector3 targetPos = holdPoint.position;
-        Vector3 currentPos = _heldObj.transform.position;
+        Vector3 currentPos = _heldObjRb.position;
 
         Vector3 directionToTarget = targetPos - currentPos;
         float distance = directionToTarget.magnitude;
 
+
         _heldObjRb.linearVelocity = directionToTarget * followSpeed;
-        Quaternion targetRotation = holdPoint.rotation * _heldRotationOffset;
         _heldObjRb.MoveRotation(
             Quaternion.Slerp(_heldObj.transform.rotation, targetRotation, Time.fixedDeltaTime * followSpeed)
         );
 
         if (distance > maxHoldDistance)
             DropObject();
+    }
+
+    private Vector3 GetHeldRootTargetPosition(Quaternion targetRotation)
+    {
+        if (!_heldObjectUsesTwoHandGrip || playerCamera == null) return holdPoint.position;
+        Vector3 center = playerCamera.transform.TransformPoint(new Vector3(0f, -0.16f, 0.30f + _carryDepth));
+        return center - targetRotation * Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
+    }
+
+    private void CacheHandGripPoints(GameObject item, PickableItem pickable)
+    {
+        _heldObjectUsesTwoHandGrip = false;
+        _primaryGripLocalPosition = Vector3.zero;
+        _secondaryGripLocalPosition = Vector3.zero;
+        _carryCenterLocal = Vector3.zero;
+        Transform frame = playerCamera != null ? playerCamera.transform : holdPoint;
+        bool viewPose = _heldPieView != null && item.transform.parent == frame;
+        Vector3 up = viewPose ? frame.up : Vector3.up;
+        Vector3 forward = viewPose ? frame.forward : Vector3.ProjectOnPlane(frame.forward, Vector3.up).normalized;
+        if (forward.sqrMagnitude < .0001f) forward = transform.forward;
+        Vector3 right = Vector3.Cross(up, forward).normalized;
+        Transform root = item.transform;
+        Collider[] colliders = item.GetComponentsInChildren<Collider>();
+        Bounds bounds = new Bounds(root.position, Vector3.zero);
+        bool found = false;
+        foreach (Collider c in colliders)
+        {
+            if (!c.enabled || c.isTrigger || c.attachedRigidbody != _heldObjRb) continue;
+            if (!found) { bounds = c.bounds; found = true; }
+            else bounds.Encapsulate(c.bounds);
+        }
+        if (!found && TryGetItemLocalBounds(item, out Bounds localBounds))
+            bounds = new Bounds(root.TransformPoint(localBounds.center), Vector3.Scale(localBounds.size, root.lossyScale));
+        _carryCenterLocal = root.InverseTransformPoint(bounds.center);
+        _carryDepth = Vector3.Dot(bounds.extents, new Vector3(Mathf.Abs(forward.x), Mathf.Abs(forward.y), Mathf.Abs(forward.z)));
+        float radius = Mathf.Max(0.1f, bounds.extents.magnitude);
+        Vector3 rightQuery = bounds.center + right * radius * 2f - forward * radius * .35f;
+        Vector3 leftQuery = bounds.center - right * radius * 2f - forward * radius * .35f;
+        CacheGrip(root, colliders, pickable != null ? pickable.primaryHandGrip : null,
+            rightQuery, -right, up, out _primaryGripLocalPosition, out _primaryGripLocalRotation);
+        CacheGrip(root, colliders, pickable != null ? pickable.secondaryHandGrip : null,
+            leftQuery, right, up, out _secondaryGripLocalPosition, out _secondaryGripLocalRotation);
+        _heldObjectUsesTwoHandGrip = true;
+    }
+
+    private void CacheGrip(Transform root, Collider[] colliders, Transform authored, Vector3 query,
+        Vector3 inward, Vector3 up, out Vector3 position, out Quaternion rotation)
+    {
+        if (authored != null)
+        {
+            position = root.InverseTransformPoint(authored.position);
+            rotation = Quaternion.Inverse(root.rotation) * authored.rotation;
+            return;
+        }
+        Vector3 contact = root.TransformPoint(_carryCenterLocal);
+        float nearest = float.PositiveInfinity;
+        foreach (Collider c in colliders)
+        {
+            if (!c.enabled || c.isTrigger || c.attachedRigidbody != _heldObjRb) continue;
+            Vector3 candidate;
+            // ClosestPoint поддерживает примитивы и convex MeshCollider; для concave используем Raycast.
+            if (c is MeshCollider mesh && !mesh.convex)
+            {
+                Vector3 direction = c.bounds.center - query;
+                if (!c.Raycast(new Ray(query, direction.normalized), out RaycastHit hit, direction.magnitude * 2f)) continue;
+                candidate = hit.point;
+            }
+            else candidate = c.ClosestPoint(query);
+            float distance = (candidate - query).sqrMagnitude;
+            if (distance >= nearest) continue;
+            nearest = distance;
+            contact = candidate;
+        }
+        Vector3 normal = query - contact;
+        if (normal.sqrMagnitude > 0.000001f) inward = -normal.normalized;
+        position = root.InverseTransformPoint(contact);
+        rotation = Quaternion.Inverse(root.rotation) * Quaternion.LookRotation(inward, up);
+    }
+
+    private static bool TryGetItemLocalBounds(GameObject item, out Bounds bounds)
+    {
+        bool hasBounds = false;
+        bounds = default;
+        Collider[] colliders = item.GetComponentsInChildren<Collider>(true);
+        for (int i = 0; i < colliders.Length; i++)
+        {
+            if (colliders[i] == null || !colliders[i].enabled) continue;
+            EncapsulateBoundsInLocalSpace(item.transform, colliders[i].bounds, ref bounds, ref hasBounds);
+        }
+        if (!hasBounds)
+        {
+            Renderer[] renderers = item.GetComponentsInChildren<Renderer>(true);
+            for (int i = 0; i < renderers.Length; i++)
+                if (renderers[i] != null)
+                    EncapsulateBoundsInLocalSpace(item.transform, renderers[i].bounds, ref bounds, ref hasBounds);
+        }
+        return hasBounds;
+    }
+
+    private static void EncapsulateBoundsInLocalSpace(Transform root, Bounds worldBounds, ref Bounds localBounds, ref bool hasBounds)
+    {
+        Vector3 center = worldBounds.center;
+        Vector3 extents = worldBounds.extents;
+        for (int x = -1; x <= 1; x += 2)
+        for (int y = -1; y <= 1; y += 2)
+        for (int z = -1; z <= 1; z += 2)
+        {
+            Vector3 corner = root.InverseTransformPoint(center + Vector3.Scale(extents, new Vector3(x, y, z)));
+            if (!hasBounds) { localBounds = new Bounds(corner, Vector3.zero); hasBounds = true; }
+            else localBounds.Encapsulate(corner);
+        }
     }
 
     public void HandleThrowPressed()
@@ -600,14 +748,7 @@ public class PickupController : MonoBehaviour
             RestoreHeldRigidbody(releasedRb, true);
         }
 
-        _heldObj = null;
-        _heldObjRb = null;
-        _heldItemScript = null;
-        _heldPieView = null;
-        _heldRotationOffset = Quaternion.identity;
-
-        ParticleSystem ps = released.GetComponentInChildren<ParticleSystem>();
-        if (ps != null) ps.Play();
+        ClearHeldObject();
         return released;
     }
 
