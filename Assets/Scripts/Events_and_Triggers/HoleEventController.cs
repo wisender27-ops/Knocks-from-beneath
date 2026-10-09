@@ -165,6 +165,7 @@ public class HoleEventController : MonoBehaviour
 
     IEnumerator BasementSequence()
     {
+        HorrorMomentDirector.Instance?.Interrupt(4f);
         if (basementScare == null)
         {
             Debug.LogError("[HoleEventController] Basement scare is not configured.", this);

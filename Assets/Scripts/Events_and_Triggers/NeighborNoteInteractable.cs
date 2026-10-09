@@ -22,9 +22,9 @@ public class NeighborNoteInteractable : MonoBehaviour
         _used = true;
 
         if (ThoughtManager.Instance != null)
-            ThoughtManager.Instance.ShowThoughts(noteLines, null);
+            ThoughtManager.Instance.ShowDialogue("ЗАПИСКА СОСЕДА", noteLines, () => GameEvents.OnNeighborNoteRead?.Invoke());
 
-        GameEvents.OnNeighborNoteRead?.Invoke();
+        else GameEvents.OnNeighborNoteRead?.Invoke();
     }
 }
 }

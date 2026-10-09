@@ -11,6 +11,7 @@ namespace KnocksFromBeneath
         public InventoryEntry(InventoryItemDefinition definition, int quantity) { Definition = definition; Quantity = quantity; }
     }
 
+    [DefaultExecutionOrder(10010)]
     public class PlayerInventory : MonoBehaviour
     {
         [SerializeField] private InventoryDatabase database;
@@ -62,14 +63,14 @@ namespace KnocksFromBeneath
             get
             {
                 if (attachedItem == null) return Vector3.zero;
-                Vector3 target = attachedItemOriginalParent != null
-                    ? attachedItemOriginalParent.TransformPoint(attachedItemOriginalLocalPosition)
-                    : attachedItem.position;
+                Vector3 target = attachedItem.position;
                 if (attachedItem == flashlightInHand?.transform)
-                    target += attachedItemOriginalWorldRotation * new Vector3(0f, -0.015f, 0.07f);
+                    target += attachedItem.rotation * new Vector3(0f, -0.015f, 0.07f);
                 return target;
             }
         }
+
+        public Quaternion EquippedHandTargetRotation => protagonistBody != null ? protagonistBody.ReadyRightPalmRotation : Quaternion.identity;
 
         public bool HasItem(string id)
         {
@@ -95,7 +96,7 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
-            if (RetroInventoryScreen.IsAnyOpen || Time.timeScale == 0f) return;
+            if (PauseMenuController.InputBlocked || RetroInventoryScreen.IsAnyOpen || Time.timeScale == 0f) return;
 
             if (Time.time - lastSwitchTime >= switchCooldown)
             {
@@ -210,7 +211,17 @@ namespace KnocksFromBeneath
             attachedItemOriginalLocalRotation = attachedItem.localRotation;
             attachedItemOriginalLocalScale = attachedItem.localScale;
             attachedItemOriginalWorldRotation = attachedItem.rotation;
-            attachedItem.SetParent(hand, true);
+            // Предмет остаётся на независимом держателе камеры; IK следует его хвату.
+            Vector3 gripOffset = item == flashlightInHand ? attachedItem.rotation * new Vector3(0f, -.015f, .07f) : Vector3.zero;
+            attachedItem.position = protagonistBody.ReadyRightPalmPosition - gripOffset;
+        }
+
+        private void LateUpdate()
+        {
+            if (attachedItem == null || protagonistBody == null) return;
+            Vector3 offset = attachedItem == flashlightInHand?.transform
+                ? attachedItem.rotation * new Vector3(0f, -.015f, .07f) : Vector3.zero;
+            attachedItem.position = protagonistBody.ReadyRightPalmPosition - offset;
         }
 
         private void RestoreEquippedItemToAnchor()

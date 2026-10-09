@@ -34,6 +34,7 @@ public class FinaleController : MonoBehaviour
         if (intro != null && (!intro.CanBoardBasement(basementHatch) || !intro.TryClaimEnding()))
             return false;
         isEndingTriggered = true;
+        HorrorMomentDirector.Instance?.Interrupt();
         inventory.ActivateItem("Hammer");
         MonsterTimer.Instance?.StopTimer();
         QuestManager.Instance?.AddProgress(1);
@@ -93,7 +94,7 @@ public class FinaleController : MonoBehaviour
         if (QuestManager.Instance != null && QuestManager.Instance.questUiText != null)
             QuestManager.Instance.questUiText.text = "";
         if (ThoughtManager.Instance != null)
-            ThoughtManager.Instance.ShowThoughts(new[] {
+            ThoughtManager.Instance.ShowImportantThoughts(new[] {
                 "Вот. Теперь не выберется.",
                 "Тихо. Наконец-то тихо."
             }, ShowEnding);
@@ -204,7 +205,7 @@ public class FinaleController : MonoBehaviour
 
         if (ThoughtManager.Instance != null)
         {
-            ThoughtManager.Instance.ShowThoughts(new string[] {
+            ThoughtManager.Instance.ShowImportantThoughts(new string[] {
                 "Нет! Не закрывай люк!",
                 "Выпусти меня, сука!"
             }, ShowEnding);

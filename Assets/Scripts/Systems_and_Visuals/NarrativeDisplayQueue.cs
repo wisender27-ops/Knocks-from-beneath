@@ -12,7 +12,7 @@ namespace KnocksFromBeneath
         private bool _running;
         private Coroutine _drain;
         private IEnumerator _activeDisplay;
-        public static bool CanShowInteractionHint => _instance == null || !_instance._running;
+        public static bool CanShowInteractionHint => !NarrativeReadingPanel.IsModal && (_instance == null || !_instance._running);
         public static event Action<bool> InteractionHintAvailabilityChanged;
 
         private struct Request
@@ -91,6 +91,9 @@ namespace KnocksFromBeneath
         {
             if (_instance == this)
             {
+                (_activeDisplay as System.IDisposable)?.Dispose();
+                _activeDisplay = null;
+                _requests.Clear();
                 _instance = null;
                 InteractionHintAvailabilityChanged?.Invoke(true);
             }

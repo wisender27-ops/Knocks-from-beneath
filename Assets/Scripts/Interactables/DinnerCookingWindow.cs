@@ -17,6 +17,7 @@ namespace KnocksFromBeneath
         private CursorLockMode cursorLock;
         private float elapsed;
         private const float SweepSeconds = 1.5f;
+        public bool IsOpen => open;
 
         public void ResetAttempt()
         {
@@ -61,7 +62,7 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
-            if (!open || Time.timeScale == 0f) return;
+            if (!open || Time.timeScale == 0f || PauseMenuController.InputBlocked) return;
             if (!started)
             {
                 if (Input.GetKeyDown(KeyCode.Escape)) { Close(false); return; }

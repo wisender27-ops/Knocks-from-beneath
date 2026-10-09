@@ -401,6 +401,7 @@ public class PlacementZone : MonoBehaviour
         }
 
         // 3. Слот теперь занят
+        box.GetComponent<ItemFoley>()?.PlayPlace();
         isSlotOccupied[index] = true;
         if (_preciseBoxPlacement)
         {

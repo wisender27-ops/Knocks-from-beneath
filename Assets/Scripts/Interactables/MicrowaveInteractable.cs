@@ -19,6 +19,9 @@ public class MicrowaveInteractable : MonoBehaviour
     public AudioClip heatDoneSfx;
 
     private bool _isHeating = false;
+    private float _heatStarted;
+    public bool IsHeating => _isHeating;
+    public float HeatProgress => Mathf.Clamp01((Time.time - _heatStarted) / Mathf.Max(.1f, heatDuration));
     private bool _isReady = false;
     private PieQuestItem _pieInMicrowave;
 
@@ -108,6 +111,7 @@ public class MicrowaveInteractable : MonoBehaviour
     IEnumerator HeatPieRoutine()
     {
         _isHeating = true;
+        _heatStarted = Time.time;
         if (microwaveDoor != null) microwaveDoor.SetInteractionLocked(true);
         if (microwaveLight != null) microwaveLight.enabled = true;
 

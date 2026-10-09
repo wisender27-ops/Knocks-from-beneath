@@ -10,6 +10,7 @@ namespace KnocksFromBeneath
 public class ThoughtManager : MonoBehaviour
 {
     public static ThoughtManager Instance;
+    private NarrativeReadingPanel readingPanel;
     private readonly Dictionary<string, float> _interactionHintCooldowns = new Dictionary<string, float>();
 
     [Header("UI элементы")]
@@ -35,6 +36,8 @@ public class ThoughtManager : MonoBehaviour
         // Скрываем текст при старте
         if (textCanvas != null) textCanvas.SetActive(false);
         if (thoughtText != null) thoughtText.text = "";
+        readingPanel = gameObject.AddComponent<NarrativeReadingPanel>();
+        readingPanel.Initialize(thoughtText != null ? thoughtText.font : null);
     }
 
     void OnDestroy()
@@ -50,6 +53,7 @@ public class ThoughtManager : MonoBehaviour
 
     public void HideImmediately()
     {
+        if (readingPanel != null) readingPanel.StopPresentation();
         if (audioSource != null) audioSource.Stop();
         if (textCanvas != null) textCanvas.SetActive(false);
         if (thoughtText != null) thoughtText.text = "";
@@ -61,7 +65,7 @@ public class ThoughtManager : MonoBehaviour
     public void ShowThoughts(string[] lines, Action onComplete = null, Action onStart = null)
     {
         string[] snapshot = lines == null ? Array.Empty<string>() : (string[])lines.Clone();
-        NarrativeDisplayQueue.Enqueue(this, () => DisplaySequence(snapshot, onComplete, onStart));
+        NarrativeDisplayQueue.Enqueue(this, () => DisplaySequence(snapshot, onComplete, onStart, false, "МЫСЛИ"));
     }
 
     public bool TryShowInteractionThoughts(string key, string[] lines, float cooldown = 0.75f)
@@ -76,53 +80,36 @@ public class ThoughtManager : MonoBehaviour
         return true;
     }
 
-    private IEnumerator DisplaySequence(string[] lines, Action onComplete, Action onStart)
+    public void ShowImportantThoughts(string[] lines, Action onComplete = null, Action onStart = null)
     {
-        onStart?.Invoke();
+        ShowDialogue("МЫСЛИ", lines, onComplete, onStart);
+    }
 
-        if (lines.Length == 0 || textCanvas == null || thoughtText == null)
+    public void ShowDialogue(string speaker, string[] lines, Action onComplete = null, Action onStart = null)
+    {
+        string[] snapshot = lines == null ? Array.Empty<string>() : (string[])lines.Clone();
+        NarrativeDisplayQueue.Enqueue(this, () => DisplaySequence(snapshot, onComplete, onStart, true, speaker));
+    }
+
+    private IEnumerator DisplaySequence(string[] lines, Action onComplete, Action onStart, bool important, string speaker)
+    {
+        if (lines.Length == 0 || readingPanel == null)
         {
+            onStart?.Invoke();
             FinishCurrentRequest(onComplete);
             yield break;
         }
-
-        textCanvas.SetActive(true);
-
-        foreach (string rawLine in lines)
+        try
         {
-            string line = rawLine ?? string.Empty;
-            thoughtText.text = ""; // Очищаем поле перед новой фразой
-
-            foreach (char letter in line.ToCharArray())
-            {
-                thoughtText.text += letter;
-
-                // Проигрываем случайный звук клика с разным питчем
-                if (typeSounds != null && typeSounds.Length > 0 && audioSource != null)
-                {
-                    audioSource.pitch = UnityEngine.Random.Range(minPitch, maxPitch);
-                    audioSource.PlayOneShot(typeSounds[UnityEngine.Random.Range(0, typeSounds.Length)], 0.4f);
-                }
-
-                // Пауза после знаков препинания для естественности
-                if (letter == ',' || letter == '.' || letter == '!' || letter == '?')
-                    yield return new WaitForSeconds(typingSpeed * 3f);
-                else
-                    yield return new WaitForSeconds(typingSpeed);
-            }
-
-            // Ждем, пока игрок дочитает фразу
-            yield return new WaitForSeconds(displayDuration);
-
-            // Небольшая пауза пустой строки перед следующей
-            thoughtText.text = "";
-            yield return new WaitForSeconds(0.5f);
+            yield return readingPanel.BeginSequence(important);
+            onStart?.Invoke();
+            foreach (string line in lines)
+                yield return readingPanel.ShowLine(line, speaker, typingSpeed, Mathf.Max(2.5f, displayDuration));
         }
-
-        // Всё закончилось — скрываем UI
-        textCanvas.SetActive(false);
-
-        // ВЫПОЛНЯЕМ ДЕЙСТВИЕ, которое передали (например, включение квеста)
+        finally
+        {
+            readingPanel.EndSequence();
+        }
         FinishCurrentRequest(onComplete);
     }
 

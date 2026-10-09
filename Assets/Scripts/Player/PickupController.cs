@@ -36,6 +36,20 @@ public class PickupController : MonoBehaviour
     public float fovReturnSpeed = 5f;
     private const float FovSnapThreshold = 0.1f;
 
+    [Header("Управление переносимым предметом")]
+    [SerializeField, Range(.5f, 6f)] private float rotationSensitivity = 3f;
+    [SerializeField, Range(.03f, .3f)] private float zoomStep = .12f;
+    [SerializeField, Range(.2f, 1.2f)] private float zoomOutRange = .65f;
+    private float _zoomOffset, _targetZoomOffset, _carryRadius;
+    private Vector3 _carryHalfExtents, _lastSafeCarryPosition;
+    private Quaternion _lastSafeCarryRotation;
+    private bool _carryPoseBlocked;
+    private readonly Collider[] _carryOverlaps = new Collider[24];
+    private Quaternion _pickupRotationOffset;
+    private PlayerInteraction _interaction;
+    private PlayerController _playerController;
+    private readonly RaycastHit[] _carryObstacles = new RaycastHit[16];
+
     private GameObject _heldObj;
     private Rigidbody _heldObjRb;
     private PickableItem _heldItemScript;
@@ -68,9 +82,13 @@ public class PickupController : MonoBehaviour
     private bool _heldKitchenItem;
     private Collider[] _kitchenColliders;
     private bool[] _kitchenColliderStates;
+    private Collider[] _carryColliders;
+    private bool[] _carryColliderStates;
 
     void Start()
     {
+        _interaction = GetComponent<PlayerInteraction>();
+        _playerController = GetComponent<PlayerController>();
         ProtagonistBody body = GetComponentInChildren<ProtagonistBody>();
         handSocket = body != null ? body.RightHand : null;
         if (playerCamera != null)
@@ -78,6 +96,50 @@ public class PickupController : MonoBehaviour
             _defaultFov = playerCamera.fieldOfView;
             _cameraEffectsInitialized = true;
         }
+    }
+
+    public bool CanManipulateHeldObject => _heldObj != null && !_heldObjectAttachedToHand &&
+        _heldPieView == null && isActiveAndEnabled && Time.timeScale > 0f && !PauseMenuController.InputBlocked &&
+        (_interaction == null || (_interaction.isActiveAndEnabled && !_interaction.IsEatingPie && !_interaction.IsBreakingLock)) &&
+        (_playerController == null || !_playerController.isCameraLocked) &&
+        !RetroInventoryScreen.IsAnyOpen && !QuestJournalScreen.IsAnyOpen &&
+        !NarrativeReadingPanel.IsModal && !FadeTransitionPresentation.IsActive;
+
+    public bool IsRotatingHeldObject => CanManipulateHeldObject &&
+        (Input.GetKey(KeyCode.R) || Input.GetMouseButton(1));
+    public float HoldDistanceOffset => _targetZoomOffset;
+    public bool IsCarryObstructed => _carryPoseBlocked;
+
+    void Update()
+    {
+        if (!CanManipulateHeldObject) return;
+        if (IsRotatingHeldObject)
+            RotateHeldObject(new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y")));
+        float scroll = Input.mouseScrollDelta.y;
+        if (Mathf.Abs(scroll) > .001f) AdjustHoldDistance(scroll);
+        if (Input.GetMouseButtonDown(2)) ResetHeldRotation();
+        _zoomOffset = Mathf.Lerp(_zoomOffset, _targetZoomOffset, 1f - Mathf.Exp(-14f * Time.deltaTime));
+    }
+
+    public void RotateHeldObject(Vector2 mouseDelta)
+    {
+        if (!CanManipulateHeldObject) return;
+        Quaternion delta = Quaternion.AngleAxis(-mouseDelta.x * rotationSensitivity, Vector3.up) *
+            Quaternion.AngleAxis(mouseDelta.y * rotationSensitivity, Vector3.right);
+        _heldRotationOffset = delta * _heldRotationOffset;
+    }
+
+    public void AdjustHoldDistance(float scroll)
+    {
+        if (!CanManipulateHeldObject) return;
+        float baseDepth = .30f + _carryDepth;
+        float safeMinimum = Mathf.Min(0f, Mathf.Max(-.18f, _carryRadius + .12f - baseDepth));
+        _targetZoomOffset = Mathf.Clamp(_targetZoomOffset - scroll * zoomStep, safeMinimum, zoomOutRange);
+    }
+
+    public void ResetHeldRotation()
+    {
+        if (CanManipulateHeldObject) _heldRotationOffset = _pickupRotationOffset;
     }
 
     // Квест на расстановку коробок мог запуститься ПОЗЖЕ, чем игрок взял коробку
@@ -202,6 +264,12 @@ public class PickupController : MonoBehaviour
         return _heldObj;
     }
 
+    public void SetBaseFieldOfView(float value)
+    {
+        _defaultFov = value;
+        if (playerCamera != null) playerCamera.fieldOfView = value;
+    }
+
     public bool IsHeldObjectAttachedToHand => _heldObjectAttachedToHand && _heldObj != null;
     public bool IsHeldObjectTwoHanded => _heldObjectUsesTwoHandGrip && _heldObj != null;
     public Vector3 PrimaryHandGripTarget => _heldObj != null
@@ -227,6 +295,10 @@ public class PickupController : MonoBehaviour
     void GrabPhysicsObject(GameObject obj)
     {
         _heldObj = obj;
+        _lastSafeCarryPosition = obj.transform.position;
+        _lastSafeCarryRotation = obj.transform.rotation;
+        _carryPoseBlocked = false;
+        _zoomOffset = _targetZoomOffset = 0f;
         _heldObjectAttachedToHand = false;
         _heldObjRb = obj.GetComponent<Rigidbody>();
         if (_heldObjRb == null)
@@ -275,13 +347,23 @@ public class PickupController : MonoBehaviour
             for (int i = 0; i < _pieColliders.Length; i++)
                 if (_pieColliders[i] != null) _pieColliders[i].enabled = false;
         }
-
+        if (_heldPieView == null)
+        {
+            _carryColliders = obj.GetComponentsInChildren<Collider>(true);
+            _carryColliderStates = new bool[_carryColliders.Length];
+            for (int i = 0; i < _carryColliders.Length; i++)
+            {
+                _carryColliderStates[i] = _carryColliders[i].enabled;
+                _carryColliders[i].enabled = false;
+            }
+        }
         TrySetupQuestPlacementZones(collectable);
 
         Vector3 horizontalForward = Vector3.ProjectOnPlane(holdPoint.forward, Vector3.up);
         Quaternion pickupFrame = horizontalForward.sqrMagnitude > .0001f
             ? Quaternion.LookRotation(horizontalForward, Vector3.up) : holdPoint.rotation;
         _heldRotationOffset = Quaternion.Inverse(pickupFrame) * obj.transform.rotation;
+        _pickupRotationOffset = _heldRotationOffset;
 
         _originalLayer = _heldObj.layer;
         int heldLayer = LayerMask.NameToLayer("HeldItem");
@@ -297,6 +379,8 @@ public class PickupController : MonoBehaviour
         // Останавливаем частицы когда берём объект
         ParticleSystem ps = obj.GetComponentInChildren<ParticleSystem>();
         if (ps != null) ps.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+
+        obj.GetComponent<ItemFoley>()?.PlayGrab();
 
         // Сюжет: достали пирог. Публикуем событие безусловно — IntroSequence
         // сама решит, важно ли ей это сейчас (см. GameEvents.OnPieGrabbed).
@@ -320,7 +404,7 @@ public class PickupController : MonoBehaviour
                 if (distance < bestDistance) { closest = candidate; bestDistance = distance; }
             }
             if (closest != null && closest.TryPlaceBox(_heldObj, transform.position)) ClearHeldObject(false);
-            else if (_heldItemScript == null || _heldItemScript.placementQuestTag != "room-decoration") DropObject();
+            else DropObject();
             return;
         }
 
@@ -488,6 +572,10 @@ public class PickupController : MonoBehaviour
         ClearQuestPlacementPreviews();
         for (int i = 0; _kitchenColliders != null && i < _kitchenColliders.Length; i++)
             if (_kitchenColliders[i] != null) _kitchenColliders[i].enabled = _kitchenColliderStates[i];
+        for (int i = 0; _carryColliders != null && i < _carryColliders.Length; i++)
+            if (_carryColliders[i] != null) _carryColliders[i].enabled = _carryColliderStates[i];
+        _carryColliders = null;
+        _carryColliderStates = null;
         _kitchenColliders = null;
         _kitchenColliderStates = null;
         _heldKitchenItem = false;
@@ -500,6 +588,7 @@ public class PickupController : MonoBehaviour
             if (ps != null) ps.Play();
         }
 
+        _zoomOffset = _targetZoomOffset = 0f;
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
@@ -513,6 +602,7 @@ public class PickupController : MonoBehaviour
     public void ForceClearHeld()
     {
         ClearQuestPlacementPreviews();
+        _zoomOffset = _targetZoomOffset = 0f;
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
@@ -525,34 +615,94 @@ public class PickupController : MonoBehaviour
     void MovePhysicsObject()
     {
         if (_heldPieView != null || _heldObjectAttachedToHand) return;
-        Quaternion targetRotation = holdPoint.rotation * _heldRotationOffset;
-        Vector3 targetPos = GetHeldRootTargetPosition(targetRotation);
+        Quaternion desiredRotation = holdPoint.rotation * _heldRotationOffset;
+        Quaternion rotationStep = Quaternion.Slerp(_heldObjRb.rotation, desiredRotation, Time.fixedDeltaTime * followSpeed);
+        Vector3 targetPos = GetHeldRootTargetPosition(desiredRotation);
+        if (_carryPoseBlocked)
+        {
+            targetPos = _lastSafeCarryPosition;
+            rotationStep = _lastSafeCarryRotation;
+        }
+        else
+        {
+            Vector3 scaledCenter = Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
+            Vector3 currentCenter = _heldObjRb.position + rotationStep * scaledCenter;
+            float clearDepth = playerCamera != null ? Vector3.Dot(currentCenter - playerCamera.transform.position, playerCamera.transform.forward) : float.PositiveInfinity;
+            // Move the item away before turning a long side toward the camera.
+            if (clearDepth < CarryDepth(rotationStep) + .12f) rotationStep = _heldObjRb.rotation;
+            Vector3 desiredCenter = targetPos + desiredRotation * scaledCenter;
+            targetPos = desiredCenter - rotationStep * scaledCenter;
+            if (!CarryPoseClear(desiredCenter, rotationStep)) rotationStep = _heldObjRb.rotation;
+            _lastSafeCarryPosition = targetPos;
+            _lastSafeCarryRotation = rotationStep;
+        }
         if (_heldKitchenItem)
         {
             float t = Mathf.Clamp01(Time.fixedDeltaTime * followSpeed);
             _heldObjRb.MovePosition(Vector3.Lerp(_heldObjRb.position, targetPos, t));
-            _heldObjRb.MoveRotation(Quaternion.Slerp(_heldObjRb.rotation, targetRotation, t));
+            _heldObjRb.MoveRotation(rotationStep);
             return;
         }
-        Vector3 currentPos = _heldObjRb.position;
+        Vector3 direction = targetPos - _heldObjRb.position;
+        _heldObjRb.linearVelocity = direction * followSpeed;
+        _heldObjRb.MoveRotation(rotationStep);
+        if (direction.magnitude > maxHoldDistance) DropObject();
+    }
 
-        Vector3 directionToTarget = targetPos - currentPos;
-        float distance = directionToTarget.magnitude;
+    private float CarryDepth(Quaternion rotation)
+    {
+        if (playerCamera == null) return _carryDepth;
+        Quaternion viewRotation = Quaternion.Inverse(playerCamera.transform.rotation) * rotation;
+        return Mathf.Abs((viewRotation * Vector3.right).z) * _carryHalfExtents.x +
+            Mathf.Abs((viewRotation * Vector3.up).z) * _carryHalfExtents.y +
+            Mathf.Abs((viewRotation * Vector3.forward).z) * _carryHalfExtents.z;
+    }
 
-
-        _heldObjRb.linearVelocity = directionToTarget * followSpeed;
-        _heldObjRb.MoveRotation(
-            Quaternion.Slerp(_heldObj.transform.rotation, targetRotation, Time.fixedDeltaTime * followSpeed)
-        );
-
-        if (distance > maxHoldDistance)
-            DropObject();
+    private bool CarryPoseClear(Vector3 center, Quaternion rotation)
+    {
+        Vector3 extents = new Vector3(Mathf.Max(.01f, _carryHalfExtents.x - .015f),
+            Mathf.Max(.01f, _carryHalfExtents.y - .015f), Mathf.Max(.01f, _carryHalfExtents.z - .015f));
+        int count = Physics.OverlapBoxNonAlloc(center, extents, _carryOverlaps, rotation,
+            PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
+        if (count == _carryOverlaps.Length) return false;
+        for (int i = 0; i < count; i++)
+        {
+            Transform hit = _carryOverlaps[i].transform;
+            if (hit.IsChildOf(_heldObj.transform) || hit.IsChildOf(transform)) continue;
+            return false;
+        }
+        return true;
     }
 
     private Vector3 GetHeldRootTargetPosition(Quaternion targetRotation)
     {
-        if (!_heldObjectUsesTwoHandGrip || playerCamera == null) return holdPoint.position;
-        Vector3 center = playerCamera.transform.TransformPoint(new Vector3(0f, -0.16f, 0.30f + _carryDepth));
+        _carryPoseBlocked = false;
+        if (playerCamera == null)
+            return holdPoint.position + holdPoint.forward * _zoomOffset;
+        if (!_heldObjectUsesTwoHandGrip)
+        {
+            Vector3 smallCenter = playerCamera.transform.TransformPoint(new Vector3(.18f, -.19f, .32f + _carryDepth + _zoomOffset));
+            return smallCenter - targetRotation * Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
+        }
+        float depth = Mathf.Max(.30f + _carryDepth + _zoomOffset, CarryDepth(targetRotation) + .18f);
+        Vector3 center = playerCamera.transform.TransformPoint(new Vector3(0f, -.16f, depth));
+        Vector3 currentCenter = _heldObjRb.position + _heldObjRb.rotation *
+            Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
+        Vector3 path = center - currentCenter;
+        if (path.sqrMagnitude > .0001f)
+        {
+            Vector3 skin = Vector3.one * .015f;
+            Vector3 extents = Vector3.Max(_carryHalfExtents - skin, Vector3.one * .01f);
+            int count = Physics.BoxCastNonAlloc(currentCenter, extents, path.normalized, _carryObstacles,
+                _heldObjRb.rotation, path.magnitude, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++)
+            {
+                Transform hit = _carryObstacles[i].collider.transform;
+                if (hit.IsChildOf(_heldObj.transform) || hit.IsChildOf(transform) || _carryObstacles[i].distance < .002f) continue;
+                _carryPoseBlocked = true;
+            }
+        }
+        if (!CarryPoseClear(center, targetRotation)) _carryPoseBlocked = true;
         return center - targetRotation * Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
     }
 
@@ -583,13 +733,31 @@ public class PickupController : MonoBehaviour
         _carryCenterLocal = root.InverseTransformPoint(bounds.center);
         _carryDepth = Vector3.Dot(bounds.extents, new Vector3(Mathf.Abs(forward.x), Mathf.Abs(forward.y), Mathf.Abs(forward.z)));
         float radius = Mathf.Max(0.1f, bounds.extents.magnitude);
+        _carryRadius = radius;
+        if (TryGetItemLocalBounds(item, out Bounds gripBounds))
+        {
+            Vector3 scale = root.lossyScale;
+            _carryHalfExtents = Vector3.Scale(gripBounds.extents,
+                new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
+        }
+        else _carryHalfExtents = bounds.extents;
         Vector3 rightQuery = bounds.center + right * radius * 2f - forward * radius * .35f;
         Vector3 leftQuery = bounds.center - right * radius * 2f - forward * radius * .35f;
+        float width = Vector3.Dot(bounds.size, new Vector3(Mathf.Abs(right.x), Mathf.Abs(right.y), Mathf.Abs(right.z)));
+        if (width > .65f)
+        {
+            // Широкий предмет берём за ближнюю поверхность, не растягивая руки до дальних краёв.
+            rightQuery = bounds.center + right * .26f - forward * (_carryDepth + radius) + up * .08f;
+            leftQuery = bounds.center - right * .26f - forward * (_carryDepth + radius) + up * .08f;
+        }
         CacheGrip(root, colliders, pickable != null ? pickable.primaryHandGrip : null,
             rightQuery, -right, up, out _primaryGripLocalPosition, out _primaryGripLocalRotation);
         CacheGrip(root, colliders, pickable != null ? pickable.secondaryHandGrip : null,
             leftQuery, right, up, out _secondaryGripLocalPosition, out _secondaryGripLocalRotation);
-        _heldObjectUsesTwoHandGrip = true;
+        Vector3 size = bounds.size;
+        _heldObjectUsesTwoHandGrip = _heldPieView != null ||
+            Mathf.Max(size.x, Mathf.Max(size.y, size.z)) > .38f ||
+            (_heldObjRb != null && _heldObjRb.mass > 3f);
     }
 
     private void CacheGrip(Transform root, Collider[] colliders, Transform authored, Vector3 query,
@@ -671,6 +839,7 @@ public class PickupController : MonoBehaviour
 
         Rigidbody rbToThrow = _heldObjRb;
         GameObject objToThrow = _heldObj;
+        objToThrow.GetComponent<ItemFoley>()?.PlayThrow();
 
         objToThrow.layer = _originalLayer;
         if (_heldPieView != null)

@@ -51,6 +51,8 @@ public sealed class BasementHatchLock : MonoBehaviour
     private bool _wasLocked, _inventoryEnabled;
     private GameObject _heldTool;
 
+    private float _interactionStarted;
+    public float InteractionProgress => Mathf.Clamp01((Time.time - _interactionStarted) / 1.15f);
     public bool IsPlaying => _playing;
     public Vector3 StrikePoint => padlock != null ? padlock.transform.position : transform.position;
     public bool CanStartBreak(PlayerInteraction interaction)
@@ -70,6 +72,7 @@ public sealed class BasementHatchLock : MonoBehaviour
         _body = interaction.GetComponentInChildren<ProtagonistBody>();
         if (_player == null || _camera == null || _player.isCameraLocked) return false;
         _playing = true;
+        _interactionStarted = Time.time;
         _wasLocked = _player.isCameraLocked;
         _cameraRotation = _camera.transform.localRotation;
         _player.isCameraLocked = true;

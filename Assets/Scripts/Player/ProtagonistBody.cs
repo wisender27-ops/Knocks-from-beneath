@@ -23,7 +23,20 @@ namespace KnocksFromBeneath
         [SerializeField] private Vector3 rightSoleNormal = Vector3.up;
         [SerializeField] private Quaternion rightWristBoneOffset = Quaternion.identity;
         [SerializeField] private Mesh firstPersonArmsMesh;
-        [SerializeField, Range(1f, 2f)] private float viewForearmLength = 1.8f;
+        [SerializeField] private GameObject firstPersonArmsPrefab;
+        private Transform modelRightUpper, modelLeftUpper, modelRightHand, modelLeftHand;
+        private Transform[] modelBones;
+        private float rightViewReach, leftViewReach;
+        private GameObject firstPersonModel;
+        private readonly Dictionary<HumanBodyBones, Transform> armBoneCache = new Dictionary<HumanBodyBones, Transform>();
+        [SerializeField] private Vector3 readyHandPosition = new Vector3(0.19f, -0.27f, 0.39f);
+        [SerializeField, Range(0f, 1f)] private float handMotion = 1f;
+        private float motionPhase;
+        private Quaternion previousViewRotation;
+        private Vector2 viewSway;
+        private float rightGripWeight, leftGripWeight;
+        private Vector3 lastLeftGripTarget;
+        private Quaternion lastLeftGripRotation = Quaternion.identity;
 
         private static readonly int MoveX = Animator.StringToHash("MoveX");
         private static readonly int MoveZ = Animator.StringToHash("MoveZ");
@@ -32,6 +45,7 @@ namespace KnocksFromBeneath
         private CharacterController capsule;
         private PlayerInventory inventory;
         private PickupController pickup;
+        private PlayerDoorOpen doorInput;
         private Camera view;
         private Renderer[] bodyRenderers;
         private ShadowCastingMode[] bodyShadowModes;
@@ -51,7 +65,7 @@ namespace KnocksFromBeneath
         private TwoBoneIKConstraint rightCarryIK, leftCarryIK;
         private Transform rightCarryTarget, leftCarryTarget, rightElbowHint, leftElbowHint;
         private Vector3 rightPalmOffset, leftPalmOffset;
-        private Quaternion rightPalmRotation, leftPalmRotation;
+        private Quaternion rightPalmRotation = Quaternion.identity, leftPalmRotation = Quaternion.identity;
         private float carryWeight;
         private Transform rightViewUpper, rightViewLower, rightViewHand, leftViewUpper, leftViewLower, leftViewHand;
         private readonly Dictionary<Transform, Transform> viewBones = new Dictionary<Transform, Transform>();
@@ -74,6 +88,12 @@ namespace KnocksFromBeneath
 
         public Animator Animator => animator;
         public Transform RightHand => rightHand;
+        public Transform ViewRightHand => rightViewHand;
+        public Transform ViewLeftHand => leftViewHand;
+        public Vector3 ReadyRightHandPosition => view != null ? view.transform.TransformPoint(readyHandPosition) : rightHand.position;
+        public Vector3 ReadyRightPalmPosition => ReadyRightHandPosition + ReadyRightHandRotation * rightPalmOffset;
+        public Quaternion ReadyRightPalmRotation => ReadyRightHandRotation * Quaternion.Inverse(rightPalmRotation);
+        public Quaternion ReadyRightHandRotation => view != null ? view.transform.rotation * Quaternion.LookRotation(Vector3.left, new Vector3(0f, .25f, 1f)) * rightPalmRotation : rightHand.rotation;
         public SkinnedMeshRenderer HeadRenderer => headRenderer;
         public SkinnedMeshRenderer[] HeadRenderers => headRenderers;
 
@@ -88,6 +108,7 @@ namespace KnocksFromBeneath
             capsule = player.GetComponent<CharacterController>();
             inventory = player.GetComponent<PlayerInventory>();
             pickup = player.GetComponent<PickupController>();
+            doorInput = player.GetComponentInChildren<PlayerDoorOpen>();
             view = player.GetComponentInChildren<Camera>();
             CreateFirstPersonArms();
         }
@@ -98,14 +119,12 @@ namespace KnocksFromBeneath
             var rigObject = new GameObject("Carry Rig");
             rigObject.transform.SetParent(animator.transform, false);
             Rig rig = rigObject.AddComponent<Rig>();
-            rightViewUpper = CloneViewBones(rightUpperArm, rigObject.transform);
-            leftViewUpper = CloneViewBones(leftUpperArm, rigObject.transform);
-            rightViewLower = viewBones[rightForearm]; rightViewHand = viewBones[rightHand];
-            leftViewLower = viewBones[leftForearm]; leftViewHand = viewBones[leftHand];
-            rightViewLower.localScale *= viewForearmLength;
-            leftViewLower.localScale *= viewForearmLength;
-            rightViewHand.localScale /= viewForearmLength;
-            leftViewHand.localScale /= viewForearmLength;
+            rightViewUpper = CloneViewBones(modelRightUpper != null ? modelRightUpper : rightUpperArm, rigObject.transform);
+            leftViewUpper = CloneViewBones(modelLeftUpper != null ? modelLeftUpper : leftUpperArm, rigObject.transform);
+            rightViewLower = viewBones[GetArmBone(HumanBodyBones.RightLowerArm)]; rightViewHand = viewBones[GetArmBone(HumanBodyBones.RightHand)];
+            leftViewLower = viewBones[GetArmBone(HumanBodyBones.LeftLowerArm)]; leftViewHand = viewBones[GetArmBone(HumanBodyBones.LeftHand)];
+            rightViewReach = Vector3.Distance(rightViewUpper.position, rightViewLower.position) + Vector3.Distance(rightViewLower.position, rightViewHand.position);
+            leftViewReach = Vector3.Distance(leftViewUpper.position, leftViewLower.position) + Vector3.Distance(leftViewLower.position, leftViewHand.position);
             if (firstPersonArms != null)
             {
                 var bones = firstPersonArms.bones;
@@ -118,11 +137,11 @@ namespace KnocksFromBeneath
             leftCarryIK = CreateCarryConstraint(rigObject.transform, "Left", leftViewUpper, leftViewLower,
                 leftViewHand, out leftCarryTarget, out leftElbowHint);
             CalibratePalm(HumanBodyBones.RightMiddleProximal, HumanBodyBones.RightIndexProximal,
-                HumanBodyBones.RightLittleProximal, rightHand, out rightPalmOffset, out rightPalmRotation);
+                HumanBodyBones.RightLittleProximal, GetArmBone(HumanBodyBones.RightHand), out rightPalmOffset, out rightPalmRotation);
             CalibratePalm(HumanBodyBones.LeftMiddleProximal, HumanBodyBones.LeftIndexProximal,
-                HumanBodyBones.LeftLittleProximal, leftHand, out leftPalmOffset, out leftPalmRotation);
-            ConfigureGripFingers(HumanBodyBones.RightThumbProximal, HumanBodyBones.RightLittleDistal, rightHand, rightPalmRotation);
-            ConfigureGripFingers(HumanBodyBones.LeftThumbProximal, HumanBodyBones.LeftLittleDistal, leftHand, leftPalmRotation);
+                HumanBodyBones.LeftLittleProximal, GetArmBone(HumanBodyBones.LeftHand), out leftPalmOffset, out leftPalmRotation);
+            ConfigureGripFingers(HumanBodyBones.RightThumbProximal, HumanBodyBones.RightLittleDistal, GetArmBone(HumanBodyBones.RightHand), rightPalmRotation);
+            ConfigureGripFingers(HumanBodyBones.LeftThumbProximal, HumanBodyBones.LeftLittleDistal, GetArmBone(HumanBodyBones.LeftHand), leftPalmRotation);
             carryBuilder = animator.gameObject.AddComponent<RigBuilder>();
             carryBuilder.enabled = false;
             carryBuilder.layers.Add(new RigLayer(rig));
@@ -162,26 +181,30 @@ namespace KnocksFromBeneath
             data.targetPositionWeight = data.targetRotationWeight = data.hintWeight = 1f;
             data.maintainTargetPositionOffset = data.maintainTargetRotationOffset = false;
             constraint.data = data;
-            constraint.weight = 0f;
+            constraint.weight = 1f;
             return constraint;
         }
 
         private void CalibratePalm(HumanBodyBones middleBone, HumanBodyBones indexBone,
             HumanBodyBones littleBone, Transform hand, out Vector3 offset, out Quaternion rotation)
         {
-            var middle = animator.GetBoneTransform(middleBone);
-            var index = animator.GetBoneTransform(indexBone);
-            var little = animator.GetBoneTransform(littleBone);
+            var middle = GetArmBone(middleBone);
+            var index = GetArmBone(indexBone);
+            var little = GetArmBone(littleBone);
             offset = Vector3.zero;
             rotation = Quaternion.identity;
-            if (middle == null || index == null || little == null) return;
-            Vector3 fingers = (middle.position - hand.position).normalized;
-            Vector3 normal = Vector3.Cross(index.position - little.position, fingers).normalized;
+            Transform finger = middle != null ? middle : index;
+            if (finger == null || hand == null) return;
+            Vector3 fingers = (finger.position - hand.position).normalized;
+            Vector3 normal = index != null && little != null
+                ? Vector3.Cross(index.position - little.position, fingers).normalized
+                : Vector3.ProjectOnPlane(transform.forward, fingers).normalized;
             if (Vector3.Dot(normal, transform.forward) < 0f) normal = -normal;
             if (normal.sqrMagnitude < 0.5f || fingers.sqrMagnitude < 0.5f) return;
             Quaternion palmFrame = Quaternion.LookRotation(normal, fingers);
             rotation = Quaternion.Inverse(palmFrame) * hand.rotation;
-            Vector3 palmCenter = Vector3.Lerp(hand.position, (index.position + little.position) * 0.5f, 0.65f);
+            Vector3 knuckles = index != null && little != null ? (index.position + little.position) * .5f : finger.position;
+            Vector3 palmCenter = Vector3.Lerp(hand.position, knuckles, 0.65f);
             offset = Quaternion.Inverse(hand.rotation) * (palmCenter - hand.position);
         }
 
@@ -190,7 +213,7 @@ namespace KnocksFromBeneath
             Vector3 normal = hand.rotation * Quaternion.Inverse(palmRotation) * Vector3.forward;
             for (int bone = (int)first; bone <= (int)last; bone++)
             {
-                Transform source = animator.GetBoneTransform((HumanBodyBones)bone);
+                Transform source = GetArmBone((HumanBodyBones)bone);
                 if (source == null || source.childCount == 0 || !viewBones.TryGetValue(source, out Transform target)) continue;
                 Vector3 direction = (source.GetChild(0).position - source.position).normalized;
                 Vector3 axis = source.InverseTransformDirection(Vector3.Cross(direction, normal)).normalized;
@@ -202,42 +225,85 @@ namespace KnocksFromBeneath
 
         private bool EvaluateCarryRig()
         {
-            if (carryBuilder == null || !carryBuilder.graph.IsValid()) return false;
-            bool carrying = pickup != null && pickup.GetHeldObject() != null && pickup.IsHeldObjectTwoHanded &&
-                player.enabled && capsule.enabled && !player.isCameraLocked && !lockKick;
-            carryWeight = Mathf.MoveTowards(carryWeight, carrying ? 1f : 0f, Time.deltaTime * 10f);
-            rightCarryIK.weight = leftCarryIK.weight = carryWeight;
-            // Отдельные плечи для viewmodel: высота мировой модели не ограничивает FPS-хват.
+            if (carryBuilder == null || !carryBuilder.graph.IsValid() || view == null) return false;
+            float dt = Time.deltaTime;
+            bool held = pickup != null && pickup.GetHeldObject() != null;
+            bool equipped = !held && EquippedItem() != null;
+            bool twoHanded = held && pickup.IsHeldObjectTwoHanded;
+            bool touchingDoor = !held && !equipped && doorInput != null && doorInput.HeldDoor != null;
+            rightGripWeight = Mathf.MoveTowards(rightGripWeight, held || equipped || touchingDoor ? 1f : 0f, dt * 6f);
+            leftGripWeight = Mathf.MoveTowards(leftGripWeight, twoHanded ? 1f : 0f, dt * 6f);
+            rightCarryIK.weight = leftCarryIK.weight = 1f;
             foreach (var pair in viewBones)
-                if (pair.Key != rightUpperArm && pair.Key != leftUpperArm)
-                {
-                    float lengthScale = carrying || carryWeight > 0f ? viewForearmLength : 1f;
-                    pair.Value.localPosition = pair.Key.localPosition;
-                    pair.Value.localScale = pair.Key.localScale *
-                        (pair.Key == rightForearm || pair.Key == leftForearm ? lengthScale :
-                         pair.Key == rightHand || pair.Key == leftHand ? 1f / lengthScale : 1f);
-                    pair.Value.localRotation = pair.Key.localRotation;
-                }
-            foreach (var finger in gripFingers)
-                finger.target.localRotation = finger.source.localRotation * Quaternion.AngleAxis(finger.angle * carryWeight, finger.axis);
-            if (carrying)
             {
-                Quaternion rightRotation = pickup.PrimaryGripRotation * rightPalmRotation;
-                Quaternion leftRotation = pickup.SecondaryGripRotation * leftPalmRotation;
-                rightCarryTarget.SetPositionAndRotation(pickup.PrimaryHandGripTarget - rightRotation * rightPalmOffset, rightRotation);
-                leftCarryTarget.SetPositionAndRotation(pickup.SecondaryHandGripTarget - leftRotation * leftPalmOffset, leftRotation);
-                rightElbowHint.position = view.transform.TransformPoint(new Vector3(0.75f, -1f, -0.2f));
-                leftElbowHint.position = view.transform.TransformPoint(new Vector3(-0.75f, -1f, -0.2f));
+                if (pair.Value != rightViewUpper && pair.Value != leftViewUpper)
+                {
+                    pair.Value.localPosition = pair.Key.localPosition;
+                    pair.Value.localScale = pair.Key.localScale;
+                }
+                pair.Value.localRotation = pair.Key.localRotation;
             }
-            Vector3 rightLocal = view.transform.InverseTransformPoint(rightCarryTarget.position);
-            Vector3 leftLocal = view.transform.InverseTransformPoint(leftCarryTarget.position);
-            float spread = Mathf.Max(.26f, Mathf.Max(Mathf.Abs(rightLocal.x), Mathf.Abs(leftLocal.x)) - .18f);
-            float depth = Mathf.Max(.1f, Mathf.Max(rightLocal.z, leftLocal.z) - .40f);
-            float height = Mathf.Min(-.6f, Mathf.Min(rightLocal.y, leftLocal.y) - .36f);
-            rightViewUpper.SetPositionAndRotation(view.transform.TransformPoint(new Vector3(spread, height, depth)), rightUpperArm.rotation);
-            leftViewUpper.SetPositionAndRotation(view.transform.TransformPoint(new Vector3(-spread, height, depth)), leftUpperArm.rotation);
-            carryBuilder.Evaluate(Time.deltaTime);
-            return carrying || carryWeight > 0f;
+            foreach (var finger in gripFingers)
+            {
+                bool right = finger.source.IsChildOf(GetArmBone(HumanBodyBones.RightHand));
+                float curl = Mathf.Lerp(.18f, 1f, right ? rightGripWeight : leftGripWeight);
+                finger.target.localRotation = finger.source.localRotation * Quaternion.AngleAxis(finger.angle * curl, finger.axis);
+            }
+            float speed = player.PlanarVelocity.magnitude;
+            float movement = Mathf.Clamp(speed / Mathf.Max(.01f, player.walkSpeed), 0f, 1.8f);
+            motionPhase += dt * Mathf.Lerp(1.6f, 9f, Mathf.Clamp01(movement));
+            Quaternion delta = Quaternion.Inverse(previousViewRotation) * view.transform.rotation;
+            Vector3 angles = delta.eulerAngles;
+            Vector2 angularMotion = new Vector2(Mathf.DeltaAngle(0f, angles.y), Mathf.DeltaAngle(0f, angles.x));
+            if (previousViewRotation == default) angularMotion = Vector2.zero;
+            previousViewRotation = view.transform.rotation;
+            Vector2 desiredSway = Vector2.ClampMagnitude(angularMotion * -.0018f, .025f);
+            viewSway = Vector2.Lerp(viewSway, desiredSway, 1f - Mathf.Exp(-12f * dt));
+            Vector3 sway = new Vector3(viewSway.x + Mathf.Sin(motionPhase) * .007f * movement,
+                -viewSway.y + Mathf.Cos(motionPhase * 2f) * .005f * movement + Mathf.Sin(Time.time * 1.6f) * .003f, 0f) * handMotion;
+            Quaternion cameraRotation = view.transform.rotation;
+            Vector3 rightIdle = view.transform.TransformPoint(readyHandPosition + sway);
+            Vector3 leftIdle = view.transform.TransformPoint(new Vector3(-readyHandPosition.x, readyHandPosition.y, readyHandPosition.z) + sway);
+            Quaternion rightIdleRotation = cameraRotation * Quaternion.LookRotation(Vector3.left, new Vector3(0f, .25f, 1f)) * rightPalmRotation;
+            Quaternion leftIdleRotation = cameraRotation * Quaternion.LookRotation(Vector3.right, new Vector3(0f, .25f, 1f)) * leftPalmRotation;
+            if (held)
+            {
+                lastRightGripRotation = pickup.PrimaryGripRotation * rightPalmRotation;
+                lastRightGripTarget = pickup.PrimaryHandGripTarget - lastRightGripRotation * rightPalmOffset;
+                if (twoHanded)
+                {
+                    lastLeftGripRotation = pickup.SecondaryGripRotation * leftPalmRotation;
+                    lastLeftGripTarget = pickup.SecondaryHandGripTarget - lastLeftGripRotation * leftPalmOffset;
+                }
+            }
+            else if (equipped)
+            {
+                lastRightGripRotation = inventory.EquippedHandTargetRotation * rightPalmRotation;
+                lastRightGripTarget = inventory.EquippedHandTargetPosition - lastRightGripRotation * rightPalmOffset;
+            }
+            if (touchingDoor)
+            {
+                Vector3 normal = doorInput.HeldDoor.transform.forward;
+                if (Vector3.Dot(normal, doorInput.HeldContactPoint - view.transform.position) < 0f) normal = -normal;
+                lastRightGripRotation = Quaternion.LookRotation(normal, Vector3.up) * rightPalmRotation;
+                lastRightGripTarget = doorInput.HeldContactPoint - lastRightGripRotation * rightPalmOffset;
+            }
+            rightCarryTarget.SetPositionAndRotation(Vector3.Lerp(rightIdle, lastRightGripTarget, rightGripWeight),
+                Quaternion.Slerp(rightIdleRotation, lastRightGripRotation, rightGripWeight));
+            leftCarryTarget.SetPositionAndRotation(Vector3.Lerp(leftIdle, lastLeftGripTarget, leftGripWeight),
+                Quaternion.Slerp(leftIdleRotation, lastLeftGripRotation, leftGripWeight));
+            rightViewUpper.SetPositionAndRotation(view.transform.TransformPoint(new Vector3(.21f, -.34f, .05f)), rightUpperArm.rotation);
+            leftViewUpper.SetPositionAndRotation(view.transform.TransformPoint(new Vector3(-.21f, -.34f, .05f)), leftUpperArm.rotation);
+            if (modelRightUpper != null)
+            {
+                // Keep bone lengths intact when an item exceeds the resting reach.
+                rightViewUpper.position = ReachableShoulder(rightViewUpper.position, rightCarryTarget.position, rightViewReach);
+                leftViewUpper.position = ReachableShoulder(leftViewUpper.position, leftCarryTarget.position, leftViewReach);
+            }
+            rightElbowHint.position = view.transform.TransformPoint(new Vector3(.52f, -.58f, .02f));
+            leftElbowHint.position = view.transform.TransformPoint(new Vector3(-.52f, -.58f, .02f));
+            carryBuilder.Evaluate(dt);
+            return true;
         }
 
         private void OnEnable()
@@ -264,7 +330,10 @@ namespace KnocksFromBeneath
             RestoreBodyShadows();
             if (view == null || camera != view || bodyRenderers == null) return;
             // Исходный меш целиком остаётся невидимым от камеры игрока.
-            bool showHands = (pickup != null && pickup.GetHeldObject() != null) || EquippedItem() != null;
+            bool showHands = enabled &&
+                ((pickup != null && pickup.GetHeldObject() != null) ||
+                 EquippedItem() != null ||
+                 (doorInput != null && doorInput.HeldDoor != null));
             for (int i = 0; i < bodyRenderers.Length; i++)
                 if (bodyRenderers[i] != null)
                     bodyRenderers[i].shadowCastingMode = ShadowCastingMode.ShadowsOnly;
@@ -272,8 +341,68 @@ namespace KnocksFromBeneath
                 firstPersonArms.shadowCastingMode = showHands ? ShadowCastingMode.On : ShadowCastingMode.ShadowsOnly;
         }
 
+        private Vector3 ReachableShoulder(Vector3 shoulder, Vector3 target, float reach)
+        {
+            Vector3 offset = shoulder - target;
+            float distance = offset.magnitude;
+            if (distance <= reach * .96f) return shoulder;
+            shoulder = target + offset * (reach * .96f / distance);
+            Vector3 lowerEdgeNormal = (view.transform.up + view.transform.forward *
+                Mathf.Tan(view.fieldOfView * Mathf.Deg2Rad * .5f)).normalized;
+            if (Vector3.Dot(shoulder - view.transform.position, lowerEdgeNormal) > -.025f)
+                shoulder = target - lowerEdgeNormal * (reach * .96f);
+            return shoulder;
+        }
+
+        private Transform GetArmBone(HumanBodyBones bone)
+        {
+            if (modelRightUpper == null) return animator.GetBoneTransform(bone);
+            if (armBoneCache.TryGetValue(bone, out Transform cached)) return cached;
+            string name = bone.ToString();
+            bool right = name.StartsWith("Right");
+            string part = name.Substring(right ? 5 : 4);
+            string suffix = right ? "_R" : "_L";
+            string target;
+            switch (part)
+            {
+                case "UpperArm": target = "arm" + suffix; break;
+                case "LowerArm": target = "forearm" + suffix; break;
+                case "Hand": return right ? modelRightHand : modelLeftHand;
+                default:
+                    string segment = part.EndsWith("Proximal") ? "1" : part.EndsWith("Intermediate") ? "2" : "3";
+                    string finger = part.Replace("Proximal", "").Replace("Intermediate", "").Replace("Distal", "").ToLowerInvariant();
+                    target = (finger == "little" ? "pinky" : finger) + segment + suffix;
+                    break;
+            }
+            foreach (Transform transform in modelBones)
+                if (transform.name == target) { armBoneCache.Add(bone, transform); return transform; }
+            return null;
+        }
+
         private void CreateFirstPersonArms()
         {
+            if (firstPersonArmsPrefab != null)
+            {
+                var model = Instantiate(firstPersonArmsPrefab, transform);
+                firstPersonModel = model;
+                model.name = "First Person Arms";
+                firstPersonArms = model.GetComponentInChildren<SkinnedMeshRenderer>();
+                if (firstPersonArms == null) { Destroy(model); return; }
+                modelBones = firstPersonArms.bones;
+                foreach (Transform bone in modelBones)
+                {
+                    switch (bone.name)
+                    {
+                        case "arm_R": modelRightUpper = bone; break;
+                        case "arm_L": modelLeftUpper = bone; break;
+                        case "hand_R": modelRightHand = bone; break;
+                        case "hand_L": modelLeftHand = bone; break;
+                    }
+                }
+                firstPersonArms.shadowCastingMode = ShadowCastingMode.Off;
+                firstPersonArms.receiveShadows = false;
+                return;
+            }
             if (animator == null || firstPersonArmsMesh == null) return;
 
             SkinnedMeshRenderer source = null;
@@ -346,7 +475,8 @@ namespace KnocksFromBeneath
         private void OnDestroy()
         {
             if (carryBuilder != null) carryBuilder.Clear();
-            if (firstPersonArms != null) Destroy(firstPersonArms.gameObject);
+            if (firstPersonModel != null) Destroy(firstPersonModel);
+            else if (firstPersonArms != null) Destroy(firstPersonArms.gameObject);
             if (viewForearmsMesh != null) Destroy(viewForearmsMesh);
         }
 
@@ -550,12 +680,15 @@ namespace KnocksFromBeneath
             if (animator.avatar != null && animator.avatar.isHuman)
             {
                 var middle = animator.GetBoneTransform(HumanBodyBones.RightMiddleDistal);
+                if (middle == null) middle = animator.GetBoneTransform(HumanBodyBones.RightIndexDistal);
                 var index = animator.GetBoneTransform(HumanBodyBones.RightIndexProximal);
                 var pinky = animator.GetBoneTransform(HumanBodyBones.RightLittleProximal);
-                if (middle != null && index != null && pinky != null)
+                if (middle != null && index != null)
                 {
                     Vector3 fingers = (middle.position - rightHand.position).normalized;
-                    Vector3 palmNormal = Vector3.Cross(index.position - pinky.position, fingers).normalized;
+                    Vector3 palmNormal = pinky != null
+                        ? Vector3.Cross(index.position - pinky.position, fingers).normalized
+                        : Vector3.ProjectOnPlane(transform.forward, fingers).normalized;
                     if (Vector3.Dot(palmNormal, transform.forward) < 0f) palmNormal = -palmNormal;
                     if (palmNormal.sqrMagnitude > .5f && fingers.sqrMagnitude > .5f)
                     {

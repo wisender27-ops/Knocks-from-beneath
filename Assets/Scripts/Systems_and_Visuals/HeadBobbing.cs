@@ -43,6 +43,7 @@ public class HeadBobbing : MonoBehaviour
     public AudioClip[] metalSteps;
     public AudioClip[] woodSteps;
     public AudioClip[] stairSteps;
+    private AudioClip _lastStep;
 
     private bool _stepPlayed = false;
 
@@ -112,10 +113,13 @@ public class HeadBobbing : MonoBehaviour
 
     void PlayFootstepSound()
     {
+        if (_controller == null || footstepSource == null || AudioListener.pause || Time.timeScale <= 0f) return;
         RaycastHit hit;
         // Стреляем лучом вниз, чтобы понять, на чем стоим
         // (слой-блокер исключён: калитка под ногами не должна менять звук шага)
-        if (Physics.Raycast(transform.position, Vector3.down, out hit, 2.0f, PhysicsMasks.RaycastDefault))
+        Bounds bodyBounds = _controller.bounds;
+        if (Physics.Raycast(bodyBounds.center, Vector3.down, out hit, bodyBounds.extents.y + .4f,
+            PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore))
         {
             AudioClip[] selectedArray = null;
 
@@ -139,14 +143,20 @@ public class HeadBobbing : MonoBehaviour
             if (selectedArray != null && selectedArray.Length > 0)
             {
                 // Берем случайный звук из выбранного массива
-                AudioClip clip = selectedArray[Random.Range(0, selectedArray.Length)];
+                int index = Random.Range(0, selectedArray.Length);
+                if (selectedArray.Length > 1 && selectedArray[index] == _lastStep)
+                    index = (index + 1 + Random.Range(0, selectedArray.Length - 1)) % selectedArray.Length;
+                AudioClip clip = selectedArray[index];
+                if (clip == null) return;
+                _lastStep = clip;
 
                 // Немного меняем высоту звука (Pitch), чтобы шаги не были одинаковыми
                 if (footstepSource == null)
                     return;
 
-                footstepSource.pitch = Random.Range(0.9f, 1.1f);
-                footstepSource.PlayOneShot(clip);
+                footstepSource.pitch = Random.Range(0.96f, 1.04f);
+                float speed = new Vector2(_controller.velocity.x, _controller.velocity.z).magnitude;
+                footstepSource.PlayOneShot(clip, Mathf.Lerp(.55f, 1f, Mathf.InverseLerp(1f, 4f, speed)));
             }
         }
     }

@@ -52,6 +52,8 @@ public class Door : MonoBehaviour
     [Header("Заперто (T-21)")]
     [Tooltip("Звук, когда игрок пытается открыть запертую дверь. Если не задан — просто дёргается без звука.")]
     [SerializeField] private AudioClip lockedRattleClip;
+    [SerializeField] private AudioSource feedbackSource;
+    private float _nextRattleSound;
     [SerializeField] private float rattleAngle = 6f;
     [SerializeField] private float rattleDuration = 0.3f;
 
@@ -536,8 +538,12 @@ public class Door : MonoBehaviour
     {
         if (!interactionLocked) return;
         LockedAttempted?.Invoke();
-        if (sfxSource != null && lockedRattleClip != null)
-            sfxSource.PlayOneShot(lockedRattleClip);
+        if (lockedRattleClip != null && Time.time >= _nextRattleSound)
+        {
+            AudioSource source = feedbackSource != null ? feedbackSource : sfxSource;
+            if (source != null) source.PlayOneShot(lockedRattleClip, .55f);
+            _nextRattleSound = Time.time + .4f;
+        }
 
         // StopCoroutine(string) останавливает только корутины, запущенные через
         // StartCoroutine(string) — эта запущена через StartCoroutine(IEnumerator), так что

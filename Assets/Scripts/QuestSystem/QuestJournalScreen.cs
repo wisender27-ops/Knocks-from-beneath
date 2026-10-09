@@ -69,7 +69,7 @@ namespace KnocksFromBeneath
             }
             else if (IsOpen && Input.GetKeyDown(KeyCode.Escape)) Close();
 
-            bool showHint = !IsOpen && !closing && Time.timeScale > 0f &&
+            bool showHint = !InteractionPresentation.HasControlHints && !IsOpen && !closing && Time.timeScale > 0f &&
                 !RetroInventoryScreen.IsAnyOpen &&
                 (playerController == null || !playerController.isCameraLocked) &&
                 (playerInteraction == null || !playerInteraction.IsEatingPie);

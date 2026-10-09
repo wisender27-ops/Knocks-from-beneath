@@ -25,6 +25,15 @@ public class CrosshairJuice : MonoBehaviour
     private Color _targetColor;
     private string _targetHint = "";
     private IntroSequence _intro;
+    private InteractionPresentation _presentation;
+    public InteractionFocus CurrentFocus { get; private set; }
+    public string CurrentHint => _targetHint;
+
+    void Awake()
+    {
+        _presentation = gameObject.AddComponent<InteractionPresentation>();
+        _presentation.Initialize(this);
+    }
 
     void OnEnable()
     {
@@ -110,14 +119,11 @@ public class CrosshairJuice : MonoBehaviour
 
     void CheckUnderCursor()
     {
-        if (interaction == null || interaction.playerCamera == null || interaction.IsBreakingLock)
-        {
-            _targetScale = Vector3.one * defaultScale;
-            _targetColor = defaultColor;
-            _targetHint = "";
-            return;
-        }
-
+        CurrentFocus = default;
+        _targetHint = "";
+        _targetScale = Vector3.one * defaultScale;
+        _targetColor = defaultColor;
+        if (interaction == null || interaction.playerCamera == null || interaction.IsBreakingLock) return;
         GameObject heldObj = interaction.GetHeldObject();
         if (heldObj != null)
         {
@@ -155,11 +161,11 @@ public class CrosshairJuice : MonoBehaviour
             MicrowaveInteractable microwave = heldHit.collider.GetComponentInParent<MicrowaveInteractable>();
             if (microwave == null) return;
             if (!intro.CanPlacePieInMicrowave()) return;
-            if (microwave.microwaveDoor == null) return;
+            if (microwave.microwaveDoor == null || microwave.pieInsidePoint == null || microwave.IsHeating) return;
 
             if (!microwave.microwaveDoor.isOpen)
             {
-                _targetHint = "Открой дверцу микроволновки";
+                _targetHint = "E — открыть дверцу";
                 return;
             }
 
@@ -167,149 +173,25 @@ public class CrosshairJuice : MonoBehaviour
             return;
         }
 
-        Ray ray = interaction.playerCamera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0));
-        RaycastHit hit;
-        bool hittingSomething = false;
 
-        if (interaction.TryGetInteractionHit(out hit))
+        if (_intro == null) _intro = FindFirstObjectByType<IntroSequence>();
+        if (interaction.TryGetInteractionHit(out RaycastHit hit) &&
+            InteractionFocusResolver.TryResolve(interaction, _intro, hit, out var focus))
         {
-            FloorLogic floor = hit.collider.GetComponentInParent<FloorLogic>();
-            if (floor != null && floor.CanStartBreak(interaction.inventory))
-            {
-                hittingSomething = true;
-                _targetHint = "Нажмите E, чтобы сломать пол";
-            }
-
-            // Люк в подвал. Проверка идёт ДО всех остальных веток и по GetComponentInParent,
-            // как в PlayerInteraction.PerformInteraction: коллайдеры створок висят на
-            // дочерних MetalHatchPanel, а сам BasementHatch — на корне люка. Без этого
-            // ветка ловила только пустоту, и подсказка у люка не появлялась.
-            //
-            // Текст зависит от состояния: заперто (нужен лом) / не вскрыто / вскрыто
-            // (закрыть). Ссылка нужна и в случае, когда смотришь на сам замок, а не на
-            // створки, — тогда родителем коллайдера будет BasementHatchLock.
-            BasementHatchLock hatchLock = hit.collider.GetComponentInParent<BasementHatchLock>();
-            BasementHatch hatch = hatchLock == null
-                ? hit.collider.GetComponentInParent<BasementHatch>()
-                : hatchLock.GetComponentInParent<BasementHatch>();
-
-            if (!hittingSomething && (hatch != null || hatchLock != null))
-            {
-                hittingSomething = true;
-                if (_intro == null) _intro = FindFirstObjectByType<IntroSequence>();
-                if (_intro != null && _intro.CanBoardBasement(hatch))
-                    _targetHint = "Нажмите E, чтобы заколотить люк";
-                else if (hatch != null && hatch.IsOpen)
-                    _targetHint = "Нажмите E, чтобы закрыть дверь";
-                else if (hatchLock != null && hatchLock.IsLocked && QuestManager.Instance != null &&
-                    QuestManager.Instance.IsQuestActive(hatchLock.RequiredQuestTag))
-                    _targetHint = hatchLock.CanStartBreak(interaction)
-                        ? "Нажмите E, чтобы сломать замок" : "Подойдите ближе к замку";
-                else
-                    _targetHint = "Нажмите E, чтобы открыть дверь";
-            }
-
-            MicrowaveInteractable microwave = hit.collider.GetComponentInParent<MicrowaveInteractable>();
-            if (!hittingSomething && microwave != null)
-            {
-                // Готовый пирог внутри: подсказываем открыть дверцу или достать.
-                if (microwave.IsPieReadyToTake())
-                {
-                    hittingSomething = true;
-                    if (microwave.microwaveDoor != null && microwave.microwaveDoor.isOpen)
-                        _targetHint = "E — достать пирог";
-                    else
-                        _targetHint = "Открой дверцу микроволновки";
-                }
-            }
-
-            // Подсказки на русском
-            if (!hittingSomething && hit.collider.GetComponent<HammerTrap>() != null)
-            {
-                hittingSomething = true;
-                _targetHint = "E — взять";
-            }
-            else if (!hittingSomething && hit.collider.GetComponent<SimpleItem>() != null)
-            {
-                hittingSomething = true;
-                _targetHint = "E — взять";
-            }
-            else if (!hittingSomething && hit.collider.GetComponent<TrashPile>() != null
-                     && QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("trash-collect"))
-            {
-                hittingSomething = true;
-                _targetHint = "E — собрать";
-            }
-            else if (!hittingSomething && hit.collider.GetComponent<LightSwitch>() != null)
-            {
-                hittingSomething = true;
-                _targetHint = "E — включить/выключить";
-            }
-            else if (!hittingSomething && hit.collider.GetComponentInParent<Door>() != null)
-            {
-                hittingSomething = true;
-                _targetHint = "E — открыть";
-            }
-            else if (!hittingSomething && hit.collider.GetComponentInParent<IngredientItem>() != null
-                     && QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("dinner-ingredients"))
-            {
-                hittingSomething = true;
-                _targetHint = "E — собрать";
-            }
-            else if (!hittingSomething && hit.collider.GetComponentInParent<DinnerMealInteractable>() is DinnerMealInteractable meal && meal.CanInteract)
-            {
-                hittingSomething = true;
-                _targetHint = "E — съесть ужин";
-            }
-            else if (!hittingSomething && hit.collider.GetComponentInParent<StoveInteractable>() is StoveInteractable stove)
-            {
-                if (_intro == null) _intro = FindFirstObjectByType<IntroSequence>();
-                if (!stove.IsReady && !stove.IsCooking && _intro != null && _intro.CanCookDinner())
-                {
-                    hittingSomething = true;
-                    _targetHint = "E — готовить";
-                }
-            }
-            else if (!hittingSomething && hit.collider.GetComponentInParent<NeighborNoteInteractable>() is NeighborNoteInteractable note && note.CanInteract)
-            {
-                hittingSomething = true;
-                _targetHint = "E — посмотреть";
-            }
-            else if (!hittingSomething && hit.collider.GetComponentInParent<FrontDoorLockInteractable>() is FrontDoorLockInteractable frontLock && frontLock.CanInteract)
-            {
-                hittingSomething = true;
-                _targetHint = "E — запереть засов";
-            }
-            else if (!hittingSomething && hit.collider.CompareTag("Pickable"))
-            {
-                hittingSomething = true;
-                PickableItem pickable = hit.collider.GetComponent<PickableItem>();
-                _targetHint = pickable != null && pickable.placementQuestTag == "room-decoration"
-                    ? $"E — поднять {pickable.displayName}"
-                    : "E — взять";
-            }
-            else if (!hittingSomething && hit.collider.TryGetComponent(out BedSleepInteractable bed) && bed.CanInteract)
-            {
-                hittingSomething = true;
-                _targetHint = "E — лечь спать";
-            }
-        }
-
-        if (hittingSomething)
-        {
+            CurrentFocus = focus;
+            _targetHint = focus.Prompt;
             _targetScale = Vector3.one * interactScale;
-            _targetColor = interactColor;
-        }
-        else
-        {
-            _targetScale = Vector3.one * defaultScale;
-            _targetColor = defaultColor;
-            _targetHint = "";
+            _targetColor = focus.Blocked ? defaultColor : interactColor;
         }
     }
 
     void ApplyJuice()
     {
+        if (_presentation != null && _presentation.isActiveAndEnabled)
+        {
+            if (hintText != null) hintText.text = "";
+            return;
+        }
         if (hintText != null)
             hintText.text = NarrativeDisplayQueue.CanShowInteractionHint ? _targetHint : "";
 

@@ -58,9 +58,8 @@ public sealed class ProtagonistTests
             Assert.That(clip.length, Is.GreaterThan(.5f));
             Assert.That(clip.humanMotion, Is.True, clip.name);
             var importer = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(clip)) as ModelImporter;
-            Assert.That(importer, Is.Not.Null);
-            var settings = importer.clipAnimations.First(c => c.name == clip.name);
-            Assert.That(settings.lockRootRotation && settings.lockRootHeightY && settings.lockRootPositionXZ, Is.True, clip.name);
+            var settings = AnimationUtility.GetAnimationClipSettings(clip);
+            Assert.That(settings.loopBlendOrientation && settings.loopBlendPositionY && settings.loopBlendPositionXZ, Is.True, clip.name);
         }
     }
 
@@ -118,7 +117,7 @@ public sealed class ProtagonistTests
             Assert.That(Quaternion.Angle(corrected, foot.rotation), Is.LessThan(.1f));
         }
         var hand = animator.GetBoneTransform(HumanBodyBones.RightHand);
-        var middle = animator.GetBoneTransform(HumanBodyBones.RightMiddleDistal);
+        var middle = animator.GetBoneTransform(HumanBodyBones.RightMiddleDistal) ?? animator.GetBoneTransform(HumanBodyBones.RightIndexDistal);
         var offset = (Quaternion)typeof(ProtagonistBody).GetField("rightWristBoneOffset", flags).GetValue(body);
         Vector3 localFingers = Quaternion.Inverse(hand.rotation) * (middle.position - hand.position).normalized;
         Assert.That(Vector3.Dot(offset * localFingers, Vector3.down), Is.GreaterThan(.999f));

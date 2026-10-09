@@ -89,6 +89,9 @@ public class IntroSequence : MonoBehaviour
     [Tooltip("Входная дверь дома — EveningRoundController запирает её через Door.SetInteractionLocked, если игрок выберет 'запереть'.")]
     public Door frontDoor;
 
+    [Header("Первая ночь — визит соседа")]
+    public NeighborVisitSequence neighborVisit;
+
     [Header("Ночь 2 — развилка концовок (T-19)")]
     [Tooltip("Триггер у входной двери — концовка 'побег'. Включается BranchEndingController, если дверь не заперта.")]
     public GameObject escapeDoorTrigger;
@@ -127,6 +130,16 @@ public class IntroSequence : MonoBehaviour
     void Awake()
     {
         FadeTransitionPresentation.Ensure(fadeScreen);
+        var horrorDirector = gameObject.AddComponent<HorrorMomentDirector>();
+        horrorDirector.Initialize(playerInventory);
+        var firstNightScare = gameObject.AddComponent<NightOneScare>();
+        firstNightScare.Initialize(playerInventory);
+        var followingSteps = gameObject.AddComponent<FollowingFootsteps>();
+        followingSteps.Initialize(playerInventory);
+        var kitchenDisturbance = gameObject.AddComponent<KitchenDisturbance>();
+        kitchenDisturbance.Initialize(this, playerInventory);
+        kitchenDisturbance.ConfigureAudio(Resources.Load<AudioClip>("Audio/Horror/PlateScrape"),
+            Resources.Load<AudioClip>("Audio/Horror/PlateImpact"));
         _pieQuest = new PieQuestController(
             pieObject, microwaveZone,
             CreateQuest, ShowThoughts, IsQuestActive,
@@ -163,8 +176,11 @@ public class IntroSequence : MonoBehaviour
 
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
-            TeleportPlayerToBed, StartCoroutine, ShowThoughts,
-            onNightFinished: _decoration.SetupDecorationQuest);
+            TeleportPlayerToBed, StartCoroutine, ShowImportantThoughts,
+            onNightFinished: _decoration.SetupDecorationQuest,
+            nightScare: firstNightScare.Play,
+            neighborVisit: neighborVisit != null ? neighborVisit.Play : (System.Func<IEnumerator>)null,
+            didMeetNeighbor: () => neighborVisit != null && neighborVisit.HasVisited);
 
         SetupBedsideLamp();
         SetupPowerOutageAudio();
@@ -456,7 +472,7 @@ public class IntroSequence : MonoBehaviour
     // --- 1. Начальный монолог ---
     void StartIntro()
     {
-        ShowThoughts(new string[] {
+        ShowImportantThoughts(new string[] {
             "Ну вот. Свой дом. Может, хоть здесь будет спокойно.",
             "Семья съехала, а срач оставила мне. Спасибо."
         }, _moveInChores.SetupTrashQuest);
@@ -587,7 +603,7 @@ public class IntroSequence : MonoBehaviour
         // стучать всю оставшуюся ночь, включая сцену у дыры и развилку концовок.
         if (knockController != null) knockController.SetActive(false);
         bool hasFlashlight = playerInventory != null && playerInventory.hasFlashlight;
-        ShowThoughts(new string[] {
+        ShowImportantThoughts(new string[] {
             "Стук идёт снизу. Из подвала.",
             "Только бы не та же история...",
             hasFlashlight ? "Вход в подвал снаружи. Пойду проверю люк." : "Стоило бы взять фонарик. Без него я туда не полезу."
@@ -836,7 +852,7 @@ public class IntroSequence : MonoBehaviour
     // --- 8. Открыть створки и посветить вниз ---
     void SetupLookInHoleQuest()
     {
-        CreateQuest("Открыть подвал и осветить лестницу", 1, OnHoleEventFinished);
+        CreateQuest("Открыть подвал и осветить лестницу", 1, OnHoleEventFinished, "open-basement-after-lock");
         if (holeEventController != null)
         {
             holeEventController.gameObject.SetActive(true);
@@ -858,7 +874,7 @@ public class IntroSequence : MonoBehaviour
     // игрок теперь получает именно тогда, когда видит развилку и может действовать.
     public void OnHoleEventFinished()
     {
-        ShowThoughts(new string[] {
+        ShowImportantThoughts(new string[] {
             "Оно исчезло.",
             "Нет. Я не стану опять от него бежать.",
             "Заколочу люк. И всё. Больше не вылезет.",
@@ -999,6 +1015,14 @@ public class IntroSequence : MonoBehaviour
         }
 
         onComplete?.Invoke();
+    }
+
+    private void ShowImportantThoughts(string[] lines, System.Action onComplete)
+    {
+        if (ThoughtManager.Instance != null)
+            ThoughtManager.Instance.ShowImportantThoughts(lines, onComplete);
+        else
+            onComplete?.Invoke();
     }
 
     bool IsQuestActive(string questTag)

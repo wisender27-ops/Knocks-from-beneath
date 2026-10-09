@@ -12,6 +12,9 @@ public class PlayerDoorOpen : MonoBehaviour
 
     private PlayerInteraction interaction;
     private Door currentHeldDoor;
+    private Vector3 heldContactLocal;
+    public Door HeldDoor => currentHeldDoor;
+    public Vector3 HeldContactPoint => currentHeldDoor != null ? currentHeldDoor.transform.TransformPoint(heldContactLocal) : Vector3.zero;
     private float pressTime;
     private float mouseMovement;
     private const float TapDuration = 0.22f;
@@ -31,6 +34,8 @@ public class PlayerDoorOpen : MonoBehaviour
 
     void Update()
     {
+        if (PauseMenuController.InputBlocked || Time.timeScale <= 0f) return;
+        if (currentHeldDoor != null && !Input.GetKey(KeyCode.E)) EndDoorHold(true);
         if (playerCamera == null)
             return;
 
@@ -49,7 +54,7 @@ public class PlayerDoorOpen : MonoBehaviour
             if (interaction != null && interaction.enabled && interaction.TryGetInteractionHit(out hit))
             {
                 Door door = hit.collider.GetComponentInParent<Door>();
-                if (door != null)
+                if (door != null && interaction.ShouldUseDoorInput(door))
                 {
                     if (door.IsInteractionLocked)
                     {
@@ -58,14 +63,7 @@ public class PlayerDoorOpen : MonoBehaviour
                         return;
                     }
 
-                    currentHeldDoor = door;
-                    pressTime = Time.unscaledTime;
-                    mouseMovement = 0f;
-                    currentHeldDoor.StartHolding();
-
-                    // Блокируем вращение камеры
-                    if (playerController != null)
-                        playerController.isCameraLocked = true;
+                    BeginDoorHold(door, hit.point + hit.normal * .006f);
                 }
             }
         }
@@ -78,33 +76,46 @@ public class PlayerDoorOpen : MonoBehaviour
         {
             if (currentHeldDoor != null)
             {
-                bool wasTap = Time.unscaledTime - pressTime <= TapDuration &&
-                              mouseMovement <= TapMouseTolerance;
-                currentHeldDoor.StopHolding();
-                if (wasTap && !currentHeldDoor.IsInteractionLocked)
-                    currentHeldDoor.ToggleDoor();
-                currentHeldDoor = null;
-
-                // Возвращаем управление камерой
-                if (playerController != null)
-                    playerController.isCameraLocked = false;
+                EndDoorHold(true);
             }
         }
     }
 
-    void OnDisable()
+    public void Initialize(Camera camera, PlayerController controller, PlayerInteraction actor)
     {
-        // Снимаем блокировку камеры только если её поставили мы (держали дверь) — иначе
-        // чужая блокировка (финал, инвентарь) снимается тем, что этот компонент выключили.
-        if (currentHeldDoor != null)
-        {
-            currentHeldDoor.StopHolding();
-            currentHeldDoor = null;
-
-            if (playerController != null)
-                playerController.isCameraLocked = false;
-        }
+        playerCamera = camera != null ? camera : GetComponentInChildren<Camera>();
+        playerController = controller != null ? controller : GetComponentInParent<PlayerController>();
+        interaction = actor != null ? actor : GetComponentInParent<PlayerInteraction>();
     }
+
+    public bool BeginDoorHold(Door door, Vector3 contact)
+    {
+        if (interaction == null) interaction = GetComponentInParent<PlayerInteraction>();
+        if (playerController == null) playerController = GetComponentInParent<PlayerController>();
+        if (door == null || currentHeldDoor != null || interaction == null || !interaction.isActiveAndEnabled ||
+            !interaction.ShouldUseDoorInput(door) || (playerController != null && playerController.isCameraLocked)) return false;
+        if (door.IsInteractionLocked) { door.PlayLockedFeedback(); NotifyLockedFrontDoor(door); return false; }
+        currentHeldDoor = door;
+        heldContactLocal = door.transform.InverseTransformPoint(contact);
+        pressTime = Time.unscaledTime;
+        mouseMovement = 0f;
+        door.StartHolding();
+        if (playerController != null) playerController.isCameraLocked = true;
+        return true;
+    }
+
+    public void EndDoorHold(bool allowTap = false)
+    {
+        if (currentHeldDoor == null) return;
+        Door released = currentHeldDoor;
+        bool tap = allowTap && Time.unscaledTime - pressTime <= TapDuration && mouseMovement <= TapMouseTolerance;
+        currentHeldDoor = null;
+        released.StopHolding();
+        if (tap && !released.IsInteractionLocked) released.ToggleDoor();
+        if (playerController != null) playerController.isCameraLocked = false;
+    }
+
+    void OnDisable() => EndDoorHold();
 
     // T-21: Door.IsInteractionLocked обслуживает и входную дверь (заперта на вечернем обходе
     // дня 2), и дверцу микроволновки (заперта во время готовки, MicrowaveInteractable) — общий

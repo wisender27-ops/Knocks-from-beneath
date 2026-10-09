@@ -34,6 +34,10 @@ public class PlayerController : MonoBehaviour
 
     private CharacterController controller;
     private Camera cam;
+    private PickupController _pickupControl;
+    private bool invertMouseY;
+    private float defaultFieldOfView;
+    private int settingsRevision = -1;
     private float yRotation;
     private float verticalVelocity;
     private float currentStamina;
@@ -61,6 +65,7 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
         controller = GetComponent<CharacterController>();
+        _pickupControl = GetComponent<PickupController>();
         cam = GetComponentInChildren<Camera>();
         if (cam != null)
             cam.nearClipPlane = Mathf.Min(cam.nearClipPlane, MaxCameraNearClip);
@@ -68,6 +73,8 @@ public class PlayerController : MonoBehaviour
 
         currentCameraY = standingHeight - 0.2f;
         mouseSensitivity = SettingsStore.GetMouseSensitivity(mouseSensitivity);
+        defaultFieldOfView = cam != null ? cam.fieldOfView : 60f;
+        ApplyUserSettings();
         SettingsStore.ApplyMasterVolume();
 
         Cursor.lockState = CursorLockMode.Locked;
@@ -76,8 +83,20 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        if (settingsRevision != SettingsStore.Revision) ApplyUserSettings();
+        if (PauseMenuController.InputBlocked || Time.timeScale <= 0f) return;
         HandleLook();
         HandleMovement();
+    }
+
+    private void ApplyUserSettings()
+    {
+        settingsRevision = SettingsStore.Revision;
+        mouseSensitivity = SettingsStore.GetMouseSensitivity(mouseSensitivity);
+        invertMouseY = SettingsStore.GetInvertY();
+        float fov = SettingsStore.GetFieldOfView(defaultFieldOfView);
+        if (cam != null) cam.fieldOfView = fov;
+        if (_pickupControl != null) _pickupControl.SetBaseFieldOfView(fov);
     }
 
     void LateUpdate()
@@ -100,10 +119,10 @@ public class PlayerController : MonoBehaviour
 
     private void HandleLook()
     {
-        if (isCameraLocked || cam == null) return;
+        if (isCameraLocked || cam == null || (_pickupControl != null && _pickupControl.IsRotatingHeldObject)) return;
 
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
-        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
+        float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * (invertMouseY ? -1f : 1f);
 
         yRotation -= mouseY;
         yRotation = Mathf.Clamp(yRotation, minY, maxY);

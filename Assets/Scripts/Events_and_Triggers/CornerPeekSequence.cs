@@ -71,6 +71,7 @@ namespace KnocksFromBeneath
             if (Physics.Raycast(_camera.transform.position, direction.normalized, direction.magnitude - 0.08f,
                 PhysicsMasks.AllLayers, QueryTriggerInteraction.Ignore)) return;
             _played = true;
+            HorrorMomentDirector.Instance?.Interrupt();
             _intro?.PrepareCornerScare();
             NarrativeDisplayQueue.InterruptAndEnqueue(this, Play);
         }
@@ -150,7 +151,7 @@ namespace KnocksFromBeneath
                 yield return null;
             }
             RestoreControl();
-            ThoughtManager.Instance?.ShowThoughts(new[] {
+            ThoughtManager.Instance?.ShowImportantThoughts(new[] {
                 "Блядь! Это что за хрень?!",
                 "Какого чёрта... Он был прямо передо мной!",
                 "Стук был из подвала. Он оттуда вылез?.."
