@@ -49,6 +49,12 @@ public class QuestParticleGate : MonoBehaviour
 
     void Refresh()
     {
+        if (!alwaysOn)
+        {
+            QuestItemMarker.SuppressLegacyParticles(transform);
+            QuestItemMarker.Ensure(gameObject).ConfigureTags(activeQuestTags);
+            return;
+        }
         bool shouldEmit = alwaysOn || MatchesActiveQuestTag();
 
         if (particleSystems == null) return;

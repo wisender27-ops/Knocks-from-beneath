@@ -146,9 +146,9 @@ public class TrashManager : MonoBehaviour
         }
 
         ThoughtManager.Instance.ShowThoughts(new[] {
-            "...Что это было?",
-            "Странный звук. Нужно проверить.",
-            "Может, это с кухни."
+            "Только не опять.",
+            "Нет. Старый дом, тут всё скрипит.",
+            "Сначала вынесу этот чёртов мусор."
         }, () => GameEvents.OnTrashDeliveryReady?.Invoke(), onStart: PlayFloorKnock);
     }
 

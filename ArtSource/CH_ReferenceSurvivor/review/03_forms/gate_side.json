@@ -1,0 +1,21 @@
+{
+  "view": "side",
+  "az": 270.0,
+  "matte": "C:\\claude\\knocks-from-beneath\\Knocks-from-beneath\\ArtSource\\CH_ReferenceSurvivor\\ref\\side_clean.png",
+  "m_per_px": 0.001865285,
+  "iou": 0.835,
+  "ref_only_pct": 8.75,
+  "render_only_pct": 9.28,
+  "band_width_diff": [
+    -0.0299,
+    0.0144,
+    -0.0052,
+    0.0082,
+    0.0041,
+    -0.0021,
+    0.0175,
+    0.0052,
+    0.0,
+    0.0093
+  ]
+}

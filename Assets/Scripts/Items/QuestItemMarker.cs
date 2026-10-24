@@ -1,0 +1,211 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.SceneManagement;
+
+namespace KnocksFromBeneath
+{
+    [DisallowMultipleComponent]
+    public sealed class QuestItemMarker : MonoBehaviour
+    {
+        private static readonly List<QuestItemMarker> markers = new List<QuestItemMarker>();
+        private static QuestItemMarkerPresentation presentation;
+        private Renderer[] renderers;
+        private Collider[] colliders;
+        private SimpleItem simple;
+        private CollectableItem collectable;
+        private PickableItem pickable;
+        private TrashPile trash;
+        private PieQuestItem pie;
+        private string[] explicitTags;
+        private float opacity, nextVisibilityCheck;
+        private bool unobstructed;
+        private Vector2 screenPoint;
+        public float VisibleDistance { get; set; } = 4f;
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics()
+        {
+            markers.Clear();
+            presentation = null;
+            SceneManager.sceneLoaded -= ConfigureScene;
+            SceneManager.sceneLoaded += ConfigureScene;
+        }
+
+        private static void ConfigureScene(Scene scene, LoadSceneMode mode)
+        {
+            foreach (GameObject root in scene.GetRootGameObjects())
+                foreach (MonoBehaviour component in root.GetComponentsInChildren<MonoBehaviour>(true))
+                    if (component is SimpleItem || component is CollectableItem || component is PickableItem ||
+                        component is TrashPile || component is PieQuestItem)
+                        Ensure(component.gameObject);
+        }
+
+        public static QuestItemMarker Ensure(GameObject item)
+        {
+            var marker = item.GetComponent<QuestItemMarker>();
+            return marker != null ? marker : item.AddComponent<QuestItemMarker>();
+        }
+
+        public void ConfigureTags(string[] tags) => explicitTags = tags;
+
+        public static void SuppressLegacyParticles(Transform root)
+        {
+            foreach (ParticleSystem particles in root.GetComponentsInChildren<ParticleSystem>(true))
+            {
+                var main = particles.main;
+                main.playOnAwake = false;
+                main.loop = false;
+                var emission = particles.emission;
+                emission.enabled = false;
+                particles.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+                var renderer = particles.GetComponent<ParticleSystemRenderer>();
+                if (renderer != null) renderer.enabled = false;
+                if (particles.gameObject != root.gameObject) particles.gameObject.SetActive(false);
+            }
+        }
+
+        private void Awake()
+        {
+            simple = GetComponent<SimpleItem>();
+            collectable = GetComponent<CollectableItem>();
+            pickable = GetComponent<PickableItem>();
+            trash = GetComponent<TrashPile>();
+            pie = GetComponent<PieQuestItem>();
+            var visual = new List<Renderer>();
+            foreach (Renderer renderer in GetComponentsInChildren<Renderer>(true))
+                if (!(renderer is ParticleSystemRenderer) && renderer.name != "PixelOutline") visual.Add(renderer);
+            renderers = visual.ToArray();
+            colliders = GetComponentsInChildren<Collider>(true);
+        }
+
+        private void OnEnable()
+        {
+            if (!Application.isPlaying) return;
+            if (!markers.Contains(this)) markers.Add(this);
+            if (presentation == null)
+            {
+                presentation = new GameObject("Quest item indicators").AddComponent<QuestItemMarkerPresentation>();
+                DontDestroyOnLoad(presentation.gameObject);
+            }
+        }
+
+        private void OnDisable()
+        {
+            markers.Remove(this);
+            opacity = 0f;
+        }
+
+        private bool IsRequired()
+        {
+            var quests = QuestManager.Instance;
+            if (quests == null || quests.GetActiveQuest() == null) return false;
+            if (simple != null) return simple.IsAvailable && quests.IsItemRequired(simple.itemType);
+            if (trash != null) return quests.IsQuestActive("trash-collect");
+            if (pie != null) return quests.IsQuestActive("pie-take") || quests.IsQuestActive("pie-eat");
+            if (pickable != null && !string.IsNullOrEmpty(pickable.placementQuestTag))
+                return pickable.enabled && quests.IsQuestActive(pickable.placementQuestTag);
+            if (collectable != null)
+            {
+                switch (collectable.currentItemType)
+                {
+                    case CollectableItem.ItemType.Trash: return quests.IsQuestActive("trash-delivery");
+                    case CollectableItem.ItemType.Box: return quests.IsQuestActive("box-delivery") || quests.IsQuestActive("box-collect");
+                    case CollectableItem.ItemType.Grocery: return quests.IsQuestActive("dinner-ingredients");
+                }
+            }
+            if (explicitTags != null)
+                foreach (string tag in explicitTags) if (quests.IsQuestActive(tag)) return true;
+            return false;
+        }
+
+        private bool TryGetBounds(out Bounds bounds)
+        {
+            bounds = new Bounds();
+            bool found = false;
+            foreach (Renderer renderer in renderers)
+            {
+                if (renderer == null || !renderer.enabled || !renderer.gameObject.activeInHierarchy) continue;
+                if (!found) { bounds = renderer.bounds; found = true; } else bounds.Encapsulate(renderer.bounds);
+            }
+            if (found) return true;
+            foreach (Collider collider in colliders)
+            {
+                if (collider == null || !collider.enabled || collider.isTrigger || !collider.gameObject.activeInHierarchy) continue;
+                if (!found) { bounds = collider.bounds; found = true; } else bounds.Encapsulate(collider.bounds);
+            }
+            return found;
+        }
+
+        private void Refresh(Camera camera, GameObject held)
+        {
+            float targetOpacity = 0f;
+            if (IsRequired() && GetComponentInParent<PlayerInventory>() == null &&
+                (held == null || (held != gameObject && !transform.IsChildOf(held.transform))) && TryGetBounds(out Bounds bounds))
+            {
+                Vector3 eye = camera.transform.position;
+                float distance = Vector3.Distance(eye, bounds.center);
+                Vector3 viewport = camera.WorldToViewportPoint(bounds.center + Vector3.up * (bounds.extents.y + .07f));
+                if (distance < VisibleDistance && viewport.z > camera.nearClipPlane &&
+                    viewport.x > .025f && viewport.x < .975f && viewport.y > .025f && viewport.y < .975f)
+                {
+                    if (Time.unscaledTime >= nextVisibilityCheck)
+                    {
+                        nextVisibilityCheck = Time.unscaledTime + .12f;
+                        Vector3 direction = bounds.center - eye;
+                        unobstructed = !Physics.Raycast(eye, direction.normalized, out RaycastHit hit,
+                            direction.magnitude, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore) ||
+                            hit.collider.transform == transform || hit.collider.transform.IsChildOf(transform);
+                    }
+                    if (unobstructed)
+                    {
+                        screenPoint = new Vector2(viewport.x * Screen.width, (1f - viewport.y) * Screen.height);
+                        targetOpacity = .8f * Mathf.Clamp01((VisibleDistance - distance) / .75f);
+                    }
+                }
+            }
+            opacity = Mathf.MoveTowards(opacity, targetOpacity, Time.unscaledDeltaTime * 5f);
+        }
+
+        internal static void RefreshAll(Camera camera, GameObject held)
+        {
+            for (int i = 0; i < markers.Count; i++)
+                if (markers[i] != null) markers[i].Refresh(camera, held);
+        }
+
+        internal static void DrawAll()
+        {
+            if (Event.current.type != EventType.Repaint || Time.timeScale == 0f || FadeTransitionPresentation.IsActive ||
+                RetroInventoryScreen.IsAnyOpen || QuestJournalScreen.IsAnyOpen || !NarrativeDisplayQueue.CanShowInteractionHint) return;
+            Color previousColor = GUI.color;
+            Matrix4x4 previousMatrix = GUI.matrix;
+            float size = Mathf.Clamp(Screen.height / 720f, .75f, 2f) * 5.2f;
+            foreach (var marker in markers)
+            {
+                if (marker == null || marker.opacity < .02f) continue;
+                Vector2 point = marker.screenPoint;
+                GUIUtility.RotateAroundPivot(45f, point);
+                GUI.color = new Color(.08f, .07f, .06f, marker.opacity * .65f);
+                GUI.DrawTexture(new Rect(point.x - size / 2f - 1.3f, point.y - size / 2f - 1.3f, size + 2.6f, size + 2.6f), Texture2D.whiteTexture);
+                GUI.color = new Color(.91f, .88f, .81f, marker.opacity);
+                GUI.DrawTexture(new Rect(point.x - size / 2f, point.y - size / 2f, size, size), Texture2D.whiteTexture);
+                GUI.matrix = previousMatrix;
+            }
+            GUI.color = previousColor;
+            GUI.matrix = previousMatrix;
+        }
+    }
+
+    internal sealed class QuestItemMarkerPresentation : MonoBehaviour
+    {
+        private Camera view;
+        private PickupController pickup;
+        private void LateUpdate()
+        {
+            if (view == null) view = Camera.main;
+            if (view == null) return;
+            if (pickup == null) pickup = FindFirstObjectByType<PickupController>();
+            QuestItemMarker.RefreshAll(view, pickup != null ? pickup.GetHeldObject() : null);
+        }
+        private void OnGUI() => QuestItemMarker.DrawAll();
+    }
+}

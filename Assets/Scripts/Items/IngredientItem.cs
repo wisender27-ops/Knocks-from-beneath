@@ -7,8 +7,12 @@ namespace KnocksFromBeneath
 // засчитывается только если активный квест — "dinner-ingredients", иначе игнорируется.
 public class IngredientItem : MonoBehaviour
 {
+    [SerializeField] private Transform collectedParent;
+    private bool _collected;
+
     public void Collect()
     {
+        if (_collected) return;
         if (QuestManager.Instance == null) return;
         if (QuestManager.Instance.questList == null ||
             QuestManager.Instance.currentQuestIndex < 0 ||
@@ -22,8 +26,17 @@ public class IngredientItem : MonoBehaviour
             return;
         }
 
+        _collected = true;
+        if (collectedParent != null)
+        {
+            transform.SetParent(collectedParent, true);
+            gameObject.SetActive(false);
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
         QuestManager.Instance.AddProgress(1);
-        Destroy(gameObject);
     }
 }
 }

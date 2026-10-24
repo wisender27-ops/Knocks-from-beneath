@@ -17,6 +17,7 @@ public sealed class PieQuestController
     private readonly Action<string[], Action> _showThoughts;
     private readonly Func<string, bool> _isQuestActive;
     private readonly Action _onDinnerFinished;
+    private readonly Action<string> _recordCompletion;
 
     private bool _isPieTaken;
     private bool _isPieHeated;
@@ -27,7 +28,8 @@ public sealed class PieQuestController
         Action<string, int, UnityAction, string> createQuest,
         Action<string[], Action> showThoughts,
         Func<string, bool> isQuestActive,
-        Action onDinnerFinished)
+        Action onDinnerFinished,
+        Action<string> recordCompletion = null)
     {
         _pieObject = pieObject;
         _microwaveZone = microwaveZone;
@@ -35,6 +37,7 @@ public sealed class PieQuestController
         _showThoughts = showThoughts;
         _isQuestActive = isQuestActive;
         _onDinnerFinished = onDinnerFinished;
+        _recordCompletion = recordCompletion;
     }
 
     public void SetupTakePieQuest()
@@ -58,13 +61,31 @@ public sealed class PieQuestController
 
     public void OnPieTaken()
     {
+        _recordCompletion?.Invoke("pie-take");
+        SetupMicrowaveQuest();
+    }
+
+    public void SetupMicrowaveQuest()
+    {
         _isPieTaken = true;
+        _isPieHeated = false;
+        if (_pieObject != null) _pieObject.SetActive(true);
         if (_microwaveZone != null) _microwaveZone.SetActive(true);
         _createQuest("Поставить пирог в микроволновку", 1, OnPiePlacedInMicrowave, "pie-microwave");
     }
 
+    public void SetupEatQuest()
+    {
+        _isPieTaken = true;
+        _isPieHeated = true;
+        if (_pieObject != null) _pieObject.SetActive(true);
+        if (_microwaveZone != null) _microwaveZone.SetActive(false);
+        _createQuest("Съесть пирог", 1, OnPieEaten, "pie-eat");
+    }
+
     public void OnPiePlacedInMicrowave()
     {
+        _recordCompletion?.Invoke("pie-microwave");
         _isPieHeated = true;
         if (_microwaveZone != null) _microwaveZone.SetActive(false);
         _createQuest("Съесть пирог", 1, OnPieEaten, "pie-eat");
@@ -72,9 +93,10 @@ public sealed class PieQuestController
 
     public void OnPieEaten()
     {
+        _recordCompletion?.Invoke("pie-eat");
         _showThoughts(new string[] {
-            "Уже легче.",
-            "Теперь можно поспать."
+            "Хоть поел нормально.",
+            "Всё. На сегодня с меня хватит."
         }, _onDinnerFinished);
     }
 

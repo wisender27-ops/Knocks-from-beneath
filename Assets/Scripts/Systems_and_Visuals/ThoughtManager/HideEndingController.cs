@@ -119,8 +119,8 @@ public sealed class HideEndingController
         if (_resolved) yield break;
 
         _showThoughts(new string[] {
-            "Тихо...",
-            "Кажется, можно выходить."
+            "Больше ничего не слышно.",
+            "Может, ушло. Надо выбираться."
         }, null);
     }
 
@@ -141,7 +141,7 @@ public sealed class HideEndingController
         yield return new WaitForSeconds(1.5f);
 
         _showThoughts(new string[] {
-            "..."
+            "Нет... Оно здесь."
         }, () => _endGame("КОНЕЦ: ТЫ ОСТАЛСЯ ЗДЕСЬ (2/4)"));
     }
 }

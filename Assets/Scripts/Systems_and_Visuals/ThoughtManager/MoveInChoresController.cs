@@ -65,8 +65,8 @@ public sealed class MoveInChoresController
     {
         if (_trashZone != null) _trashZone.SetActive(false);
         _showThoughts(new string[] {
-            "Коробки всё ещё у входа...",
-            "Как будто на каторгу приехал."
+            "Ещё коробки по комнатам растащить.",
+            "Переехал, блин. Отдохнул."
         }, SetupBoxQuest);
     }
 
@@ -90,9 +90,9 @@ public sealed class MoveInChoresController
             }
         }
         _showThoughts(new string[] {
-            "Спина отваливается.",
-            "Надо хоть что-то поесть перед сном.",
-            "Достану пирог из холодильника."
+            "Ну всё, спина сказала спасибо.",
+            "Теперь поесть — и в кровать.",
+            "В холодильнике ещё пирог остался."
         }, _onChoresFinished);
     }
 

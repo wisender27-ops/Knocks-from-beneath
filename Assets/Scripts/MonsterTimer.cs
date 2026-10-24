@@ -27,6 +27,7 @@ public class MonsterTimer : MonoBehaviour
     [SerializeField] private float finalMessageHoldDuration = 3f;
 
     private bool _isRunning = false;
+    private bool _paused;
     private float _defaultFontSize;
 
     void Awake()
@@ -52,13 +53,19 @@ public class MonsterTimer : MonoBehaviour
     public void StartTimer()
     {
         if (_isRunning) return;
+        _paused = false;
         StartCoroutine(TimerRoutine());
     }
+
+    public void PauseTimer() => _paused = true;
+
+    public void ResumeTimer() => _paused = false;
 
     public void StopTimer()
     {
         StopAllCoroutines();
         _isRunning = false;
+        _paused = false;
         if (timerText != null)
         {
             timerText.text = "";
@@ -71,10 +78,7 @@ public class MonsterTimer : MonoBehaviour
 
     IEnumerator TimerRoutine()
     {
-        // Раньше при timerText == null таймер сразу вызывал OnTimerExpired() — отсутствие
-        // текстового поля в инспекторе обнуляло весь 30-секундный отсчёт, и игровая логика
-        // (концовка "не успел") зависела от косметической UI-ссылки. Теперь отсчёт всегда
-        // идёт полные timerDuration секунд, а обновление текста — отдельный необязательный шаг.
+        // Дедлайн работает без UI; чтение обязательной реплики может приостановить отсчёт.
         _isRunning = true;
         float remaining = timerDuration;
 
@@ -90,9 +94,9 @@ public class MonsterTimer : MonoBehaviour
                 else
                     timerText.color = Color.red;
 
-                timerText.text = $"Монстр вылезет из дыры через {Mathf.CeilToInt(remaining)} секунд";
+                timerText.text = $"Заколотить подвал: {Mathf.CeilToInt(remaining)} с";
             }
-            remaining -= Time.deltaTime;
+            if (!_paused) remaining -= Time.deltaTime;
             yield return null;
         }
 
@@ -103,17 +107,7 @@ public class MonsterTimer : MonoBehaviour
 
     void OnTimerExpired()
     {
-        // Страшный звук
-        if (audioSource != null && monsterEscapeClip != null)
-            audioSource.PlayOneShot(monsterEscapeClip);
-
-        // Порядок важен: сначала публикуем событие. Оно синхронно резолвит концовку
-        // "НЕ УСПЕЛ" (BranchEndingController.TryResolve), которая заодно и глушит таймер
-        // через StopTimer() -> StopAllCoroutines() — раньше ShowFinalMessage() уже была
-        // запущена К ЭТОМУ моменту и обрывалась на первом же слове в тот же кадр. Таймер
-        // на этой строке уже и так закончился сам (мы внутри его собственного завершения),
-        // так что более ранний StopTimer() тут безвреден — а корутину сообщения стартуем
-        // ПОСЛЕ, когда её уже точно никто не убьёт в этом кадре.
+        // Истечение меняет исход следующего взаимодействия с люком, но не запускает нападение.
         GameEvents.OnMonsterTimerExpired?.Invoke();
 
         if (timerText != null)
@@ -127,19 +121,7 @@ public class MonsterTimer : MonoBehaviour
         timerText.fontSize = finalMessageFontSize;
         timerText.color = Color.red;
 
-        // Раньше текст ("ТЕБЕ. НУЖНО. ЗАКОЛОТИТЬ. ДЫРУ.") звучал как инструкция к действию —
-        // ровно в момент, когда действовать уже поздно. Заменил на реакцию на провал,
-        // не пересекающуюся по смыслу с последующей репликой "Не успел." в концовке.
-        timerText.text = "ПОЗДНО.";
-        yield return new WaitForSeconds(finalMessageWordDelay);
-
-        timerText.text = "ПОЗДНО. ОНО ВЫШЛО.";
-        yield return new WaitForSeconds(finalMessageWordDelay);
-
-        timerText.text = "ПОЗДНО. ОНО ВЫШЛО. ОНО СВОБОДНО.";
-        yield return new WaitForSeconds(finalMessageWordDelay);
-
-        timerText.text = "ПОЗДНО. ОНО ВЫШЛО. ОНО СВОБОДНО. БЕГИ.";
+        timerText.text = "Время вышло";
         yield return new WaitForSeconds(finalMessageHoldDuration);
 
         // Убираем надпись

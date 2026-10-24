@@ -1,0 +1,147 @@
+{
+  "blend": "C:\\claude\\knocks-from-beneath\\Knocks-from-beneath\\ArtSource\\CH_ReferenceSurvivor\\CH_ReferenceSurvivor_rigged.blend",
+  "summary": {
+    "tris_by_lod": {
+      "0": 8324,
+      "1": 4578,
+      "2": 2246
+    },
+    "fail": [],
+    "warn": [
+      "CH_ReferenceSurvivor_Body_LOD1: 19 tiny influences below 0.01",
+      "CH_ReferenceSurvivor_Body_LOD2: 96 tiny influences below 0.01"
+    ]
+  },
+  "objects": [
+    {
+      "name": "CH_ReferenceSurvivor_Body_LOD0",
+      "type": "MESH",
+      "warn": [],
+      "fail": [],
+      "info": {
+        "tris_evaluated": 8324,
+        "verts_evaluated": 4332,
+        "verts": 4332,
+        "faces": 8324,
+        "boundary_edges": 32,
+        "nonmanifold_edges": 0,
+        "islands": 78,
+        "uv_loops_outside_0_1": 0,
+        "materials": [
+          "Survivor_Atlas"
+        ],
+        "modifiers": [
+          "ARMATURE:Skin"
+        ],
+        "skin": {
+          "armature": "CH_ReferenceSurvivor_Rig",
+          "unweighted": 0,
+          "over_influences": 0,
+          "not_normalised": 0,
+          "tiny_weights": 0,
+          "orphan_groups": []
+        }
+      }
+    },
+    {
+      "name": "CH_ReferenceSurvivor_Body_LOD1",
+      "type": "MESH",
+      "warn": [
+        "19 tiny influences below 0.01"
+      ],
+      "fail": [],
+      "info": {
+        "tris_evaluated": 4578,
+        "verts_evaluated": 2459,
+        "verts": 2459,
+        "faces": 4578,
+        "boundary_edges": 32,
+        "nonmanifold_edges": 0,
+        "islands": 78,
+        "uv_loops_outside_0_1": 0,
+        "materials": [
+          "Survivor_Atlas"
+        ],
+        "modifiers": [
+          "ARMATURE:Skin"
+        ],
+        "skin": {
+          "armature": "CH_ReferenceSurvivor_Rig",
+          "unweighted": 0,
+          "over_influences": 0,
+          "not_normalised": 0,
+          "tiny_weights": 19,
+          "orphan_groups": []
+        }
+      }
+    },
+    {
+      "name": "CH_ReferenceSurvivor_Body_LOD2",
+      "type": "MESH",
+      "warn": [
+        "96 tiny influences below 0.01"
+      ],
+      "fail": [],
+      "info": {
+        "tris_evaluated": 2246,
+        "verts_evaluated": 1292,
+        "verts": 1292,
+        "faces": 2246,
+        "boundary_edges": 30,
+        "nonmanifold_edges": 0,
+        "islands": 78,
+        "flipped_vs_recalc": 12,
+        "uv_loops_outside_0_1": 0,
+        "materials": [
+          "Survivor_Atlas"
+        ],
+        "modifiers": [
+          "ARMATURE:Skin"
+        ],
+        "skin": {
+          "armature": "CH_ReferenceSurvivor_Rig",
+          "unweighted": 0,
+          "over_influences": 0,
+          "not_normalised": 0,
+          "tiny_weights": 96,
+          "orphan_groups": []
+        }
+      }
+    },
+    {
+      "name": "SOCKET_LeftHand",
+      "type": "SOCKET",
+      "warn": [],
+      "fail": [],
+      "info": {
+        "parent": "CH_ReferenceSurvivor_Rig",
+        "parent_bone": "LeftHand",
+        "props": {}
+      }
+    },
+    {
+      "name": "SOCKET_RightHand",
+      "type": "SOCKET",
+      "warn": [],
+      "fail": [],
+      "info": {
+        "parent": "CH_ReferenceSurvivor_Rig",
+        "parent_bone": "RightHand",
+        "props": {}
+      }
+    },
+    {
+      "name": "CH_ReferenceSurvivor_Rig",
+      "type": "ARMATURE",
+      "warn": [],
+      "fail": [],
+      "info": {
+        "bones": 52,
+        "deform_bones": 52,
+        "roots": [
+          "Hips"
+        ]
+      }
+    }
+  ]
+}

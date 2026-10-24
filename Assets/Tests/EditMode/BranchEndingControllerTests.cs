@@ -1,177 +1,113 @@
 using System;
 using System.Collections;
-using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using KnocksFromBeneath;
 
 public class BranchEndingControllerTests
 {
-    private GameObject _escapeDoorTrigger;
-    private GameObject _player;
-    private bool _hammerPathActivated;
-    private bool _hidePathsActivated;
-    private bool _endGameCalled;
-    private string _lastEndingTitle;
-    private bool _cameraLockCalled;
-    private bool _cameraLockedValue;
-    private List<string[]> _shownThoughts;
-    private Action _lastOnComplete;
-
-    // Как и в HideEndingControllerTests — прогоняет корутину синхронно, без Play Mode.
-    static Coroutine FakeStartCoroutine(IEnumerator routine)
-    {
-        while (routine.MoveNext()) { }
-        return null;
-    }
+    private GameObject _escape;
+    private bool _hammer;
+    private bool _hide;
+    private int _coroutines;
+    private int _thoughts;
+    private int _cameraLocks;
+    private int _endings;
 
     private BranchEndingController CreateController()
     {
-        _escapeDoorTrigger = new GameObject("EscapeDoorTrigger");
-        _escapeDoorTrigger.SetActive(false);
-        _player = new GameObject("Player");
-        _hammerPathActivated = false;
-        _hidePathsActivated = false;
-        _endGameCalled = false;
-        _lastEndingTitle = null;
-        _cameraLockCalled = false;
-        _shownThoughts = new List<string[]>();
-
+        _escape = new GameObject("EscapeDoorTrigger");
+        _hide = true;
         return new BranchEndingController(
-            activateHammerPath: () => _hammerPathActivated = true,
-            escapeDoorTrigger: _escapeDoorTrigger,
-            setHidePathsActive: active => _hidePathsActivated = active,
-            playerTransform: _player.transform,
-            startCoroutine: FakeStartCoroutine,
-            showThoughts: (lines, onComplete) => { _shownThoughts.Add(lines); _lastOnComplete = onComplete; },
-            lockCamera: locked => { _cameraLockCalled = true; _cameraLockedValue = locked; },
-            endGame: title => { _endGameCalled = true; _lastEndingTitle = title; });
+            () => _hammer = true, _escape, active => _hide = active, null,
+            routine => { _coroutines++; return null; },
+            (lines, complete) => { _thoughts++; complete?.Invoke(); },
+            locked => _cameraLocks++, title => _endings++);
     }
 
     [TearDown]
     public void TearDown()
     {
+        if (_escape != null) UnityEngine.Object.DestroyImmediate(_escape);
         GameState.frontDoorLocked = false;
-        if (_escapeDoorTrigger != null) UnityEngine.Object.DestroyImmediate(_escapeDoorTrigger);
-        if (_player != null) UnityEngine.Object.DestroyImmediate(_player);
     }
 
-    [Test]
-    public void Activate_AlwaysActivatesHammerPath()
+    [TestCase(false)]
+    [TestCase(true)]
+    public void Activate_EnablesHammerAndDisablesOtherRoutes(bool doorLocked)
     {
         var controller = CreateController();
+        GameState.frontDoorLocked = doorLocked;
 
         controller.Activate();
 
-        Assert.That(_hammerPathActivated, Is.True);
+        Assert.That(_hammer, Is.True);
+        Assert.That(_hide, Is.False);
+        Assert.That(_escape.activeSelf, Is.False);
+        Assert.That(controller.DeadlineExpired, Is.False);
     }
 
     [Test]
-    public void Activate_AlwaysActivatesHidePaths()
+    public void HandleDoorEscape_DoesNothingAndCannotClaimFinale()
     {
-        var controller = CreateController();
-
-        controller.Activate();
-
-        Assert.That(_hidePathsActivated, Is.True);
-    }
-
-    [Test]
-    public void Activate_EnablesEscapeDoorWhenNotLocked()
-    {
-        GameState.frontDoorLocked = false;
-        var controller = CreateController();
-
-        controller.Activate();
-
-        Assert.That(_escapeDoorTrigger.activeSelf, Is.True);
-    }
-
-    [Test]
-    public void Activate_KeepsEscapeDoorDisabledWhenLocked()
-    {
-        GameState.frontDoorLocked = true;
-        var controller = CreateController();
-
-        controller.Activate();
-
-        Assert.That(_escapeDoorTrigger.activeSelf, Is.False);
-    }
-
-    [Test]
-    public void HandleDoorEscape_DeactivatesTriggerLocksCameraAndEndsGameOnce()
-    {
-        GameState.frontDoorLocked = false;
         var controller = CreateController();
         controller.Activate();
 
         controller.HandleDoorEscape();
-        Assert.That(_escapeDoorTrigger.activeSelf, Is.False);
-        Assert.That(_shownThoughts.Count, Is.EqualTo(1));
-        // T-21: раньше камера не блокировалась во время финальной реплики — за это время
-        // можно было успеть дойти до дыры и запустить конкурирующую концовку.
-        Assert.That(_cameraLockCalled, Is.True);
-        Assert.That(_cameraLockedValue, Is.True);
+        controller.HandleDoorEscape();
 
-        _lastOnComplete?.Invoke();
-        Assert.That(_endGameCalled, Is.True);
-        Assert.That(_lastEndingTitle, Is.Not.Null.And.Not.Empty);
+        AssertNoEndingSideEffects();
+        Assert.That(controller.TryResolve(), Is.True);
     }
 
     [Test]
-    public void HandleDoorEscape_IgnoredOnSecondCall()
-    {
-        var controller = CreateController();
-        controller.Activate();
-        controller.HandleDoorEscape();
-        int countAfterFirst = _shownThoughts.Count;
-
-        controller.HandleDoorEscape();
-
-        Assert.That(_shownThoughts.Count, Is.EqualTo(countAfterFirst), "second call must be ignored");
-    }
-
-    // T-21: четвёртая концовка — таймер у дыры истёк, игрок не успел заколотить.
-    [Test]
-    public void HandleTimerExpired_LocksCameraAndEndsGame()
+    public void HandleTimerExpired_OnlyMarksDeadlineAndLeavesFinaleAvailable()
     {
         var controller = CreateController();
         controller.Activate();
 
         controller.HandleTimerExpired();
+        controller.HandleTimerExpired();
 
-        Assert.That(_cameraLockCalled, Is.True);
-        Assert.That(_cameraLockedValue, Is.True);
-        Assert.That(_shownThoughts, Is.Not.Empty);
-
-        _lastOnComplete?.Invoke();
-        Assert.That(_endGameCalled, Is.True);
-        Assert.That(_lastEndingTitle, Is.Not.Null.And.Not.Empty);
+        Assert.That(controller.DeadlineExpired, Is.True);
+        AssertNoEndingSideEffects();
+        Assert.That(controller.TryResolve(), Is.True);
     }
 
     [Test]
-    public void HandleTimerExpired_IgnoredWhenAnotherEndingAlreadyClaimedTheBranch()
+    public void HandleTimerExpired_AfterResolveDoesNotChangeDeadline()
     {
         var controller = CreateController();
         controller.Activate();
-        controller.HandleDoorEscape(); // claims the branch first
-        _shownThoughts.Clear();
-        _cameraLockCalled = false;
+        Assert.That(controller.TryResolve(), Is.True);
 
         controller.HandleTimerExpired();
 
-        Assert.That(_shownThoughts, Is.Empty);
+        Assert.That(controller.DeadlineExpired, Is.False);
+        AssertNoEndingSideEffects();
     }
 
-    // T-21: единая точка, через которую проходят все концовки ветки (кроме молотка, у него
-    // свой путь через IntroSequence.TryClaimEnding) — TryResolve не должна падать, даже если
-    // MonsterTimer.Instance ещё не существует (в EditMode-тестах его нет вообще).
     [Test]
-    public void TryResolve_DoesNotThrow_WhenMonsterTimerInstanceMissing()
+    public void TryResolve_IsIdempotentUntilReactivated()
     {
         var controller = CreateController();
         controller.Activate();
+        controller.HandleTimerExpired();
 
-        Assert.DoesNotThrow(() => controller.HandleDoorEscape());
+        Assert.That(controller.TryResolve(), Is.True);
+        Assert.That(controller.TryResolve(), Is.False);
+        controller.Activate();
+
+        Assert.That(controller.DeadlineExpired, Is.False);
+        Assert.That(controller.TryResolve(), Is.True);
+        Assert.That(controller.TryResolve(), Is.False);
+    }
+
+    private void AssertNoEndingSideEffects()
+    {
+        Assert.That(_coroutines, Is.Zero);
+        Assert.That(_thoughts, Is.Zero);
+        Assert.That(_cameraLocks, Is.Zero);
+        Assert.That(_endings, Is.Zero);
     }
 }

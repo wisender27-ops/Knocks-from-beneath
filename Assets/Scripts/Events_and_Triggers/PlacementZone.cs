@@ -60,6 +60,10 @@ public class PlacementZone : MonoBehaviour
     private string _placementQuestTag;
     private GameObject _boxPreview;
     private Material _previewMaterial;
+    private Vector3 _previewAimPoint;
+
+    public Vector3 PlacementAimPoint(Transform slot) =>
+        _boxPreview != null ? _previewAimPoint : slot.position + Vector3.up * 0.1f;
 
     public void ConfigureBoxQuestPlacement(bool enabled)
     {
@@ -78,6 +82,45 @@ public class PlacementZone : MonoBehaviour
     public bool AcceptsQuest(string questTag) =>
         _placementQuestTag == questTag && IsProgressQuest(questTag);
 
+    /// <summary>
+    /// Принимает ли зона именно ЭТОТ предмет.
+    ///
+    /// У квеста с разными предметами (декор дня 2) у каждого своя зона: лампа
+    /// должна попасть в гостиную, цветок — на кухню. Раньше проверки не было
+    /// вовсе, и любой предмет можно было засунуть в любую зону, а превью
+    /// показывало его сразу во всех трёх слотах.
+    ///
+    /// У предметов с назначенной зоной требуем попадание ровно в неё.
+    /// У предметов без назначенной (коробки дня 1 — они одинаковые) подходит
+    /// любая зона квеста, как и раньше.
+    /// </summary>
+    public bool AcceptsItem(GameObject item)
+    {
+        if (item == null) return false;
+        var pickable = item.GetComponent<PickableItem>();
+        if (_placementQuestTag == "room-decoration")
+            return pickable != null && pickable.placementQuestTag == "room-decoration" &&
+                   pickable.designatedZone == this;
+        if (pickable != null && pickable.designatedZone != null)
+            return pickable.designatedZone == this;
+
+        // Предмет без назначенной зоны подходит любой (коробки дня 1).
+        return true;
+    }
+
+    public bool TryGetFreeSlot(out Transform slot)
+    {
+        slot = null;
+        if (!isActiveAndEnabled || slots == null) return false;
+        for (int i = 0; i < slots.Count; i++)
+        {
+            if (slots[i] == null || (isSlotOccupied != null && i < isSlotOccupied.Length && isSlotOccupied[i])) continue;
+            slot = slots[i];
+            return true;
+        }
+        return false;
+    }
+
     public bool IsPlayerNearFreeSlot(Vector3 playerPosition, float distance)
     {
         if (!isActiveAndEnabled || slots == null) return false;
@@ -93,6 +136,11 @@ public class PlacementZone : MonoBehaviour
         HideBoxPreview();
         if (!_preciseBoxPlacement || !isActiveAndEnabled || box == null || slots == null) return;
 
+        // Зона показывает превью ТОЛЬКО своего предмета. Раньше проверки не было,
+        // и стоило взять одну лампу — все три зоны рисовали копию этой лампы
+        // в своих слотах, создавая иллюзию «у каждого предмета своё место».
+        if (!AcceptsItem(box)) return;
+
         Transform slot = null;
         for (int i = 0; i < slots.Count; i++)
             if ((isSlotOccupied == null || i >= isSlotOccupied.Length || !isSlotOccupied[i]) && slots[i] != null)
@@ -102,9 +150,21 @@ public class PlacementZone : MonoBehaviour
         Shader shader = Shader.Find("Sprites/Default");
         if (shader == null) return;
         _previewMaterial = new Material(shader) { color = new Color(0.45f, 0.9f, 1f, 0.38f) };
-        _boxPreview = new GameObject("Box placement preview");
-        _boxPreview.transform.SetPositionAndRotation(slot.position, slot.rotation);
+        _boxPreview = new GameObject("Item placement preview");
+        Quaternion previewRotation = slot.rotation;
+        // Превью сажаем тем же способом, что и настоящую установку: если слот —
+        // FurnitureSlot, смещаем копию так, чтобы низ меша лёг на маркер. Иначе
+        // превью показывало вещь висящей в воздухе, а после установки она
+        // оказывалась на полу — картинка не совпадала с результатом.
+        var slotMarker = slot.GetComponent<FurnitureSlot>();
+        Vector3 previewPivot = slotMarker != null
+            ? slotMarker.GetItemPlacementPosition(box.transform, previewRotation)
+            : slot.position;
+        _boxPreview.transform.SetPositionAndRotation(previewPivot, previewRotation);
         _boxPreview.transform.localScale = box.transform.lossyScale;
+
+        Bounds previewBounds = new Bounds();
+        bool hasPreviewBounds = false;
 
         foreach (MeshRenderer source in box.GetComponentsInChildren<MeshRenderer>())
         {
@@ -124,7 +184,11 @@ public class PlacementZone : MonoBehaviour
             for (int i = 0; i < materials.Length; i++) materials[i] = _previewMaterial;
             previewRenderer.sharedMaterials = materials;
             previewRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            previewRenderer.receiveShadows = false;
+            if (!hasPreviewBounds) { previewBounds = previewRenderer.bounds; hasPreviewBounds = true; }
+            else previewBounds.Encapsulate(previewRenderer.bounds);
         }
+        _previewAimPoint = hasPreviewBounds ? previewBounds.center : slot.position + Vector3.up * 0.1f;
     }
 
     public void HideBoxPreview()
@@ -192,6 +256,14 @@ public class PlacementZone : MonoBehaviour
         RevealRunner.StartCoroutine(RevealSequence(toAnimate));
     }
 
+    public void RevealItemsForDebug()
+    {
+        _revealed = true;
+        if (itemsToReveal == null) return;
+        foreach (GameObject item in itemsToReveal)
+            if (item != null) item.SetActive(true);
+    }
+
     IEnumerator RevealSequence(List<(Transform t, Vector3 targetScale)> items)
     {
         for (int i = 0; i < items.Count; i++)
@@ -253,6 +325,13 @@ public class PlacementZone : MonoBehaviour
                 return false;
         }
 
+        // Предмет должен подходить ЭТОЙ зоне (у декора дня 2 у каждого своя зона).
+        if (!AcceptsItem(box))
+        {
+            Debug.Log($"[PlacementZone] '{box.name}' не подходит для зоны '{name}'.", this);
+            return false;
+        }
+
         if (_preciseBoxPlacement && (!playerPosition.HasValue ||
             (!IsPlayerNearFreeSlot(playerPosition.Value, 1.8f) && !IsPlayerNearFreeSlot(box.transform.position, 1.8f)) ||
             QuestManager.Instance == null || !QuestManager.Instance.IsQuestActive(_placementQuestTag)))
@@ -281,19 +360,48 @@ public class PlacementZone : MonoBehaviour
         if (box == null || slots == null || index < 0 || index >= slots.Count || slots[index] == null)
             return;
 
-        // 1. Убиваем физику
         Rigidbody rb = box.GetComponent<Rigidbody>();
-        if (rb != null) {
+        if (rb != null)
+        {
+            // Удержание использует MovePosition: сбрасываем интерполяцию перед телепортацией.
+            rb.interpolation = RigidbodyInterpolation.None;
+            if (!rb.isKinematic)
+            {
+                rb.linearVelocity = Vector3.zero;
+                rb.angularVelocity = Vector3.zero;
+            }
             rb.isKinematic = true;
             rb.useGravity = false;
         }
 
         // 2. Ставим в слот
-        box.transform.parent = null; 
-        box.transform.position = slots[index].position;
-        box.transform.rotation = slots[index].rotation;
+        box.transform.parent = null;
+        // Место — это FurnitureSlot (полупрозрачный маркер, который двигаешь в
+        // сцене руками). Он умеет посадить предмет по нижней грани его меша,
+        // а не по пивоту: у FBX-моделей пивот в центре меша, и установка по
+        // пивоту уводила лампу в пол или подвешивала в воздухе. Если маркера нет
+        // (старый слот без компонента) — работаем как раньше, строго по Transform.
+        var slotMarker = slots[index].GetComponent<FurnitureSlot>();
+        if (slotMarker != null)
+        {
+            Quaternion placementRotation = slots[index].rotation;
+            box.transform.SetPositionAndRotation(
+                slotMarker.GetItemPlacementPosition(box.transform, placementRotation),
+                placementRotation);
+        }
+        else
+        {
+            box.transform.SetPositionAndRotation(slots[index].position, slots[index].rotation);
+        }
+
+        if (rb != null)
+        {
+            rb.position = box.transform.position;
+            rb.rotation = box.transform.rotation;
+        }
 
         // 3. Слот теперь занят
+        box.GetComponent<ItemFoley>()?.PlayPlace();
         isSlotOccupied[index] = true;
         if (_preciseBoxPlacement)
         {

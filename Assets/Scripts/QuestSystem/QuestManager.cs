@@ -13,10 +13,14 @@ public class QuestManager : MonoBehaviour
     public static QuestManager Instance;
 
     public static event Action<string> OnActiveQuestTagChanged;
+    public event Action OnQuestChanged;
+    public int ToastRevision { get; private set; }
+    public bool IsToastVisible => questUiText != null && questUiText.alpha > 0f;
 
     [System.Serializable]
     public class QuestData
     {
+        public bool IsCompleted => requiredAmount > 0 && currentAmount >= requiredAmount;
         public string questTitle;
         public int requiredAmount;
         public int currentAmount;
@@ -34,13 +38,16 @@ public class QuestManager : MonoBehaviour
     [SerializeField] private float highlightHoldDuration = 0.2f;
     [SerializeField] private float fadeToBaseDuration = 0.6f;
 
-    private string _lastRenderedQuestText = "";
-    private Coroutine _questColorRoutine;
+    private QuestData _lastPresentedQuest;
+    private Vector2 _toastOrigin;
+    private bool _toastOriginCaptured;
+    private string _lastQueuedText;
     private string _lastActiveQuestTag = null;
 
     void Awake()
     {
         Instance = this;
+        HideToast();
         if (questList == null)
             questList = new List<QuestData>();
     }
@@ -57,14 +64,22 @@ public class QuestManager : MonoBehaviour
         NotifyActiveQuestTagIfChanged(force: true);
     }
 
-    // В Start теперь UpdateUI не вызываем, чтобы не было пустых 0/0
     void Start()
     {
-        if (questUiText != null)
-        {
-            questUiText.text = "";
-            questUiText.color = baseQuestColor;
-        }
+        UpdateUI();
+    }
+
+    void OnDisable()
+    {
+        HideToast();
+    }
+
+    public QuestData GetActiveQuest()
+    {
+        if (questList == null || currentQuestIndex < 0 || currentQuestIndex >= questList.Count)
+            return null;
+        QuestData quest = questList[currentQuestIndex];
+        return quest != null && !quest.IsCompleted ? quest : null;
     }
 
     public void AddProgress(int amount)
@@ -90,6 +105,20 @@ public class QuestManager : MonoBehaviour
 
         UpdateUI();
         NotifyActiveQuestTagIfChanged();
+        OnQuestChanged?.Invoke();
+    }
+
+    public void RecordQuestCompletion(string questTag)
+    {
+        QuestData quest = GetActiveQuest();
+        if (quest == null || string.IsNullOrEmpty(questTag) ||
+            !string.Equals(quest.questTag, questTag, StringComparison.Ordinal)) return;
+        // Direct story transitions already invoke their next step themselves.
+        quest.currentAmount = quest.requiredAmount;
+        currentQuestIndex++;
+        UpdateUI();
+        NotifyActiveQuestTagIfChanged();
+        OnQuestChanged?.Invoke();
     }
 
     public void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction onCompleteAction = null, string questTag = "")
@@ -112,6 +141,7 @@ public class QuestManager : MonoBehaviour
 
         UpdateUI();
         NotifyActiveQuestTagIfChanged();
+        OnQuestChanged?.Invoke();
     }
 
     public string GetActiveQuestTag()
@@ -163,81 +193,59 @@ public class QuestManager : MonoBehaviour
 
     void UpdateUI()
     {
+        QuestData quest = GetActiveQuest();
+        bool newQuest = !ReferenceEquals(_lastPresentedQuest, quest);
+        _lastPresentedQuest = quest;
+        if (quest == null)
+        {
+            _lastQueuedText = null;
+            return;
+        }
+
+        if (newQuest) ToastRevision++;
         if (questUiText == null) return;
-
-        // Если есть активный квест — показываем его
-        if (currentQuestIndex >= 0 && currentQuestIndex < questList.Count)
+        if (!_toastOriginCaptured)
         {
-            QuestData q = questList[currentQuestIndex];
-            if (q == null)
-            {
-                questUiText.text = "";
-                return;
-            }
-            string newText;
-
-            // Для одношаговых квестов выводим только цель.
-            // Для многошаговых — цель + сколько осталось в формате "(N)".
-            if (q.requiredAmount <= 1)
-            {
-                newText = q.questTitle;
-            }
-            else
-            {
-                int remaining = Mathf.Max(0, q.requiredAmount - q.currentAmount);
-                newText = $"{q.questTitle} ({remaining})";
-            }
-
-            ApplyQuestText(newText);
+            _toastOrigin = questUiText.rectTransform.anchoredPosition;
+            _toastOriginCaptured = true;
         }
-        else
-        {
-            // Если все квесты выполнены или их еще нет — просто очищаем текст
-            questUiText.text = "";
-            _lastRenderedQuestText = "";
-            if (_questColorRoutine != null)
-            {
-                StopCoroutine(_questColorRoutine);
-                _questColorRoutine = null;
-            }
-            questUiText.color = baseQuestColor;
-        }
+        string text = quest.requiredAmount <= 1
+            ? quest.questTitle
+            : $"{quest.questTitle} ({Mathf.Max(0, quest.requiredAmount - quest.currentAmount)})";
+        if (!newQuest && text == _lastQueuedText) return;
+        _lastQueuedText = text;
+        if (isActiveAndEnabled && Application.isPlaying)
+            NarrativeDisplayQueue.Enqueue(this, () => PlayQuestTextColorTransition(text));
     }
 
-    void ApplyQuestText(string newText)
+    public void HideToast()
     {
         if (questUiText == null) return;
-
-        bool changed = _lastRenderedQuestText != newText;
-        questUiText.text = newText;
-
-        if (changed)
-        {
-            _lastRenderedQuestText = newText;
-            if (_questColorRoutine != null) StopCoroutine(_questColorRoutine);
-            _questColorRoutine = StartCoroutine(PlayQuestTextColorTransition());
-        }
+        questUiText.color = baseQuestColor;
+        questUiText.alpha = 0f;
+        if (_toastOriginCaptured) questUiText.rectTransform.anchoredPosition = _toastOrigin;
     }
 
-    IEnumerator PlayQuestTextColorTransition()
+    IEnumerator PlayQuestTextColorTransition(string text)
     {
-        questUiText.color = highlightQuestColor;
-
-        if (highlightHoldDuration > 0f)
-            yield return new WaitForSeconds(highlightHoldDuration);
-
-        float t = 0f;
-        float duration = Mathf.Max(0.01f, fadeToBaseDuration);
-        while (t < duration)
+        if (questUiText == null) yield break;
+        questUiText.text = text;
+        const float fadeIn = .2f;
+        const float hold = 3f;
+        const float fadeOut = .45f;
+        float elapsed = 0f;
+        while (isActiveAndEnabled && questUiText != null && elapsed < fadeIn + hold + fadeOut)
         {
-            t += Time.deltaTime;
-            float lerp = Mathf.Clamp01(t / duration);
-            questUiText.color = Color.Lerp(highlightQuestColor, baseQuestColor, lerp);
+            elapsed += Time.deltaTime;
+            float colorProgress = Mathf.Clamp01((elapsed - highlightHoldDuration) / Mathf.Max(.01f, fadeToBaseDuration));
+            Color color = Color.Lerp(highlightQuestColor, baseQuestColor, colorProgress);
+            float exit = Mathf.SmoothStep(0f, 1f, Mathf.Clamp01((elapsed - fadeIn - hold) / fadeOut));
+            color.a = baseQuestColor.a * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / fadeIn)) * (1f - exit);
+            questUiText.color = color;
+            questUiText.rectTransform.anchoredPosition = _toastOrigin + Vector2.up * (12f * exit);
             yield return null;
         }
-
-        questUiText.color = baseQuestColor;
-        _questColorRoutine = null;
+        HideToast();
     }
 }
 }

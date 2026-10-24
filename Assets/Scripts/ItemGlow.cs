@@ -2,74 +2,16 @@ using UnityEngine;
 
 namespace KnocksFromBeneath
 {
-
-public class ItemGlow : MonoBehaviour
-{
-    [Header("Настройки")]
-    public float visibleDistance = 4f;
-    public float fadeDistance = 2f;
-
-    private ParticleSystem _particles;
-    private Transform _player;
-    private float _baseEmissionRate = 8f;
-
-    void Start()
+    public class ItemGlow : MonoBehaviour
     {
-        // Ищем ParticleSystem на этом объекте или дочерних
-        _particles = GetComponentInChildren<ParticleSystem>();
+        public float visibleDistance = 4f;
+        public float fadeDistance = 2f;
 
-        if (_particles == null)
+        private void Awake()
         {
-            Debug.LogError($"[ItemGlow] ParticleSystem не найден на {gameObject.name}!");
+            QuestItemMarker.SuppressLegacyParticles(transform);
+            QuestItemMarker.Ensure(gameObject).VisibleDistance = visibleDistance;
             enabled = false;
-            return;
-        }
-
-        // World + наследование скорости от Rigidbody даёт «улёт» частиц сквозь геометрию и хаотичное движение.
-        var main = _particles.main;
-        main.simulationSpace = ParticleSystemSimulationSpace.Local;
-
-        Camera camera = Camera.main;
-        if (camera == null)
-        {
-            enabled = false;
-            return;
-        }
-
-        _player = camera.transform;
-
-        // Сразу выключаем emission
-        SetEmission(0);
-    }
-
-
-    void Update()
-    {
-        if (_particles == null || _player == null) return;
-
-        float distance = Vector3.Distance(transform.position, _player.position);
-
-        if (distance > visibleDistance)
-        {
-            SetEmission(0);
-        }
-        else if (distance <= fadeDistance)
-        {
-            SetEmission(_baseEmissionRate);
-        }
-        else
-        {
-            float fadeRange = Mathf.Max(0.001f, visibleDistance - fadeDistance);
-            float t = 1f - (distance - fadeDistance) / fadeRange;
-            SetEmission(_baseEmissionRate * t);
         }
     }
-
-    void SetEmission(float rate)
-    {
-        // Правильный способ получить emission модуль
-        var emission = _particles.emission;
-        emission.rateOverTime = rate;
-    }
-}
 }

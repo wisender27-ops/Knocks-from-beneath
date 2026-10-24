@@ -1,0 +1,9 @@
+Characters PSX 1.1 - Character_16
+Author: Elbolilloduro
+Source: https://elbolilloduro.itch.io/characters-psx
+Downloaded: 2026-10-08
+License: CC0 1.0 Universal
+https://creativecommons.org/publicdomain/zero/1.0/
+The author states: The models in this package are under the CC0 license.
+Selected Character_16 mesh/rig and diffuse texture. Embedded source animation removed.
+Uses the project's existing fourteen humanoid protagonist animation clips.

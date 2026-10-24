@@ -18,43 +18,87 @@ public class FinaleController : MonoBehaviour
     public AudioSource audioSource;
     public AudioClip evilLaughClip;
     public AudioClip nailingWoodClip;
+    [SerializeField] private BasementHatch basementHatch;
+    [SerializeField] private GameObject boardedVisual;
 
     private bool isEndingTriggered = false;
 
-    private void OnTriggerEnter(Collider other)
+    void Awake() => FadeTransitionPresentation.Ensure(fadeScreen);
+
+    public bool BeginBoarding(PlayerController pc, bool deadlineExpired)
     {
-        if (isEndingTriggered || other == null)
-            return;
+        if (isEndingTriggered || pc == null || basementHatch == null) return false;
+        PlayerInventory inventory = pc.GetComponent<PlayerInventory>();
+        if (inventory == null || !inventory.hasHammer) return false;
+        IntroSequence intro = FindFirstObjectByType<IntroSequence>();
+        if (intro != null && (!intro.CanBoardBasement(basementHatch) || !intro.TryClaimEnding()))
+            return false;
+        isEndingTriggered = true;
+        HorrorMomentDirector.Instance?.Interrupt();
+        inventory.ActivateItem("Hammer");
+        MonsterTimer.Instance?.StopTimer();
+        QuestManager.Instance?.AddProgress(1);
+        StartCoroutine(BoardingRoutine(pc, deadlineExpired));
+        return true;
+    }
 
-        Transform playerRoot = other.transform.root;
-        if (playerRoot == null || !playerRoot.CompareTag("Player"))
-            return;
+    private void LockControls(PlayerController pc)
+    {
+        pc.isCameraLocked = true;
+        var inventory = pc.GetComponent<PlayerInventory>();
+        if (inventory != null) inventory.enabled = false;
+        var interaction = pc.GetComponent<PlayerInteraction>();
+        if (interaction != null) interaction.enabled = false;
+        var door = pc.GetComponentInChildren<PlayerDoorOpen>();
+        if (door != null) door.enabled = false;
+        var pickup = pc.GetComponentInChildren<PickupController>();
+        if (pickup != null) pickup.enabled = false;
+        var bob = pc.GetComponentInChildren<HeadBobbing>();
+        if (bob != null) bob.enabled = false;
+    }
 
-        if (!isEndingTriggered)
+    private IEnumerator BoardingRoutine(PlayerController pc, bool deadlineExpired)
+    {
+        LockControls(pc);
+        if (deadlineExpired)
         {
-            PlayerInventory inventory = playerRoot.GetComponent<PlayerInventory>();
-            PlayerController pc = playerRoot.GetComponent<PlayerController>();
-
-            if (inventory != null && inventory.hasHammer && pc != null)
-            {
-                // T-21: общая защёлка развилки ночи 2 — без неё эта концовка могла сработать
-                // поверх уже идущего побега/пряток/"не успел" (BranchEndingController._resolved
-                // ничего не знал про эту концовку). Если IntroSequence не найден (например, в
-                // отдельной тестовой сцене без полной цепочки) — работаем как раньше, без гейта.
-                var intro = FindFirstObjectByType<IntroSequence>();
-                if (intro != null && !intro.TryClaimEnding())
-                    return;
-
-                isEndingTriggered = true;
-                inventory.ActivateItem("Hammer");
-                if (QuestManager.Instance != null)
-                    QuestManager.Instance.AddProgress(1);
-                StartCoroutine(PushedIntoHoleRoutine(pc));
-                if (MonsterTimer.Instance != null)
-                    MonsterTimer.Instance.StopTimer();
-            }
-
+            basementHatch.OpenForCinematic();
+            while (!basementHatch.IsOpen) yield return null;
         }
+        if (audioSource != null && nailingWoodClip != null)
+            audioSource.PlayOneShot(nailingWoodClip);
+        yield return new WaitForSeconds(0.35f);
+        if (deadlineExpired)
+        {
+            yield return PushedIntoHoleRoutine(pc);
+            yield break;
+        }
+
+        basementHatch.Seal();
+        Transform hammer = pc.GetComponent<PlayerInventory>().hammerInHand?.transform;
+        Quaternion hammerRotation = hammer != null ? hammer.localRotation : Quaternion.identity;
+        for (int strike = 0; strike < 4; strike++)
+        {
+            if (audioSource != null && nailingWoodClip != null)
+                audioSource.PlayOneShot(nailingWoodClip);
+            for (float elapsed = 0f; elapsed < 0.45f; elapsed += Time.deltaTime)
+            {
+                if (hammer != null)
+                    hammer.localRotation = hammerRotation * Quaternion.Euler(
+                        -35f * Mathf.Sin(elapsed / 0.45f * Mathf.PI), 0f, 0f);
+                yield return null;
+            }
+        }
+        if (hammer != null) hammer.localRotation = hammerRotation;
+        if (boardedVisual != null) boardedVisual.SetActive(true);
+        if (QuestManager.Instance != null && QuestManager.Instance.questUiText != null)
+            QuestManager.Instance.questUiText.text = "";
+        if (ThoughtManager.Instance != null)
+            ThoughtManager.Instance.ShowImportantThoughts(new[] {
+                "Вот. Теперь не выберется.",
+                "Тихо. Наконец-то тихо."
+            }, ShowEnding);
+        else ShowEnding();
     }
 
     IEnumerator PushedIntoHoleRoutine(PlayerController pc)
@@ -63,11 +107,7 @@ public class FinaleController : MonoBehaviour
         // PlayerController.HandleMovement), но ~0.9 с между этим моментом и отключением
         // CharacterController в шаге 5 PlayerDoorOpen/PickupController оставались активны —
         // игрок мог зацепиться за дверь или бросить/поднять предмет посреди кат-сцены.
-        pc.isCameraLocked = true;
-        if (pc.GetComponent<PlayerInventory>() != null) pc.GetComponent<PlayerInventory>().enabled = false;
-        if (pc.GetComponent<PlayerInteraction>() != null) pc.GetComponent<PlayerInteraction>().enabled = false;
-        if (pc.GetComponentInChildren<PlayerDoorOpen>() != null) pc.GetComponentInChildren<PlayerDoorOpen>().enabled = false;
-        if (pc.GetComponentInChildren<PickupController>() != null) pc.GetComponentInChildren<PickupController>().enabled = false;
+        LockControls(pc);
 
         Camera playerCam = pc.GetComponentInChildren<Camera>();
         CharacterController cc = pc.GetComponent<CharacterController>();
@@ -128,6 +168,8 @@ public class FinaleController : MonoBehaviour
         }
         if (holeBottomSpot != null)
             pc.transform.position = holeBottomSpot.position;
+        basementHatch.Seal();
+        if (boardedVisual != null) boardedVisual.SetActive(true);
 
         // 6. Затемнение экрана
         float elapsed = 0;
@@ -163,9 +205,9 @@ public class FinaleController : MonoBehaviour
 
         if (ThoughtManager.Instance != null)
         {
-            ThoughtManager.Instance.ShowThoughts(new string[] {
-                "НЕТ!",
-                "ВЫПУСТИ МЕНЯ!"
+            ThoughtManager.Instance.ShowImportantThoughts(new string[] {
+                "Нет! Не закрывай люк!",
+                "Выпусти меня, сука!"
             }, ShowEnding);
         }
         else
@@ -180,7 +222,7 @@ public class FinaleController : MonoBehaviour
         // закрывалась без всякой карточки итога. Теперь как и у остальных трёх концовок —
         // экран "КОНЕЦ: ..." и возврат в главное меню (EndingScreen).
         if (EndingScreen.Instance != null)
-            EndingScreen.Instance.ShowEnding("КОНЕЦ: ПОЙМАН (3/4)");
+            EndingScreen.Instance.ShowEnding("КОНЕЦ");
     }
 }
 }

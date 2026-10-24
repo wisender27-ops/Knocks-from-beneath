@@ -19,6 +19,9 @@ public class MicrowaveInteractable : MonoBehaviour
     public AudioClip heatDoneSfx;
 
     private bool _isHeating = false;
+    private float _heatStarted;
+    public bool IsHeating => _isHeating;
+    public float HeatProgress => Mathf.Clamp01((Time.time - _heatStarted) / Mathf.Max(.1f, heatDuration));
     private bool _isReady = false;
     private PieQuestItem _pieInMicrowave;
 
@@ -28,7 +31,7 @@ public class MicrowaveInteractable : MonoBehaviour
             microwaveLight.enabled = false;
     }
 
-    public void Interact()
+    public void Interact(bool hitDoor = false)
     {
         var intro = FindFirstObjectByType<IntroSequence>();
         if (intro == null) return;
@@ -39,7 +42,14 @@ public class MicrowaveInteractable : MonoBehaviour
         // Если пирог уже готов: достать его можно только при открытой дверце и пустых руках.
         if (_isReady)
         {
-            if (microwaveDoor == null || !microwaveDoor.isOpen) return;
+            if (microwaveDoor == null) return;
+            if (!microwaveDoor.isOpen)
+            {
+                // Корпус тоже является целью взаимодействия; из него можно открыть дверцу,
+                // даже если тонкий collider самой дверцы не попал под центр луча.
+                if (!hitDoor) microwaveDoor.ToggleDoor();
+                return;
+            }
             if (playerInteraction.GetHeldObject() != null) return;
             TryTakePieFromMicrowave(playerInteraction);
             return;
@@ -47,7 +57,7 @@ public class MicrowaveInteractable : MonoBehaviour
 
         if (_isHeating) return;
         if (!intro.CanPlacePieInMicrowave()) return;
-        if (microwaveDoor == null || !microwaveDoor.isOpen) return;
+        if (microwaveDoor == null) return;
         if (pieInsidePoint == null) return;
 
         GameObject held = playerInteraction.GetHeldObject();
@@ -55,6 +65,12 @@ public class MicrowaveInteractable : MonoBehaviour
 
         PieQuestItem pie = held.GetComponent<PieQuestItem>();
         if (pie == null) return;
+
+        if (!microwaveDoor.isOpen)
+        {
+            if (!hitDoor) microwaveDoor.ToggleDoor();
+            return;
+        }
 
         held = playerInteraction.ReleaseHeldObject();
         if (held == null) return;
@@ -78,10 +94,10 @@ public class MicrowaveInteractable : MonoBehaviour
         Rigidbody rb = pieObj.GetComponent<Rigidbody>();
         if (rb != null)
         {
-            rb.isKinematic = true;
-            rb.useGravity = false;
             rb.linearVelocity = Vector3.zero;
             rb.angularVelocity = Vector3.zero;
+            rb.isKinematic = true;
+            rb.useGravity = false;
         }
 
         Collider[] colliders = pieObj.GetComponentsInChildren<Collider>(true);
@@ -95,6 +111,7 @@ public class MicrowaveInteractable : MonoBehaviour
     IEnumerator HeatPieRoutine()
     {
         _isHeating = true;
+        _heatStarted = Time.time;
         if (microwaveDoor != null) microwaveDoor.SetInteractionLocked(true);
         if (microwaveLight != null) microwaveLight.enabled = true;
 
@@ -140,22 +157,24 @@ public class MicrowaveInteractable : MonoBehaviour
         if (_pieInMicrowave == null) return;
 
         GameObject pieObj = _pieInMicrowave.gameObject;
-        pieObj.transform.SetParent(null);
-
+        PickupController pickup = playerInteraction.pickup;
         Rigidbody rb = pieObj.GetComponent<Rigidbody>();
-        if (rb != null)
-        {
-            rb.isKinematic = false;
-            rb.useGravity = true;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-        }
+        if (pickup == null || pickup.holdPoint == null || rb == null) return;
+
+        pieObj.transform.SetParent(null);
+        rb.isKinematic = false;
+        rb.useGravity = true;
+        rb.linearVelocity = Vector3.zero;
+        rb.angularVelocity = Vector3.zero;
 
         Collider[] colliders = pieObj.GetComponentsInChildren<Collider>(true);
         for (int i = 0; i < colliders.Length; i++)
             colliders[i].enabled = true;
 
         pieObj.tag = "Pickable";
+        // Старт внутри корпуса отстоит чуть дальше лимита удержания, поэтому PickupController
+        // сбрасывал пирог в первый же FixedUpdate. Переносим в точку рук перед захватом.
+        pieObj.transform.SetPositionAndRotation(pickup.holdPoint.position, pickup.holdPoint.rotation);
 
         if (!playerInteraction.TryGrabObjectFromScript(pieObj))
             return;

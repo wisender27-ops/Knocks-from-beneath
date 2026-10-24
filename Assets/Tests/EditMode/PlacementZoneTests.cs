@@ -114,7 +114,33 @@ public class PlacementZoneTests
         Assert.That(zone.TryPlaceBox(_box, _slotGo.transform.position), Is.False);
 
         SetActiveQuest("room-decoration", 1);
+        var pickable = _box.AddComponent<PickableItem>();
+        pickable.placementQuestTag = "room-decoration";
+        pickable.designatedZone = zone;
         Assert.That(zone.TryPlaceBox(_box, _slotGo.transform.position), Is.True);
+    }
+
+    [Test]
+    public void KitchenPlacement_RejectsMissingOrDifferentDesignatedZone()
+    {
+        var zone = CreateZone("room-decoration");
+        zone.ConfigureQuestPlacement("room-decoration");
+        SetActiveQuest("room-decoration", 3);
+        var item = _box.AddComponent<PickableItem>();
+        item.placementQuestTag = "room-decoration";
+        Assert.That(zone.TryPlaceBox(_box, _slotGo.transform.position), Is.False);
+
+        var other = new GameObject("Other kitchen destination");
+        try
+        {
+            item.designatedZone = other.AddComponent<PlacementZone>();
+            Assert.That(zone.TryPlaceBox(_box, _slotGo.transform.position), Is.False);
+            Assert.That(QuestManager.Instance.questList[0].currentAmount, Is.Zero);
+            item.designatedZone = zone;
+            Assert.That(zone.TryPlaceBox(_box, _slotGo.transform.position), Is.True);
+            Assert.That(zone.TryGetFreeSlot(out _), Is.False);
+        }
+        finally { Object.DestroyImmediate(other); }
     }
 
     [Test]
@@ -125,6 +151,26 @@ public class PlacementZoneTests
 
         Assert.That(zone.TryPlaceBox(_box), Is.True, "предмет всё равно встаёт в слот");
         Assert.That(QuestManager.Instance.questList[0].currentAmount, Is.EqualTo(0));
+    }
+
+    [Test]
+    public void FurnitureSlot_AlignsRotatedMeshBottomCenterToSurface()
+    {
+        CreateZone();
+        _box.AddComponent<MeshFilter>().sharedMesh = Resources.GetBuiltinResource<Mesh>("Cube.fbx");
+        var renderer = _box.AddComponent<MeshRenderer>();
+        _box.transform.localScale = new Vector3(0.3f, 0.6f, 0.9f);
+        _box.transform.rotation = Quaternion.Euler(40f, 15f, 70f);
+        var slot = _slotGo.AddComponent<FurnitureSlot>();
+        slot.ItemForSlot = _box;
+        slot.transform.position = new Vector3(2f, 1.8f, 3f);
+        Quaternion rotation = Quaternion.Euler(270f, 35f, 0f);
+
+        _box.transform.SetPositionAndRotation(slot.GetItemPlacementPosition(_box.transform, rotation), rotation);
+
+        Assert.That(renderer.bounds.center.x, Is.EqualTo(2f).Within(0.0001f));
+        Assert.That(renderer.bounds.center.z, Is.EqualTo(3f).Within(0.0001f));
+        Assert.That(renderer.bounds.min.y, Is.EqualTo(1.802f).Within(0.0001f));
     }
 
     [Test]

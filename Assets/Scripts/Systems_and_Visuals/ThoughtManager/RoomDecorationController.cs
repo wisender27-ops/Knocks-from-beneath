@@ -32,14 +32,27 @@ public sealed class RoomDecorationController
     {
         SetZonesActive(true);
         int amount = _decorationZones != null ? Mathf.Max(1, _decorationZones.Length) : 1;
-        _createQuest("Расставить вещи по дому", amount, OnDecorationFinished, "room-decoration");
+        _createQuest("Убрать разбросанные вещи на кухне", amount, OnDecorationFinished, "room-decoration");
+        if (_decorationZones == null) return;
+        foreach (GameObject zoneObject in _decorationZones)
+        {
+            PlacementZone zone = zoneObject != null ? zoneObject.GetComponent<PlacementZone>() : null;
+            if (zone == null || zone.slots == null) continue;
+            foreach (Transform slot in zone.slots)
+            {
+                FurnitureSlot marker = slot != null ? slot.GetComponent<FurnitureSlot>() : null;
+                if (marker != null && marker.ItemForSlot != null)
+                    marker.ItemForSlot.GetComponent<PickableItem>()?.PrepareForPlacementQuest();
+            }
+        }
     }
 
     void OnDecorationFinished()
     {
         SetZonesActive(false);
         _showThoughts(new string[] {
-            "Вот так уже больше похоже на дом."
+            "Вчера всё стояло нормально. Само оно на пол не упало.",
+            "Ладно. Сначала поем, потом разберусь."
         }, _onDecorationFinished);
     }
 

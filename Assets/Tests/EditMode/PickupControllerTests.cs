@@ -4,6 +4,12 @@ using KnocksFromBeneath;
 
 public class PickupControllerTests
 {
+    private static object InvokePrivate(object target, string method)
+    {
+        return target.GetType().GetMethod(method,
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic).Invoke(target, null);
+    }
+
     private GameObject _playerGo;
     private GameObject _cameraGo;
     private GameObject _holdPointGo;
@@ -33,6 +39,112 @@ public class PickupControllerTests
         Object.DestroyImmediate(_holdPointGo);
         Object.DestroyImmediate(_cameraGo);
         Object.DestroyImmediate(_playerGo);
+    }
+
+    [Test]
+    public void GripTargets_FollowRotatedScaledObjectWithoutHandParenting()
+    {
+        var collider = _itemGo.AddComponent<BoxCollider>();
+        _itemGo.transform.SetPositionAndRotation(new Vector3(2f, 1f, 3f), Quaternion.Euler(20f, 65f, 10f));
+        _itemGo.transform.localScale = new Vector3(0.4f, 0.6f, 0.3f);
+        Physics.SyncTransforms();
+        Assert.That(_pickup.TryGrab(_itemGo), Is.True);
+        Assert.That(_pickup.IsHeldObjectTwoHanded, Is.True);
+        Vector3 right = _itemGo.transform.InverseTransformPoint(_pickup.PrimaryHandGripTarget);
+        Vector3 left = _itemGo.transform.InverseTransformPoint(_pickup.SecondaryHandGripTarget);
+        Assert.That(Vector3.Distance(collider.ClosestPoint(_pickup.PrimaryHandGripTarget), _pickup.PrimaryHandGripTarget), Is.LessThan(0.001f));
+        _itemGo.transform.SetPositionAndRotation(new Vector3(-2f, 2f, 1f), Quaternion.Euler(-40f, 130f, 30f));
+        Assert.That(Vector3.Distance(_pickup.PrimaryHandGripTarget, _itemGo.transform.TransformPoint(right)), Is.LessThan(0.001f));
+        Assert.That(Vector3.Distance(_pickup.SecondaryHandGripTarget, _itemGo.transform.TransformPoint(left)), Is.LessThan(0.001f));
+        Assert.That(_itemGo.transform.parent, Is.Null);
+        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.False);
+    }
+
+    [Test]
+    public void SmallObject_UsesBothHands()
+    {
+        _itemGo.AddComponent<SphereCollider>().radius = 0.05f;
+        Physics.SyncTransforms();
+        Assert.That(_pickup.TryGrab(_itemGo), Is.True);
+        Assert.That(_pickup.IsHeldObjectTwoHanded, Is.True);
+        Assert.That(Vector3.Distance(_pickup.PrimaryHandGripTarget, _pickup.SecondaryHandGripTarget), Is.GreaterThan(0.05f));
+    }
+
+    [Test]
+    public void KitchenRelease_RestoresDisabledColliders()
+    {
+        _itemGo.AddComponent<PickableItem>().placementQuestTag = "room-decoration";
+        var collider = _itemGo.AddComponent<BoxCollider>();
+        Assert.That(_pickup.TryGrab(_itemGo), Is.True);
+        Assert.That(collider.enabled, Is.False);
+        _pickup.Release();
+        Assert.That(collider.enabled, Is.True);
+        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.False);
+    }
+
+    [Test]
+    public void ThrowShake_UsesNormalizedCameraPoseInsteadOfStartupHeight()
+    {
+        _cameraGo.transform.localPosition = Vector3.up * 2.24f;
+        InvokePrivate(_pickup, "Start");
+        _cameraGo.transform.localPosition = Vector3.zero;
+        var effect = (System.Collections.IEnumerator)InvokePrivate(_pickup, "ShakeAndKick");
+        Assert.That(effect.MoveNext(), Is.True);
+        Assert.That(_cameraGo.transform.localPosition.magnitude, Is.LessThanOrEqualTo(_pickup.shakeIntensity * 1.42f));
+        InvokePrivate(_pickup, "ResetCameraShake");
+        Assert.That(_cameraGo.transform.localPosition, Is.EqualTo(Vector3.zero));
+    }
+
+    [Test]
+    public void ThrowShake_RepeatedInterruptionRestoresPoseWithoutDrift()
+    {
+        InvokePrivate(_pickup, "Start");
+        Vector3 pose = new Vector3(0.02f, -0.1f, 0.03f);
+        _cameraGo.transform.localPosition = pose;
+        for (int i = 0; i < 20; i++)
+        {
+            var effect = (System.Collections.IEnumerator)InvokePrivate(_pickup, "ShakeAndKick");
+            Assert.That(effect.MoveNext(), Is.True);
+            InvokePrivate(_pickup, "ResetCameraShake");
+            Assert.That(_cameraGo.transform.localPosition, Is.EqualTo(pose));
+        }
+    }
+
+    [Test]
+    public void DisableWithoutShake_PreservesCurrentCameraPose()
+    {
+        _cameraGo.transform.localPosition = Vector3.up * 2.24f;
+        InvokePrivate(_pickup, "Start");
+        Vector3 pose = new Vector3(0.02f, 0f, 0.03f);
+        _cameraGo.transform.localPosition = pose;
+        InvokePrivate(_pickup, "OnDisable");
+        Assert.That(_cameraGo.transform.localPosition, Is.EqualTo(pose));
+    }
+
+    [Test]
+    public void ColdPie_UsesPhysicalCarry()
+    {
+        _itemGo.AddComponent<PieQuestItem>();
+        var collider = _itemGo.AddComponent<BoxCollider>();
+        Assert.That(_pickup.TryGrab(_itemGo), Is.True);
+        Assert.That(_itemGo.transform.parent, Is.Null);
+        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.False);
+        Assert.That(collider.enabled, Is.True);
+    }
+
+    [Test]
+    public void HeatedPie_UsesViewPoseAndRestoresPhysicsOnRelease()
+    {
+        _itemGo.AddComponent<PieQuestItem>().isHeated = true;
+        var collider = _itemGo.AddComponent<BoxCollider>();
+        Assert.That(_pickup.TryGrab(_itemGo), Is.True);
+        Assert.That(_itemGo.transform.parent, Is.EqualTo(_cameraGo.transform));
+        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.True);
+        Assert.That(collider.enabled, Is.False);
+        _pickup.Release();
+        Assert.That(_itemGo.transform.parent, Is.Null);
+        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.False);
+        Assert.That(collider.enabled, Is.True);
     }
 
     [Test]

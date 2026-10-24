@@ -11,6 +11,7 @@ namespace KnocksFromBeneath
         public InventoryEntry(InventoryItemDefinition definition, int quantity) { Definition = definition; Quantity = quantity; }
     }
 
+    [DefaultExecutionOrder(10010)]
     public class PlayerInventory : MonoBehaviour
     {
         [SerializeField] private InventoryDatabase database;
@@ -45,10 +46,31 @@ namespace KnocksFromBeneath
         private int currentItemIndex;
         private string equippedItemId = string.Empty;
         private Animator crowbarAnim;
+        private ProtagonistBody protagonistBody;
+        private Transform attachedItem;
+        private Transform attachedItemOriginalParent;
+        private Vector3 attachedItemOriginalLocalPosition;
+        private Quaternion attachedItemOriginalLocalRotation;
+        private Vector3 attachedItemOriginalLocalScale;
+        private Quaternion attachedItemOriginalWorldRotation;
 
         public event Action Changed;
         public IReadOnlyList<InventoryEntry> Entries => entries;
         public string EquippedItemId => equippedItemId;
+        public bool HasEquippedItemAttachedToHand => attachedItem != null;
+        public Vector3 EquippedHandTargetPosition
+        {
+            get
+            {
+                if (attachedItem == null) return Vector3.zero;
+                Vector3 target = attachedItem.position;
+                if (attachedItem == flashlightInHand?.transform)
+                    target += attachedItem.rotation * new Vector3(0f, -0.015f, 0.07f);
+                return target;
+            }
+        }
+
+        public Quaternion EquippedHandTargetRotation => protagonistBody != null ? protagonistBody.ReadyRightPalmRotation : Quaternion.identity;
 
         public bool HasItem(string id)
         {
@@ -60,6 +82,10 @@ namespace KnocksFromBeneath
 
         private void Start()
         {
+            FlashlightScreenAim aim = GetComponent<FlashlightScreenAim>();
+            if (aim == null) aim = gameObject.AddComponent<FlashlightScreenAim>();
+            aim.Initialize(flashlightLightSource, GetComponentInChildren<Camera>());
+            protagonistBody = GetComponentInChildren<ProtagonistBody>(true);
             if (crowbarInHand != null) crowbarAnim = crowbarInHand.GetComponent<Animator>();
             if (physicalPickup == null) physicalPickup = GetComponentInParent<PickupController>();
             SetHeldObjectsInactive();
@@ -70,7 +96,7 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
-            if (RetroInventoryScreen.IsAnyOpen) return;
+            if (PauseMenuController.InputBlocked || RetroInventoryScreen.IsAnyOpen || Time.timeScale == 0f) return;
 
             if (Time.time - lastSwitchTime >= switchCooldown)
             {
@@ -121,7 +147,11 @@ namespace KnocksFromBeneath
             if (entry.Definition.IsEquippable)
             {
                 if (equippedItemId == entry.Definition.Id) Unequip();
-                else Equip(entry.Definition.Id);
+                else
+                {
+                    if (!CanEquip(entry.Definition.Id)) return false;
+                    Equip(entry.Definition.Id);
+                }
                 return true;
             }
 
@@ -139,7 +169,7 @@ namespace KnocksFromBeneath
         public void Equip(string id)
         {
             InventoryEntry entry = FindEntry(id);
-            if (entry == null || !entry.Definition.IsEquippable) return;
+            if (entry == null || !entry.Definition.IsEquippable || !CanEquip(id)) return;
             equippedItemId = id;
             ActivateItem(id);
             Changed?.Invoke();
@@ -152,12 +182,57 @@ namespace KnocksFromBeneath
             Changed?.Invoke();
         }
 
+        private bool CanEquip(string id)
+        {
+            if (physicalPickup == null) physicalPickup = GetComponentInParent<PickupController>();
+            if (physicalPickup != null && physicalPickup.GetHeldObject() != null) return false;
+            return (id == "Crowbar" && hasCrowbar && crowbarInHand != null) ||
+                   (id == "Flashlight" && hasFlashlight && flashlightInHand != null) ||
+                   (id == "Hammer" && hasHammer && hammerInHand != null);
+        }
+
         public void ActivateItem(string itemName)
         {
+            RestoreEquippedItemToAnchor();
             SetHeldObjectsInactive();
-            if (itemName == "Crowbar" && hasCrowbar && crowbarInHand != null) crowbarInHand.SetActive(true);
-            else if (itemName == "Flashlight" && hasFlashlight && flashlightInHand != null) flashlightInHand.SetActive(true);
-            else if (itemName == "Hammer" && hasHammer && hammerInHand != null) hammerInHand.SetActive(true);
+            GameObject item = itemName == "Crowbar" && hasCrowbar ? crowbarInHand
+                : itemName == "Flashlight" && hasFlashlight ? flashlightInHand
+                : itemName == "Hammer" && hasHammer ? hammerInHand
+                : null;
+            if (item == null) return;
+
+            item.SetActive(true);
+            Transform hand = protagonistBody != null ? protagonistBody.RightHand : null;
+            if (hand == null) return;
+
+            attachedItem = item.transform;
+            attachedItemOriginalParent = attachedItem.parent;
+            attachedItemOriginalLocalPosition = attachedItem.localPosition;
+            attachedItemOriginalLocalRotation = attachedItem.localRotation;
+            attachedItemOriginalLocalScale = attachedItem.localScale;
+            attachedItemOriginalWorldRotation = attachedItem.rotation;
+            // Предмет остаётся на независимом держателе камеры; IK следует его хвату.
+            Vector3 gripOffset = item == flashlightInHand ? attachedItem.rotation * new Vector3(0f, -.015f, .07f) : Vector3.zero;
+            attachedItem.position = protagonistBody.ReadyRightPalmPosition - gripOffset;
+        }
+
+        private void LateUpdate()
+        {
+            if (attachedItem == null || protagonistBody == null) return;
+            Vector3 offset = attachedItem == flashlightInHand?.transform
+                ? attachedItem.rotation * new Vector3(0f, -.015f, .07f) : Vector3.zero;
+            attachedItem.position = protagonistBody.ReadyRightPalmPosition - offset;
+        }
+
+        private void RestoreEquippedItemToAnchor()
+        {
+            if (attachedItem == null) return;
+            attachedItem.SetParent(attachedItemOriginalParent, false);
+            attachedItem.localPosition = attachedItemOriginalLocalPosition;
+            attachedItem.localRotation = attachedItemOriginalLocalRotation;
+            attachedItem.localScale = attachedItemOriginalLocalScale;
+            attachedItem = null;
+            attachedItemOriginalParent = null;
         }
 
         private void SwitchToSlot(int slotIndex)
@@ -228,6 +303,10 @@ namespace KnocksFromBeneath
             if (!Physics.Raycast(ray, out RaycastHit hit, hitDistance, PhysicsMasks.WithoutNoRaycast(interactableLayer))) return;
             BreakableObject breakable = hit.collider.GetComponent<BreakableObject>();
             if (breakable != null) breakable.Break();
+            // Замок на люке в подвал ломается тем же ударом. GetComponentInParent — коллайдер
+            // замка может стоять на накладке, а сам BasementHatchLock на родителе.
+            BasementHatchLock hatchLock = hit.collider.GetComponentInParent<BasementHatchLock>();
+            if (hatchLock != null) hatchLock.Break(this);
         }
     }
 

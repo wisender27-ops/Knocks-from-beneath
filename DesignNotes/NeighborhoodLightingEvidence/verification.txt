@@ -1,0 +1,1 @@
+Play=True; Night warm windows+bulbs visually verified with PSX postprocess; Day restored surfaces=57/57; Day active street lights=0

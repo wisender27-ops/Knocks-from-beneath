@@ -1,0 +1,5 @@
+Source: https://kenney.nl/assets/food-kit
+Pack: Kenney Food Kit 2.0
+License: CC0 (License.txt)
+Imported authored FBX meshes: egg, bacon-raw, tomato, egg-cooked, bacon, tomato-slice, plate, frying-pan.
+Unity prefabs and palette material are in Assets/DinnerFood.

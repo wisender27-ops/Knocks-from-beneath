@@ -1,0 +1,139 @@
+{
+  "blend": "C:\\claude\\knocks-from-beneath\\Knocks-from-beneath\\ArtSource\\CH_ReferenceSurvivor\\CH_ReferenceSurvivor_forms.blend",
+  "mode": "material",
+  "engine": "cycles",
+  "bbox_min": [
+    -0.39846155047416687,
+    -0.2081499993801117,
+    0.0010000000474974513
+  ],
+  "bbox_max": [
+    0.39846155047416687,
+    0.1850000023841858,
+    1.7999999523162842
+  ],
+  "size_xyz": [
+    0.7969231009483337,
+    0.3931500017642975,
+    1.7989999055862427
+  ],
+  "objects": [
+    "CH_ReferenceSurvivor_Pelvis_LOD0",
+    "CH_ReferenceSurvivor_Shirt_LOD0",
+    "CH_ReferenceSurvivor_Jacket_LOD0",
+    "CH_ReferenceSurvivor_Neck_LOD0",
+    "CH_ReferenceSurvivor_Head_LOD0",
+    "CH_ReferenceSurvivor_Hood_LOD0",
+    "CH_ReferenceSurvivor_Sleeve_R_LOD0",
+    "CH_ReferenceSurvivor_Jeans_R_LOD0",
+    "CH_ReferenceSurvivor_Shoe_R_LOD0",
+    "CH_ReferenceSurvivor_Ear_R_LOD0",
+    "CH_ReferenceSurvivor_Sleeve_L_LOD0",
+    "CH_ReferenceSurvivor_Jeans_L_LOD0",
+    "CH_ReferenceSurvivor_Shoe_L_LOD0",
+    "CH_ReferenceSurvivor_Ear_L_LOD0",
+    "CH_ReferenceSurvivor_Flashlight_LOD0",
+    "CH_ReferenceSurvivor_Nose_LOD0",
+    "CH_ReferenceSurvivor_HairCap_LOD0",
+    "CH_ReferenceSurvivor_HairLock00_LOD0",
+    "CH_ReferenceSurvivor_HairLock01_LOD0",
+    "CH_ReferenceSurvivor_HairLock02_LOD0",
+    "CH_ReferenceSurvivor_HairLock03_LOD0",
+    "CH_ReferenceSurvivor_HairLock04_LOD0",
+    "CH_ReferenceSurvivor_HairLock05_LOD0",
+    "CH_ReferenceSurvivor_HairLock06_LOD0",
+    "CH_ReferenceSurvivor_HairLock07_LOD0",
+    "CH_ReferenceSurvivor_HairLock08_LOD0",
+    "CH_ReferenceSurvivor_HairLock09_LOD0",
+    "CH_ReferenceSurvivor_HairLock10_LOD0",
+    "CH_ReferenceSurvivor_HairLock11_LOD0",
+    "CH_ReferenceSurvivor_HairLock12_LOD0",
+    "CH_ReferenceSurvivor_HairLock13_LOD0",
+    "CH_ReferenceSurvivor_HairLock14_LOD0",
+    "CH_ReferenceSurvivor_HairLock15_LOD0",
+    "CH_ReferenceSurvivor_HairLock16_LOD0",
+    "CH_ReferenceSurvivor_HairLock17_LOD0",
+    "CH_ReferenceSurvivor_HairLock18_LOD0",
+    "CH_ReferenceSurvivor_HairLock19_LOD0",
+    "CH_ReferenceSurvivor_HairLock20_LOD0",
+    "CH_ReferenceSurvivor_HairLock21_LOD0",
+    "CH_ReferenceSurvivor_HairLock22_LOD0",
+    "CH_ReferenceSurvivor_HairLock23_LOD0",
+    "CH_ReferenceSurvivor_HairLock24_LOD0",
+    "CH_ReferenceSurvivor_HairLock25_LOD0",
+    "CH_ReferenceSurvivor_HairLock26_LOD0",
+    "CH_ReferenceSurvivor_HairLock27_LOD0",
+    "CH_ReferenceSurvivor_HairLock28_LOD0",
+    "CH_ReferenceSurvivor_HairLock29_LOD0",
+    "CH_ReferenceSurvivor_HairLock30_LOD0",
+    "CH_ReferenceSurvivor_HairLock31_LOD0",
+    "CH_ReferenceSurvivor_Palm_R_LOD0",
+    "CH_ReferenceSurvivor_Index_R_LOD0",
+    "CH_ReferenceSurvivor_Middle_R_LOD0",
+    "CH_ReferenceSurvivor_Ring_R_LOD0",
+    "CH_ReferenceSurvivor_Pinky_R_LOD0",
+    "CH_ReferenceSurvivor_Thumb_R_LOD0",
+    "CH_ReferenceSurvivor_Cuff_R_LOD0",
+    "CH_ReferenceSurvivor_Drawstring_R_LOD0",
+    "CH_ReferenceSurvivor_Zipper_R_LOD0",
+    "CH_ReferenceSurvivor_Pocket_R_LOD0",
+    "CH_ReferenceSurvivor_Lace0_R_LOD0",
+    "CH_ReferenceSurvivor_Lace1_R_LOD0",
+    "CH_ReferenceSurvivor_Lace2_R_LOD0",
+    "CH_ReferenceSurvivor_Lace3_R_LOD0",
+    "CH_ReferenceSurvivor_Sole_R_LOD0",
+    "CH_ReferenceSurvivor_Palm_L_LOD0",
+    "CH_ReferenceSurvivor_Index_L_LOD0",
+    "CH_ReferenceSurvivor_Middle_L_LOD0",
+    "CH_ReferenceSurvivor_Ring_L_LOD0",
+    "CH_ReferenceSurvivor_Pinky_L_LOD0",
+    "CH_ReferenceSurvivor_Thumb_L_LOD0",
+    "CH_ReferenceSurvivor_Cuff_L_LOD0",
+    "CH_ReferenceSurvivor_Drawstring_L_LOD0",
+    "CH_ReferenceSurvivor_Zipper_L_LOD0",
+    "CH_ReferenceSurvivor_Pocket_L_LOD0",
+    "CH_ReferenceSurvivor_Lace0_L_LOD0",
+    "CH_ReferenceSurvivor_Lace1_L_LOD0",
+    "CH_ReferenceSurvivor_Lace2_L_LOD0",
+    "CH_ReferenceSurvivor_Lace3_L_LOD0",
+    "CH_ReferenceSurvivor_Sole_L_LOD0"
+  ],
+  "renders": {
+    "front": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/03_forms\\material_front.png",
+      "az_el_lens": [
+        0,
+        0,
+        0
+      ],
+      "distance": 4.196575000882149
+    },
+    "side": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/03_forms\\material_side.png",
+      "az_el_lens": [
+        90,
+        0,
+        0
+      ],
+      "distance": 4.398461550474167
+    },
+    "back": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/03_forms\\material_back.png",
+      "az_el_lens": [
+        180,
+        0,
+        0
+      ],
+      "distance": 4.196575000882149
+    },
+    "threequarter": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/03_forms\\material_threequarter.png",
+      "az_el_lens": [
+        35,
+        15,
+        50
+      ],
+      "distance": 3.2410768602664266
+    }
+  }
+}

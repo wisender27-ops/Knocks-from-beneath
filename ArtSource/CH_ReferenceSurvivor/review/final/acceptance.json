@@ -1,0 +1,39 @@
+{
+  "status": "Delivered textured rigged Unity asset; strict all-view likeness gate not fully passed",
+  "triangles": {
+    "LOD0": 8324,
+    "LOD1": 4578,
+    "LOD2": 2246
+  },
+  "bones": 52,
+  "material_count": 1,
+  "texture_size": 1024,
+  "silhouette_iou": {
+    "front": 0.9331,
+    "side": 0.885,
+    "back": 0.8771
+  },
+  "deviations": [
+    "Side and rear silhouettes below skill target 0.90; head posture adjusted per user request",
+    "Hood and shoulder outline narrower than source in upper band",
+    "Hands open in Mixamo T-pose rather than gripping flashlight",
+    "Cloth pattern authored from reference palette; face projection approximately de-lit, not exact PBR reconstruction"
+  ],
+  "inferred": [
+    "Height 1.8m",
+    "Hidden anatomy",
+    "Finger rest position",
+    "Sole and fabric pattern"
+  ],
+  "checks": [
+    "Blender validate: zero FAIL; tiny LOD weights warnings",
+    "FBX roundtrip: no errors, packed textures, 52 bones, height1.799m",
+    "Unity Avatar isValid and isHuman",
+    "Unity all LOD bones bound, textured Humanoid pose rendered"
+  ],
+  "not_tested": [
+    "Mixamo service autorig/upload",
+    "Gameplay animation clips",
+    "Actual-scene Play Mode"
+  ]
+}

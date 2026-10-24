@@ -6,6 +6,10 @@ namespace KnocksFromBeneath
 
 public class Door : MonoBehaviour
 {
+    public event System.Action LockedAttempted;
+    public event System.Action Opened;
+    private bool _openingNotified;
+    private bool _detached;
     public enum RotationAxis
     {
         X,
@@ -41,9 +45,15 @@ public class Door : MonoBehaviour
     [SerializeField] private float volumeMultiplier = 1.5f;
     [SerializeField] private float minVelocityThreshold = 2f;
 
+    [Header("Сюжетное закрытие (без звука)")]
+    [Tooltip("Дверь закрывается сама, когда игрок ложится спать. Такое закрытие не должно звучать: скрип и спуск эмбиент-монстра — технические детали перехода, игрок их не должен слышать.")]
+    [SerializeField] private bool muteCreakOnAutoClose = true;
+
     [Header("Заперто (T-21)")]
     [Tooltip("Звук, когда игрок пытается открыть запертую дверь. Если не задан — просто дёргается без звука.")]
     [SerializeField] private AudioClip lockedRattleClip;
+    [SerializeField] private AudioSource feedbackSource;
+    private float _nextRattleSound;
     [SerializeField] private float rattleAngle = 6f;
     [SerializeField] private float rattleDuration = 0.3f;
 
@@ -54,6 +64,7 @@ public class Door : MonoBehaviour
         get => _isOpen;
         set
         {
+            if (_detached) return;
             if (_isOpen == value) return; // Если значение не изменилось — ничего не делаем
             _isOpen = value;
 
@@ -211,13 +222,30 @@ public class Door : MonoBehaviour
         // (lockedRattleClip), и generic-детектор скорости не должен на неё реагировать —
         // иначе дёргание ЛЮБОЙ запертой двери (в т.ч. дверцы микроволновки) могло спавнить
         // эмбиент-монстра через тот же путь, что обычный скрип двери.
-        if (!_isRattling)
+        //
+        // _suppressCreak добавляет второе исключение: сюжетное закрытие на ночь.
+        // Пока створка реально не доехала (currentOffset != 0), скрип не считается —
+        // иначе игрок услышал бы все двери дома в момент ухода ко сну.
+        if (!_isRattling && !(_suppressCreak && currentOffset != 0f))
             ManageCreakSound(smoothDoorVelocity);
+
+        // Створка доехала — снимаем подавление, двери снова «живые».
+        if (_suppressCreak && currentOffset == 0f)
+        {
+            _suppressCreak = false;
+            smoothDoorVelocity = 0f;
+        }
 
         // Обновляем состояние галочки без вызова сеттера, чтобы просто видеть статус в инспекторе
         // Но лучше оставить управление за пользователем через свойство выше.
         // Чтобы галочка в инспекторе сама не "прыгала", пока ты тянешь дверь:
         if (isBeingHeld) _isOpen = Mathf.Abs(currentOffset) > 5f;
+        if (!_isRattling && Mathf.Abs(currentOffset) > 5f && !_openingNotified)
+        {
+            _openingNotified = true;
+            Opened?.Invoke();
+        }
+        if (!_isRattling && Mathf.Abs(currentOffset) < 0.5f) _openingNotified = false;
     }
 
     // Это позволит видеть изменения в инспекторе Unity в реальном времени
@@ -273,6 +301,16 @@ public class Door : MonoBehaviour
     {
         if (sfxSource == null || doorCreakClip == null) return;
 
+        // Сюжетное закрытие на ночь: скрип не должен быть слышен вообще.
+        // Стоит ДАЖЕ если флаг почему-то ещё не снят — лучше лишний кадр
+        // тишины, чем щелчок скрипа в момент перехода.
+        if (_suppressCreak)
+        {
+            sfxSource.volume = 0f;
+            if (sfxSource.isPlaying) sfxSource.Pause();
+            return;
+        }
+
         if (velocity > minVelocityThreshold)
         {
             if (!sfxSource.isPlaying)
@@ -295,18 +333,104 @@ public class Door : MonoBehaviour
 
     public void CloseDoor()
     {
+        if (_detached) return;
         currentOffset = 0f;
         _isOpen = false;
     }
 
     public void OpenDoor()
     {
+        if (_detached) return;
         currentOffset = angleRotation;
         _isOpen = true;
     }
 
+    public void BurstOpen()
+    {
+        if (_detached) return;
+        SetInteractionLocked(false);
+        isBeingHeld = false;
+        _suppressCreak = true;
+        if (sfxSource != null) sfxSource.Stop();
+        StartCoroutine(BurstOpenRoutine());
+    }
+
+    public void BreakOffHinges(Vector3 outward, AudioClip breakClip, AudioClip landingClip)
+    {
+        if (_detached) return;
+        _detached = true;
+        StopAllCoroutines();
+        isBeingHeld = false;
+        interactionLocked = false;
+        _isOpen = true;
+        _openingNotified = true;
+        _suppressCreak = true;
+        if (sfxSource != null) sfxSource.Stop();
+        enabled = false;
+
+        transform.SetParent(null, true);
+        foreach (Collider existing in GetComponentsInChildren<Collider>(true))
+            existing.enabled = false;
+
+        BoxCollider leafCollider = gameObject.AddComponent<BoxCollider>();
+        MeshFilter mesh = GetComponent<MeshFilter>();
+        if (mesh != null && mesh.sharedMesh != null)
+        {
+            leafCollider.center = mesh.sharedMesh.bounds.center;
+            leafCollider.size = mesh.sharedMesh.bounds.size;
+        }
+        else
+        {
+            // Renderer bounds are in world space; transform all corners for a rotated leaf.
+            Renderer leafRenderer = GetComponentInChildren<Renderer>();
+            if (leafRenderer != null)
+            {
+                Bounds world = leafRenderer.bounds;
+                Bounds local = new Bounds(transform.InverseTransformPoint(world.center), Vector3.zero);
+                for (int i = 0; i < 8; i++)
+                {
+                    Vector3 corner = world.center + Vector3.Scale(world.extents,
+                        new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                    local.Encapsulate(transform.InverseTransformPoint(corner));
+                }
+                leafCollider.center = local.center;
+                leafCollider.size = local.size;
+            }
+        }
+        leafCollider.isTrigger = false;
+        Rigidbody body = GetComponent<Rigidbody>();
+        if (body == null) body = gameObject.AddComponent<Rigidbody>();
+        body.isKinematic = true;
+        body.useGravity = true;
+        body.mass = 25f;
+        body.constraints = RigidbodyConstraints.None;
+        body.collisionDetectionMode = CollisionDetectionMode.ContinuousSpeculative;
+        body.interpolation = RigidbodyInterpolation.Interpolate;
+        leafCollider.enabled = false;
+        DetachedDoorImpact impact = gameObject.AddComponent<DetachedDoorImpact>();
+        impact.Initialize(breakClip, landingClip, detachedLandingCenter, Quaternion.Euler(detachedLandingEuler),
+            leafCollider, body);
+    }
+
+    [Header("Постановочное выбивание двери")]
+    [SerializeField] private Vector3 detachedLandingCenter = new Vector3(-39.27f, 0.36f, 121.3f);
+    [SerializeField] private Vector3 detachedLandingEuler = new Vector3(0f, 18f, 0f);
+
+    private IEnumerator BurstOpenRoutine()
+    {
+        float previousSpeed = automaticOpenSpeed;
+        automaticOpenSpeed = 28f;
+        OpenDoor();
+        yield return new WaitForSeconds(0.35f);
+        automaticOpenSpeed = previousSpeed;
+        smoothDoorVelocity = 0f;
+        _suppressCreak = false;
+    }
+
     public void ToggleDoor()
     {
+        if (_detached) return;
+        if (interactionLocked) { PlayLockedFeedback(); return; }
         isOpen = !isOpen; // Используем свойство
     }
 
@@ -326,8 +450,26 @@ public class Door : MonoBehaviour
         // если игрок в этот момент как раз тянул дверь руками, "принудительное" закрытие
         // на ночь молча ничего не делало. Сначала отпускаем захват, потом закрываем.
         isBeingHeld = false;
-        isOpen = false; // Используем твое свойство, оно само запустит звук и анимацию
+
+        // Сюжетное закрытие на ночь — БЕЗ ЗВУКА.
+        //
+        // Раньше здесь просто ставилось isOpen = false, и обычная анимация закрытия
+        // разгоняла створку до скорости выше minVelocityThreshold. Дальше
+        // ManageCreakSound считал это скрипом: включался AudioSource, и вдобавок
+        // TriggerMonsterEvent() выпускал эмбиент-монстра. Игрок в момент ухода
+        // ко сну слышал скрип всех дверей дома — чисто технический артефакт
+        // перехода, который ломает атмосферу.
+        //
+        // Теперь на время сюжетного закрытия скрип гасится. Обычные действия
+        // игрока (сам открыл/закрыл дверь, дёрнул запертую) звучат как раньше.
+        _suppressCreak = muteCreakOnAutoClose;
+        isOpen = false;
+        // Сбрасываем сглаженную скорость: пока дверь закрывается, детектор скрипа
+        // не должен накопить её заново и выстрелить звуком уже после снятия флага.
+        smoothDoorVelocity = 0f;
     }
+
+    private bool _suppressCreak;
 
     private void TriggerMonsterEvent()
     {
@@ -368,6 +510,7 @@ public class Door : MonoBehaviour
 
     public void SetInteractionLocked(bool isLocked)
     {
+        if (_detached) return;
         interactionLocked = isLocked;
         if (interactionLocked)
         {
@@ -378,6 +521,7 @@ public class Door : MonoBehaviour
 
     public void StartHolding()
     {
+        if (_detached) return;
         if (interactionLocked) return;
         isBeingHeld = true;
     }
@@ -393,8 +537,13 @@ public class Door : MonoBehaviour
     public void PlayLockedFeedback()
     {
         if (!interactionLocked) return;
-        if (sfxSource != null && lockedRattleClip != null)
-            sfxSource.PlayOneShot(lockedRattleClip);
+        LockedAttempted?.Invoke();
+        if (lockedRattleClip != null && Time.time >= _nextRattleSound)
+        {
+            AudioSource source = feedbackSource != null ? feedbackSource : sfxSource;
+            if (source != null) source.PlayOneShot(lockedRattleClip, .55f);
+            _nextRattleSound = Time.time + .4f;
+        }
 
         // StopCoroutine(string) останавливает только корутины, запущенные через
         // StartCoroutine(string) — эта запущена через StartCoroutine(IEnumerator), так что

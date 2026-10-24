@@ -36,6 +36,8 @@ public class FloorLogic : MonoBehaviour
     [SerializeField] private string requiredQuestTag = "break-floor";
 
     private Coroutine fallbackRoutine;
+    private float _interactionStarted;
+    public float InteractionProgress => state == BreakState.Playing ? Mathf.Clamp01((Time.time - _interactionStarted) / Mathf.Max(.1f, fallbackDuration)) : state == BreakState.Completed ? 1f : 0f;
 
     void Awake()
     {
@@ -58,6 +60,7 @@ public class FloorLogic : MonoBehaviour
         if (!CanStartBreak(inventory)) return false;
 
         state = BreakState.Playing;
+        _interactionStarted = Time.time;
         if (interactionCollider != null) interactionCollider.enabled = false;
         SetActive(intactBoard, false);
         SetActive(animatedBoard, true);
@@ -120,6 +123,13 @@ public class FloorLogic : MonoBehaviour
         state = BreakState.Available;
         isBroken = false;
         ApplyAvailableState();
+    }
+
+    public void SetCompletedForDebug()
+    {
+        if (fallbackRoutine != null) StopCoroutine(fallbackRoutine);
+        fallbackRoutine = null;
+        ApplyCompletedState();
     }
 
     private IEnumerator CompleteAfterDelay()

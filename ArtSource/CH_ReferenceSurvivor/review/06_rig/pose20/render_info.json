@@ -1,0 +1,34 @@
+{
+  "blend": "C:\\claude\\knocks-from-beneath\\Knocks-from-beneath\\ArtSource\\CH_ReferenceSurvivor\\CH_ReferenceSurvivor_review.blend",
+  "mode": "material",
+  "engine": "cycles",
+  "bbox_min": [
+    -0.5069757699966431,
+    -0.43562787771224976,
+    0.2436686009168625
+  ],
+  "bbox_max": [
+    0.578070342540741,
+    0.42693543434143066,
+    1.7999998331069946
+  ],
+  "size_xyz": [
+    1.0850460529327393,
+    0.8625633120536804,
+    1.5563312768936157
+  ],
+  "objects": [
+    "CH_ReferenceSurvivor_Body_LOD0"
+  ],
+  "renders": {
+    "threequarter": {
+      "file": "C:/claude/knocks-from-beneath/Knocks-from-beneath/ArtSource/CH_ReferenceSurvivor/review/06_rig/pose20\\material_threequarter.png",
+      "az_el_lens": [
+        35,
+        15,
+        50
+      ],
+      "distance": 3.3908906318247314
+    }
+  }
+}

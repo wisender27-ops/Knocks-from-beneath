@@ -93,6 +93,22 @@ public class PieQuestControllerTests
     }
 
     [Test]
+    public void SetupMicrowaveQuest_ActivatesPieAndAllowsPlacementWithoutTakeQuest()
+    {
+        var controller = CreateController();
+        _pieObject.SetActive(false);
+        _microwaveZone.SetActive(false);
+        _activeTag = "pie-microwave";
+
+        controller.SetupMicrowaveQuest();
+
+        Assert.That(_pieObject.activeSelf, Is.True);
+        Assert.That(_microwaveZone.activeSelf, Is.True);
+        Assert.That(controller.CanPlacePieInMicrowave(), Is.True);
+        Assert.That(_recorder.CreatedQuestTags, Does.Contain("pie-microwave"));
+    }
+
+    [Test]
     public void OnPiePlacedInMicrowave_HidesZoneAndCreatesEatQuest()
     {
         var controller = CreateController();

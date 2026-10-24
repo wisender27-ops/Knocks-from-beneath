@@ -23,7 +23,16 @@ public enum DebugStoryStage
     StartFinale,
     // Развилка ночи 2 (T-19/T-20) — сразу после выхода монстра из дыры,
     // все три пути открыты.
-    StartBranchEndings
+    StartBranchEndings,
+    StartPieMicrowaveQuest,
+    StartTrashQuest,
+    StartTrashDeliveryQuest,
+    StartPieQuest,
+    StartPieEatQuest,
+    StartGoToBed,
+    StartNightOne,
+    StartDinnerCook,
+    StartDinnerEat
 }
 
 public class IntroSequence : MonoBehaviour
@@ -47,6 +56,10 @@ public class IntroSequence : MonoBehaviour
     public Vector3 nightSpawnPosition;
     public Vector3 nightSpawnRotation;
 
+    [Header("Ночь 2 — точка пробуждения")]
+    public Vector3 nightTwoBedSpawnPosition = new Vector3(-43f, 4.16f, 118.6f);
+    public Vector3 nightTwoSpawnRotation = new Vector3(0f, 140f, 0f);
+
     [Header("Зоны активности")]
     public GameObject trashZone;
     [Tooltip("Зона для каждой из коробок дня 1 (T-12) — одна PlacementZone+RoomRevealZone на комнату.")]
@@ -68,13 +81,16 @@ public class IntroSequence : MonoBehaviour
     public GameObject pieObject;
     public GameObject microwaveZone;
 
-    [Header("День 2 — расстановка вещей (T-14)")]
-    [Tooltip("Зоны для мелких декоративных предметов дня 2 — та же PlacementZone+RoomRevealZone, что и коробки дня 1, отдельный набор.")]
+    [Header("День 2 — разбросанные вещи на кухне (T-14)")]
+    [Tooltip("У каждой кухонной вещи одна зона возврата на её прежнее место.")]
     public GameObject[] decorationZones;
 
     [Header("День 2 — вечерний обход (T-17)")]
     [Tooltip("Входная дверь дома — EveningRoundController запирает её через Door.SetInteractionLocked, если игрок выберет 'запереть'.")]
     public Door frontDoor;
+
+    [Header("Первая ночь — визит соседа")]
+    public NeighborVisitSequence neighborVisit;
 
     [Header("Ночь 2 — развилка концовок (T-19)")]
     [Tooltip("Триггер у входной двери — концовка 'побег'. Включается BranchEndingController, если дверь не заперта.")]
@@ -104,6 +120,8 @@ public class IntroSequence : MonoBehaviour
     private EveningRoundController _eveningRound;
     private BranchEndingController _branchEnding;
     private HideEndingController _hideEnding;
+    private bool _hasReactedToPowerOutage;
+    private AudioSource _powerOutageAudio;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -111,10 +129,22 @@ public class IntroSequence : MonoBehaviour
 
     void Awake()
     {
+        FadeTransitionPresentation.Ensure(fadeScreen);
+        var horrorDirector = gameObject.AddComponent<HorrorMomentDirector>();
+        horrorDirector.Initialize(playerInventory);
+        var firstNightScare = gameObject.AddComponent<NightOneScare>();
+        firstNightScare.Initialize(playerInventory);
+        var followingSteps = gameObject.AddComponent<FollowingFootsteps>();
+        followingSteps.Initialize(playerInventory);
+        var kitchenDisturbance = gameObject.AddComponent<KitchenDisturbance>();
+        kitchenDisturbance.Initialize(this, playerInventory);
+        kitchenDisturbance.ConfigureAudio(Resources.Load<AudioClip>("Audio/Horror/PlateScrape"),
+            Resources.Load<AudioClip>("Audio/Horror/PlateImpact"));
         _pieQuest = new PieQuestController(
             pieObject, microwaveZone,
             CreateQuest, ShowThoughts, IsQuestActive,
-            onDinnerFinished: SetupGoToBedQuest);
+            onDinnerFinished: SetupGoToBedQuest,
+            recordCompletion: tag => { QuestManager.Instance?.RecordQuestCompletion(tag); });
 
         _moveInChores = new MoveInChoresController(
             trashZone, roomZones,
@@ -127,7 +157,8 @@ public class IntroSequence : MonoBehaviour
 
         _dinner = new DinnerCookingController(
             CreateQuest, ShowThoughts,
-            onDinnerFinished: _eveningRound.SetupEveningWalkQuest);
+            onDinnerFinished: _eveningRound.SetupEveningWalkQuest,
+            recordCompletion: tag => { QuestManager.Instance?.RecordQuestCompletion(tag); });
 
         _decoration = new RoomDecorationController(
             decorationZones, CreateQuest, ShowThoughts,
@@ -145,8 +176,16 @@ public class IntroSequence : MonoBehaviour
 
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
-            TeleportPlayerToBed, StartCoroutine, ShowThoughts,
-            onNightFinished: _decoration.SetupDecorationQuest);
+            TeleportPlayerToBed, StartCoroutine, ShowImportantThoughts,
+            onNightFinished: _decoration.SetupDecorationQuest,
+            nightScare: firstNightScare.Play,
+            neighborVisit: neighborVisit != null ? neighborVisit.Play : (System.Func<IEnumerator>)null,
+            didMeetNeighbor: () => neighborVisit != null && neighborVisit.HasVisited);
+
+        SetupBedsideLamp();
+        SetupPowerOutageAudio();
+        CornerPeekSequence cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
+        cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
     }
 
     void OnEnable()
@@ -158,10 +197,18 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnPieGrabbed += _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten += _pieQuest.OnPieEaten;
         GameEvents.OnMonsterTimerExpired += _branchEnding.HandleTimerExpired;
+        GameEvents.OnPowerOutageSwitchAttempt += HandlePowerOutageSwitchAttempt;
+        GameEvents.OnNightTwoStarted += ResetPowerOutageThought;
     }
 
     void OnDisable()
     {
+        if (_bedroomDoor != null)
+        {
+            _bedroomDoor.LockedAttempted -= OnBedroomDoorAttempt;
+            _bedroomDoor.Opened -= OnBedroomDoorOpened;
+            if (_checkingLight) _bedroomDoor.SetInteractionLocked(_bedroomDoorWasLocked);
+        }
         GameEvents.OnBedTriggerReached -= OnBedTriggerReached;
         GameEvents.OnBedTriggerReached -= _eveningRound.HandleBedReached;
         GameEvents.OnKitchenNoiseHeard -= OnKitchenTriggerReached;
@@ -169,6 +216,8 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnPieGrabbed -= _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten -= _pieQuest.OnPieEaten;
         GameEvents.OnMonsterTimerExpired -= _branchEnding.HandleTimerExpired;
+        GameEvents.OnPowerOutageSwitchAttempt -= HandlePowerOutageSwitchAttempt;
+        GameEvents.OnNightTwoStarted -= ResetPowerOutageThought;
     }
 
     void Start()
@@ -238,24 +287,69 @@ public class IntroSequence : MonoBehaviour
     {
         Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
-        if (startStage >= DebugStoryStage.StartKitchenNoise)
+        if (startStage != DebugStoryStage.None && startStage != DebugStoryStage.StartTrashQuest &&
+            startStage != DebugStoryStage.StartTrashDeliveryQuest && startStage != DebugStoryStage.StartBoxQuest && roomZones != null)
+        {
+            if (TrashManager.Instance != null && TrashManager.Instance.trashPiles != null)
+                foreach (GameObject pile in TrashManager.Instance.trashPiles)
+                    if (pile != null) pile.SetActive(false);
+            foreach (GameObject zone in roomZones)
+                if (zone != null) zone.GetComponent<PlacementZone>()?.RevealItemsForDebug();
+        }
+
+        if (IsNightDebugStage(startStage))
         {
             if (skySwitcher != null) skySwitcher.isDayTime = false;
             RenderSettings.fog = false;
             if (knockController != null) knockController.SetActive(true);
-            TeleportPlayerToBed();
+            TeleportPlayerToNightTwoBed();
+        }
+        if (IsNightDebugStage(startStage) && startStage != DebugStoryStage.StartNight)
+        {
+            GameEvents.OnNightStarted?.Invoke();
+            GameEvents.OnNightTwoStarted?.Invoke();
+            GameEvents.OnNightTwoAwake?.Invoke();
         }
 
         switch (startStage)
         {
+            case DebugStoryStage.StartTrashQuest:
+                _moveInChores.SetupTrashQuest();
+                break;
+            case DebugStoryStage.StartTrashDeliveryQuest:
+                _moveInChores.StartTrashDeliveryQuest();
+                break;
             case DebugStoryStage.StartBoxQuest:
                 _moveInChores.SetupBoxQuest();
+                break;
+            case DebugStoryStage.StartPieQuest:
+                _pieQuest.SetupTakePieQuest();
+                break;
+            case DebugStoryStage.StartPieMicrowaveQuest:
+                _pieQuest.SetupMicrowaveQuest();
+                break;
+            case DebugStoryStage.StartPieEatQuest:
+                _pieQuest.SetupEatQuest();
+                break;
+            case DebugStoryStage.StartGoToBed:
+                SetupGoToBedQuest();
+                break;
+            case DebugStoryStage.StartNightOne:
+                _nightOne.Run();
                 break;
             case DebugStoryStage.StartDay2Decoration:
                 _decoration.SetupDecorationQuest();
                 break;
             case DebugStoryStage.StartDay2Dinner:
                 _dinner.SetupIngredientQuest();
+                break;
+            case DebugStoryStage.StartDinnerCook:
+                _dinner.SetupCookDinnerDebug();
+                FindFirstObjectByType<StoveInteractable>()?.ResetForCookDebug();
+                break;
+            case DebugStoryStage.StartDinnerEat:
+                _dinner.SetupEatDinnerDebug();
+                FindFirstObjectByType<StoveInteractable>()?.SetReadyForDebug();
                 break;
             case DebugStoryStage.StartDay2Evening:
                 _eveningRound.SetupEveningWalkQuest();
@@ -271,29 +365,72 @@ public class IntroSequence : MonoBehaviour
                 SetupFlashlightQuest();
                 break;
             case DebugStoryStage.StartCrowbarQuest:
-                if (playerInventory != null) playerInventory.hasFlashlight = true;
+                GrantDebugItem("Flashlight");
                 SetupCrowbarQuest();
                 break;
             case DebugStoryStage.StartBreakFloor:
-                if (playerInventory != null) playerInventory.hasFlashlight = true;
-                SetupBreakFloorQuest();
+                // Раньше эта стадия ломала пол на кухне (FloorLogic.SetCompletedForDebug).
+                // Кухонной дыры в сюжете больше нет — стадия теперь прыгает к замку люка.
+                GrantDebugItem("Flashlight");
+                SetupPryLockQuest();
                 break;
             case DebugStoryStage.StartLookInHole:
-                if (playerInventory != null) playerInventory.hasFlashlight = true;
+                GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
                 SetupLookInHoleQuest();
                 break;
             case DebugStoryStage.StartHammerQuest:
+                GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
+                FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
                 SetupHammerQuest();
                 break;
             case DebugStoryStage.StartFinale:
+                GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
+                GrantDebugItem("Hammer");
+                FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
                 OnHammerPickedUp();
                 break;
             case DebugStoryStage.StartBranchEndings:
+                GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
+                FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
                 if (MonsterTimer.Instance != null)
                     MonsterTimer.Instance.StartTimer();
                 _branchEnding.Activate();
                 break;
         }
+    }
+
+    static bool IsNightDebugStage(DebugStoryStage stage)
+    {
+        switch (stage)
+        {
+            case DebugStoryStage.StartNight:
+            case DebugStoryStage.StartKitchenNoise:
+            case DebugStoryStage.StartFlashlightQuest:
+            case DebugStoryStage.StartCrowbarQuest:
+            case DebugStoryStage.StartBreakFloor:
+            case DebugStoryStage.StartLookInHole:
+            case DebugStoryStage.StartHammerQuest:
+            case DebugStoryStage.StartFinale:
+            case DebugStoryStage.StartBranchEndings:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    void GrantDebugItem(string itemId)
+    {
+        if (playerInventory == null || playerInventory.HasItem(itemId)) return;
+        if (playerInventory.AddItem(itemId)) return;
+
+        // Keep debug entry usable in scenes where the inventory database is not assigned.
+        if (itemId == "Flashlight") playerInventory.hasFlashlight = true;
+        else if (itemId == "Crowbar") playerInventory.hasCrowbar = true;
+        else if (itemId == "Hammer") playerInventory.hasHammer = true;
     }
 
     // =====================================================================
@@ -311,6 +448,17 @@ public class IntroSequence : MonoBehaviour
         if (cc != null) cc.enabled = true;
     }
 
+    void TeleportPlayerToNightTwoBed()
+    {
+        if (playerTransform == null) return;
+
+        CharacterController cc = playerTransform.GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = false;
+        playerTransform.position = nightTwoBedSpawnPosition;
+        playerTransform.rotation = Quaternion.Euler(nightTwoSpawnRotation);
+        if (cc != null) cc.enabled = true;
+    }
+
     void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction callback = null, string questTag = "")
     {
         if (QuestManager.Instance != null)
@@ -324,16 +472,16 @@ public class IntroSequence : MonoBehaviour
     // --- 1. Начальный монолог ---
     void StartIntro()
     {
-        ShowThoughts(new string[] {
-            "Наконец-то - своё жильё.",
-            "Хоть и прошлые хозяева его конечно засрали."
+        ShowImportantThoughts(new string[] {
+            "Ну вот. Свой дом. Может, хоть здесь будет спокойно.",
+            "Семья съехала, а срач оставила мне. Спасибо."
         }, _moveInChores.SetupTrashQuest);
     }
 
     void SetupGoToBedQuest()
     {
         // nightStartTrigger.SetActive(true) убрано — кровать всегда видна
-        CreateQuest("Пойти к кровати", 1, OnGoToBedFinished, "go-to-bed");
+        CreateQuest("Лечь спать", 1, OnGoToBedFinished, "go-to-bed");
     }
 
     public void OnBedTriggerReached()
@@ -378,12 +526,12 @@ public class IntroSequence : MonoBehaviour
         }
 
         GameEvents.OnNightStarted?.Invoke();
+        GameEvents.OnNightTwoStarted?.Invoke();
         if (skySwitcher != null) skySwitcher.isDayTime = false;
         RenderSettings.fog = false;
-        TeleportPlayerToBed();
+        TeleportPlayerToNightTwoBed();
 
-        // IntroSequence сама включает стук; отдельный NightStartTrigger для этого больше не нужен
-        if (knockController != null) knockController.SetActive(true);
+        if (knockController != null) knockController.SetActive(false);
 
         yield return new WaitForSeconds(2f);
         if (nightTrigger != null) nightTrigger.SetActive(true);
@@ -396,11 +544,22 @@ public class IntroSequence : MonoBehaviour
             yield return null;
         }
 
-        ShowThoughts(new string[] {
-            "...?",
-            "Что это было?..",
-            "Я только въехал. Почему оно не пропало."
-        }, SetupSearchNoiseQuest);
+        GameEvents.OnNightTwoAwake?.Invoke();
+
+        SetupCheckLightQuest(false);
+        RandomKnock firstKnock = knockController != null ? knockController.GetComponentInChildren<RandomKnock>(true) : null;
+        int knockCount = firstKnock != null ? firstKnock.PlayedKnockCount : 0;
+        if (knockController != null) knockController.SetActive(true);
+        if (firstKnock == null) yield break;
+        while (firstKnock != null && firstKnock.PlayedKnockCount == knockCount) yield return null;
+        if (firstKnock == null) yield break;
+        yield return new WaitForSeconds(Mathf.Max(0f, firstKnock.LastKnockTime + 1f - Time.time));
+        ShowThoughts(new[] {
+            "Опять этот стук.",
+            _hasReactedToPowerOutage ? "Нужно выяснить, откуда он." : "Сначала проверю свет, потом пойду разбираться."
+        }, () => {
+            if (_checkingLight) CreateQuest("Проверить выключатель света", 1, questTag: "night-two-light");
+        });
     }
 
     // =====================================================================
@@ -411,12 +570,29 @@ public class IntroSequence : MonoBehaviour
     void SetupSearchNoiseQuest()
     {
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(true);
-        CreateQuest("Проверить источник шума", 1, OnKitchenQuestCompleted);
+        CreateQuest("Проверить шум на кухне", 1, OnKitchenQuestCompleted, "search-kitchen-noise");
+    }
+
+    public void PrepareCornerScare()
+    {
+        if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
+    }
+
+    public void ContinueAfterCornerScare()
+    {
+        PrepareCornerScare();
+        QuestManager quests = QuestManager.Instance;
+        if (quests == null) return;
+        // Interrupted speech callbacks never run; continue the existing story explicitly.
+        string tag = quests.GetActiveQuestTag();
+        if (!string.IsNullOrEmpty(tag) && tag != "search-kitchen-noise" && tag != "flashlight-find") return;
+        if (!string.IsNullOrEmpty(tag)) quests.RecordQuestCompletion(tag);
+        SetupHatchQuest();
     }
 
     public void OnKitchenTriggerReached()
     {
-        if (QuestManager.Instance != null)
+        if (QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("search-kitchen-noise"))
             QuestManager.Instance.AddProgress(1);
     }
 
@@ -426,29 +602,225 @@ public class IntroSequence : MonoBehaviour
         // T-21: источник шума найден — RandomKnock (knockController) раньше продолжал
         // стучать всю оставшуюся ночь, включая сцену у дыры и развилку концовок.
         if (knockController != null) knockController.SetActive(false);
-        ShowThoughts(new string[] {
-            "Под полом.",
-            "Прямо подо мной.",
-            "Без света я туда не полезу."
-        }, SetupFlashlightQuest);
+        bool hasFlashlight = playerInventory != null && playerInventory.hasFlashlight;
+        ShowImportantThoughts(new string[] {
+            "Стук идёт снизу. Из подвала.",
+            "Только бы не та же история...",
+            hasFlashlight ? "Вход в подвал снаружи. Пойду проверю люк." : "Стоило бы взять фонарик. Без него я туда не полезу."
+        }, hasFlashlight ? (System.Action)SetupHatchQuest : SetupFlashlightQuest);
     }
 
     // --- 4. Найти фонарик ---
     void SetupFlashlightQuest()
     {
-        if (flashlightItem != null) flashlightItem.SetActive(true);
         CreateQuest("Найти фонарик", 1, OnFlashlightPickedUp, "flashlight-find");
+        ShowThoughts(new[] { "Пойду возьму фонарик." }, ShowFlashlightOutline);
+    }
+
+    void ShowFlashlightOutline()
+    {
+        if (playerInventory != null && playerInventory.hasFlashlight) return;
+        if (flashlightItem != null)
+        {
+            PixelItemOutline outline = flashlightItem.GetComponent<PixelItemOutline>();
+            if (outline == null) outline = flashlightItem.AddComponent<PixelItemOutline>();
+            outline.Show();
+        }
+    }
+
+    void SetupBedsideLamp()
+    {
+        GameObject lampObject = GameObject.Find("Desk_lamp_01.002");
+        if (lampObject == null) return;
+
+        LightSwitch lampSwitch = lampObject.GetComponent<LightSwitch>();
+        if (lampSwitch == null)
+            lampSwitch = lampObject.AddComponent<LightSwitch>();
+
+        Light lampLight = lampObject.GetComponentInChildren<Light>();
+        if (lampLight == null)
+        {
+            GameObject bulb = new GameObject("BedsideLampLight");
+            bulb.transform.SetParent(lampObject.transform, false);
+            bulb.transform.position = lampObject.transform.position + Vector3.up * 0.35f;
+            lampLight = bulb.AddComponent<Light>();
+            lampLight.type = LightType.Point;
+            lampLight.color = new Color(1f, 0.78f, 0.55f);
+            lampLight.intensity = 2.5f;
+            lampLight.range = 3.5f;
+            lampLight.shadows = LightShadows.None;
+        }
+
+        lampSwitch.lightsToControl = new[] { lampLight };
+        lampSwitch.lampRenderers = new[] { lampObject.GetComponent<Renderer>() };
+        lampSwitch.turnOnAfterNightTwoWake = true;
+        lampSwitch.isOn = false;
+        lampLight.enabled = false;
+
+        if (lampObject.GetComponent<Collider>() == null)
+        {
+            SphereCollider collider = lampObject.AddComponent<SphereCollider>();
+            collider.radius = 0.01f;
+        }
+
+        AudioSource lampAudio = lampObject.AddComponent<AudioSource>();
+        lampAudio.playOnAwake = false;
+        lampAudio.spatialBlend = 1f;
+        lampAudio.minDistance = 1.5f;
+        lampAudio.maxDistance = 8f;
+        lampAudio.volume = 0.45f;
+        lampAudio.clip = Resources.Load<AudioClip>("Audio/DeskLampToggle");
+        lampSwitch.switchSound = lampAudio;
+        _bedsideBulb = lampObject.AddComponent<BedsideBulb>();
+        _bedsideBulb.Initialize(lampLight);
     }
 
     public void OnFlashlightPickedUp()
     {
+        if (flashlightItem != null && flashlightItem.TryGetComponent<PixelItemOutline>(out var outline)) outline.Hide();
+        ShowThoughts(new[] { "Фонарик есть. Теперь проверю, откуда шум." }, SetupSearchNoiseQuest);
+    }
+
+    void HandlePowerOutageSwitchAttempt()
+    {
+        if (_hasReactedToPowerOutage) return;
+        _hasReactedToPowerOutage = true;
+        if (_bedsideBulb != null) _bedsideBulb.Break();
+        if (_checkingLight)
+        {
+            _checkingLight = false;
+            if (_bedroomDoor != null) _bedroomDoor.SetInteractionLocked(_bedroomDoorWasLocked);
+            QuestManager.Instance?.RecordQuestCompletion("night-two-light");
+        }
+        if (_powerOutageAudio != null)
+            _powerOutageAudio.PlayOneShot(_powerOutageAudio.clip);
+        ShowThoughts(new[] { "Странно. Свет не работает." }, null);
+        SetupFlashlightQuest();
+    }
+
+    void SetupPowerOutageAudio()
+    {
+        AudioClip clip = Resources.Load<AudioClip>("Audio/GeneratorShutdown");
+        if (clip == null)
+        {
+            Debug.LogWarning("[IntroSequence] Generator shutdown sound not found in Resources/Audio/GeneratorShutdown.");
+            return;
+        }
+
+        _powerOutageAudio = gameObject.AddComponent<AudioSource>();
+        _powerOutageAudio.playOnAwake = false;
+        _powerOutageAudio.spatialBlend = 0f;
+        _powerOutageAudio.volume = 0.8f;
+        _powerOutageAudio.clip = clip;
+    }
+
+    void ResetPowerOutageThought()
+    {
+        _hasReactedToPowerOutage = false;
+        _stairRunPlayed = false;
+    }
+
+    private BedsideBulb _bedsideBulb;
+    private Door _bedroomDoor;
+    private bool _checkingLight, _bedroomDoorWasLocked, _stairRunPlayed;
+    private int _doorHintIndex;
+    private readonly string[] _doorHints = { "Сначала бы свет включить.", "В темноте я никуда не пойду.", "Нужно проверить выключатель." };
+
+    void SetupCheckLightQuest(bool showQuest = true)
+    {
+        _checkingLight = !_hasReactedToPowerOutage;
+        if (!_checkingLight) { SetupSearchNoiseQuest(); return; }
+        _doorHintIndex = 0;
+        if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
+        _bedroomDoor = GameObject.Find("Door_001")?.GetComponent<Door>();
+        if (_bedroomDoor != null)
+        {
+            _bedroomDoorWasLocked = _bedroomDoor.IsInteractionLocked;
+            _bedroomDoor.SetInteractionLocked(true);
+            _bedroomDoor.LockedAttempted -= OnBedroomDoorAttempt;
+            _bedroomDoor.LockedAttempted += OnBedroomDoorAttempt;
+            _bedroomDoor.Opened -= OnBedroomDoorOpened;
+            _bedroomDoor.Opened += OnBedroomDoorOpened;
+        }
+        if (showQuest) CreateQuest("Проверить выключатель света", 1, questTag: "night-two-light");
+    }
+
+    void OnBedroomDoorAttempt()
+    {
+        if (!_checkingLight || _doorHintIndex >= _doorHints.Length || ThoughtManager.Instance == null) return;
+        if (ThoughtManager.Instance.TryShowInteractionThoughts("bedroom-light-check", new[] { _doorHints[_doorHintIndex] }))
+            _doorHintIndex++;
+    }
+
+    void OnBedroomDoorOpened()
+    {
+        if (_checkingLight || !_hasReactedToPowerOutage || _stairRunPlayed) return;
+        _stairRunPlayed = true;
+        GameObject stairs = GameObject.Find("Ladders");
+        if (stairs != null) StartCoroutine(PlayStairRun(stairs));
+    }
+
+    IEnumerator PlayStairRun(GameObject stairs)
+    {
+        AudioClip clip = Resources.Load<AudioClip>("Audio/StairRunDown");
+        if (clip == null) yield break;
+        GameObject emitter = new GameObject("NightTwoStairRun");
+        emitter.transform.SetParent(stairs.transform, false);
+        AudioSource source = emitter.AddComponent<AudioSource>();
+        source.playOnAwake = false;
+        source.spatialBlend = 1f;
+        source.minDistance = 3f;
+        source.maxDistance = 18f;
+        source.volume = 0.9f;
+        source.rolloffMode = AudioRolloffMode.Linear;
+        source.dopplerLevel = 0f;
+        source.clip = clip;
+        // Both flights meet at the landing; the old path covered only the lower flight.
+        Vector3 top = new Vector3(-41.9f, 4.25f, 113.08f);
+        Vector3 landing = new Vector3(-39.4f, 2.6f, 113.08f);
+        Vector3 bottom = new Vector3(-41.67f, 0.92f, 111.8f);
+        float firstFlightLength = Vector3.Distance(top, landing);
+        float totalLength = firstFlightLength + Vector3.Distance(landing, bottom);
+        emitter.transform.position = top;
+        if (knockController != null)
+            foreach (RandomKnock knock in knockController.GetComponentsInChildren<RandomKnock>(true))
+                knock.PauseFor(clip.length + 3f);
+        source.Play();
+        Destroy(emitter, clip.length + 1f);
+        while (source != null && source.isPlaying)
+        {
+            float distance = Mathf.Clamp01(source.time / clip.length) * totalLength;
+            emitter.transform.position = distance <= firstFlightLength
+                ? Vector3.Lerp(top, landing, distance / firstFlightLength)
+                : Vector3.Lerp(landing, bottom, (distance - firstFlightLength) / (totalLength - firstFlightLength));
+            yield return null;
+        }
+        if (emitter != null) Destroy(emitter);
+        if (!CornerPeekSequence.IsPlaying)
+            ShowThoughts(new[] { "Кто-то только что пробежал по моей лестнице..." }, null);
+    }
+
+    // --- 5. Идём к подвалу и пробуем открыть ---
+    // Ночь 2 перестроена вокруг уличного люка: игрок берёт фонарик, выходит на улицу,
+    // пробует E на створках и получает отказ — замок. Только после этого он идёт за ломом.
+    // Прежний шаг «вскрыть доски на кухне» (break-floor) удалён целиком вместе с
+    // FloorLogic: он вёл в кухонную дыру, а скример обслуживает подвал, и игрок ломал пол
+    // ради квеста, который засчитывался в другом конце карты.
+    void SetupHatchQuest()
+    {
+        CreateQuest("Проверить люк подвала снаружи", 1, OnHatchLockedFound, "open-basement");
+    }
+
+    // Игрок нажал E на запертом люке — засчитываем шаг и отправляем за ломом.
+    public void OnHatchLockedFound()
+    {
         ShowThoughts(new string[] {
-            "Свет есть.",
-            "Теперь бы лом."
+            "Ещё и замок.",
+            "Ключа нет. Придётся найти лом."
         }, SetupCrowbarQuest);
     }
 
-    // --- 5. Поиск лома ---
+    // --- 6. Поиск лома ---
     void SetupCrowbarQuest()
     {
         if (crowbarItem != null) crowbarItem.SetActive(true);
@@ -458,31 +830,34 @@ public class IntroSequence : MonoBehaviour
     public void OnCrowbarPickedUp()
     {
         ShowThoughts(new string[] {
-            "Нашёл.",
-            "Ненавижу это чувство."
-        }, SetupBreakFloorQuest);
+            "Этим замок можно сорвать.",
+            "Ночью вскрывать собственный подвал. Отличный переезд."
+        }, SetupPryLockQuest);
     }
 
-    // --- 6. Пробить пол ---
-    void SetupBreakFloorQuest()
+    // --- 7. Вскрыть замок люка ---
+    void SetupPryLockQuest()
     {
-        CreateQuest("Вскрыть доски на кухне", 1, OnFloorBroken, "break-floor");
+        CreateQuest("Сорвать замок с люка подвала", 1, OnHatchLockPried, "pry-hatch-lock");
     }
 
-    public void OnFloorBroken()
+    public void OnHatchLockPried()
     {
         ShowThoughts(new string[] {
-            "Ничего не видно.",
-            "Ладно хоть фонарик взял."
+            "Теперь можно открыть люк.",
+            "Сперва посветить на лестницу. Вслепую туда не полезу."
         }, SetupLookInHoleQuest);
     }
 
-    // --- 7. Заглянуть в дыру ---
+    // --- 8. Открыть створки и посветить вниз ---
     void SetupLookInHoleQuest()
     {
-        CreateQuest("Заглянуть в дыру", 1, OnHoleEventFinished);
+        CreateQuest("Открыть подвал и осветить лестницу", 1, OnHoleEventFinished, "open-basement-after-lock");
         if (holeEventController != null)
+        {
+            holeEventController.gameObject.SetActive(true);
             holeEventController.enabled = true;
+        }
     }
 
     // =====================================================================
@@ -499,11 +874,11 @@ public class IntroSequence : MonoBehaviour
     // игрок теперь получает именно тогда, когда видит развилку и может действовать.
     public void OnHoleEventFinished()
     {
-        ShowThoughts(new string[] {
-            "НЕТ.",
-            "Эта тварь выскочила прямо на меня.",
-            "Нужно заколотить её.",
-            "Прямо сейчас."
+        ShowImportantThoughts(new string[] {
+            "Оно исчезло.",
+            "Нет. Я не стану опять от него бежать.",
+            "Заколочу люк. И всё. Больше не вылезет.",
+            "Нужен молоток."
         }, () =>
         {
             if (MonsterTimer.Instance != null)
@@ -564,14 +939,31 @@ public class IntroSequence : MonoBehaviour
     // --- 9. Молоток и финал ---
     public void OnHammerPickedUp()
     {
+        MonsterTimer.Instance?.PauseTimer();
         ShowThoughts(new string[] {
-            "Взял.",
-            "Я всё исправлю."
+            "Заколочу. И наконец всё закончится.",
+            "Надо вернуться к люку."
         }, () =>
         {
             if (finaleTrigger != null) finaleTrigger.SetActive(true);
-            CreateQuest("Закрыть дыру", 1);
+            CreateQuest("Заколотить люк подвала", 1, questTag: "board-basement");
+            MonsterTimer.Instance?.ResumeTimer();
         });
+    }
+
+    public bool CanBoardBasement(BasementHatch hatch)
+    {
+        return hatch != null && holeEventController != null &&
+            hatch == holeEventController.basementHatch && playerInventory != null &&
+            playerInventory.hasHammer && IsQuestActive("board-basement");
+    }
+
+    public bool TryBoardBasement(BasementHatch hatch)
+    {
+        if (!CanBoardBasement(hatch) || finaleTrigger == null || playerTransform == null) return false;
+        FinaleController finale = finaleTrigger.GetComponent<FinaleController>();
+        return finale != null && finale.BeginBoarding(
+            playerTransform.GetComponent<PlayerController>(), _branchEnding.DeadlineExpired);
     }
 
     // --- Квест с пирогом: внешний контракт (MicrowaveInteractable, CrosshairJuice,
@@ -623,6 +1015,14 @@ public class IntroSequence : MonoBehaviour
         }
 
         onComplete?.Invoke();
+    }
+
+    private void ShowImportantThoughts(string[] lines, System.Action onComplete)
+    {
+        if (ThoughtManager.Instance != null)
+            ThoughtManager.Instance.ShowImportantThoughts(lines, onComplete);
+        else
+            onComplete?.Invoke();
     }
 
     bool IsQuestActive(string questTag)

@@ -1,0 +1,14 @@
+PSX Home Interior Pack — APPROVED
+https://approved-work.itch.io/psx-home-interior-pack
+License: Creative Commons Attribution 4.0 International (CC BY 4.0).
+Used: water-heater, breaker-box and textures. Materials adapted for this project.
+Credit APPROVED in the game credits when distributing.
+
+Modular PipeWork Pack — Siris Pendrake
+https://siris-pendrake.itch.io/simple-pipework-pack
+Author permits commercial use; standalone asset redistribution is prohibited.
+Used: pipe meshes and texture. Materials and proportions adapted for this project.
+See Assets/PipeWorksPack/READ_ME.txt.
+
+Other meshes and textures reused from the existing House assets.
+Basement geometry assembled in the Unity Editor; no gameplay scripts added.
