@@ -9,6 +9,8 @@ public class PlayerController : MonoBehaviour
 {
     private const float MaxCameraNearClip = 0.03f;
     private const float CameraWallMargin = 0.01f;
+    // Load hitches (e.g. scene load from the main menu) give dt≈0.33 and let the controller tunnel through thin floors.
+    private const float MaxMovementDeltaTime = 1f / 30f;
     [Header("Movement")]
     public float walkSpeed = 2f;
     public float runSpeed = 4f;
@@ -137,6 +139,7 @@ public class PlayerController : MonoBehaviour
 
         if (isCameraLocked) return;
 
+        float dt = Mathf.Min(Time.deltaTime, MaxMovementDeltaTime);
         float x = (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) ? 1f : 0f)
                 - (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) ? 1f : 0f);
         float z = (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow) ? 1f : 0f)
@@ -158,25 +161,25 @@ public class PlayerController : MonoBehaviour
         else if (canRun)
         {
             targetSpeed = runSpeed;
-            currentStamina -= Time.deltaTime;
+            currentStamina -= dt;
         }
         else
         {
             if (currentStamina < maxStamina)
-                currentStamina += staminaRegenRate * Time.deltaTime;
+                currentStamina += staminaRegenRate * dt;
         }
         currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
         wasRunningLastFrame = canRun && isMoving;
         Vector3 targetDirection = (transform.right * x + transform.forward * z).normalized;
         Vector3 targetMoveVelocity = targetDirection * targetSpeed;
-        horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, targetMoveVelocity, movementSmoothness * Time.deltaTime);
+        horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, targetMoveVelocity, movementSmoothness * dt);
         if (controller.isGrounded && verticalVelocity < 0f) 
             verticalVelocity = -2f;
         
-        verticalVelocity += gravity * Time.deltaTime;
+        verticalVelocity += gravity * dt;
         Vector3 finalVelocity = horizontalVelocity;
         finalVelocity.y = verticalVelocity;
-        Vector3 step = finalVelocity * Time.deltaTime;
+        Vector3 step = finalVelocity * dt;
         // Коробка в руках упирается в стены и мебель и не даёт пройти сквозь неё.
         if (_pickupControl != null) step = _pickupControl.ClampCarryMovement(step);
         controller.Move(step);
