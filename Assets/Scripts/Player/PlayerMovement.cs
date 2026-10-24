@@ -176,7 +176,10 @@ public class PlayerController : MonoBehaviour
         verticalVelocity += gravity * Time.deltaTime;
         Vector3 finalVelocity = horizontalVelocity;
         finalVelocity.y = verticalVelocity;
-        controller.Move(finalVelocity * Time.deltaTime);
+        Vector3 step = finalVelocity * Time.deltaTime;
+        // Коробка в руках упирается в стены и мебель и не даёт пройти сквозь неё.
+        if (_pickupControl != null) step = _pickupControl.ClampCarryMovement(step);
+        controller.Move(step);
 
         ApplyCrouchVisuals(wantsToCrouch);
         isCrouching = wantsToCrouch;

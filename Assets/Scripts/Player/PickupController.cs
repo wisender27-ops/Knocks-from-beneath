@@ -43,6 +43,7 @@ public class PickupController : MonoBehaviour
     private float _zoomOffset, _targetZoomOffset, _carryRadius;
     private Vector3 _carryHalfExtents;
     private bool _carryPoseBlocked;
+    private Vector3 _carryBlockNormal;
     private readonly Collider[] _carryOverlaps = new Collider[24];
     private Quaternion _pickupRotationOffset;
     private PlayerInteraction _interaction;
@@ -672,6 +673,7 @@ public class PickupController : MonoBehaviour
     private Vector3 GetHeldRootTargetPosition(Quaternion targetRotation)
     {
         _carryPoseBlocked = false;
+        _carryBlockNormal = Vector3.zero;
         if (playerCamera == null)
             return holdPoint.position + holdPoint.forward * _zoomOffset;
         if (!_heldObjectUsesTwoHandGrip)
@@ -679,8 +681,7 @@ public class PickupController : MonoBehaviour
             Vector3 smallCenter = playerCamera.transform.TransformPoint(new Vector3(.18f, -.19f, .32f + _carryDepth + _zoomOffset));
             return smallCenter - targetRotation * Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
         }
-        float depth = Mathf.Max(.30f + _carryDepth + _zoomOffset, CarryDepth(targetRotation) + .18f);
-        Vector3 center = playerCamera.transform.TransformPoint(new Vector3(0f, -.16f, depth));
+        Vector3 center = TwoHandedCarryCenter(targetRotation);
         if (!CarryPoseClear(center, targetRotation))
         {
             // Место перед камерой занято (стена, стол) — подтягиваем предмет к игроку
@@ -701,12 +702,77 @@ public class PickupController : MonoBehaviour
                     // (игрок вплотную к стене); ближе подтянуть всё равно некуда.
                     Transform hit = _carryObstacles[i].collider.transform;
                     if (hit.IsChildOf(_heldObj.transform) || hit.IsChildOf(transform) || _carryObstacles[i].distance <= 0f) continue;
-                    nearest = Mathf.Min(nearest, _carryObstacles[i].distance);
+                    if (_carryObstacles[i].distance >= nearest) continue;
+                    nearest = _carryObstacles[i].distance;
+                    _carryBlockNormal = _carryObstacles[i].normal;
                 }
                 center = origin + path / length * nearest;
             }
         }
         return center - targetRotation * Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
+    }
+
+    private Vector3 TwoHandedCarryCenter(Quaternion rotation)
+    {
+        float depth = Mathf.Max(.30f + _carryDepth + _zoomOffset, CarryDepth(rotation) + .18f);
+        return playerCamera.transform.TransformPoint(new Vector3(0f, -.16f, depth));
+    }
+
+    // Крупный предмет в руках упирается в препятствия и останавливает игрока.
+    // Раньше коробку подтягивало к камере, а игрок продолжал идти и оказывался
+    // внутри неё. Пол и столешницы (почти горизонтальные поверхности) не мешают,
+    // иначе нельзя было бы ходить, глядя вниз. Вызывается из PlayerController.
+    public Vector3 ClampCarryMovement(Vector3 step)
+    {
+        if (_heldObj == null || _heldObjRb == null || playerCamera == null || holdPoint == null ||
+            _heldPieView != null || !_heldObjectUsesTwoHandGrip) return step;
+        Vector3 flat = new Vector3(step.x, 0f, step.z);
+        float distance = flat.magnitude;
+        if (distance < .00001f) return step;
+
+        if (_carryPoseBlocked)
+        {
+            // Коробку уже подтянуло к игроку: не даём шагать в сторону препятствия.
+            flat = SlideAlong(flat, _carryBlockNormal);
+        }
+        else
+        {
+            Quaternion rotation = holdPoint.rotation * _heldRotationOffset;
+            Vector3 direction = flat / distance;
+            Vector3 extents = Vector3.Max(_carryHalfExtents - Vector3.one * .015f, Vector3.one * .01f);
+            int count = Physics.BoxCastNonAlloc(TwoHandedCarryCenter(rotation), extents, direction, _carryObstacles,
+                rotation, distance + CarryMoveSkin, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
+            float nearest = float.PositiveInfinity;
+            Vector3 normal = Vector3.zero;
+            for (int i = 0; i < count; i++)
+            {
+                RaycastHit hit = _carryObstacles[i];
+                if (hit.collider.transform.IsChildOf(_heldObj.transform) || hit.collider.transform.IsChildOf(transform) ||
+                    hit.distance <= 0f || Mathf.Abs(hit.normal.y) > CarryFloorNormalY || hit.distance >= nearest) continue;
+                nearest = hit.distance;
+                normal = hit.normal;
+            }
+            if (!float.IsPositiveInfinity(nearest))
+            {
+                float allowed = Mathf.Max(0f, nearest - CarryMoveSkin);
+                flat = direction * allowed + SlideAlong(direction * (distance - allowed), normal);
+            }
+        }
+        return new Vector3(flat.x, step.y, flat.z);
+    }
+
+    private const float CarryMoveSkin = .02f;
+    private const float CarryFloorNormalY = .7f;
+
+    // Убирает из движения составляющую, направленную в препятствие с нормалью normal.
+    private static Vector3 SlideAlong(Vector3 move, Vector3 normal)
+    {
+        if (Mathf.Abs(normal.y) > CarryFloorNormalY) return move;
+        Vector3 wall = new Vector3(normal.x, 0f, normal.z);
+        if (wall.sqrMagnitude < .0001f) return move;
+        wall.Normalize();
+        float into = Vector3.Dot(move, wall);
+        return into < 0f ? move - wall * into : move;
     }
 
     private void CacheHandGripPoints(GameObject item, PickableItem pickable)
