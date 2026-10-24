@@ -310,6 +310,15 @@ public class PickupController : MonoBehaviour
         _heldPieView = pie != null && pie.isHeated ? pie : null;
         CacheHandGripPoints(obj, _heldItemScript);
 
+        Vector3 horizontalForward = Vector3.ProjectOnPlane(holdPoint.forward, Vector3.up);
+        Quaternion pickupFrame = horizontalForward.sqrMagnitude > .0001f
+            ? Quaternion.LookRotation(horizontalForward, Vector3.up) : holdPoint.rotation;
+        _heldRotationOffset = Quaternion.Inverse(pickupFrame) * obj.transform.rotation;
+        // До выключения коллайдеров: по ним считаются габариты для хвата.
+        if (_heldObjectUsesTwoHandGrip && _heldPieView == null)
+            AlignTwoHandedItem(obj, _heldItemScript);
+        _pickupRotationOffset = _heldRotationOffset;
+
         _heldKitchenItem = _heldItemScript != null && _heldItemScript.placementQuestTag == "room-decoration";
         if (_heldKitchenItem)
         {
@@ -356,11 +365,6 @@ public class PickupController : MonoBehaviour
         }
         TrySetupQuestPlacementZones(collectable);
 
-        Vector3 horizontalForward = Vector3.ProjectOnPlane(holdPoint.forward, Vector3.up);
-        Quaternion pickupFrame = horizontalForward.sqrMagnitude > .0001f
-            ? Quaternion.LookRotation(horizontalForward, Vector3.up) : holdPoint.rotation;
-        _heldRotationOffset = Quaternion.Inverse(pickupFrame) * obj.transform.rotation;
-        _pickupRotationOffset = _heldRotationOffset;
 
         _originalLayer = _heldObj.layer;
         int heldLayer = LayerMask.NameToLayer("HeldItem");
@@ -759,6 +763,88 @@ public class PickupController : MonoBehaviour
             (_heldObjRb != null && _heldObjRb.mass > 3f);
     }
 
+    // Крупный предмет (коробку) всегда берём одинаково. Раньше он оставался в руках
+    // под тем углом, под каким лежал, а точки хвата искались ближайшей точкой
+    // коллайдера от камеры — при каждом подборе это были разные рёбра и углы, и руки
+    // хватались как попало. Теперь предмет разворачивается к игроку ближайшей гранью
+    // (верх остаётся верхом), а ладони ставятся по формуле на боковые грани.
+    private void AlignTwoHandedItem(GameObject item, PickableItem pickable)
+    {
+        if (!TryGetItemLocalBounds(item, out Bounds bounds)) return;
+        Vector3 scale = item.transform.lossyScale;
+        Quaternion toLocal = Quaternion.Inverse(_heldRotationOffset);
+        Vector3 localUp = NearestLocalAxis(toLocal * Vector3.up, Vector3.zero);
+        Vector3 localForward = NearestLocalAxis(toLocal * Vector3.forward, localUp);
+        Vector3 localRight = Vector3.Cross(localUp, localForward);
+        // Широкая сторона всегда поперёк взгляда — с какой стороны ни подойди,
+        // коробка в руках выглядит одинаково.
+        if (Mathf.Abs(Vector3.Dot(bounds.extents, localForward)) * AxisScale(scale, localForward) >
+            Mathf.Abs(Vector3.Dot(bounds.extents, localRight)) * AxisScale(scale, localRight) + .001f)
+            localForward = Vector3.Dot(toLocal * Vector3.forward, localRight) >= 0f ? localRight : -localRight;
+        localRight = Vector3.Cross(localUp, localForward);
+        _heldRotationOffset = Quaternion.Inverse(Quaternion.LookRotation(localForward, localUp));
+
+        float scaleRight = AxisScale(scale, localRight);
+        float scaleUp = AxisScale(scale, localUp);
+        float scaleForward = AxisScale(scale, localForward);
+        float halfWidth = Mathf.Abs(Vector3.Dot(bounds.extents, localRight));
+        float halfHeight = Mathf.Abs(Vector3.Dot(bounds.extents, localUp));
+        float halfDepth = Mathf.Abs(Vector3.Dot(bounds.extents, localForward));
+        _carryDepth = halfDepth * scaleForward;
+
+        // Ладонь в 1.5 см от поверхности, чтобы меш руки не утопал в коробке.
+        float gap = .015f / scaleRight;
+        // У самого ближнего ребра (центр ладони в 6 см за ним) и ниже середины: дальше
+        // по боку кисть целиком закрывает передняя грань коробки.
+        float edgeInset = Mathf.Min(halfDepth * .5f, .06f / scaleForward);
+        Vector3 along = bounds.center - localUp * halfHeight * .3f - localForward * (halfDepth - edgeInset);
+        Vector3 rightPosition = along + localRight * (halfWidth + gap);
+        Vector3 leftPosition = along - localRight * (halfWidth + gap);
+        Vector3 fingers = (localForward - localUp * .35f).normalized;
+        Quaternion rightRotation = Quaternion.LookRotation(-localRight, fingers);
+        Quaternion leftRotation = Quaternion.LookRotation(localRight, fingers);
+        if (halfWidth * scaleRight * 2f > .75f)
+        {
+            // Слишком широкий для хвата с боков — подхватываем снизу у ближнего края.
+            float spread = Mathf.Min(halfWidth * .6f, .26f / scaleRight);
+            Vector3 under = bounds.center - localUp * (halfHeight + .015f / scaleUp) - localForward * halfDepth * .6f;
+            rightPosition = under + localRight * spread;
+            leftPosition = under - localRight * spread;
+            rightRotation = leftRotation = Quaternion.LookRotation((localUp + localForward * .6f).normalized, localForward);
+        }
+        // Вручную размеченные точки хвата на предмете важнее расчётных.
+        if (pickable == null || pickable.primaryHandGrip == null)
+        {
+            _primaryGripLocalPosition = rightPosition;
+            _primaryGripLocalRotation = rightRotation;
+        }
+        if (pickable == null || pickable.secondaryHandGrip == null)
+        {
+            _secondaryGripLocalPosition = leftPosition;
+            _secondaryGripLocalRotation = leftRotation;
+        }
+    }
+
+    // Ось ±X/±Y/±Z, ближайшая к direction; ось exclude не рассматривается.
+    private static Vector3 NearestLocalAxis(Vector3 direction, Vector3 exclude)
+    {
+        Vector3 best = Vector3.forward;
+        float bestDot = float.NegativeInfinity;
+        Vector3[] axes = { Vector3.right, Vector3.up, Vector3.forward };
+        foreach (Vector3 axis in axes)
+        {
+            if (Mathf.Abs(Vector3.Dot(axis, exclude)) > .5f) continue;
+            float dot = Vector3.Dot(direction, axis);
+            if (Mathf.Abs(dot) <= bestDot) continue;
+            bestDot = Mathf.Abs(dot);
+            best = dot >= 0f ? axis : -axis;
+        }
+        return best;
+    }
+
+    private static float AxisScale(Vector3 scale, Vector3 axis) =>
+        Mathf.Max(.0001f, Mathf.Abs(Vector3.Dot(scale, new Vector3(Mathf.Abs(axis.x), Mathf.Abs(axis.y), Mathf.Abs(axis.z)))));
+
     private void CacheGrip(Transform root, Collider[] colliders, Transform authored, Vector3 query,
         Vector3 inward, Vector3 up, out Vector3 position, out Quaternion rotation)
     {
@@ -800,28 +886,37 @@ public class PickupController : MonoBehaviour
         Collider[] colliders = item.GetComponentsInChildren<Collider>(true);
         for (int i = 0; i < colliders.Length; i++)
         {
-            if (colliders[i] == null || !colliders[i].enabled) continue;
-            EncapsulateBoundsInLocalSpace(item.transform, colliders[i].bounds, ref bounds, ref hasBounds);
+            Collider c = colliders[i];
+            if (c == null || !c.enabled) continue;
+            // Мировой AABB повёрнутого предмета раздут; где можно, берём собственную форму.
+            if (c is BoxCollider box)
+                EncapsulateBoundsInLocalSpace(item.transform, c.transform, new Bounds(box.center, box.size), ref bounds, ref hasBounds);
+            else if (c is MeshCollider mesh && mesh.sharedMesh != null)
+                EncapsulateBoundsInLocalSpace(item.transform, c.transform, mesh.sharedMesh.bounds, ref bounds, ref hasBounds);
+            else
+                EncapsulateBoundsInLocalSpace(item.transform, null, c.bounds, ref bounds, ref hasBounds);
         }
         if (!hasBounds)
         {
             Renderer[] renderers = item.GetComponentsInChildren<Renderer>(true);
             for (int i = 0; i < renderers.Length; i++)
                 if (renderers[i] != null)
-                    EncapsulateBoundsInLocalSpace(item.transform, renderers[i].bounds, ref bounds, ref hasBounds);
+                    EncapsulateBoundsInLocalSpace(item.transform, renderers[i].transform, renderers[i].localBounds, ref bounds, ref hasBounds);
         }
         return hasBounds;
     }
 
-    private static void EncapsulateBoundsInLocalSpace(Transform root, Bounds worldBounds, ref Bounds localBounds, ref bool hasBounds)
+    // space == null — boxBounds уже в мировых координатах.
+    private static void EncapsulateBoundsInLocalSpace(Transform root, Transform space, Bounds boxBounds, ref Bounds localBounds, ref bool hasBounds)
     {
-        Vector3 center = worldBounds.center;
-        Vector3 extents = worldBounds.extents;
+        Vector3 center = boxBounds.center;
+        Vector3 extents = boxBounds.extents;
         for (int x = -1; x <= 1; x += 2)
         for (int y = -1; y <= 1; y += 2)
         for (int z = -1; z <= 1; z += 2)
         {
-            Vector3 corner = root.InverseTransformPoint(center + Vector3.Scale(extents, new Vector3(x, y, z)));
+            Vector3 point = center + Vector3.Scale(extents, new Vector3(x, y, z));
+            Vector3 corner = root.InverseTransformPoint(space != null ? space.TransformPoint(point) : point);
             if (!hasBounds) { localBounds = new Bounds(corner, Vector3.zero); hasBounds = true; }
             else localBounds.Encapsulate(corner);
         }
