@@ -15,6 +15,7 @@ public sealed class MoveInChoresController
     private readonly Action<string, int, UnityAction, string> _createQuest;
     private readonly Action<string[], Action> _showThoughts;
     private readonly Action _onChoresFinished;
+    private readonly DeliveryTruckSequence _boxDelivery;
 
     private bool _trashDeliveryQuestStarted;
 
@@ -23,13 +24,15 @@ public sealed class MoveInChoresController
         GameObject[] roomZones,
         Action<string, int, UnityAction, string> createQuest,
         Action<string[], Action> showThoughts,
-        Action onChoresFinished)
+        Action onChoresFinished,
+        DeliveryTruckSequence boxDelivery = null)
     {
         _trashZone = trashZone;
         _roomZones = roomZones;
         _createQuest = createQuest;
         _showThoughts = showThoughts;
         _onChoresFinished = onChoresFinished;
+        _boxDelivery = boxDelivery;
     }
 
     public void SetupTrashQuest()
@@ -64,14 +67,28 @@ public sealed class MoveInChoresController
     public void OnTrashFinished()
     {
         if (_trashZone != null) _trashZone.SetActive(false);
+        // Коробок во дворе ещё нет: их привозит фургон, и квест стартует после доставки.
+        if (_boxDelivery == null)
+        {
+            ShowBoxThoughts();
+            return;
+        }
+        _boxDelivery.Play(ShowBoxThoughts);
+    }
+
+    void ShowBoxThoughts()
+    {
         _showThoughts(new string[] {
-            "Ещё коробки по комнатам растащить.",
+            "Наконец-то привезли мои коробки.",
+            "Ещё их по комнатам растащить.",
             "Переехал, блин. Отдохнул."
         }, SetupBoxQuest);
     }
 
     public void SetupBoxQuest()
     {
+        // Отладочный старт с этапа коробок идёт в обход доставки — ставим их сразу.
+        if (_boxDelivery != null) _boxDelivery.EnsureDelivered();
         SetRoomZonesActive(true);
         int amount = _roomZones != null ? Mathf.Max(1, _roomZones.Length) : 1;
         _createQuest("Отнести коробки по комнатам", amount, OnBoxFinished, "box-delivery");

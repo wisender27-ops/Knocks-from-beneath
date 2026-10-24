@@ -64,6 +64,8 @@ public class IntroSequence : MonoBehaviour
     public GameObject trashZone;
     [Tooltip("Зона для каждой из коробок дня 1 (T-12) — одна PlacementZone+RoomRevealZone на комнату.")]
     public GameObject[] roomZones;
+    [Tooltip("Фургон, который после выноса мусора привозит коробки дня 1. Без него коробки просто стоят во дворе.")]
+    public DeliveryTruckSequence boxDeliveryTruck;
     public GameObject kitchenNoiseTrigger;
     public GameObject finaleTrigger;
     public GameObject nightStartTrigger;
@@ -149,7 +151,8 @@ public class IntroSequence : MonoBehaviour
         _moveInChores = new MoveInChoresController(
             trashZone, roomZones,
             CreateQuest, ShowThoughts,
-            onChoresFinished: _pieQuest.SetupTakePieQuest);
+            onChoresFinished: _pieQuest.SetupTakePieQuest,
+            boxDelivery: boxDeliveryTruck);
 
         _eveningRound = new EveningRoundController(
             frontDoor, CreateQuest, ShowThoughts,

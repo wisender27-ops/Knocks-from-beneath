@@ -1,0 +1,10 @@
+Звуки фургона доставки (DeliveryTruckSequence). Все исходники — CC0 1.0 (public domain).
+Файлы обрезаны, сведены в моно и выровнены по громкости (ffmpeg loudnorm).
+
+TruckEngineIdleLoop.ogg  | kyles — "engine idle van diesel exhaust CBC microwave truck back3 nearby" | https://freesound.org/people/kyles/sounds/637517/ | CC0 | участок 24–37 с, бесшовная петля 12 с
+TruckHornHonk.ogg        | kyles — "truck real horn honk quick polite warning" | https://freesound.org/people/kyles/sounds/637923/ | CC0
+TruckAirBrakeHiss.ogg    | rabbydaw — "air_brakes_loud_fade_out" | https://freesound.org/people/rabbydaw/sounds/504865/ | CC0
+TruckRollUpOpen.ogg      | douglasbruce@look.ca — "Transport truck roll up door open - close edited" | https://freesound.org/people/douglasbruce@look.ca/sounds/403715/ | CC0 | 2.45–8.05 с
+TruckRollUpClose.ogg     | тот же исходник | 12.9–21.3 с
+TruckParkingBrake.ogg    | GGBotNet — PSX Style Cars, "Car_Parking_Brake.ogg" | https://opengameart.org/content/psx-style-cars | CC0
+Сигнал заднего хода синтезируется в коде (DeliveryTruckSequence).
