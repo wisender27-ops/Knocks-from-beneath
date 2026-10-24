@@ -41,8 +41,7 @@ public class PickupController : MonoBehaviour
     [SerializeField, Range(.03f, .3f)] private float zoomStep = .12f;
     [SerializeField, Range(.2f, 1.2f)] private float zoomOutRange = .65f;
     private float _zoomOffset, _targetZoomOffset, _carryRadius;
-    private Vector3 _carryHalfExtents, _lastSafeCarryPosition;
-    private Quaternion _lastSafeCarryRotation;
+    private Vector3 _carryHalfExtents;
     private bool _carryPoseBlocked;
     private readonly Collider[] _carryOverlaps = new Collider[24];
     private Quaternion _pickupRotationOffset;
@@ -295,8 +294,6 @@ public class PickupController : MonoBehaviour
     void GrabPhysicsObject(GameObject obj)
     {
         _heldObj = obj;
-        _lastSafeCarryPosition = obj.transform.position;
-        _lastSafeCarryRotation = obj.transform.rotation;
         _carryPoseBlocked = false;
         _zoomOffset = _targetZoomOffset = 0f;
         _heldObjectAttachedToHand = false;
@@ -617,25 +614,19 @@ public class PickupController : MonoBehaviour
         if (_heldPieView != null || _heldObjectAttachedToHand) return;
         Quaternion desiredRotation = holdPoint.rotation * _heldRotationOffset;
         Quaternion rotationStep = Quaternion.Slerp(_heldObjRb.rotation, desiredRotation, Time.fixedDeltaTime * followSpeed);
+        // Раньше при препятствии на пути предмет замораживался в «последней безопасной»
+        // мировой позиции: коллайдеры у него выключены, игрок уходил, а коробка висела
+        // в воздухе/в стене, и руки тянулись к ней по IK. Теперь цель всегда считается
+        // от камеры (GetHeldRootTargetPosition сам подтягивает её ближе к игроку).
         Vector3 targetPos = GetHeldRootTargetPosition(desiredRotation);
-        if (_carryPoseBlocked)
-        {
-            targetPos = _lastSafeCarryPosition;
-            rotationStep = _lastSafeCarryRotation;
-        }
-        else
-        {
-            Vector3 scaledCenter = Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
-            Vector3 currentCenter = _heldObjRb.position + rotationStep * scaledCenter;
-            float clearDepth = playerCamera != null ? Vector3.Dot(currentCenter - playerCamera.transform.position, playerCamera.transform.forward) : float.PositiveInfinity;
-            // Move the item away before turning a long side toward the camera.
-            if (clearDepth < CarryDepth(rotationStep) + .12f) rotationStep = _heldObjRb.rotation;
-            Vector3 desiredCenter = targetPos + desiredRotation * scaledCenter;
-            targetPos = desiredCenter - rotationStep * scaledCenter;
-            if (!CarryPoseClear(desiredCenter, rotationStep)) rotationStep = _heldObjRb.rotation;
-            _lastSafeCarryPosition = targetPos;
-            _lastSafeCarryRotation = rotationStep;
-        }
+        Vector3 scaledCenter = Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
+        Vector3 currentCenter = _heldObjRb.position + rotationStep * scaledCenter;
+        float clearDepth = playerCamera != null ? Vector3.Dot(currentCenter - playerCamera.transform.position, playerCamera.transform.forward) : float.PositiveInfinity;
+        // Move the item away before turning a long side toward the camera.
+        if (clearDepth < CarryDepth(rotationStep) + .12f) rotationStep = _heldObjRb.rotation;
+        Vector3 desiredCenter = targetPos + desiredRotation * scaledCenter;
+        targetPos = desiredCenter - rotationStep * scaledCenter;
+        if (!CarryPoseClear(desiredCenter, rotationStep)) rotationStep = _heldObjRb.rotation;
         if (_heldKitchenItem)
         {
             float t = Mathf.Clamp01(Time.fixedDeltaTime * followSpeed);
@@ -686,23 +677,31 @@ public class PickupController : MonoBehaviour
         }
         float depth = Mathf.Max(.30f + _carryDepth + _zoomOffset, CarryDepth(targetRotation) + .18f);
         Vector3 center = playerCamera.transform.TransformPoint(new Vector3(0f, -.16f, depth));
-        Vector3 currentCenter = _heldObjRb.position + _heldObjRb.rotation *
-            Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
-        Vector3 path = center - currentCenter;
-        if (path.sqrMagnitude > .0001f)
+        if (!CarryPoseClear(center, targetRotation))
         {
-            Vector3 skin = Vector3.one * .015f;
-            Vector3 extents = Vector3.Max(_carryHalfExtents - skin, Vector3.one * .01f);
-            int count = Physics.BoxCastNonAlloc(currentCenter, extents, path.normalized, _carryObstacles,
-                _heldObjRb.rotation, path.magnitude, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
-            for (int i = 0; i < count; i++)
+            // Место перед камерой занято (стена, стол) — подтягиваем предмет к игроку
+            // по линии взгляда до первого препятствия, а не оставляем его в мире.
+            _carryPoseBlocked = true;
+            Vector3 origin = playerCamera.transform.position;
+            Vector3 path = center - origin;
+            float length = path.magnitude;
+            if (length > .0001f)
             {
-                Transform hit = _carryObstacles[i].collider.transform;
-                if (hit.IsChildOf(_heldObj.transform) || hit.IsChildOf(transform) || _carryObstacles[i].distance < .002f) continue;
-                _carryPoseBlocked = true;
+                Vector3 extents = Vector3.Max(_carryHalfExtents - Vector3.one * .015f, Vector3.one * .01f);
+                int count = Physics.BoxCastNonAlloc(origin, extents, path / length, _carryObstacles,
+                    targetRotation, length, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
+                float nearest = length;
+                for (int i = 0; i < count; i++)
+                {
+                    // distance == 0 — коробка уже пересекается с этим коллайдером у самой камеры
+                    // (игрок вплотную к стене); ближе подтянуть всё равно некуда.
+                    Transform hit = _carryObstacles[i].collider.transform;
+                    if (hit.IsChildOf(_heldObj.transform) || hit.IsChildOf(transform) || _carryObstacles[i].distance <= 0f) continue;
+                    nearest = Mathf.Min(nearest, _carryObstacles[i].distance);
+                }
+                center = origin + path / length * nearest;
             }
         }
-        if (!CarryPoseClear(center, targetRotation)) _carryPoseBlocked = true;
         return center - targetRotation * Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
     }
 
