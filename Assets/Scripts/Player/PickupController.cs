@@ -43,7 +43,7 @@ public class PickupController : MonoBehaviour
     private float _zoomOffset, _targetZoomOffset, _carryRadius;
     private Vector3 _carryHalfExtents;
     private bool _carryPoseBlocked;
-    private Vector3 _carryBlockNormal;
+    private CharacterController _playerCapsule;
     private readonly Collider[] _carryOverlaps = new Collider[24];
     private Quaternion _pickupRotationOffset;
     private PlayerInteraction _interaction;
@@ -53,12 +53,7 @@ public class PickupController : MonoBehaviour
     private GameObject _heldObj;
     private Rigidbody _heldObjRb;
     private PickableItem _heldItemScript;
-    private Transform handSocket;
-    private bool _heldObjectAttachedToHand;
     private bool _heldObjectUsesTwoHandGrip;
-    private Vector3 _primaryGripLocalPosition;
-    private Vector3 _secondaryGripLocalPosition;
-    private Quaternion _primaryGripLocalRotation, _secondaryGripLocalRotation;
     private Vector3 _carryCenterLocal;
     private float _carryDepth;
     private int _originalLayer;
@@ -89,8 +84,7 @@ public class PickupController : MonoBehaviour
     {
         _interaction = GetComponent<PlayerInteraction>();
         _playerController = GetComponent<PlayerController>();
-        ProtagonistBody body = GetComponentInChildren<ProtagonistBody>();
-        handSocket = body != null ? body.RightHand : null;
+        _playerCapsule = GetComponent<CharacterController>();
         if (playerCamera != null)
         {
             _defaultFov = playerCamera.fieldOfView;
@@ -98,7 +92,7 @@ public class PickupController : MonoBehaviour
         }
     }
 
-    public bool CanManipulateHeldObject => _heldObj != null && !_heldObjectAttachedToHand &&
+    public bool CanManipulateHeldObject => _heldObj != null &&
         _heldPieView == null && isActiveAndEnabled && Time.timeScale > 0f && !PauseMenuController.InputBlocked &&
         (_interaction == null || (_interaction.isActiveAndEnabled && !_interaction.IsEatingPie && !_interaction.IsBreakingLock)) &&
         (_playerController == null || !_playerController.isCameraLocked) &&
@@ -270,18 +264,9 @@ public class PickupController : MonoBehaviour
         if (playerCamera != null) playerCamera.fieldOfView = value;
     }
 
-    public bool IsHeldObjectAttachedToHand => _heldObjectAttachedToHand && _heldObj != null;
     public bool IsHeldObjectTwoHanded => _heldObjectUsesTwoHandGrip && _heldObj != null;
-    public Vector3 PrimaryHandGripTarget => _heldObj != null
-        ? _heldObj.transform.TransformPoint(_primaryGripLocalPosition) : Vector3.zero;
-    public Vector3 SecondaryHandGripTarget => _heldObj != null
-        ? _heldObj.transform.TransformPoint(_secondaryGripLocalPosition)
-        : Vector3.zero;
-    public Quaternion HeldHandRotationTarget => PrimaryGripRotation;
-    public Quaternion PrimaryGripRotation => _heldObj != null
-        ? _heldObj.transform.rotation * _primaryGripLocalRotation : Quaternion.identity;
-    public Quaternion SecondaryGripRotation => _heldObj != null
-        ? _heldObj.transform.rotation * _secondaryGripLocalRotation : Quaternion.identity;
+    public Vector3 HeldObjectCenter => _heldObj != null
+        ? _heldObj.transform.TransformPoint(_carryCenterLocal) : Vector3.zero;
 
     public bool TryGrab(GameObject obj)
     {
@@ -297,7 +282,6 @@ public class PickupController : MonoBehaviour
         _heldObj = obj;
         _carryPoseBlocked = false;
         _zoomOffset = _targetZoomOffset = 0f;
-        _heldObjectAttachedToHand = false;
         _heldObjRb = obj.GetComponent<Rigidbody>();
         if (_heldObjRb == null)
         {
@@ -309,7 +293,7 @@ public class PickupController : MonoBehaviour
         CollectableItem collectable = obj.GetComponent<CollectableItem>();
         PieQuestItem pie = obj.GetComponent<PieQuestItem>();
         _heldPieView = pie != null && pie.isHeated ? pie : null;
-        CacheHandGripPoints(obj, _heldItemScript);
+        CacheCarryShape(obj);
 
         Vector3 horizontalForward = Vector3.ProjectOnPlane(holdPoint.forward, Vector3.up);
         Quaternion pickupFrame = horizontalForward.sqrMagnitude > .0001f
@@ -317,7 +301,7 @@ public class PickupController : MonoBehaviour
         _heldRotationOffset = Quaternion.Inverse(pickupFrame) * obj.transform.rotation;
         // До выключения коллайдеров: по ним считаются габариты для хвата.
         if (_heldObjectUsesTwoHandGrip && _heldPieView == null)
-            AlignTwoHandedItem(obj, _heldItemScript);
+            AlignTwoHandedItem(obj);
         _pickupRotationOffset = _heldRotationOffset;
 
         _heldKitchenItem = _heldItemScript != null && _heldItemScript.placementQuestTag == "room-decoration";
@@ -350,7 +334,7 @@ public class PickupController : MonoBehaviour
             for (int i = 0; i < _pieColliders.Length; i++)
                 if (_pieColliders[i] != null) _pieColliders[i].enabled = _pieColliderStates[i];
             Physics.SyncTransforms();
-            CacheHandGripPoints(obj, _heldItemScript);
+            CacheCarryShape(obj);
             for (int i = 0; i < _pieColliders.Length; i++)
                 if (_pieColliders[i] != null) _pieColliders[i].enabled = false;
         }
@@ -594,7 +578,6 @@ public class PickupController : MonoBehaviour
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
-        _heldObjectAttachedToHand = false;
         _heldPieView = null;
         _heldRotationOffset = Quaternion.identity;
     }
@@ -608,7 +591,6 @@ public class PickupController : MonoBehaviour
         _heldObj = null;
         _heldObjRb = null;
         _heldItemScript = null;
-        _heldObjectAttachedToHand = false;
         _heldPieView = null;
         _pieColliders = null;
         _pieColliderStates = null;
@@ -616,7 +598,7 @@ public class PickupController : MonoBehaviour
 
     void MovePhysicsObject()
     {
-        if (_heldPieView != null || _heldObjectAttachedToHand) return;
+        if (_heldPieView != null) return;
         Quaternion desiredRotation = holdPoint.rotation * _heldRotationOffset;
         Quaternion rotationStep = Quaternion.Slerp(_heldObjRb.rotation, desiredRotation, Time.fixedDeltaTime * followSpeed);
         // Раньше при препятствии на пути предмет замораживался в «последней безопасной»
@@ -673,7 +655,6 @@ public class PickupController : MonoBehaviour
     private Vector3 GetHeldRootTargetPosition(Quaternion targetRotation)
     {
         _carryPoseBlocked = false;
-        _carryBlockNormal = Vector3.zero;
         if (playerCamera == null)
             return holdPoint.position + holdPoint.forward * _zoomOffset;
         if (!_heldObjectUsesTwoHandGrip)
@@ -702,9 +683,7 @@ public class PickupController : MonoBehaviour
                     // (игрок вплотную к стене); ближе подтянуть всё равно некуда.
                     Transform hit = _carryObstacles[i].collider.transform;
                     if (hit.IsChildOf(_heldObj.transform) || hit.IsChildOf(transform) || _carryObstacles[i].distance <= 0f) continue;
-                    if (_carryObstacles[i].distance >= nearest) continue;
-                    nearest = _carryObstacles[i].distance;
-                    _carryBlockNormal = _carryObstacles[i].normal;
+                    nearest = Mathf.Min(nearest, _carryObstacles[i].distance);
                 }
                 center = origin + path / length * nearest;
             }
@@ -720,8 +699,12 @@ public class PickupController : MonoBehaviour
 
     // Крупный предмет в руках упирается в препятствия и останавливает игрока.
     // Раньше коробку подтягивало к камере, а игрок продолжал идти и оказывался
-    // внутри неё. Пол и столешницы (почти горизонтальные поверхности) не мешают,
-    // иначе нельзя было бы ходить, глядя вниз. Вызывается из PlayerController.
+    // внутри неё. Вызывается из PlayerController.
+    //
+    // Упор считается не по всей ширине предмета, а по полосе шириной с тело игрока:
+    // иначе широкий мешок с мусором цеплялся боками за косяк, хотя сам игрок
+    // в проём проходит. Пол и столешницы (почти горизонтальные поверхности) не мешают,
+    // иначе нельзя было бы ходить, глядя вниз.
     public Vector3 ClampCarryMovement(Vector3 step)
     {
         if (_heldObj == null || _heldObjRb == null || playerCamera == null || holdPoint == null ||
@@ -730,38 +713,49 @@ public class PickupController : MonoBehaviour
         float distance = flat.magnitude;
         if (distance < .00001f) return step;
 
-        if (_carryPoseBlocked)
+        Vector3 viewForward = Vector3.ProjectOnPlane(playerCamera.transform.forward, Vector3.up);
+        if (viewForward.sqrMagnitude < .0001f) viewForward = transform.forward;
+        Quaternion frame = Quaternion.LookRotation(viewForward.normalized, Vector3.up);
+        Quaternion rotation = holdPoint.rotation * _heldRotationOffset;
+        float bodyHalfWidth = _playerCapsule != null ? _playerCapsule.radius : .3f;
+        Vector3 extents = new Vector3(
+            Mathf.Min(ExtentAlong(rotation, frame * Vector3.right), bodyHalfWidth),
+            ExtentAlong(rotation, Vector3.up),
+            ExtentAlong(rotation, frame * Vector3.forward));
+        extents = Vector3.Max(extents - Vector3.one * .015f, Vector3.one * .01f);
+
+        // Пробу запускаем чуть позади предмета: если он уже прижат к стене, луч всё
+        // равно её найдёт и вернёт нормаль, вдоль которой можно скользить.
+        Vector3 direction = flat / distance;
+        Vector3 start = TwoHandedCarryCenter(rotation) - direction * CarryProbeBackoff;
+        int count = Physics.BoxCastNonAlloc(start, extents, direction, _carryObstacles, frame,
+            CarryProbeBackoff + distance + CarryMoveSkin, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
+        float nearest = float.PositiveInfinity;
+        Vector3 normal = Vector3.zero;
+        for (int i = 0; i < count; i++)
         {
-            // Коробку уже подтянуло к игроку: не даём шагать в сторону препятствия.
-            flat = SlideAlong(flat, _carryBlockNormal);
+            RaycastHit hit = _carryObstacles[i];
+            if (hit.collider.transform.IsChildOf(_heldObj.transform) || hit.collider.transform.IsChildOf(transform) ||
+                hit.distance <= 0f || Mathf.Abs(hit.normal.y) > CarryFloorNormalY || hit.distance >= nearest) continue;
+            nearest = hit.distance;
+            normal = hit.normal;
         }
-        else
+        if (!float.IsPositiveInfinity(nearest))
         {
-            Quaternion rotation = holdPoint.rotation * _heldRotationOffset;
-            Vector3 direction = flat / distance;
-            Vector3 extents = Vector3.Max(_carryHalfExtents - Vector3.one * .015f, Vector3.one * .01f);
-            int count = Physics.BoxCastNonAlloc(TwoHandedCarryCenter(rotation), extents, direction, _carryObstacles,
-                rotation, distance + CarryMoveSkin, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
-            float nearest = float.PositiveInfinity;
-            Vector3 normal = Vector3.zero;
-            for (int i = 0; i < count; i++)
-            {
-                RaycastHit hit = _carryObstacles[i];
-                if (hit.collider.transform.IsChildOf(_heldObj.transform) || hit.collider.transform.IsChildOf(transform) ||
-                    hit.distance <= 0f || Mathf.Abs(hit.normal.y) > CarryFloorNormalY || hit.distance >= nearest) continue;
-                nearest = hit.distance;
-                normal = hit.normal;
-            }
-            if (!float.IsPositiveInfinity(nearest))
-            {
-                float allowed = Mathf.Max(0f, nearest - CarryMoveSkin);
-                flat = direction * allowed + SlideAlong(direction * (distance - allowed), normal);
-            }
+            float allowed = Mathf.Clamp(nearest - CarryProbeBackoff - CarryMoveSkin, 0f, distance);
+            flat = direction * allowed + SlideAlong(direction * (distance - allowed), normal);
         }
         return new Vector3(flat.x, step.y, flat.z);
     }
 
+    // Полуразмер повёрнутого предмета вдоль мировой оси axis.
+    private float ExtentAlong(Quaternion rotation, Vector3 axis) =>
+        Mathf.Abs(Vector3.Dot(rotation * Vector3.right, axis)) * _carryHalfExtents.x +
+        Mathf.Abs(Vector3.Dot(rotation * Vector3.up, axis)) * _carryHalfExtents.y +
+        Mathf.Abs(Vector3.Dot(rotation * Vector3.forward, axis)) * _carryHalfExtents.z;
+
     private const float CarryMoveSkin = .02f;
+    private const float CarryProbeBackoff = .3f;
     private const float CarryFloorNormalY = .7f;
 
     // Убирает из движения составляющую, направленную в препятствие с нормалью normal.
@@ -775,18 +769,15 @@ public class PickupController : MonoBehaviour
         return into < 0f ? move - wall * into : move;
     }
 
-    private void CacheHandGripPoints(GameObject item, PickableItem pickable)
+    // Габариты, центр и глубина предмета для его позы перед камерой.
+    private void CacheCarryShape(GameObject item)
     {
         _heldObjectUsesTwoHandGrip = false;
-        _primaryGripLocalPosition = Vector3.zero;
-        _secondaryGripLocalPosition = Vector3.zero;
         _carryCenterLocal = Vector3.zero;
         Transform frame = playerCamera != null ? playerCamera.transform : holdPoint;
         bool viewPose = _heldPieView != null && item.transform.parent == frame;
-        Vector3 up = viewPose ? frame.up : Vector3.up;
         Vector3 forward = viewPose ? frame.forward : Vector3.ProjectOnPlane(frame.forward, Vector3.up).normalized;
         if (forward.sqrMagnitude < .0001f) forward = transform.forward;
-        Vector3 right = Vector3.Cross(up, forward).normalized;
         Transform root = item.transform;
         Collider[] colliders = item.GetComponentsInChildren<Collider>();
         Bounds bounds = new Bounds(root.position, Vector3.zero);
@@ -810,31 +801,16 @@ public class PickupController : MonoBehaviour
                 new Vector3(Mathf.Abs(scale.x), Mathf.Abs(scale.y), Mathf.Abs(scale.z)));
         }
         else _carryHalfExtents = bounds.extents;
-        Vector3 rightQuery = bounds.center + right * radius * 2f - forward * radius * .35f;
-        Vector3 leftQuery = bounds.center - right * radius * 2f - forward * radius * .35f;
-        float width = Vector3.Dot(bounds.size, new Vector3(Mathf.Abs(right.x), Mathf.Abs(right.y), Mathf.Abs(right.z)));
-        if (width > .65f)
-        {
-            // Широкий предмет берём за ближнюю поверхность, не растягивая руки до дальних краёв.
-            rightQuery = bounds.center + right * .26f - forward * (_carryDepth + radius) + up * .08f;
-            leftQuery = bounds.center - right * .26f - forward * (_carryDepth + radius) + up * .08f;
-        }
-        CacheGrip(root, colliders, pickable != null ? pickable.primaryHandGrip : null,
-            rightQuery, -right, up, out _primaryGripLocalPosition, out _primaryGripLocalRotation);
-        CacheGrip(root, colliders, pickable != null ? pickable.secondaryHandGrip : null,
-            leftQuery, right, up, out _secondaryGripLocalPosition, out _secondaryGripLocalRotation);
         Vector3 size = bounds.size;
         _heldObjectUsesTwoHandGrip = _heldPieView != null ||
             Mathf.Max(size.x, Mathf.Max(size.y, size.z)) > .38f ||
             (_heldObjRb != null && _heldObjRb.mass > 3f);
     }
 
-    // Крупный предмет (коробку) всегда берём одинаково. Раньше он оставался в руках
-    // под тем углом, под каким лежал, а точки хвата искались ближайшей точкой
-    // коллайдера от камеры — при каждом подборе это были разные рёбра и углы, и руки
-    // хватались как попало. Теперь предмет разворачивается к игроку ближайшей гранью
-    // (верх остаётся верхом), а ладони ставятся по формуле на боковые грани.
-    private void AlignTwoHandedItem(GameObject item, PickableItem pickable)
+    // Крупный предмет (коробку) всегда держим одинаково: он разворачивается к игроку
+    // ровно (верх остаётся верхом, широкая сторона поперёк взгляда), а не остаётся
+    // под тем углом, под каким лежал.
+    private void AlignTwoHandedItem(GameObject item)
     {
         if (!TryGetItemLocalBounds(item, out Bounds bounds)) return;
         Vector3 scale = item.transform.lossyScale;
@@ -849,46 +825,7 @@ public class PickupController : MonoBehaviour
             localForward = Vector3.Dot(toLocal * Vector3.forward, localRight) >= 0f ? localRight : -localRight;
         localRight = Vector3.Cross(localUp, localForward);
         _heldRotationOffset = Quaternion.Inverse(Quaternion.LookRotation(localForward, localUp));
-
-        float scaleRight = AxisScale(scale, localRight);
-        float scaleUp = AxisScale(scale, localUp);
-        float scaleForward = AxisScale(scale, localForward);
-        float halfWidth = Mathf.Abs(Vector3.Dot(bounds.extents, localRight));
-        float halfHeight = Mathf.Abs(Vector3.Dot(bounds.extents, localUp));
-        float halfDepth = Mathf.Abs(Vector3.Dot(bounds.extents, localForward));
-        _carryDepth = halfDepth * scaleForward;
-
-        // Ладонь в 1.5 см от поверхности, чтобы меш руки не утопал в коробке.
-        float gap = .015f / scaleRight;
-        // У самого ближнего ребра (центр ладони в 6 см за ним) и ниже середины: дальше
-        // по боку кисть целиком закрывает передняя грань коробки.
-        float edgeInset = Mathf.Min(halfDepth * .5f, .06f / scaleForward);
-        Vector3 along = bounds.center - localUp * halfHeight * .3f - localForward * (halfDepth - edgeInset);
-        Vector3 rightPosition = along + localRight * (halfWidth + gap);
-        Vector3 leftPosition = along - localRight * (halfWidth + gap);
-        Vector3 fingers = (localForward - localUp * .35f).normalized;
-        Quaternion rightRotation = Quaternion.LookRotation(-localRight, fingers);
-        Quaternion leftRotation = Quaternion.LookRotation(localRight, fingers);
-        if (halfWidth * scaleRight * 2f > .75f)
-        {
-            // Слишком широкий для хвата с боков — подхватываем снизу у ближнего края.
-            float spread = Mathf.Min(halfWidth * .6f, .26f / scaleRight);
-            Vector3 under = bounds.center - localUp * (halfHeight + .015f / scaleUp) - localForward * halfDepth * .6f;
-            rightPosition = under + localRight * spread;
-            leftPosition = under - localRight * spread;
-            rightRotation = leftRotation = Quaternion.LookRotation((localUp + localForward * .6f).normalized, localForward);
-        }
-        // Вручную размеченные точки хвата на предмете важнее расчётных.
-        if (pickable == null || pickable.primaryHandGrip == null)
-        {
-            _primaryGripLocalPosition = rightPosition;
-            _primaryGripLocalRotation = rightRotation;
-        }
-        if (pickable == null || pickable.secondaryHandGrip == null)
-        {
-            _secondaryGripLocalPosition = leftPosition;
-            _secondaryGripLocalRotation = leftRotation;
-        }
+        _carryDepth = Mathf.Abs(Vector3.Dot(bounds.extents, localForward)) * AxisScale(scale, localForward);
     }
 
     // Ось ±X/±Y/±Z, ближайшая к direction; ось exclude не рассматривается.
@@ -910,40 +847,6 @@ public class PickupController : MonoBehaviour
 
     private static float AxisScale(Vector3 scale, Vector3 axis) =>
         Mathf.Max(.0001f, Mathf.Abs(Vector3.Dot(scale, new Vector3(Mathf.Abs(axis.x), Mathf.Abs(axis.y), Mathf.Abs(axis.z)))));
-
-    private void CacheGrip(Transform root, Collider[] colliders, Transform authored, Vector3 query,
-        Vector3 inward, Vector3 up, out Vector3 position, out Quaternion rotation)
-    {
-        if (authored != null)
-        {
-            position = root.InverseTransformPoint(authored.position);
-            rotation = Quaternion.Inverse(root.rotation) * authored.rotation;
-            return;
-        }
-        Vector3 contact = root.TransformPoint(_carryCenterLocal);
-        float nearest = float.PositiveInfinity;
-        foreach (Collider c in colliders)
-        {
-            if (!c.enabled || c.isTrigger || c.attachedRigidbody != _heldObjRb) continue;
-            Vector3 candidate;
-            // ClosestPoint поддерживает примитивы и convex MeshCollider; для concave используем Raycast.
-            if (c is MeshCollider mesh && !mesh.convex)
-            {
-                Vector3 direction = c.bounds.center - query;
-                if (!c.Raycast(new Ray(query, direction.normalized), out RaycastHit hit, direction.magnitude * 2f)) continue;
-                candidate = hit.point;
-            }
-            else candidate = c.ClosestPoint(query);
-            float distance = (candidate - query).sqrMagnitude;
-            if (distance >= nearest) continue;
-            nearest = distance;
-            contact = candidate;
-        }
-        Vector3 normal = query - contact;
-        if (normal.sqrMagnitude > 0.000001f) inward = -normal.normalized;
-        position = root.InverseTransformPoint(contact);
-        rotation = Quaternion.Inverse(root.rotation) * Quaternion.LookRotation(inward, up);
-    }
 
     private static bool TryGetItemLocalBounds(GameObject item, out Bounds bounds)
     {

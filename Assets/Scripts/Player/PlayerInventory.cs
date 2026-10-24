@@ -46,31 +46,10 @@ namespace KnocksFromBeneath
         private int currentItemIndex;
         private string equippedItemId = string.Empty;
         private Animator crowbarAnim;
-        private ProtagonistBody protagonistBody;
-        private Transform attachedItem;
-        private Transform attachedItemOriginalParent;
-        private Vector3 attachedItemOriginalLocalPosition;
-        private Quaternion attachedItemOriginalLocalRotation;
-        private Vector3 attachedItemOriginalLocalScale;
-        private Quaternion attachedItemOriginalWorldRotation;
 
         public event Action Changed;
         public IReadOnlyList<InventoryEntry> Entries => entries;
         public string EquippedItemId => equippedItemId;
-        public bool HasEquippedItemAttachedToHand => attachedItem != null;
-        public Vector3 EquippedHandTargetPosition
-        {
-            get
-            {
-                if (attachedItem == null) return Vector3.zero;
-                Vector3 target = attachedItem.position;
-                if (attachedItem == flashlightInHand?.transform)
-                    target += attachedItem.rotation * new Vector3(0f, -0.015f, 0.07f);
-                return target;
-            }
-        }
-
-        public Quaternion EquippedHandTargetRotation => protagonistBody != null ? protagonistBody.ReadyRightPalmRotation : Quaternion.identity;
 
         public bool HasItem(string id)
         {
@@ -85,7 +64,6 @@ namespace KnocksFromBeneath
             FlashlightScreenAim aim = GetComponent<FlashlightScreenAim>();
             if (aim == null) aim = gameObject.AddComponent<FlashlightScreenAim>();
             aim.Initialize(flashlightLightSource, GetComponentInChildren<Camera>());
-            protagonistBody = GetComponentInChildren<ProtagonistBody>(true);
             if (crowbarInHand != null) crowbarAnim = crowbarInHand.GetComponent<Animator>();
             if (physicalPickup == null) physicalPickup = GetComponentInParent<PickupController>();
             SetHeldObjectsInactive();
@@ -191,48 +169,16 @@ namespace KnocksFromBeneath
                    (id == "Hammer" && hasHammer && hammerInHand != null);
         }
 
+        // Предмет просто показывается на своём креплении у камеры (ItemHolder).
+        // Раньше его каждый кадр переносили к ладони рук от первого лица — их больше нет.
         public void ActivateItem(string itemName)
         {
-            RestoreEquippedItemToAnchor();
             SetHeldObjectsInactive();
             GameObject item = itemName == "Crowbar" && hasCrowbar ? crowbarInHand
                 : itemName == "Flashlight" && hasFlashlight ? flashlightInHand
                 : itemName == "Hammer" && hasHammer ? hammerInHand
                 : null;
-            if (item == null) return;
-
-            item.SetActive(true);
-            Transform hand = protagonistBody != null ? protagonistBody.RightHand : null;
-            if (hand == null) return;
-
-            attachedItem = item.transform;
-            attachedItemOriginalParent = attachedItem.parent;
-            attachedItemOriginalLocalPosition = attachedItem.localPosition;
-            attachedItemOriginalLocalRotation = attachedItem.localRotation;
-            attachedItemOriginalLocalScale = attachedItem.localScale;
-            attachedItemOriginalWorldRotation = attachedItem.rotation;
-            // Предмет остаётся на независимом держателе камеры; IK следует его хвату.
-            Vector3 gripOffset = item == flashlightInHand ? attachedItem.rotation * new Vector3(0f, -.015f, .07f) : Vector3.zero;
-            attachedItem.position = protagonistBody.ReadyRightPalmPosition - gripOffset;
-        }
-
-        private void LateUpdate()
-        {
-            if (attachedItem == null || protagonistBody == null) return;
-            Vector3 offset = attachedItem == flashlightInHand?.transform
-                ? attachedItem.rotation * new Vector3(0f, -.015f, .07f) : Vector3.zero;
-            attachedItem.position = protagonistBody.ReadyRightPalmPosition - offset;
-        }
-
-        private void RestoreEquippedItemToAnchor()
-        {
-            if (attachedItem == null) return;
-            attachedItem.SetParent(attachedItemOriginalParent, false);
-            attachedItem.localPosition = attachedItemOriginalLocalPosition;
-            attachedItem.localRotation = attachedItemOriginalLocalRotation;
-            attachedItem.localScale = attachedItemOriginalLocalScale;
-            attachedItem = null;
-            attachedItemOriginalParent = null;
+            if (item != null) item.SetActive(true);
         }
 
         private void SwitchToSlot(int slotIndex)

@@ -42,20 +42,14 @@ public class PickupControllerTests
     }
 
     [Test]
-    public void GripTargets_FollowRotatedScaledObjectWithoutHandParenting()
+    public void LargeObject_IsCarriedWithoutParentingOrKinematics()
     {
-        var collider = _itemGo.AddComponent<BoxCollider>();
+        _itemGo.AddComponent<BoxCollider>();
         _itemGo.transform.SetPositionAndRotation(new Vector3(2f, 1f, 3f), Quaternion.Euler(20f, 65f, 10f));
         _itemGo.transform.localScale = new Vector3(0.4f, 0.6f, 0.3f);
         Physics.SyncTransforms();
         Assert.That(_pickup.TryGrab(_itemGo), Is.True);
         Assert.That(_pickup.IsHeldObjectTwoHanded, Is.True);
-        Vector3 right = _itemGo.transform.InverseTransformPoint(_pickup.PrimaryHandGripTarget);
-        Vector3 left = _itemGo.transform.InverseTransformPoint(_pickup.SecondaryHandGripTarget);
-        Assert.That(Vector3.Distance(collider.ClosestPoint(_pickup.PrimaryHandGripTarget), _pickup.PrimaryHandGripTarget), Is.LessThan(0.001f));
-        _itemGo.transform.SetPositionAndRotation(new Vector3(-2f, 2f, 1f), Quaternion.Euler(-40f, 130f, 30f));
-        Assert.That(Vector3.Distance(_pickup.PrimaryHandGripTarget, _itemGo.transform.TransformPoint(right)), Is.LessThan(0.001f));
-        Assert.That(Vector3.Distance(_pickup.SecondaryHandGripTarget, _itemGo.transform.TransformPoint(left)), Is.LessThan(0.001f));
         Assert.That(_itemGo.transform.parent, Is.Null);
         Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.False);
     }
@@ -67,7 +61,6 @@ public class PickupControllerTests
         Physics.SyncTransforms();
         Assert.That(_pickup.TryGrab(_itemGo), Is.True);
         Assert.That(_pickup.IsHeldObjectTwoHanded, Is.True);
-        Assert.That(Vector3.Distance(_pickup.PrimaryHandGripTarget, _pickup.SecondaryHandGripTarget), Is.GreaterThan(0.05f));
     }
 
     [Test]

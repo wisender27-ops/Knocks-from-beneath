@@ -29,7 +29,10 @@ namespace KnocksFromBeneath
         private GameObject lastHeld;
         private Door lastDoor;
         private bool lastWorking, legacyCursorEnabled, legacyHintEnabled, rejected;
-        private float alpha, closure, punch, feedbackUntil, nextOcclusionCheck;
+        private float alpha, closure, punch, feedbackUntil, nextOcclusionCheck, grabbedAt;
+        // Сколько секунд значок «сжатой руки» виден на предмете после захвата. Дальше он
+        // гаснет: пока предмет в руках, значок только дублирует то, что и так видно.
+        private const float HeldMarkerSeconds = .35f;
         private bool unobstructed = true;
         private int controlCount;
         private string controlSignature;
@@ -109,6 +112,7 @@ namespace KnocksFromBeneath
             bool engaged = held != null || heldDoor != null || working;
             if (held != lastHeld || heldDoor != lastDoor || working != lastWorking)
             {
+                if (held != null && held != lastHeld) grabbedAt = Time.unscaledTime;
                 punch = engaged ? .16f : .2f;
                 rejected = false;
                 if (!engaged && (lastHeld != null || lastDoor != null || lastWorking))
@@ -121,7 +125,7 @@ namespace KnocksFromBeneath
             else if (held != null)
             {
                 if (anchor == null || !(anchor == held.transform || anchor.IsChildOf(held.transform)))
-                    Attach(held.transform, pickup.PrimaryHandGripTarget);
+                    Attach(held.transform, pickup.HeldObjectCenter);
             }
             else if (Time.unscaledTime >= feedbackUntil)
             {
@@ -153,7 +157,7 @@ namespace KnocksFromBeneath
                 nextOcclusionCheck = Time.unscaledTime + .08f;
                 unobstructed = Visible(point);
             }
-            bool visible = onScreen && (held != null || unobstructed);
+            bool visible = onScreen && (held != null ? Time.unscaledTime - grabbedAt < HeldMarkerSeconds : unobstructed);
             alpha = Mathf.MoveTowards(alpha, visible ? 1f : 0f, Time.unscaledDeltaTime * (visible ? 12f : 10f));
             markerGroup.alpha = alpha;
             if (onScreen)

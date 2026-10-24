@@ -102,7 +102,7 @@ public sealed class ProtagonistTests
     }
 
     [Test]
-    public void ImportedRig_IKUsesAnatomicalSoleAndPalmAxes()
+    public void ImportedRig_IKUsesAnatomicalSoleAxes()
     {
         var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(Path);
         var body = prefab.GetComponent<ProtagonistBody>();
@@ -116,11 +116,6 @@ public sealed class ProtagonistTests
             var corrected = Quaternion.FromToRotation(foot.TransformDirection(normal), prefab.transform.up) * foot.rotation;
             Assert.That(Quaternion.Angle(corrected, foot.rotation), Is.LessThan(.1f));
         }
-        var hand = animator.GetBoneTransform(HumanBodyBones.RightHand);
-        var middle = animator.GetBoneTransform(HumanBodyBones.RightMiddleDistal) ?? animator.GetBoneTransform(HumanBodyBones.RightIndexDistal);
-        var offset = (Quaternion)typeof(ProtagonistBody).GetField("rightWristBoneOffset", flags).GetValue(body);
-        Vector3 localFingers = Quaternion.Inverse(hand.rotation) * (middle.position - hand.position).normalized;
-        Assert.That(Vector3.Dot(offset * localFingers, Vector3.down), Is.GreaterThan(.999f));
     }
 
     [Test]
