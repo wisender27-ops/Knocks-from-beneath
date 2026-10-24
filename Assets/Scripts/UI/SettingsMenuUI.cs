@@ -56,8 +56,8 @@ public class SettingsMenuUI : MonoBehaviour
     static readonly Color TextColor = UiStyle.Ivory;
     static readonly Color Accent = UiStyle.Amber;
     static readonly Color TrackColor = new Color(UiStyle.Ash.r, UiStyle.Ash.g, UiStyle.Ash.b, .3f);
-    static readonly Color ControlColor = new Color(.1f, .1f, .1f, 1f);
-    static readonly Color ControlHover = new Color(.2f, .19f, .17f, 1f);
+    static readonly Color ControlColor = new Color(.19f, .19f, .18f, 1f);
+    static readonly Color ControlHover = new Color(.3f, .28f, .24f, 1f);
     // Шкала текста меню: база 28, шаг x1.5 (28 / 42 / 64 / 95 / 142). Заголовок названия и пункты главного меню - на старших ступенях.
     const float TextBase = 28f, TextHeading = 42f;
     const float RowHeight = 64f, SliderWidth = 400f, ValueWidth = 100f, RowSpacing = 16f;
