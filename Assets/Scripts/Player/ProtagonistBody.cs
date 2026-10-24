@@ -338,7 +338,7 @@ namespace KnocksFromBeneath
                 if (bodyRenderers[i] != null)
                     bodyRenderers[i].shadowCastingMode = ShadowCastingMode.ShadowsOnly;
             if (firstPersonArms != null)
-                firstPersonArms.shadowCastingMode = showHands ? ShadowCastingMode.On : ShadowCastingMode.ShadowsOnly;
+                firstPersonArms.forceRenderingOff = !showHands;
         }
 
         private Vector3 ReachableShoulder(Vector3 shoulder, Vector3 target, float reach)
@@ -434,7 +434,7 @@ namespace KnocksFromBeneath
             firstPersonArms.localBounds = source.localBounds;
             firstPersonArms.quality = source.quality;
             firstPersonArms.updateWhenOffscreen = true;
-            firstPersonArms.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
+            firstPersonArms.shadowCastingMode = ShadowCastingMode.Off;
             firstPersonArms.receiveShadows = source.receiveShadows;
         }
 
@@ -492,7 +492,7 @@ namespace KnocksFromBeneath
                 if (bodyRenderers[i] != null)
                     bodyRenderers[i].shadowCastingMode = bodyShadowModes[i];
             if (firstPersonArms != null)
-                firstPersonArms.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
+                firstPersonArms.forceRenderingOff = true;
         }
 
         private void Update()
