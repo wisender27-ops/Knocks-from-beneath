@@ -1378,6 +1378,7 @@ MonoBehaviour:
   lightsToControl: []
   lampRenderers: []
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 578928393}
   switchSound: {fileID: 49158592}
 --- !u!65 &49158594
@@ -9991,14 +9992,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 113486050}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &113486052
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -11583,14 +11591,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 134947162}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!23 &134947165
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -12382,6 +12397,7 @@ RectTransform:
   m_LocalScale: {x: 0, y: 0, z: 0}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1390733152}
   - {fileID: 900070563}
   - {fileID: 141241431}
   - {fileID: 677816994}
@@ -17755,7 +17771,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!4 &275158383
 Transform:
   m_ObjectHideFlags: 0
@@ -22961,6 +22977,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 1703553236}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 422464143}
 --- !u!65 &422464145
@@ -23610,6 +23627,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 2036218660}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 435491978}
 --- !u!65 &435491980
@@ -27012,14 +27030,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 508803763}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!82 &508803763
 AudioSource:
   m_ObjectHideFlags: 0
@@ -29438,14 +29463,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 553176952}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &553176954
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -30489,6 +30521,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 1406306825}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 568845796}
 --- !u!65 &568845798
@@ -31001,14 +31034,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 577918448}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &577918450
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -32667,14 +32707,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 0}
   doorCreakClip: {fileID: 0}
   volumeMultiplier: 1.5
   minVelocityThreshold: 2
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!23 &599282907
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -37466,6 +37513,7 @@ MonoBehaviour:
   - {fileID: 1453865185}
   - {fileID: 1696146987}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 708354640}
 --- !u!65 &708354642
@@ -39769,6 +39817,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 529004803}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 749873055}
 --- !u!65 &749873057
@@ -48210,14 +48259,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 895744884}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!23 &895744887
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -48396,7 +48452,6 @@ RectTransform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
-  - {fileID: 1390733152}
   - {fileID: 469752222}
   - {fileID: 955432661}
   - {fileID: 1579334599}
@@ -48460,7 +48515,7 @@ MonoBehaviour:
   m_Padding:
     m_Left: 150
     m_Right: 0
-    m_Top: 20
+    m_Top: 200
     m_Bottom: 20
   m_ChildAlignment: 3
   m_Spacing: 16
@@ -48952,6 +49007,15 @@ MonoBehaviour:
   isHeated: 0
   eatSfx: {fileID: 8300000, guid: 8a1246bdd793cbf468b6399d304d0ed1, type: 3}
   eatDuration: 5
+  biteCount: 4
+  heldLocalPosition: {x: 0.02, y: -0.085, z: 0.2}
+  heldLocalEulerAngles: {x: -90, y: 0, z: 0}
+  heldScale: 1.25
+  idleSway: 0.004
+  biteWedgeAngle: 34
+  biteWedgeRadius: 0.92
+  bitePortionMeshes: []
+  cutSurfaceMaterial: {fileID: 0}
 --- !u!1 &911358084
 GameObject:
   m_ObjectHideFlags: 0
@@ -52905,14 +52969,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 978232539}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!82 &978232539
 AudioSource:
   m_ObjectHideFlags: 0
@@ -53311,6 +53382,7 @@ MonoBehaviour:
   - {fileID: 499501290}
   - {fileID: 1871974221}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 979655394}
 --- !u!65 &979655396
@@ -72360,14 +72432,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 1366057845}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &1366057847
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -73682,17 +73761,17 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1390733151}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_LocalScale: {x: 1.25, y: 1.25, z: 1.25}
+  m_ConstrainProportionsScale: 1
   m_Children: []
-  m_Father: {fileID: 900070563}
+  m_Father: {fileID: 145917100}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 0, y: 1}
-  m_AnchoredPosition: {x: 310, y: -180}
-  m_SizeDelta: {x: 900, y: 170}
+  m_AnchoredPosition: {x: 610, y: -273}
+  m_SizeDelta: {x: 752.99, y: 96.68}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &1390733153
 MonoBehaviour:
@@ -73723,7 +73802,7 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
+    rgba: 4292272614
   m_fontColor: {r: 0.9019608, g: 0.88235295, b: 0.8392157, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
@@ -73736,7 +73815,7 @@ MonoBehaviour:
   m_spriteAsset: {fileID: 0}
   m_tintAllSprites: 0
   m_StyleSheet: {fileID: 0}
-  m_TextStyleHashCode: 0
+  m_TextStyleHashCode: -1183493901
   m_overrideHtmlColors: 0
   m_faceColor:
     serializedVersion: 2
@@ -77415,6 +77494,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 1668314995}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 1460142578}
 --- !u!65 &1460142580
@@ -79367,6 +79447,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 1071468312}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 1494760614}
 --- !u!65 &1494760616
@@ -80444,14 +80525,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 1517118151}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!23 &1517118154
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -85346,14 +85434,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 1621512412}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!23 &1621512415
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -87947,6 +88042,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 1091067946}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 1666628575}
 --- !u!65 &1666628577
@@ -89602,6 +89698,200 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1687557501}
   m_Mesh: {fileID: 3033812082010845316, guid: 24031b3214b03cc4ab8acdc5750b00a4, type: 3}
+--- !u!1001 &1687752644
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 232760757164167693, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_Name
+      value: Monster
+      objectReference: {fileID: 0}
+    - target: {fileID: 232760757164167693, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 3834452652711066015, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.323
+      objectReference: {fileID: 0}
+    - target: {fileID: 3834452652711066015, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0.979
+      objectReference: {fileID: 0}
+    - target: {fileID: 3834452652711066015, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0.875
+      objectReference: {fileID: 0}
+    - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: -42.259
+      objectReference: {fileID: 0}
+    - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 4.054
+      objectReference: {fileID: 0}
+    - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 118.436
+      objectReference: {fileID: 0}
+    - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4914939938340129326, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5861272136472702538, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: mainCam
+      value: 
+      objectReference: {fileID: 0}
+    - target: {fileID: 5871524455906261651, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 2.177
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598426469352618403, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_Size.z
+      value: 1.8
+      objectReference: {fileID: 0}
+    - target: {fileID: 6598426469352618403, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      propertyPath: m_Center.z
+      value: 1.7
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents:
+    - targetCorrespondingSourceObject: {fileID: 232760757164167693, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 1687752646}
+  m_SourcePrefab: {fileID: 100100000, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+--- !u!1 &1687752645 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 232760757164167693, guid: d178747ad62635a47a812e1bb5d4bc49, type: 3}
+  m_PrefabInstance: {fileID: 1687752644}
+  m_PrefabAsset: {fileID: 0}
+--- !u!82 &1687752646
+AudioSource:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1687752645}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 0}
+  m_Resource: {fileID: 0}
+  m_PlayOnAwake: 1
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0.75
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!1 &1688174399
 GameObject:
   m_ObjectHideFlags: 0
@@ -92247,14 +92537,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 1733787991}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!23 &1733787994
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -93825,14 +94122,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 1757158370}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &1757158372
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -100961,6 +101265,7 @@ MonoBehaviour:
   - {fileID: 775492444}
   - {fileID: 2028459978}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 1894284758}
 --- !u!65 &1894284760
@@ -102954,14 +103259,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 1931662154}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &1931662156
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -106225,6 +106537,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 249926438}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 2021416394}
 --- !u!65 &2021416396
@@ -108782,14 +109095,21 @@ MonoBehaviour:
   useOuterEdgeHinge: 0
   hingeAtMaximumWorldX: 0
   addGateCollider: 0
+  slideInsteadOfSwing: 0
+  slideWorldDirection: {x: 0, y: 0, z: 0}
+  slideDistance: 1.15
   sfxSource: {fileID: 2071901986}
   doorCreakClip: {fileID: 8300000, guid: 6a6034290e8fd6d49ac4578e0d861764, type: 3}
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
+  muteCreakOnAutoClose: 1
   lockedRattleClip: {fileID: 0}
+  feedbackSource: {fileID: 0}
   rattleAngle: 6
   rattleDuration: 0.3
   _isOpen: 0
+  detachedLandingCenter: {x: -39.27, y: 0.36, z: 121.3}
+  detachedLandingEuler: {x: 0, y: 18, z: 0}
 --- !u!65 &2071901988
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -109378,6 +109698,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 1016680141}
   isOn: 0
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 2078017911}
 --- !u!65 &2078017913
@@ -110030,6 +110351,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 1293302227}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 2098652165}
 --- !u!65 &2098652167
@@ -111432,6 +111754,7 @@ MonoBehaviour:
   lampRenderers:
   - {fileID: 289101486}
   isOn: 1
+  turnOnAfterNightTwoWake: 0
   fanRotator: {fileID: 0}
   switchSound: {fileID: 2130616816}
 --- !u!65 &2130616818
@@ -112193,3 +112516,4 @@ SceneRoots:
   - {fileID: 1735223029}
   - {fileID: 1360762339}
   - {fileID: 1127626880}
+  - {fileID: 1687752644}
