@@ -62,10 +62,12 @@ public class ThoughtManager : MonoBehaviour
     // Главная функция, которую мы вызываем из IntroSequence
     // lines - список фраз
     // onComplete - действие, которое выполнится в самом конце (например, выдача квеста)
+    private const string ThoughtSpeaker = "МЫСЛИ";
+
     public void ShowThoughts(string[] lines, Action onComplete = null, Action onStart = null)
     {
         string[] snapshot = lines == null ? Array.Empty<string>() : (string[])lines.Clone();
-        NarrativeDisplayQueue.Enqueue(this, () => DisplaySequence(snapshot, onComplete, onStart, false, "МЫСЛИ"));
+        NarrativeDisplayQueue.Enqueue(this, () => DisplaySequence(snapshot, onComplete, onStart, false, ThoughtSpeaker, NarrativeStyle.Thought));
     }
 
     public bool TryShowInteractionThoughts(string key, string[] lines, float cooldown = 0.75f)
@@ -82,16 +84,25 @@ public class ThoughtManager : MonoBehaviour
 
     public void ShowImportantThoughts(string[] lines, Action onComplete = null, Action onStart = null)
     {
-        ShowDialogue("МЫСЛИ", lines, onComplete, onStart);
+        string[] snapshot = lines == null ? Array.Empty<string>() : (string[])lines.Clone();
+        NarrativeDisplayQueue.Enqueue(this, () => DisplaySequence(snapshot, onComplete, onStart, true, ThoughtSpeaker, NarrativeStyle.Thought));
     }
 
     public void ShowDialogue(string speaker, string[] lines, Action onComplete = null, Action onStart = null)
     {
         string[] snapshot = lines == null ? Array.Empty<string>() : (string[])lines.Clone();
-        NarrativeDisplayQueue.Enqueue(this, () => DisplaySequence(snapshot, onComplete, onStart, true, speaker));
+        NarrativeStyle style = speaker == ThoughtSpeaker ? NarrativeStyle.Thought : NarrativeStyle.Speech;
+        NarrativeDisplayQueue.Enqueue(this, () => DisplaySequence(snapshot, onComplete, onStart, true, speaker, style));
     }
 
-    private IEnumerator DisplaySequence(string[] lines, Action onComplete, Action onStart, bool important, string speaker)
+    // Записка показывается листом бумаги: строки дописываются на один лист по мере чтения.
+    public void ShowNote(string title, string[] lines, Action onComplete = null, Action onStart = null)
+    {
+        string[] snapshot = lines == null ? Array.Empty<string>() : (string[])lines.Clone();
+        NarrativeDisplayQueue.Enqueue(this, () => DisplaySequence(snapshot, onComplete, onStart, true, title, NarrativeStyle.Note));
+    }
+
+    private IEnumerator DisplaySequence(string[] lines, Action onComplete, Action onStart, bool important, string speaker, NarrativeStyle style)
     {
         if (lines.Length == 0 || readingPanel == null)
         {
@@ -101,7 +112,7 @@ public class ThoughtManager : MonoBehaviour
         }
         try
         {
-            yield return readingPanel.BeginSequence(important);
+            yield return readingPanel.BeginSequence(important, style);
             onStart?.Invoke();
             foreach (string line in lines)
                 yield return readingPanel.ShowLine(line, speaker, typingSpeed, Mathf.Max(2.5f, displayDuration));

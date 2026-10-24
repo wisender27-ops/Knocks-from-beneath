@@ -12,8 +12,9 @@ namespace KnocksFromBeneath
         [SerializeField] private PlayerInteraction playerInteraction;
         [SerializeField] private KeyCode toggleKey = KeyCode.J;
 
-        private static readonly Color Ivory = new Color32(230, 225, 214, 255);
-        private static readonly Color Gold = new Color32(190, 157, 101, 255);
+        private static readonly Color Ivory = UiStyle.Ivory;
+        private static readonly Color Amber = UiStyle.Amber;
+        private static readonly Color Ash = UiStyle.Ash;
         private readonly List<TextMeshProUGUI> historyRows = new List<TextMeshProUGUI>();
         private CanvasGroup group;
         private RectTransform panel;
@@ -22,7 +23,7 @@ namespace KnocksFromBeneath
         private TextMeshProUGUI currentTitle;
         private TextMeshProUGUI currentProgress;
         private TextMeshProUGUI completedHeading;
-        private TextMeshProUGUI hint;
+        private UiKeyHints hint;
         private TMP_FontAsset font;
         private float transition;
         private bool closing;
@@ -151,61 +152,54 @@ namespace KnocksFromBeneath
             QuestManager.QuestData quest = manager.GetActiveQuest();
             currentTitle.text = quest != null ? quest.questTitle : "Сейчас нет активного задания";
             currentProgress.text = quest != null && quest.requiredAmount > 1
-                ? $"ВЫПОЛНЕНО  {Mathf.Clamp(quest.currentAmount, 0, quest.requiredAmount)} / {quest.requiredAmount}"
-                : quest != null ? "Следуйте цели, чтобы продолжить историю" : "Новые цели появятся по ходу истории";
+                ? $"Прогресс: {Mathf.Clamp(quest.currentAmount, 0, quest.requiredAmount)} из {quest.requiredAmount}"
+                : quest != null ? string.Empty : "Новые цели появятся по ходу истории";
             int count = 0;
             for (int i = manager.questList.Count - 1; i >= 0; i--)
             {
                 QuestManager.QuestData completed = manager.questList[i];
                 if (completed == null || !completed.IsCompleted) continue;
-                SetHistoryRow(count++, completed.questTitle);
+                SetHistoryRow(count++, completed.questTitle, true);
             }
-            completedHeading.text = $"ЗАВЕРШЁННЫЕ  /  {count}";
-            if (count == 0) SetHistoryRow(count++, "Выполненные задания появятся здесь");
+            completedHeading.text = count > 0 ? $"Выполнено: {count}" : "Выполнено";
+            if (count == 0) SetHistoryRow(count++, "Выполненные задания появятся здесь", false);
             for (int i = count; i < historyRows.Count; i++) historyRows[i].gameObject.SetActive(false);
         }
 
-        private void SetHistoryRow(int index, string title)
+        private void SetHistoryRow(int index, string title, bool done)
         {
             if (index == historyRows.Count)
             {
-                TextMeshProUGUI row = Text("CompletedQuest", historyContent, string.Empty, 22f, Ivory);
+                TextMeshProUGUI row = Text("CompletedQuest", historyContent, string.Empty, 21f, Ash);
                 row.alignment = TextAlignmentOptions.TopLeft;
-                row.margin = new Vector4(0f, 8f, 12f, 8f);
-                row.gameObject.AddComponent<LayoutElement>().minHeight = 48f;
+                row.margin = new Vector4(0f, 6f, 12f, 6f);
+                row.gameObject.AddComponent<LayoutElement>().minHeight = 40f;
                 historyRows.Add(row);
             }
             historyRows[index].text = title;
+            historyRows[index].fontStyle = done ? FontStyles.Strikethrough : FontStyles.Normal;
             historyRows[index].gameObject.SetActive(true);
         }
 
         private void BuildInterface()
         {
-            GameObject canvasObject = new GameObject("QuestJournalCanvas", typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
-            canvasObject.transform.SetParent(transform, false);
-            Canvas canvas = canvasObject.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 500;
-            CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1280f, 720f);
-            scaler.matchWidthOrHeight = 0.5f;
+            Canvas canvas = UiStyle.OverlayCanvas(transform, "QuestJournalCanvas", 500, new Vector2(1280f, 720f), true);
+            GameObject canvasObject = canvas.gameObject;
             RectTransform root = Rect("JournalOverlay", canvasObject.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
             Image backdrop = root.gameObject.AddComponent<Image>();
-            backdrop.color = new Color(0.025f, 0.025f, 0.03f, 0.90f);
+            backdrop.color = UiStyle.Dim;
+            UiStyle.Scanlines(root);
             group = root.gameObject.AddComponent<CanvasGroup>();
-            panel = Rect("JournalPanel", root, Vector2.one * 0.5f, Vector2.one * 0.5f, Vector2.zero, new Vector2(900f, 600f));
-            Image panelImage = panel.gameObject.AddComponent<Image>();
-            panelImage.color = new Color32(28, 29, 30, 250);
-            PositionedText("JournalTitle", "ЗАДАНИЯ", 32f, Ivory, 40f, -28f, 780f, 50f);
-            PositionedText("ActiveHeading", "ТЕКУЩАЯ ЦЕЛЬ", 16f, Gold, 40f, -102f, 800f, 28f);
-            currentTitle = PositionedText("ActiveTitle", "", 28f, Ivory, 40f, -142f, 820f, 90f);
-            currentProgress = PositionedText("ActiveProgress", "", 17f, new Color32(157, 157, 152, 255), 40f, -230f, 820f, 32f);
-            RectTransform divider = Rect("Divider", panel, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -282f), new Vector2(820f, 1f));
+            panel = Rect("JournalPanel", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            PositionedText("JournalTitle", "► ЗАДАНИЯ", 30f, Amber, 120f, -64f, 780f, 40f);
+            PositionedText("ActiveHeading", "Текущая цель", 17f, Ash, 120f, -134f, 800f, 26f);
+            currentTitle = PositionedText("ActiveTitle", "", 30f, Ivory, 120f, -164f, 860f, 84f);
+            currentProgress = PositionedText("ActiveProgress", "", 18f, Ash, 120f, -250f, 860f, 28f);
+            RectTransform divider = Rect("Divider", panel, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(120f, -298f), new Vector2(860f, 2f));
             divider.pivot = new Vector2(0f, 1f);
-            divider.gameObject.AddComponent<Image>().color = new Color(0.6f, 0.5f, 0.35f, 0.35f);
-            completedHeading = PositionedText("CompletedHeading", "ЗАВЕРШЁННЫЕ", 16f, Gold, 40f, -304f, 820f, 28f);
-            RectTransform scroll = Rect("HistoryScroll", panel, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(40f, -350f), new Vector2(820f, 176f));
+            divider.gameObject.AddComponent<Image>().color = new Color(Ash.r, Ash.g, Ash.b, .25f);
+            completedHeading = PositionedText("CompletedHeading", "Выполнено", 17f, Ash, 120f, -318f, 820f, 26f);
+            RectTransform scroll = Rect("HistoryScroll", panel, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(120f, -356f), new Vector2(860f, 250f));
             scroll.pivot = new Vector2(0f, 1f);
             historyScroll = scroll.gameObject.AddComponent<ScrollRect>();
             historyScroll.horizontal = false;
@@ -226,14 +220,14 @@ namespace KnocksFromBeneath
             ContentSizeFitter fitter = historyContent.gameObject.AddComponent<ContentSizeFitter>();
             fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             historyScroll.content = historyContent;
-            PositionedText("Controls", "J / ESC — ЗАКРЫТЬ     •     КОЛЕСО МЫШИ / ↑ ↓ — ИСТОРИЯ", 16f, new Color32(157, 157, 152, 255), 40f, -550f, 820f, 28f);
-            hint = Text("JournalHint", canvasObject.transform, "J — ЗАДАНИЯ", 18f, Ivory);
-            RectTransform hintRect = hint.rectTransform;
-            hintRect.anchorMin = hintRect.anchorMax = new Vector2(1f, 0f);
-            hintRect.pivot = new Vector2(1f, 0f);
-            hintRect.anchoredPosition = new Vector2(-30f, 30f);
-            hintRect.sizeDelta = new Vector2(230f, 28f);
-            hint.alignment = TextAlignmentOptions.BottomRight;
+            UiKeyHints controls = UiKeyHints.Create(root, "Controls", font);
+            controls.RectTransform.anchorMin = controls.RectTransform.anchorMax = controls.RectTransform.pivot = new Vector2(1f, 0f);
+            controls.RectTransform.anchoredPosition = new Vector2(-30f, 30f);
+            controls.Set("J", "ЗАКРЫТЬ", "↑ ↓", "ЛИСТАТЬ");
+            hint = UiKeyHints.Create(canvasObject.transform, "JournalHint", font, .85f, new Color(Ivory.r, Ivory.g, Ivory.b, .8f));
+            hint.RectTransform.anchorMin = hint.RectTransform.anchorMax = hint.RectTransform.pivot = new Vector2(1f, 0f);
+            hint.RectTransform.anchoredPosition = new Vector2(-30f, 30f);
+            hint.Set("J", "ЗАДАНИЯ", "H", "ИСТОРИЯ");
         }
 
         private TextMeshProUGUI PositionedText(string name, string value, float size, Color color, float x, float y, float width, float height)
@@ -252,7 +246,7 @@ namespace KnocksFromBeneath
             GameObject obj = new GameObject(name, typeof(RectTransform), typeof(TextMeshProUGUI));
             obj.transform.SetParent(parent, false);
             TextMeshProUGUI text = obj.GetComponent<TextMeshProUGUI>();
-            if (font != null) text.font = font;
+            text.font = UiStyle.Font(font);
             text.text = value;
             text.fontSize = size;
             text.color = color;

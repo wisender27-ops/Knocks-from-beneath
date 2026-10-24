@@ -15,6 +15,9 @@ namespace KnocksFromBeneath
         private Canvas canvas;
         private GameObject menu, confirmation;
         private SettingsMenuUI settings;
+        private TextMeshProUGUI counter;
+        private UiMenuItem[] menuItems, confirmItems;
+        private UiKeyHints hints;
         private bool paused, previousCameraLock, previousAudioPause, previousCursorVisible;
         private float previousTimeScale;
         private CursorLockMode previousCursorLock;
@@ -49,21 +52,22 @@ namespace KnocksFromBeneath
             player = FindFirstObjectByType<PlayerController>();
             cooking = FindFirstObjectByType<DinnerCookingWindow>();
             canvas = CreateCanvas(transform, "PauseCanvas", 32000);
-            var background = new GameObject("Dim", typeof(RectTransform), typeof(Image));
-            background.transform.SetParent(canvas.transform, false);
-            Stretch((RectTransform)background.transform);
-            background.GetComponent<Image>().color = new Color(0, 0, 0, .85f);
+            UiStyle.Fill(canvas.transform, "Dim", UiStyle.Dim).raycastTarget = true;
+            UiStyle.Scanlines(canvas.transform);
             TMP_FontAsset font = FindFont();
-            menu = Panel(canvas.transform, "Pause", new Vector2(600, 470));
-            Label(menu.transform, "ПАУЗА", font, new Vector2(0, 155), 38);
-            Button(menu.transform, "Продолжить", font, 65, Resume);
-            Button(menu.transform, "Настройки", font, -5, OpenSettings);
-            Button(menu.transform, "В главное меню", font, -75, ConfirmReturnToMenu);
+            menu = ScreenLayer(canvas.transform, "Pause");
+            Heading(menu.transform, "▌▌ ПАУЗА", font, 64f, UiStyle.Amber, -96f);
+            counter = Heading(menu.transform, string.Empty, font, 26f, UiStyle.Ash, -178f);
+            menuItems = Column(menu.transform, font, -270f,
+                ("Продолжить", Resume), ("Настройки", OpenSettings), ("В главное меню", ConfirmReturnToMenu));
             settings = SettingsMenuUI.BuildRuntime(canvas.transform, font, ShowMenu);
-            confirmation = Panel(canvas.transform, "ConfirmExit", new Vector2(760, 360));
-            Label(confirmation.transform, "ВЫЙТИ В ГЛАВНОЕ МЕНЮ?\nТекущий прогресс будет потерян.", font, new Vector2(0, 80), 26);
-            Button(confirmation.transform, "Отмена", font, -30, ShowMenu);
-            Button(confirmation.transform, "Выйти в меню", font, -100, ReturnToMainMenu);
+            confirmation = ScreenLayer(canvas.transform, "ConfirmExit");
+            Heading(confirmation.transform, "Выйти в главное меню?", font, 48f, UiStyle.Ivory, -96f);
+            Heading(confirmation.transform, "Текущий прогресс будет потерян.", font, 28f, UiStyle.Ash, -170f);
+            confirmItems = Column(confirmation.transform, font, -270f, ("Остаться", ShowMenu), ("Выйти в меню", ReturnToMainMenu));
+            hints = UiKeyHints.Create(canvas.transform, "PauseHints", font, 1.5f);
+            hints.RectTransform.anchorMin = hints.RectTransform.anchorMax = hints.RectTransform.pivot = new Vector2(1f, 0f);
+            hints.RectTransform.anchoredPosition = new Vector2(-45f, 45f);
             ShowMenu();
             canvas.gameObject.SetActive(false);
         }
@@ -93,8 +97,10 @@ namespace KnocksFromBeneath
             if (player != null) player.isCameraLocked = true;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
-            ShowMenu();
+            int seconds = Mathf.FloorToInt(Time.timeSinceLevelLoad);
+            counter.text = $"СЧЁТЧИК {seconds / 3600}:{seconds / 60 % 60:00}:{seconds % 60:00}";
             canvas.gameObject.SetActive(true);
+            ShowMenu();
         }
 
         public void Resume()
@@ -116,6 +122,7 @@ namespace KnocksFromBeneath
             menu.SetActive(false);
             confirmation.SetActive(false);
             settings.gameObject.SetActive(true);
+            hints.Set("ESC", "НАЗАД");
         }
 
         public void ShowMenu()
@@ -123,12 +130,16 @@ namespace KnocksFromBeneath
             menu.SetActive(true);
             settings.gameObject.SetActive(false);
             confirmation.SetActive(false);
+            hints.Set("↑ ↓", "ВЫБОР", "ENTER", "OK", "ESC", "ПРОДОЛЖИТЬ");
+            UiMenuItem.Select(menuItems[0]);
         }
 
         public void ConfirmReturnToMenu()
         {
             menu.SetActive(false);
             confirmation.SetActive(true);
+            hints.Set("↑ ↓", "ВЫБОР", "ENTER", "OK", "ESC", "НАЗАД");
+            UiMenuItem.Select(confirmItems[0]);
         }
 
         public void ReturnToMainMenu()
@@ -168,49 +179,34 @@ namespace KnocksFromBeneath
             return TMP_Settings.defaultFontAsset;
         }
 
-        private static GameObject Panel(Transform parent, string name, Vector2 size)
-        {
-            var root = new GameObject(name, typeof(RectTransform), typeof(Image));
-            root.transform.SetParent(parent, false);
-            ((RectTransform)root.transform).sizeDelta = size;
-            root.GetComponent<Image>().color = new Color32(24, 24, 25, 255);
-            return root;
-        }
+        // Экраны паузы — колонка у левого края, как экранное меню видеомагнитофона.
+        private const float Margin = 180f;
 
-        private static TextMeshProUGUI Label(Transform parent, string text, TMP_FontAsset font, Vector2 position, float size)
+        private static GameObject ScreenLayer(Transform parent, string name) => UiStyle.Stretch(name, parent).gameObject;
+
+        private static TextMeshProUGUI Heading(Transform parent, string text, TMP_FontAsset font, float size, Color color, float y)
         {
-            var root = new GameObject("Label", typeof(RectTransform), typeof(TextMeshProUGUI));
-            root.transform.SetParent(parent, false);
-            var label = root.GetComponent<TextMeshProUGUI>();
-            label.rectTransform.sizeDelta = new Vector2(700, 110);
-            label.rectTransform.anchoredPosition = position;
-            label.font = font;
-            label.fontSize = size;
-            label.alignment = TextAlignmentOptions.Center;
+            var label = UiStyle.Text("Heading", parent, font, size, color, TextAlignmentOptions.TopLeft);
+            label.rectTransform.anchorMin = label.rectTransform.anchorMax = label.rectTransform.pivot = new Vector2(0f, 1f);
+            label.rectTransform.anchoredPosition = new Vector2(Margin, y);
+            label.rectTransform.sizeDelta = new Vector2(1400f, size * 1.4f);
             label.text = text;
-            label.raycastTarget = false;
             return label;
         }
 
-        private static void Button(Transform parent, string text, TMP_FontAsset font, float y, UnityAction action)
+        private static UiMenuItem[] Column(Transform parent, TMP_FontAsset font, float y, params (string caption, UnityAction action)[] entries)
         {
-            var root = new GameObject(text, typeof(RectTransform), typeof(Image), typeof(Button));
-            root.transform.SetParent(parent, false);
-            var rect = (RectTransform)root.transform;
-            rect.sizeDelta = new Vector2(470, 56);
-            rect.anchoredPosition = new Vector2(0, y);
-            root.GetComponent<Image>().color = new Color32(55, 55, 58, 255);
-            var button = root.GetComponent<Button>();
-            button.targetGraphic = root.GetComponent<Image>();
-            button.onClick.AddListener(action);
-            Label(root.transform, text, font, Vector2.zero, 27).rectTransform.sizeDelta = rect.sizeDelta;
-        }
-
-        private static void Stretch(RectTransform rect)
-        {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.offsetMin = rect.offsetMax = Vector2.zero;
+            var column = UiStyle.Rect("Items", parent, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(Margin - 22f, y), new Vector2(900f, 400f));
+            var layout = column.gameObject.AddComponent<VerticalLayoutGroup>();
+            layout.childAlignment = TextAnchor.UpperLeft;
+            layout.childControlWidth = layout.childControlHeight = true;
+            layout.childForceExpandWidth = layout.childForceExpandHeight = false;
+            layout.spacing = 10f;
+            var items = new UiMenuItem[entries.Length];
+            for (int i = 0; i < entries.Length; i++)
+                items[i] = UiMenuItem.Create(column, entries[i].caption, font, 40f, entries[i].action);
+            UiMenuItem.LinkVertical(items);
+            return items;
         }
     }
 }

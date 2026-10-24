@@ -9,6 +9,7 @@ namespace KnocksFromBeneath
         private GameObject root;
         private RectTransform needle;
         private TextMeshProUGUI title, hint;
+        private UiKeyHints keys;
         private PlayerController player;
         private PlayerInteraction interaction;
         private Action complete, cancel;
@@ -55,8 +56,9 @@ namespace KnocksFromBeneath
             elapsed = 0f;
             finished = false;
             started = false;
-            title.text = "ГОТОВКА — ИГРА НА РЕАКЦИЮ";
-            hint.text = "Останови указатель ПРОБЕЛОМ в золотой зоне. Попытка только одна.\nENTER — начать     ESC — выйти";
+            title.text = "► ГОТОВКА";
+            hint.text = "Останови указатель пробелом в янтарной зоне. Попытка одна.";
+            keys.Set("ENTER", "НАЧАТЬ", "ESC", "ВЫЙТИ");
             MoveNeedle(0f);
         }
 
@@ -69,8 +71,8 @@ namespace KnocksFromBeneath
                 if (Input.GetKeyDown(KeyCode.Return))
                 {
                     started = attemptUsed = true;
-                    title.text = "ПРИГОТОВИТЬ УЖИН";
-                    hint.text = "ПРОБЕЛ — остановить указатель в золотой зоне";
+                    hint.text = "Останови указатель в янтарной зоне";
+                    keys.Set("ПРОБЕЛ", "СТОП");
                 }
                 return;
             }
@@ -85,7 +87,8 @@ namespace KnocksFromBeneath
             if (!Input.GetKeyDown(KeyCode.Space) && position < 1f) return;
             finished = true;
             title.text = Quality(position);
-            hint.text = "ENTER — подать ужин";
+            hint.text = string.Empty;
+            keys.Set("ENTER", "ПОДАТЬ УЖИН");
         }
 
         public static string Quality(float position)
@@ -138,13 +141,17 @@ namespace KnocksFromBeneath
             var shade = Rect("Shade", root.transform, Vector2.zero, Vector2.zero);
             shade.anchorMin = Vector2.zero;
             shade.anchorMax = Vector2.one;
-            shade.gameObject.AddComponent<UnityEngine.UI.Image>().color = new Color(0.025f, 0.025f, 0.035f, 0.6f);
+            shade.gameObject.AddComponent<UnityEngine.UI.Image>().color = new Color(0f, 0f, 0f, 0.62f);
             var arc = Rect("CookingArc", root.transform, new Vector2(0f, -200f), new Vector2(700f, 700f));
             arc.gameObject.AddComponent<DinnerCookingArc>().raycastTarget = false;
             needle = Rect("Needle", arc, Vector2.zero, new Vector2(6f, 66f));
-            needle.gameObject.AddComponent<UnityEngine.UI.Image>().color = new Color(1f, 0.97f, 0.83f);
+            needle.gameObject.AddComponent<UnityEngine.UI.Image>().color = UiStyle.Ivory;
             title = Label("Title", 215f, 30f);
-            hint = Label("Controls", -280f, 20f);
+            title.color = UiStyle.Amber;
+            hint = Label("Controls", -250f, 20f);
+            keys = UiKeyHints.Create(root.transform, "Keys", title.font);
+            keys.RectTransform.anchorMin = keys.RectTransform.anchorMax = keys.RectTransform.pivot = new Vector2(0.5f, 0.5f);
+            keys.RectTransform.anchoredPosition = new Vector2(0f, -300f);
         }
 
         private static RectTransform Rect(string name, Transform parent, Vector2 position, Vector2 size)
@@ -163,10 +170,10 @@ namespace KnocksFromBeneath
             var text = Rect(name, root.transform, new Vector2(0f, y), new Vector2(1000f, 70f))
                 .gameObject.AddComponent<TextMeshProUGUI>();
             var manager = FindFirstObjectByType<QuestManager>();
-            if (manager != null && manager.questUiText != null) text.font = manager.questUiText.font;
+            text.font = UiStyle.Font(manager != null && manager.questUiText != null ? manager.questUiText.font : null);
             text.fontSize = size;
             text.alignment = TextAlignmentOptions.Center;
-            text.color = new Color(1f, 0.95f, 0.8f);
+            text.color = UiStyle.Ivory;
             text.raycastTarget = false;
             return text;
         }
@@ -178,11 +185,12 @@ namespace KnocksFromBeneath
         protected override void OnPopulateMesh(UnityEngine.UI.VertexHelper mesh)
         {
             mesh.Clear();
-            Draw(mesh, 0f, 1f, 286f, 314f, new Color(0.2f, 0.2f, 0.24f, 0.95f));
-            Draw(mesh, 0.35f, 0.67f, 286f, 314f, new Color(0.85f, 0.86f, 0.58f));
-            Draw(mesh, 0.47f, 0.55f, 286f, 314f, new Color(1f, 0.65f, 0.18f));
-            Draw(mesh, 0f, 1f, 317f, 320f, new Color(0.96f, 0.88f, 0.7f));
-            Draw(mesh, 0f, 1f, 280f, 283f, new Color(0.96f, 0.88f, 0.7f));
+            Color rim = new Color(UiStyle.Ivory.r, UiStyle.Ivory.g, UiStyle.Ivory.b, 0.55f);
+            Draw(mesh, 0f, 1f, 286f, 314f, new Color(0f, 0f, 0f, 0.84f));
+            Draw(mesh, 0.35f, 0.67f, 286f, 314f, new Color(UiStyle.Ash.r, UiStyle.Ash.g, UiStyle.Ash.b, 0.7f));
+            Draw(mesh, 0.47f, 0.55f, 286f, 314f, UiStyle.Amber);
+            Draw(mesh, 0f, 1f, 317f, 320f, rim);
+            Draw(mesh, 0f, 1f, 280f, 283f, rim);
         }
 
         private static void Draw(UnityEngine.UI.VertexHelper mesh, float start, float end,

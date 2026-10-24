@@ -23,7 +23,7 @@ namespace KnocksFromBeneath
         private CanvasGroup group;
         private TextMeshProUGUI nameText;
         private TextMeshProUGUI descriptionText;
-        private TextMeshProUGUI actionText;
+        private UiKeyHints actionHints;
         private TextMeshProUGUI emptyText;
         private RawImage previewImage;
         private RawImage noiseImage;
@@ -187,11 +187,16 @@ namespace KnocksFromBeneath
             {
                 ClampSelection();
                 Refresh();
+                feedbackText.color = UiStyle.Amber;
                 feedbackText.text = definition.IsEquippable
-                    ? (wasEquipped ? "UNEQUIPPED: " : "EQUIPPED: ") + definition.DisplayName
-                    : "USED: " + definition.DisplayName;
+                    ? (wasEquipped ? "Убрано: " : "В руках: ") + definition.DisplayName
+                    : "Использовано: " + definition.DisplayName;
             }
-            else feedbackText.text = "CANNOT USE THIS ITEM HERE";
+            else
+            {
+                feedbackText.color = UiStyle.Rust;
+                feedbackText.text = "Здесь это не пригодится";
+            }
             feedbackUntil = Time.unscaledTime + 3f;
         }
 
@@ -199,10 +204,8 @@ namespace KnocksFromBeneath
         {
             isInspecting = value;
             draggingPreview = false;
-            titleText.text = value ? "-  EXAMINE  -" : "-  INVENTORY  -";
+            titleText.text = value ? "► ОСМОТР" : "► ИНВЕНТАРЬ";
             titleText.rectTransform.anchoredPosition = value ? new Vector2(0f, -12f) : new Vector2(0f, -39f);
-            leftArrowText.gameObject.SetActive(!value);
-            rightArrowText.gameObject.SetActive(!value);
             nameText.rectTransform.anchoredPosition = value ? new Vector2(350f, -76f) : new Vector2(24f, -86f);
             nameText.rectTransform.sizeDelta = value ? new Vector2(266f, 34f) : new Vector2(592f, 30f);
             descriptionText.rectTransform.anchoredPosition = value ? new Vector2(350f, -116f) : new Vector2(24f, -126f);
@@ -258,6 +261,10 @@ namespace KnocksFromBeneath
             if (!isOpen || inventory == null) return;
             ClampSelection();
             bool hasItems = inventory.Entries.Count > 0;
+            // Стрелки выбора имеют смысл, только когда есть между чем выбирать.
+            bool canSelect = !isInspecting && inventory.Entries.Count > 1;
+            leftArrowText.gameObject.SetActive(canSelect);
+            rightArrowText.gameObject.SetActive(canSelect);
             emptyText.gameObject.SetActive(!hasItems);
             nameText.gameObject.SetActive(hasItems);
             descriptionText.gameObject.SetActive(hasItems);
@@ -266,19 +273,24 @@ namespace KnocksFromBeneath
             if (!hasItems)
             {
                 if (isInspecting) SetInspection(false);
-                actionText.text = "EXIT: Z / TAB";
+                actionHints.Set("TAB", "ЗАКРЫТЬ");
                 ReplacePreview(null);
                 return;
             }
 
             InventoryEntry entry = inventory.Entries[selectedIndex];
             bool equipped = inventory.EquippedItemId == entry.Definition.Id;
-            nameText.text = entry.Definition.DisplayName + "  " + entry.Quantity + "/" + entry.Definition.MaxStack;
+            nameText.text = entry.Definition.MaxStack > 1
+                ? entry.Definition.DisplayName + "  ×" + entry.Quantity
+                : entry.Definition.DisplayName;
             descriptionText.text = entry.Definition.Description;
-            string useAction = entry.Definition.IsEquippable ? (equipped ? "UNEQUIP" : "EQUIP") : "USE";
-            actionText.text = isInspecting
-                ? "DRAG / WASD: ROTATE   WHEEL: ZOOM   R: RESET\n" + useAction + ": SPACE / ENTER   BACK: C / Z / ESC   EXIT: TAB"
-                : "SELECT: A / D   EXAMINE: C\n" + useAction + ": SPACE / ENTER   EXIT: Z / ESC / TAB";
+            string useAction = entry.Definition.IsEquippable ? (equipped ? "УБРАТЬ" : "ВЗЯТЬ") : "ИСПОЛЬЗОВАТЬ";
+            if (isInspecting)
+                actionHints.Set("МЫШЬ", "ВРАЩАТЬ", "КОЛЕСО", "МАСШТАБ", "R", "СБРОС", "ПРОБЕЛ", useAction, "C", "НАЗАД");
+            else if (inventory.Entries.Count > 1)
+                actionHints.Set("A D", "ВЫБОР", "C", "ОСМОТР", "ПРОБЕЛ", useAction, "TAB", "ЗАКРЫТЬ");
+            else
+                actionHints.Set("C", "ОСМОТР", "ПРОБЕЛ", useAction, "TAB", "ЗАКРЫТЬ");
             ReplacePreview(entry.Definition);
         }
 
@@ -386,7 +398,7 @@ namespace KnocksFromBeneath
             contentFitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             contentFitter.aspectRatio = ReferenceWidth / ReferenceHeight;
 
-            titleText = CreateText("Title", frame, "-  INVENTORY  -", 23f, TextAlignmentOptions.Center, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -39f), new Vector2(360f, 42f));
+            titleText = CreateText("Title", frame, "► ИНВЕНТАРЬ", 23f, TextAlignmentOptions.Center, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -39f), new Vector2(360f, 42f));
             leftArrowText = CreateText("LeftArrow", frame, "<", 28f, TextAlignmentOptions.Center, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(155f, -45f), new Vector2(40f, 40f));
             rightArrowText = CreateText("RightArrow", frame, ">", 28f, TextAlignmentOptions.Center, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-155f, -45f), new Vector2(40f, 40f));
 
@@ -403,9 +415,16 @@ namespace KnocksFromBeneath
             previewTexture.Create();
             previewImage.texture = previewTexture;
 
-            emptyText = CreateText("Empty", frame, "INVENTORY IS EMPTY", 20f, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(400f, 50f));
+            emptyText = CreateText("Empty", frame, "Карманы пусты", 20f, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(400f, 50f));
             feedbackText = CreateText("Feedback", frame, string.Empty, 14f, TextAlignmentOptions.Center, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 64f), new Vector2(592f, 24f));
-            actionText = CreateText("Actions", frame, "EXIT: Z", 13f, TextAlignmentOptions.Center, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 16f), new Vector2(608f, 42f));
+            actionHints = UiKeyHints.Create(frame, "Actions", font, 0.5f);
+            actionHints.RectTransform.anchorMin = actionHints.RectTransform.anchorMax = actionHints.RectTransform.pivot = new Vector2(0.5f, 0f);
+            actionHints.RectTransform.anchoredPosition = new Vector2(0f, 18f);
+            titleText.color = UiStyle.Amber;
+            leftArrowText.color = rightArrowText.color = UiStyle.Amber;
+            leftArrowText.text = "<";
+            rightArrowText.text = ">";
+            descriptionText.color = UiStyle.Ash;
 
             BuildPreviewStage();
         }
@@ -449,13 +468,12 @@ namespace KnocksFromBeneath
         {
             RectTransform rect = CreateRect(objectName, parent, anchorMin, anchorMax, position, dimensions);
             TextMeshProUGUI text = rect.gameObject.AddComponent<TextMeshProUGUI>();
-            text.font = font != null ? font : TMP_Settings.defaultFontAsset;
+            text.font = UiStyle.Font(font);
             text.text = value;
             text.fontSize = size;
-            text.color = new Color(0.88f, 0.91f, 0.9f, 1f);
+            text.color = UiStyle.Ivory;
             text.alignment = alignment;
             text.raycastTarget = false;
-            text.fontStyle = FontStyles.Bold;
             text.extraPadding = true;
             return text;
         }

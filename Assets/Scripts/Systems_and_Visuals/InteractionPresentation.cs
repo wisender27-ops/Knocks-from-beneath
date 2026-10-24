@@ -36,9 +36,9 @@ namespace KnocksFromBeneath
         private bool unobstructed = true;
         private int controlCount;
         private string controlSignature;
-        private static readonly Color Ivory = new Color32(239, 234, 220, 255);
-        private static readonly Color Active = new Color32(225, 193, 139, 255);
-        private static readonly Color Unavailable = new Color32(205, 150, 126, 255);
+        private static readonly Color Ivory = UiStyle.Ivory;
+        private static readonly Color Active = UiStyle.Amber;
+        private static readonly Color Unavailable = UiStyle.Rust;
         public Transform AnchoredTarget => anchor;
         public Vector3 AnchoredPoint => anchor != null ? anchor.TransformPoint(localPoint) : lastPoint;
 
@@ -331,7 +331,7 @@ namespace KnocksFromBeneath
                 var key = Rect("Key", chips[i], new Vector2(0, .5f), new Vector2(34, 32));
                 key.pivot = new Vector2(0, .5f);
                 key.gameObject.AddComponent<Image>().color = Ivory;
-                keyLabels[i] = Text("KeyLabel", key, font, 15f, new Color32(35, 31, 26, 255));
+                keyLabels[i] = Text("KeyLabel", key, font, 15f, UiStyle.KeyInk);
                 keyLabels[i].rectTransform.pivot = new Vector2(0, .5f);
                 keyLabels[i].rectTransform.anchorMin = keyLabels[i].rectTransform.anchorMax = new Vector2(0, .5f);
                 keyLabels[i].alignment = TextAlignmentOptions.Center;
@@ -341,7 +341,7 @@ namespace KnocksFromBeneath
                 actionLabels[i].alignment = TextAlignmentOptions.MidlineLeft;
                 chips[i].gameObject.SetActive(false);
             }
-            context = Text("Context", controls, font, 17f, new Color32(190, 181, 162, 255));
+            context = Text("Context", controls, font, 17f, UiStyle.Ash);
             context.rectTransform.anchorMin = context.rectTransform.anchorMax = Vector2.one * .5f;
             context.rectTransform.anchoredPosition = new Vector2(0, 46);
             context.rectTransform.sizeDelta = new Vector2(1000, 30);

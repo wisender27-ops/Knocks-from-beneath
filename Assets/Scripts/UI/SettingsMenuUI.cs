@@ -52,10 +52,12 @@ public class SettingsMenuUI : MonoBehaviour
     void RefreshMasterVolumeText(float value) { if (masterVolumeValueText) masterVolumeValueText.text = $"{Mathf.RoundToInt(value * 100)}%"; }
     void RefreshMouseSensitivityText(float value) { if (mouseSensitivityValueText) mouseSensitivityValueText.text = value.ToString("0.0"); }
 
-    static readonly Color PanelColor = new Color(.055f, .059f, .067f, .97f);
-    static readonly Color TextColor = new Color(.9f, .88f, .83f);
-    static readonly Color Accent = new Color(.91f, .69f, .29f);
-    static readonly Color TrackColor = new Color(.2f, .21f, .23f);
+    static readonly Color PanelColor = new Color(0f, 0f, 0f, .88f);
+    static readonly Color TextColor = UiStyle.Ivory;
+    static readonly Color Accent = UiStyle.Amber;
+    static readonly Color TrackColor = new Color(UiStyle.Ash.r, UiStyle.Ash.g, UiStyle.Ash.b, .3f);
+    static readonly Color ControlColor = new Color(.1f, .1f, .1f, 1f);
+    static readonly Color ControlHover = new Color(.2f, .19f, .17f, 1f);
     // Шкала текста меню: база 28, шаг x1.5 (28 / 42 / 64 / 95 / 142). Заголовок названия и пункты главного меню - на старших ступенях.
     const float TextBase = 28f, TextHeading = 42f;
     const float RowHeight = 64f, SliderWidth = 400f, ValueWidth = 100f, RowSpacing = 16f;
@@ -71,7 +73,7 @@ public class SettingsMenuUI : MonoBehaviour
         panel.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         SettingsMenuUI ui = panel.gameObject.AddComponent<SettingsMenuUI>();
 
-        Label(panel, font, "НАСТРОЙКИ", TextHeading, TextAnchor.MiddleLeft, 72);
+        Label(panel, font, "► НАСТРОЙКИ", TextHeading, TextAnchor.MiddleLeft, 72).color = Accent;
         Image rule = Rect("Rule", panel, Vector2.zero).gameObject.AddComponent<Image>();
         rule.color = new Color(Accent.r, Accent.g, Accent.b, .6f); rule.raycastTarget = false;
         rule.gameObject.AddComponent<LayoutElement>().preferredHeight = 2;
@@ -169,7 +171,7 @@ public class SettingsMenuUI : MonoBehaviour
         RectTransform rect = Rect(name, parent, Vector2.zero);
         Image image = rect.gameObject.AddComponent<Image>(); image.color = Color.white;
         Button button = rect.gameObject.AddComponent<Button>(); button.targetGraphic = image;
-        ApplyColors(button, new Color(.14f, .15f, .17f), new Color(.24f, .24f, .25f));
+        ApplyColors(button, ControlColor, ControlHover);
         Size(rect.gameObject, width, height);
         Stretch(Label(rect, font, text, fontSize, TextAnchor.MiddleCenter, -1).rectTransform);
         return button;
@@ -213,7 +215,7 @@ public class SettingsMenuUI : MonoBehaviour
         RectTransform markRect = Rect("Check", box, Vector2.zero); Stretch(markRect); markRect.offsetMin = new Vector2(8, 8); markRect.offsetMax = new Vector2(-8, -8);
         Image mark = markRect.gameObject.AddComponent<Image>(); mark.color = Accent; mark.raycastTarget = false;
         toggle.targetGraphic = background; toggle.graphic = mark;
-        ApplyColors(toggle, new Color(.17f, .18f, .2f), new Color(.26f, .27f, .29f));
+        ApplyColors(toggle, ControlColor, ControlHover);
         toggle.SetIsOnWithoutNotify(value); toggle.onValueChanged.AddListener(action); return toggle;
     }
     static TextMeshProUGUI ChoiceRow(Transform parent, TMP_FontAsset font, string caption, string value, Action<int> changed)
@@ -221,7 +223,7 @@ public class SettingsMenuUI : MonoBehaviour
         HorizontalLayoutGroup row = CaptionedRow(parent, font, caption);
         HorizontalLayoutGroup choice = HorizontalRow("Choice", row.transform, 56, TextAnchor.MiddleCenter);
         Size(choice.gameObject, ControlZoneWidth, 56, 0);
-        choice.spacing = 0; choice.gameObject.AddComponent<Image>().color = new Color(.1f, .11f, .125f);
+        choice.spacing = 0; choice.gameObject.AddComponent<Image>().color = new Color(.06f, .06f, .06f);
         TextMeshProUGUI label = Label(choice.transform, font, value, TextBase, TextAnchor.MiddleCenter, 56);
         Size(label.gameObject, -1, -1, 1);
         foreach (int direction in new[] { -1, 1 })

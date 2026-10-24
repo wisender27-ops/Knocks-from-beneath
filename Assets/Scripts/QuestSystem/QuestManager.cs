@@ -224,12 +224,42 @@ public class QuestManager : MonoBehaviour
         questUiText.color = baseQuestColor;
         questUiText.alpha = 0f;
         if (_toastOriginCaptured) questUiText.rectTransform.anchoredPosition = _toastOrigin;
+        if (_toastBacking != null) _toastBacking.enabled = false;
+    }
+
+    // Уведомление о цели оформлено как субтитр: чёрная подложка точно по тексту.
+    UnityEngine.UI.Image _toastBacking;
+
+    void SyncToastBacking()
+    {
+        RectTransform text = questUiText.rectTransform;
+        if (_toastBacking == null)
+        {
+            var backing = new GameObject("QuestToastBacking", typeof(RectTransform)).GetComponent<RectTransform>();
+            backing.SetParent(text.parent, false);
+            backing.SetSiblingIndex(text.GetSiblingIndex());
+            _toastBacking = backing.gameObject.AddComponent<UnityEngine.UI.Image>();
+            _toastBacking.raycastTarget = false;
+        }
+        Bounds bounds = questUiText.textBounds;
+        _toastBacking.enabled = questUiText.alpha > 0f && bounds.size.x > 0f;
+        if (!_toastBacking.enabled) return;
+        float padX = questUiText.fontSize * .3f, padY = questUiText.fontSize * .14f;
+        RectTransform rect = _toastBacking.rectTransform;
+        rect.anchorMin = rect.anchorMax = new Vector2(.5f, .5f);
+        rect.pivot = Vector2.zero;
+        rect.localRotation = text.localRotation;
+        rect.localScale = text.localScale;
+        rect.localPosition = text.localPosition + text.localRotation * Vector3.Scale(bounds.min - new Vector3(padX, padY), text.localScale);
+        rect.sizeDelta = new Vector2(bounds.size.x + padX * 2f, bounds.size.y + padY * 2f);
+        _toastBacking.color = new Color(0f, 0f, 0f, .84f * questUiText.alpha);
     }
 
     IEnumerator PlayQuestTextColorTransition(string text)
     {
         if (questUiText == null) yield break;
         questUiText.text = text;
+        questUiText.ForceMeshUpdate(true);
         const float fadeIn = .2f;
         const float hold = 3f;
         const float fadeOut = .45f;
@@ -243,6 +273,7 @@ public class QuestManager : MonoBehaviour
             color.a = baseQuestColor.a * Mathf.SmoothStep(0f, 1f, Mathf.Clamp01(elapsed / fadeIn)) * (1f - exit);
             questUiText.color = color;
             questUiText.rectTransform.anchoredPosition = _toastOrigin + Vector2.up * (12f * exit);
+            SyncToastBacking();
             yield return null;
         }
         HideToast();
