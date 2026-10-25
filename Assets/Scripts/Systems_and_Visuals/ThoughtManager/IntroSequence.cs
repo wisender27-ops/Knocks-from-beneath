@@ -145,6 +145,7 @@ public class IntroSequence : MonoBehaviour
         var floorKnock = gameObject.AddComponent<PlayerFloorKnock>(); // K-02: Q — стук в пол
         RandomKnock knockSound = knockController != null ? knockController.GetComponent<RandomKnock>() : null;
         floorKnock.Initialize(playerInventory, knockSound != null ? knockSound.ShortestClip : null);
+        floorKnock.SetBasementArea(BasementMin, BasementMax, FirstFloorY);
         var followingSteps = gameObject.AddComponent<FollowingFootsteps>();
         followingSteps.Initialize(playerInventory);
         var kitchenDisturbance = gameObject.AddComponent<KitchenDisturbance>();
@@ -464,6 +465,7 @@ public class IntroSequence : MonoBehaviour
         playerTransform.position = nightSpawnPosition;
         playerTransform.rotation = Quaternion.Euler(nightSpawnRotation);
         if (cc != null) cc.enabled = true;
+        playerTransform.GetComponent<PlayerController>()?.StandUp();
     }
 
     void TeleportPlayerToNightTwoBed()
@@ -475,6 +477,7 @@ public class IntroSequence : MonoBehaviour
         playerTransform.position = nightTwoBedSpawnPosition;
         playerTransform.rotation = Quaternion.Euler(nightTwoSpawnRotation);
         if (cc != null) cc.enabled = true;
+        playerTransform.GetComponent<PlayerController>()?.StandUp();
     }
 
     void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction callback = null, string questTag = "")
@@ -659,6 +662,12 @@ public class IntroSequence : MonoBehaviour
         }
     }
 
+    // Подвал — под первым этажом дома (пол на 0.8 м). Гараж (бетон на 0.3 м, x > -38.5) и второй
+    // этаж — не над ним: там стучащий не ходит и герой в пол не стучит.
+    static readonly Vector2 BasementMin = new Vector2(-46f, 101f);
+    static readonly Vector2 BasementMax = new Vector2(-38.6f, 118.5f);
+    const float FirstFloorY = 0.8f;
+
     // K-01: источник RandomKnock ползёт под полом к игроку. Границы — первый этаж дома.
     void SetupKnockDirector()
     {
@@ -668,7 +677,7 @@ public class IntroSequence : MonoBehaviour
         KnockDirector director = knockController.GetComponent<KnockDirector>();
         if (director == null) director = knockController.AddComponent<KnockDirector>();
         director.Initialize(player, () => skySwitcher == null || !skySwitcher.isDayTime,
-            new Vector2(-46f, 101f), new Vector2(-34f, 119.5f));
+            BasementMin, BasementMax);
         director.ListenTo(GetComponent<PlayerFloorKnock>());
     }
 

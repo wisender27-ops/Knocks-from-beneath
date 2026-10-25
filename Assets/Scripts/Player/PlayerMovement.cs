@@ -48,6 +48,7 @@ public class PlayerController : MonoBehaviour
     private bool isExhausted;
     private bool wasRunningLastFrame;
     private bool isCrouching; // логическое состояние приседа
+    private bool crouchToggled; // присед включается/выключается нажатием Ctrl, а не удержанием
 
     public bool isCameraLocked = false;
 
@@ -55,6 +56,10 @@ public class PlayerController : MonoBehaviour
         ? Vector3.ProjectOnPlane(controller.velocity, Vector3.up) : Vector3.zero;
     public bool IsCrouching => isCrouching;
     public bool IsRunning => wasRunningLastFrame;
+    // Встать (если позволяет потолок) — например, после телепорта в кровать.
+    public void StandUp() => crouchToggled = false;
+    public void CrouchDown() => crouchToggled = true;
+
     public void StopMotion()
     {
         horizontalVelocity = Vector3.zero;
@@ -146,10 +151,12 @@ public class PlayerController : MonoBehaviour
                 - (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow) ? 1f : 0f);
         
         bool isMoving = Mathf.Abs(x) > 0.1f || Mathf.Abs(z) > 0.1f;
-        bool crouchKeyHeld = Input.GetKey(KeyCode.LeftControl);
-        bool ceilingBlocksStandUp = !crouchKeyHeld && isCrouching && IsCeilingBlocking();
-        bool wantsToCrouch = crouchKeyHeld || ceilingBlocksStandUp;
         bool shiftHeld = Input.GetKey(KeyCode.LeftShift);
+        if (Input.GetKeyDown(KeyCode.LeftControl)) crouchToggled = !crouchToggled;
+        // Побежать из приседа — значит встать.
+        if (crouchToggled && shiftHeld && isMoving) crouchToggled = false;
+        bool ceilingBlocksStandUp = !crouchToggled && isCrouching && IsCeilingBlocking();
+        bool wantsToCrouch = crouchToggled || ceilingBlocksStandUp;
         if (currentStamina <= 0f) isExhausted = true;
         if (isExhausted && currentStamina >= minStaminaToRun) isExhausted = false;
 

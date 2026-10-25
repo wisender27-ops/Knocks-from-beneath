@@ -7,8 +7,9 @@ using KnocksFromBeneath;
 using UnityEngine;
 
 // Play Mode проверка K-02 (ответный стук): KnockReplyPlayProbe.Begin() из Editor-команды.
-// Ночь 2 (StartKitchenNoise): подсказка Q, кивок камеры, повтор числа ударов, молчание на
-// беспорядочный стук, пауза. Ночь 1 (StartNightOne): BeginNightOne() — ответ на стук в сцене NightOneScare.
+// Ночь 2 (StartKitchenNoise): подсказка Q, стук только сидя и над подвалом (не гараж, не 2-й этаж),
+// кивок камеры, повтор числа ударов, молчание на беспорядочный стук, пауза.
+// Ночь 1 (StartNightOne): BeginNightOne() — игрок в кровати на 2-м этаже, стучать нельзя.
 // Отчёт — .codex/verification/knock-reply.
 [DefaultExecutionOrder(-100)]
 public sealed class KnockReplyPlayProbe : MonoBehaviour
@@ -21,7 +22,8 @@ public sealed class KnockReplyPlayProbe : MonoBehaviour
         public List<string> notes = new List<string>();
     }
     private readonly Report report = new Report();
-    private static readonly Vector3 Center = new Vector3(-38f, 0.9f, 106f);
+    private static readonly Vector3 Center = new Vector3(-42.5f, 0.9f, 106f);
+    private static readonly Vector3 Garage = new Vector3(-36f, 0.9f, 110f);
     private IntroSequence intro;
     private PlayerController player;
     private PlayerFloorKnock floorKnock;
@@ -73,7 +75,24 @@ public sealed class KnockReplyPlayProbe : MonoBehaviour
         yield return Until(() => randomKnock.PlayedKnockCount > before, 15f);
         yield return null;
         yield return null;
-        Check(floorKnock.HintVisible, "После стука снизу появилась подсказка «Q — постучать в пол»");
+        Check(floorKnock.HintVisible, "После стука снизу (игрок над подвалом) появилась подсказка «Q — постучать в пол»");
+
+        Stage("rules");
+        player.StandUp();
+        yield return Wait(0.3f);
+        Check(!floorKnock.TryKnock(), "Стоя постучать нельзя");
+        Vector3 bedroom = new Vector3(-44f, 4.2f, 115f); // второй этаж над прямоугольником подвала — отсекает высота пола
+        Teleport(bedroom);
+        player.CrouchDown();
+        yield return Wait(0.4f);
+        Check(!floorKnock.IsOverBasement && !floorKnock.TryKnock(), $"Второй этаж — нельзя (y={bedroom.y:0.0})");
+        Check(!floorKnock.HintVisible, "На втором этаже подсказки нет");
+        Teleport(Garage);
+        yield return Wait(0.4f);
+        Check(!floorKnock.IsOverBasement && !floorKnock.TryKnock(), "Гараж — нельзя");
+        Teleport(Center);
+        yield return Wait(0.4f);
+        Check(player.IsCrouching && floorKnock.IsOverBasement, "Первый этаж дома, сидя — над подвалом");
 
         Stage("dip");
         yield return new WaitForEndOfFrame();
@@ -133,15 +152,23 @@ public sealed class KnockReplyPlayProbe : MonoBehaviour
         Check(scare.IsPlaying, "Сцена стука ночи 1 началась");
         // Два удара снизу (3.2 + 0.64 с), затем ожидание ответа игрока.
         yield return Wait(4.6f);
-        Check(floorKnock.HintVisible, "Ночь 1: после стука снизу видна подсказка Q");
-        Vector3 origin = player.transform.position;
-        for (int i = 0; i < 2; i++) { floorKnock.TryKnock(); yield return Wait(0.3f); }
+        player.CrouchDown();
+        yield return Wait(0.4f);
+        Check(!floorKnock.HintVisible, "Ночь 1: игрок в кровати на 2-м этаже — подсказки Q нет");
+        Check(!floorKnock.TryKnock(), "Ночь 1: на 2-м этаже постучать нельзя");
+        player.StandUp();
         yield return Until(() => !scare.IsPlaying, 15f);
-        Check(scare.AnsweredKnocks == 2, $"Ночь 1: на два удара снизу ответили двумя ({scare.AnsweredKnocks})");
-        Check(Vector3.Distance(origin, player.transform.position) < 0.6f, "Ответ пришёл без движения игрока — на стук");
+        Check(scare.AnsweredKnocks == 1, $"Ночь 1: без ответа игрока сцена идёт как раньше — один удар ({scare.AnsweredKnocks})");
     }
 
     private float Pitch() => cam.localEulerAngles.x;
+
+    // Editor в фоне теряет фокус — PauseMenuController ставит паузу; для пробы её снимаем.
+    private void Update()
+    {
+        if (PauseMenuController.IsPaused)
+            FindFirstObjectByType<PauseMenuController>()?.SendMessage("Resume", SendMessageOptions.DontRequireReceiver);
+    }
 
     private static IEnumerator Until(Func<bool> condition, float timeout)
     {

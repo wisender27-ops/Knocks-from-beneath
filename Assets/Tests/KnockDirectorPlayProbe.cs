@@ -19,7 +19,7 @@ public sealed class KnockDirectorPlayProbe : MonoBehaviour
         public List<string> notes = new List<string>();
     }
     private readonly Report report = new Report();
-    private static readonly Vector3 WalkCenter = new Vector3(-38f, 0.9f, 106f);
+    private static readonly Vector3 WalkCenter = new Vector3(-42.5f, 0.9f, 106f); // кухня/гостиная над подвалом, не гараж
     private IntroSequence intro;
     private PlayerController player;
     private CharacterController capsule;
