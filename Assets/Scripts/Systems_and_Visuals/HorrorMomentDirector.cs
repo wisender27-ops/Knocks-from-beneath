@@ -40,6 +40,7 @@ namespace KnocksFromBeneath
         }
 
         public bool IsOwner(Object requester) => requester != null && owner == requester;
+        public bool HasOwner => owner != null; // идёт чья-то пугалка
 
         public void End(Object requester, float recoverySeconds = 15f)
         {

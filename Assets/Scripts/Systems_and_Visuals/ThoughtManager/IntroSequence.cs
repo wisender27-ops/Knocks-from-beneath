@@ -130,6 +130,8 @@ public class IntroSequence : MonoBehaviour
     private HideEndingController _hideEnding;
     private bool _hasReactedToPowerOutage;
     private AudioSource _powerOutageAudio;
+    // K-02: хозяин в подвале отвечает на стук с первой ночи (до неё о нём никто не знает).
+    private bool _knockerAwake;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -198,6 +200,9 @@ public class IntroSequence : MonoBehaviour
         SetupBedsideLamp();
         SetupPowerOutageAudio();
         SetupKnockDirector();
+        var responder = gameObject.AddComponent<KnockResponder>();
+        responder.Initialize(floorKnock, knockController != null ? knockController.GetComponent<KnockDirector>() : null,
+            knockSound != null ? knockSound.ShortestClip : null, () => _knockerAwake);
         CornerPeekSequence cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
         cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
     }
@@ -208,6 +213,7 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnBedTriggerReached += _eveningRound.HandleBedReached;
         GameEvents.OnKitchenNoiseHeard += OnKitchenTriggerReached;
         GameEvents.OnHouseEntered += OnHouseEntered;
+        GameEvents.OnNightStarted += WakeKnocker;
         GameEvents.OnTrashDeliveryReady += _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed += _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten += _pieQuest.OnPieEaten;
@@ -228,6 +234,7 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnBedTriggerReached -= _eveningRound.HandleBedReached;
         GameEvents.OnKitchenNoiseHeard -= OnKitchenTriggerReached;
         GameEvents.OnHouseEntered -= OnHouseEntered;
+        GameEvents.OnNightStarted -= WakeKnocker;
         GameEvents.OnTrashDeliveryReady -= _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed -= _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten -= _pieQuest.OnPieEaten;
@@ -330,6 +337,7 @@ public class IntroSequence : MonoBehaviour
             GameEvents.OnNightTwoAwake?.Invoke();
         }
 
+        if (IsDayTwoDebugStage(startStage)) _knockerAwake = true; // ночь 1 уже была
         switch (startStage)
         {
             case DebugStoryStage.StartTrashQuest:
@@ -678,8 +686,15 @@ public class IntroSequence : MonoBehaviour
         if (director == null) director = knockController.AddComponent<KnockDirector>();
         director.Initialize(player, () => skySwitcher == null || !skySwitcher.isDayTime,
             BasementMin, BasementMax);
-        director.ListenTo(GetComponent<PlayerFloorKnock>());
+        director.SetPlayerKnock(GetComponent<PlayerFloorKnock>());
     }
+
+    void WakeKnocker() => _knockerAwake = true;
+
+    static bool IsDayTwoDebugStage(DebugStoryStage stage) =>
+        stage == DebugStoryStage.StartDay2Decoration || stage == DebugStoryStage.StartDay2Dinner ||
+        stage == DebugStoryStage.StartDay2Evening || stage == DebugStoryStage.StartDinnerCook ||
+        stage == DebugStoryStage.StartDinnerEat;
 
     void SetupBedsideLamp()
     {

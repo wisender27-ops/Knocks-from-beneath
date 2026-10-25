@@ -28,6 +28,7 @@ public sealed class KnockReplyPlayProbe : MonoBehaviour
     private PlayerController player;
     private PlayerFloorKnock floorKnock;
     private KnockDirector knock;
+    private KnockResponder responder;
     private RandomKnock randomKnock;
     private Transform cam;
     private string output;
@@ -52,6 +53,7 @@ public sealed class KnockReplyPlayProbe : MonoBehaviour
         cam = player.GetComponentInChildren<Camera>().transform;
         floorKnock = intro.GetComponent<PlayerFloorKnock>();
         knock = intro.knockController.GetComponent<KnockDirector>();
+        responder = intro.GetComponent<KnockResponder>();
         randomKnock = intro.knockController.GetComponent<RandomKnock>();
         Check(floorKnock != null, "PlayerFloorKnock добавлен IntroSequence");
         yield return nightOne ? NightOne() : NightTwo();
@@ -111,27 +113,39 @@ public sealed class KnockReplyPlayProbe : MonoBehaviour
         Check(knock.HasPlayer && knock.Attention > 0.8f, $"Стук игрока выдаёт его стучащему (внимание {knock.Attention:0.00} через 0.5 с)");
 
         Stage("repeat");
-        yield return Until(() => knock.LastReply != KnockReplyKind.None && !knock.IsReplying, 5f);
-        Check(knock.LastReply == KnockReplyKind.Repeat && knock.LastReplyCount == 1, $"Один удар — один в ответ ({knock.LastReply} {knock.LastReplyCount})");
+        yield return Until(() => responder.LastReply != KnockReplyKind.None && !responder.IsReplying, 5f);
+        Check(responder.LastReply == KnockReplyKind.Repeat && responder.LastReplyCount == 1, $"Один удар — один в ответ ({responder.LastReply} {responder.LastReplyCount})");
         yield return Wait(1f);
-        int played = knock.ReplyKnocksPlayed;
+        int played = responder.ReplyKnocksPlayed;
         int randomBefore = randomKnock.PlayedKnockCount;
         for (int i = 0; i < 3; i++) { floorKnock.TryKnock(); yield return Wait(0.3f); }
-        yield return Until(() => knock.IsReplying, 3f);
-        yield return Until(() => !knock.IsReplying, 5f);
-        Check(knock.LastReply == KnockReplyKind.Repeat && knock.LastReplyCount == 3 && knock.ReplyKnocksPlayed - played == 3,
-            $"Три удара — три в ответ (сыграно {knock.ReplyKnocksPlayed - played})");
+        yield return Until(() => responder.IsReplying, 3f);
+        yield return Until(() => !responder.IsReplying, 5f);
+        Check(responder.LastReply == KnockReplyKind.Repeat && responder.LastReplyCount == 3 && responder.ReplyKnocksPlayed - played == 3,
+            $"Три удара — три в ответ (сыграно {responder.ReplyKnocksPlayed - played})");
         Check(randomKnock.PlayedKnockCount == randomBefore, "Пока игрок стучит и ждёт ответа, случайный стук молчит");
 
         Stage("silence");
         yield return Wait(1f);
-        played = knock.ReplyKnocksPlayed;
+        played = responder.ReplyKnocksPlayed;
         for (int i = 0; i < 7; i++) { floorKnock.TryKnock(); yield return Wait(0.22f); }
         yield return Wait(2f);
         randomBefore = randomKnock.PlayedKnockCount;
-        Check(knock.LastReply == KnockReplyKind.Silence && knock.ReplyKnocksPlayed == played, "Беспорядочный стук — в ответ тишина");
+        Check(responder.LastReply == KnockReplyKind.Silence && responder.ReplyKnocksPlayed == played, "Беспорядочный стук — в ответ тишина");
         yield return Wait(6f);
         Check(randomKnock.PlayedKnockCount == randomBefore, "После беспорядочного стука стучащий затих");
+
+        Stage("controller-off");
+        // Квест кухни выключает Knock Controller — хозяин всё равно отвечает (из-под пола под игроком).
+        yield return Wait(1f);
+        intro.knockController.SetActive(false);
+        played = responder.ReplyKnocksPlayed;
+        for (int i = 0; i < 2; i++) { floorKnock.TryKnock(); yield return Wait(0.3f); }
+        yield return Until(() => responder.IsReplying, 3f);
+        yield return Until(() => !responder.IsReplying, 5f);
+        Check(responder.LastReply == KnockReplyKind.Repeat && responder.ReplyKnocksPlayed - played == 2,
+            $"Knock Controller выключен (после кухни) — ответ всё равно приходит (сыграно {responder.ReplyKnocksPlayed - played})");
+        intro.knockController.SetActive(true);
 
         Stage("pause");
         Time.timeScale = 0f;
@@ -141,7 +155,7 @@ public sealed class KnockReplyPlayProbe : MonoBehaviour
         player.isCameraLocked = true;
         Check(!floorKnock.TryKnock(), "При заблокированной камере (катсцена) Q не работает");
         player.isCameraLocked = false;
-        report.notes.Add($"knocks={floorKnock.KnockCount} replyKnocks={knock.ReplyKnocksPlayed} occluders={knock.Occluders}");
+        report.notes.Add($"knocks={floorKnock.KnockCount} replyKnocks={responder.ReplyKnocksPlayed} occluders={knock.Occluders}");
     }
 
     private IEnumerator NightOne()
