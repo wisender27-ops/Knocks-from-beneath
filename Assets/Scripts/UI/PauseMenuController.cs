@@ -11,7 +11,6 @@ namespace KnocksFromBeneath
     public sealed class PauseMenuController : MonoBehaviour
     {
         private PlayerController player;
-        private DinnerCookingWindow cooking;
         private Canvas canvas;
         private GameObject menu, confirmation;
         private SettingsMenuUI settings;
@@ -50,7 +49,6 @@ namespace KnocksFromBeneath
         private void Awake()
         {
             player = FindFirstObjectByType<PlayerController>();
-            cooking = FindFirstObjectByType<DinnerCookingWindow>();
             canvas = CreateCanvas(transform, "PauseCanvas", 32000);
             UiStyle.Fill(canvas.transform, "Dim", UiStyle.Dim).raycastTarget = true;
             UiStyle.Scanlines(canvas.transform);
@@ -82,9 +80,8 @@ namespace KnocksFromBeneath
 
         public void Pause()
         {
-            if (cooking == null) cooking = FindFirstObjectByType<DinnerCookingWindow>();
             // Выполняется раньше экранов: Esc закрывает инвентарь без открытия паузы в том же кадре.
-            if (paused || Time.timeScale <= 0f || (cooking != null && cooking.IsOpen) || RetroInventoryScreen.IsAnyOpen ||
+            if (paused || Time.timeScale <= 0f || MinigameWindow.IsAnyOpen || RetroInventoryScreen.IsAnyOpen ||
                 QuestJournalScreen.IsAnyOpen || NarrativeReadingPanel.IsModal || FadeTransitionPresentation.IsActive) return;
             previousTimeScale = Time.timeScale;
             previousAudioPause = AudioListener.pause;

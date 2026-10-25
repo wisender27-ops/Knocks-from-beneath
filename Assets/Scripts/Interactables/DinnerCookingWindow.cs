@@ -4,21 +4,18 @@ using UnityEngine;
 
 namespace KnocksFromBeneath
 {
-    public sealed class DinnerCookingWindow : MonoBehaviour
+    public sealed class DinnerCookingWindow : MinigameWindow
     {
-        private GameObject root;
         private RectTransform needle;
         private TextMeshProUGUI title, hint;
         private UiKeyHints keys;
-        private PlayerController player;
-        private PlayerInteraction interaction;
         private Action complete, cancel;
-        private bool open, finished, cameraLocked, interactionEnabled, cursorVisible;
-        private bool started, attemptUsed;
-        private CursorLockMode cursorLock;
+        private bool finished, started, attemptUsed;
         private float elapsed;
         private const float SweepSeconds = 1.5f;
-        public bool IsOpen => open;
+
+        protected override string WindowName => "DinnerCooking";
+        protected override bool CanOpen => !attemptUsed;
 
         public void ResetAttempt()
         {
@@ -29,24 +26,9 @@ namespace KnocksFromBeneath
 
         public bool Open(Action onComplete, Action onCancel)
         {
-            if (FadeTransitionPresentation.IsActive || open || attemptUsed || Time.timeScale == 0f || QuestJournalScreen.IsAnyOpen || RetroInventoryScreen.IsAnyOpen)
-                return false;
-            player = FindFirstObjectByType<PlayerController>();
-            if (player != null && player.isCameraLocked) return false;
-            interaction = FindFirstObjectByType<PlayerInteraction>();
-            if (root == null) Build();
+            if (!TryOpen()) return false;
             complete = onComplete;
             cancel = onCancel;
-            cameraLocked = player != null && player.isCameraLocked;
-            interactionEnabled = interaction != null && interaction.enabled;
-            cursorLock = Cursor.lockState;
-            cursorVisible = Cursor.visible;
-            if (player != null) player.isCameraLocked = true;
-            if (interaction != null) interaction.enabled = false;
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = false;
-            open = true;
-            root.SetActive(true);
             ShowInstructions();
             return true;
         }
@@ -62,12 +44,11 @@ namespace KnocksFromBeneath
             MoveNeedle(0f);
         }
 
-        private void Update()
+        protected override void Tick()
         {
-            if (!open || Time.timeScale == 0f || PauseMenuController.InputBlocked) return;
             if (!started)
             {
-                if (Input.GetKeyDown(KeyCode.Escape)) { Close(false); return; }
+                if (CancelPressed) { Close(false); return; }
                 if (Input.GetKeyDown(KeyCode.Return))
                 {
                     started = attemptUsed = true;
@@ -106,76 +87,27 @@ namespace KnocksFromBeneath
             needle.localRotation = Quaternion.Euler(0f, 0f, angle - 90f);
         }
 
+        protected override void Cancel() => Close(false);
+
         private void Close(bool success)
         {
-            if (!open) return;
-            open = false;
-            root.SetActive(false);
-            if (player != null) player.isCameraLocked = cameraLocked;
-            if (interaction != null) interaction.enabled = interactionEnabled;
-            Cursor.lockState = cursorLock;
-            Cursor.visible = cursorVisible;
+            if (!CloseWindow()) return;
             // Закрытие после старта тоже расходует попытку и завершает квест готовки.
             var callback = success || started ? complete : cancel;
             complete = cancel = null;
             callback?.Invoke();
         }
 
-        private void OnDisable() => Close(false);
-        private void OnDestroy()
+        protected override void Build(Transform root)
         {
-            Close(false);
-            if (root != null) Destroy(root);
-        }
-
-        private void Build()
-        {
-            root = new GameObject("DinnerCooking", typeof(RectTransform), typeof(Canvas), typeof(UnityEngine.UI.CanvasScaler));
-            var canvas = root.GetComponent<Canvas>();
-            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
-            canvas.sortingOrder = 200;
-            var scaler = root.GetComponent<UnityEngine.UI.CanvasScaler>();
-            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1280f, 720f);
-            scaler.matchWidthOrHeight = 0.5f;
-            var shade = Rect("Shade", root.transform, Vector2.zero, Vector2.zero);
-            shade.anchorMin = Vector2.zero;
-            shade.anchorMax = Vector2.one;
-            shade.gameObject.AddComponent<UnityEngine.UI.Image>().color = new Color(0f, 0f, 0f, 0.62f);
-            var arc = Rect("CookingArc", root.transform, new Vector2(0f, -200f), new Vector2(700f, 700f));
+            var arc = Rect("CookingArc", root, new Vector2(0f, -200f), new Vector2(700f, 700f));
             arc.gameObject.AddComponent<DinnerCookingArc>().raycastTarget = false;
             needle = Rect("Needle", arc, Vector2.zero, new Vector2(6f, 66f));
             needle.gameObject.AddComponent<UnityEngine.UI.Image>().color = UiStyle.Ivory;
             title = Label("Title", 215f, 30f);
             title.color = UiStyle.Amber;
             hint = Label("Controls", -250f, 20f);
-            keys = UiKeyHints.Create(root.transform, "Keys", title.font);
-            keys.RectTransform.anchorMin = keys.RectTransform.anchorMax = keys.RectTransform.pivot = new Vector2(0.5f, 0.5f);
-            keys.RectTransform.anchoredPosition = new Vector2(0f, -300f);
-        }
-
-        private static RectTransform Rect(string name, Transform parent, Vector2 position, Vector2 size)
-        {
-            var obj = new GameObject(name, typeof(RectTransform));
-            obj.transform.SetParent(parent, false);
-            var rect = (RectTransform)obj.transform;
-            rect.anchorMin = rect.anchorMax = rect.pivot = new Vector2(0.5f, 0.5f);
-            rect.anchoredPosition = position;
-            rect.sizeDelta = size;
-            return rect;
-        }
-
-        private TextMeshProUGUI Label(string name, float y, float size)
-        {
-            var text = Rect(name, root.transform, new Vector2(0f, y), new Vector2(1000f, 70f))
-                .gameObject.AddComponent<TextMeshProUGUI>();
-            var manager = FindFirstObjectByType<QuestManager>();
-            text.font = UiStyle.Font(manager != null && manager.questUiText != null ? manager.questUiText.font : null);
-            text.fontSize = size;
-            text.alignment = TextAlignmentOptions.Center;
-            text.color = UiStyle.Ivory;
-            text.raycastTarget = false;
-            return text;
+            keys = KeyHints(title.font, -300f);
         }
     }
 

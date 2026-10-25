@@ -183,7 +183,7 @@
 - [x] **F-01a. Баг коллайдеров декора кухни** — отпущенный
   `room-decoration` остаётся без коллайдеров; плюс обновить 2 устаревших теста `PickupControllerTests`.
   - Приёмка: EditMode 106/106; в Play Mode декор дня 2, брошенный мимо зоны, лежит на полу.
-- [~] **F-02. Общий `MinigameWindow`.** _(в работе у deskif с 2026-10-25 — не брать)_ Вынести из `DinnerCookingWindow` общий контракт окна:
+- [x] **F-02. Общий `MinigameWindow`.** Вынести из `DinnerCookingWindow` общий контракт окна:
   гейты открытия, сохранение/восстановление камеры/взаимодействия/курсора, Esc = отмена,
   корректное поведение при паузе (`PauseMenuController`) и закрытии сцены, построение корня UI
   в VHS-стиле (`UiStyle`, `UiKeyHints`). Перевести готовку на базу **без изменения поведения**.
@@ -191,6 +191,11 @@
     готовка работает как раньше; пауза во время мини-игры не ломает курсор/камеру.
   - Файлы: `Interactables/DinnerCookingWindow.cs`, новый `Systems_and_Visuals/Minigames/MinigameWindow.cs`
     (+ .meta через Unity), тест на восстановление состояния.
+  - Сделано: `MinigameWindow` (абстрактный): `TryOpen()`/`CloseWindow()`, статический
+    `MinigameWindow.IsAnyOpen/Current` (одно окно за раз), ввод в `Tick()` только вне паузы,
+    `Cancel()` на Esc/OnDisable/OnDestroy, корень UI + `Rect/Label/KeyHints`. Новая мини-игра:
+    наследник с `WindowName`, `Build`, `Tick`, при необходимости `CanOpen`/`Cancel`.
+    `PauseMenuController` блокирует паузу по `MinigameWindow.IsAnyOpen` (раньше — только готовка).
 - [ ] **F-03. `StoryFlags`.** Расширить `GameState` (или новый статический `StoryFlags` рядом) —
   bool/int флаги (`knockTrust`, `sawRecording`, `cluesFound`, `frontDoorLocked`, `neighborNoteRead`,
   …), сброс при новой игре (`RuntimeInitializeOnLoadMethod` + старт из меню), запись из
@@ -348,3 +353,4 @@ _(дата — решение — кто/где принято)_
 | 2026-10-25 | F-01 | — | Снимок раздела 2 сверен с кодом на `660b931` — совпадает (`IntroSequence` 1064 строки, 19 EditMode-файлов, `LockFrontDoor()`→false, `HandleDoorEscape()` пуст, `(2/4)` захардкожен, `ForceTurnOn()` в `NeighborVisitSequence:45`; `frontDoorLocked` только сбрасывается в false). Клавиши Q/F/G/K/V/X/T свободны (ЛКМ занята `PlayerInteraction` — для M1 только Q). EditMode в живом Editor: 106 тестов, 103 ✓, 3 ✗ | Падают: (1) `KitchenRelease_RestoresDisabledColliders` — **реальный баг**: для `room-decoration` коллайдеры выключаются дважды (`_kitchenColliders`, затем `_carryColliders` запоминает уже `false`), в `ClearHeldObject` второй цикл возвращает `false` → отпущенный декор дня 2 остаётся без коллайдера. (2) `SmallObject_UsesBothHands` и (3) `ColdPie_UsesPhysicalCarry` — устаревшие тесты: хват двумя руками теперь только для крупных/тяжёлых (`b5158f7`), коллайдеры при переноске выключаются намеренно. Не исправлено (вне F-01). `.codex/studio/project-map.md` устарел (2026-10-01) → Q-03. PlayMode не запускался |
 | 2026-10-25 | F-01a | см. коммит | `ClearHeldObject` восстанавливает коллайдеры в обратном порядке захвата (carry → kitchen). Устаревшие тесты приведены к текущему поведению: `SmallLightObject_IsNotTwoHanded`, `ColdPie_UsesPhysicalCarryAndRestoresCollidersOnRelease`. EditMode **106/106**. Play Mode (Main): `Sarten_01` взята через `TryGrab` → 0/2 коллайдеров в руках → после `Release` 2/2, не kinematic | Приземление на пол в Play Mode не подтверждено: за 3 с позиция не изменилась (вероятно, Editor в фоне не шагал физику). Предупреждение «Setting linear velocity of a kinematic body» при захвате декора — старое, не трогал. Полный проход дня 2 руками не делался |
 | 2026-10-25 | F-02 взята в работу (`[~]`, deskif) | — | — | Реализация идёт, статус выставлен, чтобы работа не дублировалась |
+| 2026-10-25 | F-02 | см. коммит | EditMode **110/110** (106 + 4 новых `MinigameWindowTests`: восстановление камеры/взаимодействия/курсора, одно окно за раз, отказ при заблокированной камере, сброс готовки). Play Mode (Main, `StartDinnerCook`): `StoveInteractable.Interact()` → окно открыто, камера заблокирована, взаимодействие выкл., курсор None/скрыт, иерархия UI та же (Shade/CookingArc/Title/Controls/Keys); `Pause()` во время окна не срабатывает (как раньше); завершение → ужин готов, квест `dinner-eat` активен, камера/взаимодействие/курсор Locked восстановлены; пауза/продолжение после окна корректны. Ошибок в консоли нет | Клавиши (Enter/Пробел/Esc) не нажимались физически — завершение вызвано через `Close(true)` из Editor-команды; поведение `Tick()` перенесено дословно. Потеря фокуса окна во время мини-игры паузу по-прежнему не включает (поведение сохранено намеренно) |
