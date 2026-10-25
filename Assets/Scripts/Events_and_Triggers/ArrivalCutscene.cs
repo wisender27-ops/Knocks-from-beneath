@@ -271,6 +271,9 @@ namespace KnocksFromBeneath
             }
             player.StopMotion();
             player.isCameraLocked = true;
+            // PlayerController выключен на время катсцены и не прячет курсор сам.
+            Cursor.lockState = CursorLockMode.Locked;
+            Cursor.visible = false;
             captured = true;
             IsPlaying = true;
         }

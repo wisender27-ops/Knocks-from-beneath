@@ -41,6 +41,7 @@ public class EndingScreen : MonoBehaviour
 
     IEnumerator ShowEndingRoutine(string title)
     {
+        PlayerController.CursorFree = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 

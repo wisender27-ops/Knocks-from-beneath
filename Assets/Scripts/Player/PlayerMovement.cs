@@ -84,6 +84,7 @@ public class PlayerController : MonoBehaviour
         ApplyUserSettings();
         SettingsStore.ApplyMasterVolume();
 
+        CursorFree = false;
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -91,9 +92,29 @@ public class PlayerController : MonoBehaviour
     void Update()
     {
         if (settingsRevision != SettingsStore.Revision) ApplyUserSettings();
+        EnforceCursorHidden();
         if (PauseMenuController.InputBlocked || Time.timeScale <= 0f) return;
         HandleLook();
         HandleMovement();
+    }
+
+    // Финал и экраны концовки показывают курсор намеренно — тогда принудительную блокировку не применяем.
+    public static bool CursorFree;
+
+    // Курсор блокировался только в Start, и любой сброс (меню, потеря фокуса, Esc в браузере/редакторе)
+    // оставлял его видимым на всю игру. Пока не открыт ни один UI-экран, возвращаем блокировку каждый кадр.
+    private void EnforceCursorHidden()
+    {
+        if (CursorFree || Time.timeScale <= 0f || PauseMenuController.IsPaused || RetroInventoryScreen.IsAnyOpen ||
+            QuestJournalScreen.IsAnyOpen || MinigameWindow.IsAnyOpen || NarrativeReadingPanel.IsModal)
+            return;
+        if (Cursor.lockState != CursorLockMode.Locked) Cursor.lockState = CursorLockMode.Locked;
+        if (Cursor.visible) Cursor.visible = false;
+    }
+
+    void OnApplicationFocus(bool hasFocus)
+    {
+        if (hasFocus) EnforceCursorHidden();
     }
 
     private void ApplyUserSettings()

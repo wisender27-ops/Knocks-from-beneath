@@ -200,6 +200,7 @@ public class FinaleController : MonoBehaviour
 
         yield return new WaitForSeconds(3f);
 
+        PlayerController.CursorFree = true;
         Cursor.lockState = CursorLockMode.None;
         Cursor.visible = true;
 

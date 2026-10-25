@@ -66826,8 +66826,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 652671a0c3fc0094dba975608c615e58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IntroSequence
-  useDebugSkip: 1
-  startStage: 20
+  useDebugSkip: 0
+  startStage: 0
   openingCutscene: {fileID: 49200818}
   playerTransform: {fileID: 7074124332312789236}
   playerInventory: {fileID: 6977330415233415940}
