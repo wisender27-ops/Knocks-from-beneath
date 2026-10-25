@@ -19,6 +19,7 @@ namespace KnocksFromBeneath
         private const float DipAngle = 5f;
         private const float DipRise = 0.06f;
         private const float DipFall = 0.22f;
+        private const float JoltDuration = 0.55f;
         private const float HintSeconds = 7f;
         private const int MaxHintShows = 3;
         private const float AreaCheckInterval = 0.2f;
@@ -39,6 +40,8 @@ namespace KnocksFromBeneath
         private AudioClip _clip;
         private float _nextTap;
         private float _dipTime = float.NegativeInfinity;
+        private float _joltTime = float.NegativeInfinity;
+        private float _joltStrength;
         private Quaternion _appliedDip = Quaternion.identity;
         private Quaternion _leftRotation;
         private UiKeyHints _hint;
@@ -83,6 +86,13 @@ namespace KnocksFromBeneath
             if (KnockCount > 0 || _hintShows >= MaxHintShows || _hint == null) return;
             if (Time.time < _hintUntil) return;
             _hintPending = true;
+        }
+
+        // Встряска камеры от удара снизу (градусы в пике, гаснет за JoltDuration).
+        public void Jolt(float strength)
+        {
+            _joltTime = Time.time;
+            _joltStrength = strength;
         }
 
         // Удар без клавиши — для Play-проб и сценариев.
@@ -169,10 +179,25 @@ namespace KnocksFromBeneath
         private void LateUpdate()
         {
             if (_camera == null || _player == null || _player.isCameraLocked) return;
+            float dip = 0f;
             float t = Time.time - _dipTime;
-            if (t < 0f || t > DipRise + DipFall) return;
-            float k = t < DipRise ? t / DipRise : 1f - (t - DipRise) / DipFall;
-            _appliedDip = Quaternion.Euler(DipAngle * Mathf.SmoothStep(0f, 1f, k), 0f, 0f);
+            if (t >= 0f && t <= DipRise + DipFall)
+            {
+                float k = t < DipRise ? t / DipRise : 1f - (t - DipRise) / DipFall;
+                dip = DipAngle * Mathf.SmoothStep(0f, 1f, k);
+            }
+            Vector3 jolt = Vector3.zero;
+            float jt = Time.time - _joltTime;
+            if (jt >= 0f && jt < JoltDuration)
+            {
+                float a = _joltStrength * Mathf.Pow(1f - jt / JoltDuration, 2f);
+                float n = jt * 35f;
+                jolt = new Vector3((Mathf.PerlinNoise(n, 0.3f) - 0.3f) * 2f * a,
+                    (Mathf.PerlinNoise(0.7f, n) - 0.5f) * 2f * a,
+                    (Mathf.PerlinNoise(n, n) - 0.5f) * a);
+            }
+            if (dip == 0f && jolt == Vector3.zero) return;
+            _appliedDip = Quaternion.Euler(dip + jolt.x, jolt.y, jolt.z);
             _camera.localRotation *= _appliedDip;
             _leftRotation = _camera.localRotation;
         }

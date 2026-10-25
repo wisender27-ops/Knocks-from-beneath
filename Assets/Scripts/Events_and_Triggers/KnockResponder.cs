@@ -8,6 +8,7 @@ namespace KnocksFromBeneath
     // Knock Controller: тот включён только в отдельные этапы ночи 2, а хозяин в подвале — всегда.
     // Если слежка K-01 (KnockDirector) активна — ответ идёт из её источника, иначе из точки под полом
     // под игроком, глушённой как через одно перекрытие. Короткая серия (1..4) — повтор, длинная — тишина.
+    // Первый спам за игру — «срыв»: через 3–4 с снизу бьют со всей силы (встряска камеры), потом тишина.
     [DisallowMultipleComponent]
     public sealed class KnockResponder : MonoBehaviour
     {
@@ -20,6 +21,10 @@ namespace KnocksFromBeneath
         private const float DepthBelowFloor = 1.2f;
         private const float ThroughFloorCutoff = 1250f; // как у K-01 при двух препятствиях
         private const float ThroughFloorVolume = 0.72f;
+        private const float RageDelayMin = 3f;
+        private const float RageDelayMax = 4f;
+        private const float RageJolt = 3.5f;
+        private const float RagePitch = 0.65f;
 
         private readonly KnockReply _reply = new KnockReply();
         private PlayerFloorKnock _playerKnock;
@@ -29,11 +34,15 @@ namespace KnocksFromBeneath
         private AudioSource _source;
         private Coroutine _replyRoutine;
         private Vector3 _lastFloor;
+        private AudioSource _rageSource;
+        private AudioClip[] _rageLayers;
 
         public bool IsReplying => _replyRoutine != null;
         public KnockReplyKind LastReply { get; private set; }
         public int LastReplyCount { get; private set; }
         public int ReplyKnocksPlayed { get; private set; }
+        public bool HasRaged { get; private set; } // «срыв» случается один раз за игру
+        public float LastRageTime { get; private set; } = float.NegativeInfinity;
         public event Action<KnockReplyKind, int> Replied;
 
         public void Initialize(PlayerFloorKnock playerKnock, KnockDirector director, AudioClip clip, Func<bool> isAwake)
@@ -51,6 +60,19 @@ namespace KnocksFromBeneath
                 _source.volume = ThroughFloorVolume;
                 _source.gameObject.AddComponent<AudioLowPassFilter>().cutoffFrequency = ThroughFloorCutoff;
             }
+            if (_rageSource == null)
+            {
+                // Без глушения: удар такой силы пробивает пол.
+                _rageSource = HorrorMomentDirector.CreateSource(transform, "Knock rage under floor", 30f);
+                _rageSource.minDistance = 8f;
+                _rageSource.priority = 10;
+            }
+            _rageLayers = new[]
+            {
+                Resources.Load<AudioClip>("Audio/Horror/impactPunch_heavy_000"),
+                Resources.Load<AudioClip>("Audio/Horror/impactWood_heavy_000"),
+                Resources.Load<AudioClip>("Audio/Horror/impactPlank_medium_000")
+            };
         }
 
         private void OnDestroy()
@@ -83,6 +105,11 @@ namespace KnocksFromBeneath
             LastReplyCount = count;
             if (kind == KnockReplyKind.Repeat && _clip != null)
                 _replyRoutine = StartCoroutine(RepeatRoutine(count));
+            else if (kind == KnockReplyKind.Silence && !HasRaged && _rageLayers[0] != null)
+            {
+                HasRaged = true;
+                _replyRoutine = StartCoroutine(RageRoutine(count));
+            }
             else
             {
                 if (DirectorActive) _director.HoldKnocks(SilenceSeconds);
@@ -90,9 +117,9 @@ namespace KnocksFromBeneath
             }
         }
 
-        private IEnumerator RepeatRoutine(int count)
+        // Не перебиваем чужую пугалку; если она затянулась — ответа не будет.
+        private IEnumerator WaitUntilFree()
         {
-            // Не перебиваем чужую пугалку; если она затянулась — ответа не будет.
             float busy = 0f;
             var horror = HorrorMomentDirector.Instance;
             while (horror != null && horror.HasOwner && busy < BusyTimeout)
@@ -100,7 +127,40 @@ namespace KnocksFromBeneath
                 if (horror.GameplayAvailable) busy += Time.deltaTime;
                 yield return null;
             }
-            if (horror != null && horror.HasOwner)
+        }
+
+        private static bool Busy => HorrorMomentDirector.Instance != null && HorrorMomentDirector.Instance.HasOwner;
+
+        // Тишина, а потом — со всей силы, прямо под тем местом, где игрок стучал.
+        private IEnumerator RageRoutine(int count)
+        {
+            yield return WaitUntilFree();
+            float delay = UnityEngine.Random.Range(RageDelayMin, RageDelayMax);
+            if (DirectorActive) _director.HoldKnocks(delay + SilenceSeconds);
+            yield return WaitPlayable(delay);
+            if (Busy)
+            {
+                HasRaged = false; // не сработало — пусть сорвётся в другой раз
+                _replyRoutine = null;
+                yield break;
+            }
+            _rageSource.transform.position = _lastFloor - Vector3.up * 0.6f;
+            // Pitch источника общий для всех one-shot: опускаем весь «аккорд» удара разом.
+            float[] volumes = { 1f, 1f, 0.8f };
+            _rageSource.pitch = RagePitch;
+            for (int i = 0; i < _rageLayers.Length; i++)
+                if (_rageLayers[i] != null) _rageSource.PlayOneShot(_rageLayers[i], volumes[i]);
+            if (_playerKnock != null) _playerKnock.Jolt(RageJolt);
+            LastRageTime = Time.time;
+            if (DirectorActive) _director.HoldKnocks(SilenceSeconds);
+            _replyRoutine = null;
+            Replied?.Invoke(KnockReplyKind.Silence, count);
+        }
+
+        private IEnumerator RepeatRoutine(int count)
+        {
+            yield return WaitUntilFree();
+            if (Busy)
             {
                 _replyRoutine = null;
                 yield break;

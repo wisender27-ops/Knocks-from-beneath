@@ -125,15 +125,34 @@ public sealed class KnockReplyPlayProbe : MonoBehaviour
             $"Три удара — три в ответ (сыграно {responder.ReplyKnocksPlayed - played})");
         Check(randomKnock.PlayedKnockCount == randomBefore, "Пока игрок стучит и ждёт ответа, случайный стук молчит");
 
-        Stage("silence");
+        Stage("rage");
         yield return Wait(1f);
         played = responder.ReplyKnocksPlayed;
         for (int i = 0; i < 7; i++) { floorKnock.TryKnock(); yield return Wait(0.22f); }
-        yield return Wait(2f);
+        float lastTap = Time.time;
+        yield return Until(() => responder.HasRaged && responder.LastRageTime > lastTap, 8f);
+        float rageAfter = responder.LastRageTime - lastTap;
+        // Серия кончается через 1.1 с паузы, потом 3–4 с тишины.
+        Check(responder.HasRaged && rageAfter > 4f && rageAfter < 5.4f, $"Первый спам — тишина, потом удар со всей силы ({rageAfter:0.0} с после последнего стука)");
+        Check(responder.ReplyKnocksPlayed == played, "На спам не повторяет число ударов");
+        float lo = float.MaxValue, hi = float.MinValue;
+        for (float t = 0f; t < 0.35f; t += Time.deltaTime)
+        {
+            yield return new WaitForEndOfFrame();
+            float p = Mathf.DeltaAngle(0f, Pitch());
+            lo = Mathf.Min(lo, p); hi = Mathf.Max(hi, p);
+        }
+        Check(hi - lo > 1f, $"Камеру встряхнуло (размах {hi - lo:0.0}°)");
         randomBefore = randomKnock.PlayedKnockCount;
-        Check(responder.LastReply == KnockReplyKind.Silence && responder.ReplyKnocksPlayed == played, "Беспорядочный стук — в ответ тишина");
         yield return Wait(6f);
-        Check(randomKnock.PlayedKnockCount == randomBefore, "После беспорядочного стука стучащий затих");
+        Check(randomKnock.PlayedKnockCount == randomBefore, "После удара стучащий затих");
+
+        Stage("silence");
+        float rageTime = responder.LastRageTime;
+        for (int i = 0; i < 7; i++) { floorKnock.TryKnock(); yield return Wait(0.22f); }
+        yield return Wait(6f);
+        Check(responder.LastReply == KnockReplyKind.Silence && responder.LastRageTime == rageTime && responder.ReplyKnocksPlayed == played,
+            "Второй спам — просто тишина, без нового удара");
 
         Stage("controller-off");
         // Квест кухни выключает Knock Controller — хозяин всё равно отвечает (из-под пола под игроком).
