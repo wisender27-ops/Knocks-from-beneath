@@ -44,6 +44,7 @@ Only one agent may write Unity scenes/prefabs or operate the Editor at a time. T
 - For gameplay/UI/physics/animation changes, verify acceptance criteria in Play Mode and relevant scenes: pickup/equip/use, pause/menu/cursor/camera, quest transitions and missing references as applicable. Coordinate with the user if entering Play Mode would discard an unsaved scene or interrupt active play.
 - Compilation is not runtime proof. Record tests actually executed, outcomes, and precise unverified checks. Do not claim success from tool availability or empty logs alone.
 - Review the complete diff, including asset/meta pairs. Stage only task-owned files/hunks. Commit only when requested; never push/publish without explicit authorization.
+- Exception — `DESIGN_ROADMAP.md` task sync between the two developers (standing authorization): `git pull` before taking a task; on take, mark `[~]` with the owner and immediately commit + push; on close, mark `[x]` + journal row and immediately commit (with the task's code) + push. Never take a task another developer marked `[~]`. No force-push.
 - Answer in concise Russian: result, verification, limitations, commit. Apply changes directly when asked to implement; for a code-only answer, show only the changed function/block. These project rules specialize the global code-snippet preference for repository work.
 
 ## Code Review Rules
