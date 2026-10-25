@@ -15,6 +15,8 @@ namespace KnocksFromBeneath
         private const float SlowWalkMargin = 0.15f;
         private const float RunSpeedFactor = 1.25f;
         private const float TeleportDistance = 1.5f;
+        private const float AudibleDistance = 6f;
+        private const float FadeOutDistance = 25f;
 
         private readonly KnockTracker _tracker = new KnockTracker();
         private PlayerController _player;
@@ -34,6 +36,7 @@ namespace KnocksFromBeneath
             _home = transform.position;
             _tracker.BoundsMin = houseMin;
             _tracker.BoundsMax = houseMax;
+            ConfigureAudio(GetComponent<AudioSource>());
             _initialized = true;
             if (isActiveAndEnabled) ResetToHome();
         }
@@ -46,6 +49,17 @@ namespace KnocksFromBeneath
         private void OnDisable()
         {
             if (_initialized) transform.position = _home;
+        }
+
+        // Направление «под ногами» слышно только у полностью 3D-источника; сцена задаёт 0.7 и
+        // затухание от 2 м — со второго этажа (≈10 м) стук почти не слышен. Сквозь перекрытия
+        // он должен читаться: громкость держится до 6 м и спадает к 25 м.
+        private static void ConfigureAudio(AudioSource source)
+        {
+            if (source == null) return;
+            source.spatialBlend = 1f;
+            source.minDistance = AudibleDistance;
+            source.maxDistance = Mathf.Max(source.maxDistance, FadeOutDistance);
         }
 
         private void ResetToHome()
