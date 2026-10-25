@@ -1,0 +1,189 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7ea0d3e70a0fd4a4ea5cf855598e7a46, type: 3}
+  m_Name: GameSounds
+  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.GameSoundLibrary
+  ui:
+  - {fileID: 8300000, guid: 25db3b8047fa2c54c87f594f39e637b0, type: 3}
+  - {fileID: 0}
+  - {fileID: 8300000, guid: 021b0b9caf1dc2048a6c6d15293e0ef1, type: 3}
+  - {fileID: 8300000, guid: 4c767c5b0bb47474db957e7a19c075da, type: 3}
+  - {fileID: 8300000, guid: abf5cacdf8ddd424d94e1af38d13f6aa, type: 3}
+  - {fileID: 8300000, guid: 07a3fa1d7cfb50645b5d012ada92a9cf, type: 3}
+  - {fileID: 8300000, guid: 6c6e26212154e134cbaca3f4d42a1e6f, type: 3}
+  - {fileID: 8300000, guid: ca454d05bda1e2e4a86e7f7b6b876572, type: 3}
+  - {fileID: 8300000, guid: 6421069f100d180438630a6b0396800a, type: 3}
+  - {fileID: 8300000, guid: 25c9317d670164c48b2ee81d0b025083, type: 3}
+  - {fileID: 8300000, guid: 41d70b79aee61d146b338b9b59cc5c17, type: 3}
+  - {fileID: 8300000, guid: 55fbbe47b920b06498d8306788fdd42c, type: 3}
+  - {fileID: 8300000, guid: ea8fa46d0a6f73a49923347f58bc4f0a, type: 3}
+  - {fileID: 8300000, guid: ce2445d62362f1d4f962e987f9192608, type: 3}
+  - {fileID: 8300000, guid: f7ef92f5b15448f44b8da7914baa0e05, type: 3}
+  thoughtTicks:
+  - {fileID: 8300000, guid: a16af9dd616fea345b2c034836433ce3, type: 3}
+  - {fileID: 8300000, guid: bf0c80f63c7103c46b918e5a1ec1dc06, type: 3}
+  dayOutside: {fileID: 8300000, guid: 044afa20b33580443a212dac41985b9f, type: 3}
+  nightOutside: {fileID: 8300000, guid: 78f5c339acefe524fa8ef5c810792987, type: 3}
+  rain: {fileID: 8300000, guid: 062ccd415055c8547b18b3c8f0e8c643, type: 3}
+  basement: {fileID: 8300000, guid: 0ceeb69f84c1a0e488c4abaa8629d770, type: 3}
+  roomTone: {fileID: 8300000, guid: 97bba51572228214aaef19eeef738c24, type: 3}
+  fridgeHum: {fileID: 8300000, guid: 2da1c15c38b785f47b457ac3e7f579c1, type: 3}
+  lampBuzz: {fileID: 8300000, guid: 71a54c78628f8e341ad03a090ab6e1e3, type: 3}
+  droneMenu: {fileID: 8300000, guid: 15a0632eabc12504eb48f7aa97985bb2, type: 3}
+  droneNight1: {fileID: 8300000, guid: d1511d8888ef18b4eb5d64bc34910e80, type: 3}
+  droneNight2: {fileID: 8300000, guid: bc035230a914b6f4c8526969575f5479, type: 3}
+  droneBasement: {fileID: 8300000, guid: 9f0d278533627494a8be6bc8add3bebe, type: 3}
+  houseCreaks:
+  - {fileID: 8300000, guid: ae1e8157b092e1c409a6348e5ff3e9bb, type: 3}
+  - {fileID: 8300000, guid: 710b689d22eeca84c8a625e90aa1f703, type: 3}
+  - {fileID: 8300000, guid: 0659599565a6bfd42b62efad5b18b9bc, type: 3}
+  - {fileID: 8300000, guid: 582929ae44a93634f9a0f5cffdc9312c, type: 3}
+  - {fileID: 8300000, guid: dec35f2f422fffc4690af638b6546ab9, type: 3}
+  thunder:
+  - {fileID: 8300000, guid: 30123761bb2effd4bb02d795fb04d297, type: 3}
+  - {fileID: 8300000, guid: 80634a7841d73734da453547f38eaff8, type: 3}
+  distantDogs:
+  - {fileID: 8300000, guid: acd3165a13b74e3499cc09c93ea30d37, type: 3}
+  - {fileID: 8300000, guid: f51f4319fd534a94e9459229878902b5, type: 3}
+  heartbeat: {fileID: 8300000, guid: 1592b5ab23dd8374e9df0ed21e685121, type: 3}
+  tinnitus: {fileID: 8300000, guid: 9e7cb84dab467b44e9a9ba0bfc23b742, type: 3}
+  riser: {fileID: 8300000, guid: f90746f1f6bef934ab64aa5bb6841162, type: 3}
+  subHits:
+  - {fileID: 8300000, guid: dac55fbd16b915c4898fc9af4c0ea075, type: 3}
+  - {fileID: 8300000, guid: eb84f79242e1458439ea20335ebee512, type: 3}
+  darkHits:
+  - {fileID: 8300000, guid: aecd1146c67024c49b63d2be69af892c, type: 3}
+  - {fileID: 8300000, guid: bffc4e1797403fb4f8ce7ad40dbe35ce, type: 3}
+  - {fileID: 8300000, guid: 68cd87ce7aa8ba440bdc58e9a7f2a762, type: 3}
+  - {fileID: 8300000, guid: 2591be4b88e28674498d18e2a9347f23, type: 3}
+  - {fileID: 8300000, guid: fbe850b9b003b724990261c0eea5515c, type: 3}
+  breathScared:
+  - {fileID: 8300000, guid: 28d99cd6551ef5b4e97578f607070f1d, type: 3}
+  - {fileID: 8300000, guid: 8f54c1269b12e37468f36bbab0c6d8fd, type: 3}
+  stepWood:
+  - {fileID: 8300000, guid: 3f116801b4d1adc4493f9720e0883de7, type: 3}
+  - {fileID: 8300000, guid: 26e3d4408f7214a46908d8a8564f59f4, type: 3}
+  - {fileID: 8300000, guid: d87c7d1af59ccaf45941c5395559688c, type: 3}
+  - {fileID: 8300000, guid: 05c2812d4589967429b1892434e9e167, type: 3}
+  - {fileID: 8300000, guid: b9f6278e0a2d0074389b89a9521bdc74, type: 3}
+  stepConcrete:
+  - {fileID: 8300000, guid: eb6b19f41bb10dd41a0beb6dd788ffd6, type: 3}
+  - {fileID: 8300000, guid: 0d4fb39a63406374eb100cb51ea1f24e, type: 3}
+  - {fileID: 8300000, guid: c338dbf8d32795646888fc588a33aa56, type: 3}
+  - {fileID: 8300000, guid: 9bc8788a583da4b4181363c0b306ee5f, type: 3}
+  - {fileID: 8300000, guid: 4bfecc883c037ab448103f8dc1238576, type: 3}
+  stepGrass:
+  - {fileID: 8300000, guid: 338aaced5024e614595630d1b29e1587, type: 3}
+  - {fileID: 8300000, guid: 989900240265511488c550a1a0ffa431, type: 3}
+  - {fileID: 8300000, guid: a037d38ea85fddd4496f648734af67f7, type: 3}
+  - {fileID: 8300000, guid: fa523bdda8b4dd745a8cf562623e7450, type: 3}
+  - {fileID: 8300000, guid: 22053b0f1e7cc024895fae42e6a4fa88, type: 3}
+  stepCarpet:
+  - {fileID: 8300000, guid: 0f362d7a885f655489a8d0c83b307f9e, type: 3}
+  - {fileID: 8300000, guid: 581f692eaef89974e9f2ddc053af2728, type: 3}
+  - {fileID: 8300000, guid: 5fc2b1d9f8ac6c649a07a7a07cb970c1, type: 3}
+  - {fileID: 8300000, guid: 884bc51178153e947b8e2218005362b6, type: 3}
+  - {fileID: 8300000, guid: 9029bdc7ce71cf34eabad5d29d3abfd9, type: 3}
+  stepStairs:
+  - {fileID: 8300000, guid: 7a2dabeb14ee9274da107e6836d7bb01, type: 3}
+  - {fileID: 8300000, guid: 85f010f52a47aba4082efb7d4fddc950, type: 3}
+  - {fileID: 8300000, guid: c759a31f9294a8e46921251642e33094, type: 3}
+  - {fileID: 8300000, guid: bb69cdf3926d0a9409e04c4e6289be5b, type: 3}
+  - {fileID: 8300000, guid: 492d0cf3b4bc1f34c983c34d58b22b0e, type: 3}
+  stepDirt:
+  - {fileID: 8300000, guid: c18b23d0cba745c40a78f2bff4a8a930, type: 3}
+  - {fileID: 8300000, guid: 1cc88915d4dc95a4fa58e422ddd07b69, type: 3}
+  - {fileID: 8300000, guid: 878d4131baf275e44bdc6481ce57cfad, type: 3}
+  - {fileID: 8300000, guid: 9eede1af1f690be44887fb715e30bfa5, type: 3}
+  - {fileID: 8300000, guid: ac0afcbd0c427bf4ca0bb901a4b8a6a4, type: 3}
+  - {fileID: 8300000, guid: 21ccbce5d01ce3241a2996a75d97eb3e, type: 3}
+  stepMetal:
+  - {fileID: 8300000, guid: 862e54dbe9090074c8c1552de6b2ea22, type: 3}
+  - {fileID: 8300000, guid: 8374c3bf795c31e4ba8f3c766d013493, type: 3}
+  - {fileID: 8300000, guid: d91306e585dc7d2468d8bb98f069dcf5, type: 3}
+  - {fileID: 8300000, guid: 368c50403d9e7fa44949fba07c2b4668, type: 3}
+  cloth:
+  - {fileID: 8300000, guid: abc100b599551c34d88ee812e382cb44, type: 3}
+  - {fileID: 8300000, guid: 314b4cc0fd4711d44a903403744f94c8, type: 3}
+  - {fileID: 8300000, guid: dddd7503ab732ee4ca482469a15cdc47, type: 3}
+  - {fileID: 8300000, guid: 0308f0db6c16fdf418001351516120f7, type: 3}
+  doorCreaks:
+  - {fileID: 8300000, guid: 0aca753712bcbd446bf3b90c8fc62ec8, type: 3}
+  - {fileID: 8300000, guid: e1d257d096ef1444e9dabe4f4d586927, type: 3}
+  - {fileID: 8300000, guid: 6b59c8d288315f349a400c93f95546b8, type: 3}
+  doorOpen:
+  - {fileID: 8300000, guid: 0259969afbb071544a107040a3790858, type: 3}
+  - {fileID: 8300000, guid: fb9101b2805ce28449e1e3bb717e102e, type: 3}
+  doorClose:
+  - {fileID: 8300000, guid: 49bfd822804cbe642a0ef1197a6e35c6, type: 3}
+  - {fileID: 8300000, guid: 5e15893de2553ed4bb073d365719baf5, type: 3}
+  - {fileID: 8300000, guid: 8b7885eb82a621e408336d0bc3671dc2, type: 3}
+  - {fileID: 8300000, guid: a8164f15e9d31724e9ed571b2a780d5d, type: 3}
+  doorLatch: {fileID: 8300000, guid: 0b02454669a2e1c40a9b8e6f184f2edc, type: 3}
+  doorLock: {fileID: 8300000, guid: 69f4a0d8b219037488fa422be5438022, type: 3}
+  switchOn: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
+  switchOff: {fileID: 8300000, guid: 66341fad87ca0f346b88dcc52076a848, type: 3}
+  flashlightOn: {fileID: 8300000, guid: ec8c6e3f1e22f624fb6804e7ed8336de, type: 3}
+  flashlightOff: {fileID: 8300000, guid: f61d83cba9045324194e6dd5b6f068a2, type: 3}
+  hammerNail:
+  - {fileID: 8300000, guid: 454bb0ecbf91dbc45988aa636eea4637, type: 3}
+  - {fileID: 8300000, guid: a559791c1adc68c4fb772526e291f38e, type: 3}
+  - {fileID: 8300000, guid: 32b60aa8b7dc4124fbf7e8b610c8af16, type: 3}
+  - {fileID: 8300000, guid: b8005d763c540ca409e7d54232585c1c, type: 3}
+  nailingAbove: {fileID: 8300000, guid: 48daa848eef89244fb08f67b1f8dd369, type: 3}
+  doorKnock: {fileID: 8300000, guid: ccd0b7a2eb2937645a6e077be6703e3d, type: 3}
+  doorLanding: {fileID: 8300000, guid: e9d4dcd62d4b295429839df3b54fc350, type: 3}
+  lampFlicker: {fileID: 8300000, guid: ca6de405cacc5194fbd86b34a159183a, type: 3}
+  pryBreak: {fileID: 8300000, guid: c2d9cfe6911fc1e489095612ce33e065, type: 3}
+  stoveIgnite: {fileID: 8300000, guid: d47072a9812aeca43bab006e8f1e7126, type: 3}
+  breakerOff: {fileID: 8300000, guid: 19a44321646052d408b452dc724651c2, type: 3}
+  plateSetDown: {fileID: 8300000, guid: 76cd70e046add6248a31fb89889c63e2, type: 3}
+  grab:
+  - {fileID: 8300000, guid: 12c38a50b6fc21540a46b84483a2e7a7, type: 3}
+  - {fileID: 8300000, guid: ff520b447d3d4b74eba784a8c04539ab, type: 3}
+  - {fileID: 8300000, guid: db44a606090435a4e98a16fff34be947, type: 3}
+  equip:
+  - {fileID: 8300000, guid: 5e2aeb052a41b5e49939b82808047f77, type: 3}
+  paperGrab:
+  - {fileID: 8300000, guid: 92a9231e44799114a8ec62e8cb8f2081, type: 3}
+  - {fileID: 8300000, guid: 27a2d8208e457614185422e50f2da875, type: 3}
+  metalGrab:
+  - {fileID: 8300000, guid: 81a6afac5e2b8d34fbfaa17ac9c7be24, type: 3}
+  - {fileID: 8300000, guid: a123cf29d20eb5d45b1e9fc15138ad3f, type: 3}
+  cardboardDrop:
+  - {fileID: 8300000, guid: bac955f0c82638a438d76cc662d128ba, type: 3}
+  - {fileID: 8300000, guid: 1e00b41b6d4c881408c02b0529272c0b, type: 3}
+  - {fileID: 8300000, guid: d17edcfd87b946e48b36dcd1bfe20888, type: 3}
+  paperDrop:
+  - {fileID: 8300000, guid: 69efe17c4c453c34b9f2c980b0e6dacf, type: 3}
+  - {fileID: 8300000, guid: e4f2fcd199af2224f87523c89e3cf425, type: 3}
+  - {fileID: 8300000, guid: d8d837c025190254598897da2d67977d, type: 3}
+  plateDrop:
+  - {fileID: 8300000, guid: 52b0308bc1ed4104789f9de86009ab09, type: 3}
+  - {fileID: 8300000, guid: 393b7e85af485ed46a97acaea1f5bc3d, type: 3}
+  - {fileID: 8300000, guid: 2800176529fb28f4692f193beafad13c, type: 3}
+  metalDrop:
+  - {fileID: 8300000, guid: 13da0fceccc9bcf4dab3c57b75eaee67, type: 3}
+  - {fileID: 8300000, guid: 460817332b2a7124cac481028a282904, type: 3}
+  - {fileID: 8300000, guid: 6ddf2a8b9d463c14eaf0415f74d0479a, type: 3}
+  glassDrop:
+  - {fileID: 8300000, guid: 2d51813cf7e8072448bcb303ad9223e4, type: 3}
+  - {fileID: 8300000, guid: e3cbee03fa8ff604bbb4d27e06f30d72, type: 3}
+  - {fileID: 8300000, guid: ca54475a22304bd4d959f62685a1d931, type: 3}
+  woodDrop:
+  - {fileID: 8300000, guid: fc66ae72dde7c054aa3a211e65939e1b, type: 3}
+  - {fileID: 8300000, guid: 6ab3600a80165724b882613a0325eddf, type: 3}
+  - {fileID: 8300000, guid: 60e592fd4aa8da84ab5d9b34d00a29ca, type: 3}
+  softDrop:
+  - {fileID: 8300000, guid: fe954a8096e872f4cba21744e265190a, type: 3}
+  - {fileID: 8300000, guid: adea190b06405c248922f82fd896dc9f, type: 3}
+  - {fileID: 8300000, guid: 328ce7ab7da41d34594061d124fd1daf, type: 3}

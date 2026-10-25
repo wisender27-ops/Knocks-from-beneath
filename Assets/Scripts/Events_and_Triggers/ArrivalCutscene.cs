@@ -349,6 +349,7 @@ namespace KnocksFromBeneath
             holder.transform.SetParent(taxi, false);
             holder.transform.localPosition = Vector3.up * .8f;
             var source = holder.AddComponent<AudioSource>();
+            AudioRouting.Assign(source, AudioBus.World);
             source.clip = clip;
             source.loop = loop;
             source.playOnAwake = false;

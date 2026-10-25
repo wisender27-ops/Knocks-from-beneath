@@ -89,6 +89,8 @@ namespace KnocksFromBeneath
                 atVisit = knockIK == null;
                 knockSource = HorrorMomentDirector.CreateSource(frontDoor.transform, "Neighbor door knocks", 24f);
                 knockSource.minDistance = 3f;
+                // A-01: сосед стучит костяшками по двери — не тем же звуком, что хозяин снизу.
+                if (knockClip == null) knockClip = GameSounds.Library?.doorKnock;
                 if (knockClip == null) knockClip = Resources.Load<AudioClip>("Audio/Horror/AnswerKnock");
                 if (porchLightSwitch != null && windowPeekPoint != null) BeginSilhouette();
                 yield return Knock();

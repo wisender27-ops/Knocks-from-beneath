@@ -212,7 +212,9 @@ public class TrashManager : MonoBehaviour
             bagPopHop,
             freezePhysics: true);
 
-        PopScaleAnimator.PlayPopSound(spawnPos, bagPopSound, bagPopVolume);
+        // A-01: звук пакета не был назначен — берём мягкое падение из библиотеки.
+        AudioClip pop = bagPopSound != null ? bagPopSound : GameSounds.Pick(GameSounds.Library?.softDrop);
+        PopScaleAnimator.PlayPopSound(spawnPos, pop, bagPopVolume);
     }
 
     /// <summary>

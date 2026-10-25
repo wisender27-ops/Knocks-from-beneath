@@ -25,6 +25,7 @@ namespace KnocksFromBeneath
             _bulb.GetComponent<Renderer>().sharedMaterial = _glassMaterial;
 
             _shatterAudio = gameObject.AddComponent<AudioSource>();
+            AudioRouting.Assign(_shatterAudio, AudioBus.Horror);
             _shatterAudio.playOnAwake = false;
             _shatterAudio.spatialBlend = 1f;
             _shatterAudio.minDistance = 2f;

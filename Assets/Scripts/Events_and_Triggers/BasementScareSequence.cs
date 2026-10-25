@@ -166,7 +166,15 @@ namespace KnocksFromBeneath
                 if (!impactPlayed && t >= 0.78f)
                 {
                     impactPlayed = true;
-                    if (impactAudio != null) impactAudio.Play();
+                    // A-01: удар существа — тяжёлый удар и низкий гул, а не повтор крика из пугалки у дыры.
+                    AudioClip hit = GameSounds.Pick(GameSounds.Library?.darkHits);
+                    AudioClip sub = GameSounds.Pick(GameSounds.Library?.subHits);
+                    if (impactAudio != null && hit != null)
+                    {
+                        impactAudio.PlayOneShot(hit, 1f);
+                        if (sub != null) impactAudio.PlayOneShot(sub, .8f);
+                    }
+                    else if (impactAudio != null) impactAudio.Play();
                 }
                 yield return null;
             }

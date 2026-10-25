@@ -802,6 +802,7 @@ public class IntroSequence : MonoBehaviour
         }
 
         AudioSource lampAudio = lampObject.AddComponent<AudioSource>();
+        AudioRouting.Assign(lampAudio, AudioBus.World);
         lampAudio.playOnAwake = false;
         lampAudio.spatialBlend = 1f;
         lampAudio.minDistance = 1.5f;
@@ -846,6 +847,7 @@ public class IntroSequence : MonoBehaviour
         }
 
         _powerOutageAudio = gameObject.AddComponent<AudioSource>();
+        AudioRouting.Assign(_powerOutageAudio, AudioBus.Horror);
         _powerOutageAudio.playOnAwake = false;
         _powerOutageAudio.spatialBlend = 0f;
         _powerOutageAudio.volume = 0.8f;
@@ -905,6 +907,7 @@ public class IntroSequence : MonoBehaviour
         GameObject emitter = new GameObject("NightTwoStairRun");
         emitter.transform.SetParent(stairs.transform, false);
         AudioSource source = emitter.AddComponent<AudioSource>();
+        AudioRouting.Assign(source, AudioBus.Horror);
         source.playOnAwake = false;
         source.spatialBlend = 1f;
         source.minDistance = 3f;

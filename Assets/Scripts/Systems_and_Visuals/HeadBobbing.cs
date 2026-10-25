@@ -46,10 +46,60 @@ public class HeadBobbing : MonoBehaviour
     private AudioClip _lastStep;
 
     private bool _stepPlayed = false;
+    private PlayerController _player;
+    private bool _wasCrouching;
+
+    // A-01: поверхность по тегу, затем по материалу коллайдера, затем по месту (дом/улица/подвал).
+    // Клипы — из GameSoundLibrary; массивы в инспекторе остаются запасным вариантом.
+    private AudioClip[] SelectSteps(RaycastHit hit, out float volume)
+    {
+        volume = 1f;
+        var lib = GameSounds.Library;
+        string tag = hit.collider.tag;
+        if (lib == null)
+            return tag == "Metal" ? metalSteps : tag == "Wood" ? woodSteps : tag == "Stairs" ? stairSteps : concreteSteps;
+        switch (tag)
+        {
+            case "Metal": return lib.stepMetal;
+            case "Wood": return lib.stepWood;
+            case "Stairs": volume = 1.1f; return lib.stepStairs;
+            case "Grass": volume = .9f; return lib.stepGrass;
+            case "Concreate":
+            case "Concrete": return lib.stepConcrete;
+        }
+        if (hit.collider is TerrainCollider) { volume = .9f; return lib.stepGrass; }
+        var renderer = hit.collider.GetComponent<Renderer>();
+        string material = renderer != null && renderer.sharedMaterial != null ? renderer.sharedMaterial.name : string.Empty;
+        if (Contains(material, "grass") || Contains(material, "lawn")) { volume = .9f; return lib.stepGrass; }
+        if (Contains(material, "carpet") || Contains(material, "rug")) { volume = .8f; return lib.stepCarpet; }
+        if (Contains(material, "metal") || Contains(material, "iron") || Contains(material, "steel")) return lib.stepMetal;
+        if (Contains(material, "concrete") || Contains(material, "asphalt") || Contains(material, "stone") || Contains(material, "tile"))
+            return lib.stepConcrete;
+        if (Contains(material, "dirt") || Contains(material, "ground") || Contains(material, "soil") || Contains(material, "gravel"))
+            return lib.stepDirt;
+        if (AmbienceDirector.ListenerInBasement) return lib.stepConcrete;
+        return AmbienceDirector.ListenerInside ? lib.stepWood : lib.stepDirt;
+    }
+
+    private static bool Contains(string text, string part) => text.IndexOf(part, System.StringComparison.OrdinalIgnoreCase) >= 0;
+
+    // Шорох одежды при смене позы.
+    private void PlayCrouchFoley()
+    {
+        bool crouching = _player != null && _player.IsCrouching;
+        if (crouching == _wasCrouching) return;
+        _wasCrouching = crouching;
+        var clip = GameSounds.Pick(GameSounds.Library?.cloth);
+        if (clip != null && footstepSource != null && Time.timeScale > 0f && !AudioListener.pause)
+            footstepSource.PlayOneShot(clip, crouching ? .7f : .5f);
+    }
 
     void Start()
     {
         _controller = GetComponentInParent<CharacterController>();
+        _player = GetComponentInParent<PlayerController>();
+        _wasCrouching = _player != null && _player.IsCrouching;
+        if (footstepSource != null) AudioRouting.Assign(footstepSource, AudioBus.Foley);
         _initialLocalPos = transform.localPosition;
         _targetPos = _initialLocalPos;
         _initialLocalRot = transform.localRotation;
@@ -60,6 +110,7 @@ public class HeadBobbing : MonoBehaviour
     {
         if (_controller == null)
             return;
+        PlayCrouchFoley();
 
         Vector3 vel = new Vector3(_controller.velocity.x, 0, _controller.velocity.z);
         float speed = vel.magnitude;
@@ -121,25 +172,7 @@ public class HeadBobbing : MonoBehaviour
         if (Physics.Raycast(bodyBounds.center, Vector3.down, out hit, bodyBounds.extents.y + .4f,
             PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore))
         {
-            AudioClip[] selectedArray = null;
-
-            // Проверяем тег поверхности
-            switch (hit.collider.tag)
-            {
-                case "Metal":
-                    selectedArray = metalSteps;
-                    break;
-                case "Wood":
-                    selectedArray = woodSteps;
-                    break;
-                case "Stairs":
-                    selectedArray = stairSteps;
-                    break;
-                default: // Если тег Concrete или любой другой
-                    selectedArray = concreteSteps;
-                    break;
-            }
-
+            AudioClip[] selectedArray = SelectSteps(hit, out float surfaceVolume);
             if (selectedArray != null && selectedArray.Length > 0)
             {
                 // Берем случайный звук из выбранного массива
@@ -154,9 +187,11 @@ public class HeadBobbing : MonoBehaviour
                 if (footstepSource == null)
                     return;
 
-                footstepSource.pitch = Random.Range(0.96f, 1.04f);
+                footstepSource.pitch = Random.Range(0.94f, 1.05f);
                 float speed = new Vector2(_controller.velocity.x, _controller.velocity.z).magnitude;
-                footstepSource.PlayOneShot(clip, Mathf.Lerp(.55f, 1f, Mathf.InverseLerp(1f, 4f, speed)));
+                float volume = Mathf.Lerp(.45f, 1f, Mathf.InverseLerp(1f, 4f, speed)) * surfaceVolume * Random.Range(.88f, 1f);
+                if (_player != null && _player.IsCrouching) volume *= .45f;
+                footstepSource.PlayOneShot(clip, volume);
             }
         }
     }

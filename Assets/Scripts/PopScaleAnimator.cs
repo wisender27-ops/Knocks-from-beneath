@@ -138,6 +138,12 @@ namespace KnocksFromBeneath
         public static void PlayPopSound(Vector3 position, AudioClip clip, float volume = 0.5f)
         {
             if (clip == null) return;
+            // A-01: через пул GameAudio — звук идёт в шину Foley и слушается ползунка «Эффекты».
+            if (GameAudio.Instance != null)
+            {
+                GameAudio.PlayAt(clip, position, AudioBus.Foley, volume, Random.Range(0.92f, 1.08f));
+                return;
+            }
 
             var sfxGo = new GameObject("RevealPopSFX");
             sfxGo.transform.position = position;

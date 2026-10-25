@@ -212,7 +212,12 @@ namespace KnocksFromBeneath
                 yield return null;
             }
             PlaceBox(index, end, rotation);
-            if (boxSetDownClip != null) AudioSource.PlayClipAtPoint(boxSetDownClip, end, .45f);
+            if (boxSetDownClip != null)
+            {
+                // A-01: через пул GameAudio (шина Foley) вместо PlayClipAtPoint без маршрута.
+                if (GameAudio.Instance != null) GameAudio.PlayAt(boxSetDownClip, end, AudioBus.Foley, .45f);
+                else AudioSource.PlayClipAtPoint(boxSetDownClip, end, .45f);
+            }
         }
 
         private Vector3 GroundedPosition(Vector3 point, int index)
@@ -371,6 +376,7 @@ namespace KnocksFromBeneath
             holder.transform.SetParent(truck, false);
             holder.transform.localPosition = new Vector3(0f, 1f, name == "Engine" ? 1.6f : -1.5f);
             var source = holder.AddComponent<AudioSource>();
+            AudioRouting.Assign(source, AudioBus.World);
             source.clip = clip;
             source.loop = loop;
             source.playOnAwake = false;

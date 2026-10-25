@@ -15,6 +15,15 @@ namespace KnocksFromBeneath
         public void PlayPlace() => Play(placeClip, .4f);
         public void PlayThrow() => Play(throwClip, .3f);
 
+        // A-01: звук по материалу предмета (ItemAudio) вместо общего набора.
+        public void SetClips(AudioClip grab, AudioClip place, AudioClip throwSound)
+        {
+            if (grab != null) grabClip = grab;
+            if (place != null) placeClip = place;
+            if (throwSound != null) throwClip = throwSound;
+            if (source != null) AudioRouting.Assign(source, AudioBus.Foley);
+        }
+
         private void Play(AudioClip clip, float volume)
         {
             if (!Application.isPlaying || AudioListener.pause || Time.timeScale <= 0f ||

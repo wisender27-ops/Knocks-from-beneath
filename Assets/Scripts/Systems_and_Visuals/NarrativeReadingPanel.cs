@@ -145,7 +145,7 @@ namespace KnocksFromBeneath
                     {
                         typed += Time.unscaledDeltaTime;
                         int count = Mathf.FloorToInt(typed / Mathf.Clamp(typingInterval, .01f, .025f));
-                        if (count > 0) { visible = Mathf.Min(end, visible + count); typed = 0f; }
+                        if (count > 0) { visible = Mathf.Min(end, visible + count); typed = 0f; GameAudio.PlayThoughtTick(); }
                         if (advance) { visible = end; inputDelay = .18f; }
                         body.maxVisibleCharacters = visible;
                         waitingForInput = false;

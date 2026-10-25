@@ -63,6 +63,7 @@ namespace KnocksFromBeneath
             prompt.alpha = 0f;
 
             ticks = gameObject.AddComponent<AudioSource>();
+            AudioRouting.Assign(ticks, AudioBus.UI);
             ticks.playOnAwake = false;
             ticks.spatialBlend = 0f;
             ticks.ignoreListenerPause = true;

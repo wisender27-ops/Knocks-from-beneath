@@ -148,6 +148,7 @@ namespace KnocksFromBeneath
             SetInspection(false);
             ClampSelection();
             Refresh();
+            GameAudio.PlayUi(UiSound.InventoryOpen);
         }
 
         private void Close()
@@ -163,6 +164,7 @@ namespace KnocksFromBeneath
             Cursor.visible = previousCursorVisible;
             SetVisible(false);
             SetInspection(false);
+            GameAudio.PlayUi(UiSound.InventoryClose);
             ClearPreview();
             feedbackText.text = string.Empty;
             feedbackUntil = 0f;
@@ -173,6 +175,7 @@ namespace KnocksFromBeneath
             int count = inventory.Entries.Count;
             if (count == 0) return;
             selectedIndex = (selectedIndex + direction + count) % count;
+            GameAudio.PlayUi(UiSound.InventoryMove);
             feedbackText.text = string.Empty;
             feedbackUntil = 0f;
             Refresh();

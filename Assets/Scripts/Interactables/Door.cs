@@ -108,6 +108,7 @@ public class Door : MonoBehaviour
         if (useOuterEdgeHinge && sfxSource == null && doorCreakClip != null)
         {
             sfxSource = gameObject.AddComponent<AudioSource>();
+            AudioRouting.Assign(sfxSource, AudioBus.World);
             sfxSource.spatialBlend = 1f;
             sfxSource.minDistance = 1f;
             sfxSource.maxDistance = 12f;
@@ -533,6 +534,10 @@ public class Door : MonoBehaviour
     // читалось физически, а не только по отсутствию отклика.
     private Coroutine _rattleCoroutine;
     private bool _isRattling;
+    // A-01: DoorAudio не должен принимать тряску запертой двери или сорванную дверь за открытие/закрытие.
+    public bool IsRattling => _isRattling;
+    public bool IsDetached => _detached;
+    public bool IsCreakSuppressed => _suppressCreak;
 
     public void PlayLockedFeedback()
     {

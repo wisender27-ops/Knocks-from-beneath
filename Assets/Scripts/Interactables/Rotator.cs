@@ -40,6 +40,7 @@ public class Rotator : MonoBehaviour
         AudioSource[] sources = GetComponents<AudioSource>();
         if (sources.Length >= 2) { sourceA = sources[0]; sourceB = sources[1]; }
         else { sourceA = gameObject.AddComponent<AudioSource>(); sourceB = gameObject.AddComponent<AudioSource>(); }
+        AudioRouting.Assign(sourceA, AudioBus.World); AudioRouting.Assign(sourceB, AudioBus.World);
 
         if (fanClip != null)
         {

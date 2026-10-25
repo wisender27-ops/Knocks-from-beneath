@@ -123,6 +123,7 @@ namespace KnocksFromBeneath
             Refresh();
             Canvas.ForceUpdateCanvases();
             historyScroll.verticalNormalizedPosition = 1f;
+            GameAudio.PlayUi(UiSound.JournalOpen);
         }
 
         public void Close()
@@ -139,6 +140,7 @@ namespace KnocksFromBeneath
             group.interactable = false;
             group.blocksRaycasts = false;
             closing = true;
+            GameAudio.PlayUi(UiSound.JournalClose);
         }
 
         private void SetHidden()

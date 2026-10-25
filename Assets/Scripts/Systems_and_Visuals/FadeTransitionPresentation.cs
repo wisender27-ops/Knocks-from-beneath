@@ -14,7 +14,6 @@ namespace KnocksFromBeneath
         private readonly HashSet<Graphic> allowed = new HashSet<Graphic>();
         private readonly List<Graphic> cachedGraphics = new List<Graphic>();
         private CanvasGroup fade;
-        private float previousVolume;
         private int lastScanFrame = -1;
         private bool suppressing, previousBlocksRaycasts;
 
@@ -66,16 +65,13 @@ namespace KnocksFromBeneath
 
             if (!suppressing)
             {
-                previousVolume = AudioListener.volume;
                 previousBlocksRaycasts = fade.blocksRaycasts;
                 suppressing = true;
                 IsActive = true;
                 lastScanFrame = -1;
             }
 
-            // Сохраняем изменение настройки громкости, сделанное во время перехода.
-            if (AudioListener.volume > 0f) previousVolume = AudioListener.volume;
-            AudioListener.volume = 0f;
+            // Звук на время затемнения плавно приглушает GameAudio по IsActive (SettingsStore.FadeGain).
             fade.blocksRaycasts = true;
 
             if (lastScanFrame != Time.frameCount)
@@ -99,7 +95,6 @@ namespace KnocksFromBeneath
             if (!suppressing) return;
             suppressing = false;
             IsActive = false;
-            AudioListener.volume = previousVolume;
             if (fade != null) fade.blocksRaycasts = previousBlocksRaycasts;
             foreach (var pair in graphics)
                 if (pair.Key != null) pair.Key.enabled = pair.Value;

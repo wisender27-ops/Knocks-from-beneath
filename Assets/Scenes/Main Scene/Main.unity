@@ -1142,7 +1142,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 1228374871}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -2964,7 +2964,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ImpactSounds
   impactSource: {fileID: 1680316430}
   clips:
-  - {fileID: 8300000, guid: 5783bc2b9c1b4d94ea415a071e5d1ee2, type: 3}
+  - {fileID: 8300000, guid: fe954a8096e872f4cba21744e265190a, type: 3}
   minVelocity: 1.5
   volumeMultiplier: 0.1
   cooldown: 0.1
@@ -2981,9 +2981,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ItemFoley
   source: {fileID: 1699736776}
-  grabClip: {fileID: 8300000, guid: 4d7d08ebd0d04494d9f55555ee7b26f9, type: 3}
-  placeClip: {fileID: 8300000, guid: 5783bc2b9c1b4d94ea415a071e5d1ee2, type: 3}
-  throwClip: {fileID: 8300000, guid: 54c27d7bd5573ed40bcd2314dd2bf43d, type: 3}
+  grabClip: {fileID: 8300000, guid: db44a606090435a4e98a16fff34be947, type: 3}
+  placeClip: {fileID: 8300000, guid: fe954a8096e872f4cba21744e265190a, type: 3}
+  throwClip: {fileID: 8300000, guid: abc100b599551c34d88ee812e382cb44, type: 3}
 --- !u!1 &75938975
 GameObject:
   m_ObjectHideFlags: 0
@@ -5214,7 +5214,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -6207,7 +6207,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -7093,9 +7093,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ImpactSounds
   impactSource: {fileID: 555358827}
   clips:
-  - {fileID: 8300000, guid: 3724b3c7745f0e14681a851ba2791be7, type: 3}
-  - {fileID: 8300000, guid: ee446a1da3147264f800a74767ab7f3e, type: 3}
-  - {fileID: 8300000, guid: c0f846545cb5cbf44b855b92a50f1860, type: 3}
+  - {fileID: 8300000, guid: bac955f0c82638a438d76cc662d128ba, type: 3}
+  - {fileID: 8300000, guid: 1e00b41b6d4c881408c02b0529272c0b, type: 3}
+  - {fileID: 8300000, guid: d17edcfd87b946e48b36dcd1bfe20888, type: 3}
   minVelocity: 1.5
   volumeMultiplier: 0.5
   cooldown: 0.1
@@ -7195,9 +7195,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ItemFoley
   source: {fileID: 1615240619}
-  grabClip: {fileID: 8300000, guid: a66108d82fbf0c5408962ae2d1a3de47, type: 3}
-  placeClip: {fileID: 8300000, guid: 3724b3c7745f0e14681a851ba2791be7, type: 3}
-  throwClip: {fileID: 8300000, guid: 54c27d7bd5573ed40bcd2314dd2bf43d, type: 3}
+  grabClip: {fileID: 8300000, guid: 12c38a50b6fc21540a46b84483a2e7a7, type: 3}
+  placeClip: {fileID: 8300000, guid: bac955f0c82638a438d76cc662d128ba, type: 3}
+  throwClip: {fileID: 8300000, guid: abc100b599551c34d88ee812e382cb44, type: 3}
 --- !u!1 &263843215
 GameObject:
   m_ObjectHideFlags: 0
@@ -8068,7 +8068,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -9291,9 +9291,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ImpactSounds
   impactSource: {fileID: 126719778}
   clips:
-  - {fileID: 8300000, guid: 3724b3c7745f0e14681a851ba2791be7, type: 3}
-  - {fileID: 8300000, guid: ee446a1da3147264f800a74767ab7f3e, type: 3}
-  - {fileID: 8300000, guid: c0f846545cb5cbf44b855b92a50f1860, type: 3}
+  - {fileID: 8300000, guid: bac955f0c82638a438d76cc662d128ba, type: 3}
+  - {fileID: 8300000, guid: 1e00b41b6d4c881408c02b0529272c0b, type: 3}
+  - {fileID: 8300000, guid: d17edcfd87b946e48b36dcd1bfe20888, type: 3}
   minVelocity: 1.5
   volumeMultiplier: 0.5
   cooldown: 0.1
@@ -9323,9 +9323,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ItemFoley
   source: {fileID: 1941093117}
-  grabClip: {fileID: 8300000, guid: a66108d82fbf0c5408962ae2d1a3de47, type: 3}
-  placeClip: {fileID: 8300000, guid: 3724b3c7745f0e14681a851ba2791be7, type: 3}
-  throwClip: {fileID: 8300000, guid: 54c27d7bd5573ed40bcd2314dd2bf43d, type: 3}
+  grabClip: {fileID: 8300000, guid: 12c38a50b6fc21540a46b84483a2e7a7, type: 3}
+  placeClip: {fileID: 8300000, guid: bac955f0c82638a438d76cc662d128ba, type: 3}
+  throwClip: {fileID: 8300000, guid: abc100b599551c34d88ee812e382cb44, type: 3}
 --- !u!1 &344273044
 GameObject:
   m_ObjectHideFlags: 0
@@ -9957,7 +9957,7 @@ AudioSource:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 403278657}
-  m_Enabled: 1
+  m_Enabled: 0
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 952989285787224428, guid: e1649470f01b7d24187492b48415d6f5, type: 2}
   m_audioClip: {fileID: 0}
@@ -12223,7 +12223,7 @@ MonoBehaviour:
   holeEventTrigger: {fileID: 1126918171}
   audioSource: {fileID: 1824334343}
   pryClip: {fileID: 0}
-  breakClip: {fileID: 8300000, guid: 41e7cf47d83753342b967eabe570b3c7, type: 3}
+  breakClip: {fileID: 8300000, guid: c2d9cfe6911fc1e489095612ce33e065, type: 3}
   state: 0
   isBroken: 0
   requiredQuestTag: break-floor-disabled
@@ -12596,7 +12596,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -13269,7 +13269,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -19948,7 +19948,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -20086,7 +20086,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -30938,8 +30938,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfc3052d472cfd84e83eec5e0e20837c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RainZoneSwitcher
-  enterSnapshot: {fileID: -1744196256790283500, guid: e1649470f01b7d24187492b48415d6f5, type: 2}
-  exitSnapshot: {fileID: 24500006, guid: e1649470f01b7d24187492b48415d6f5, type: 2}
+  enterSnapshot: {fileID: 0}
+  exitSnapshot: {fileID: 0}
   transitionTime: 1.2
   enterFogDensity: 0.03
   exitFogDensity: 0.1
@@ -31103,9 +31103,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ImpactSounds
   impactSource: {fileID: 575306834}
   clips:
-  - {fileID: 8300000, guid: 3724b3c7745f0e14681a851ba2791be7, type: 3}
-  - {fileID: 8300000, guid: ee446a1da3147264f800a74767ab7f3e, type: 3}
-  - {fileID: 8300000, guid: c0f846545cb5cbf44b855b92a50f1860, type: 3}
+  - {fileID: 8300000, guid: bac955f0c82638a438d76cc662d128ba, type: 3}
+  - {fileID: 8300000, guid: 1e00b41b6d4c881408c02b0529272c0b, type: 3}
+  - {fileID: 8300000, guid: d17edcfd87b946e48b36dcd1bfe20888, type: 3}
   minVelocity: 1.5
   volumeMultiplier: 0.5
   cooldown: 0.1
@@ -31135,9 +31135,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ItemFoley
   source: {fileID: 1408426788}
-  grabClip: {fileID: 8300000, guid: a66108d82fbf0c5408962ae2d1a3de47, type: 3}
-  placeClip: {fileID: 8300000, guid: 3724b3c7745f0e14681a851ba2791be7, type: 3}
-  throwClip: {fileID: 8300000, guid: 54c27d7bd5573ed40bcd2314dd2bf43d, type: 3}
+  grabClip: {fileID: 8300000, guid: 12c38a50b6fc21540a46b84483a2e7a7, type: 3}
+  placeClip: {fileID: 8300000, guid: bac955f0c82638a438d76cc662d128ba, type: 3}
+  throwClip: {fileID: 8300000, guid: abc100b599551c34d88ee812e382cb44, type: 3}
 --- !u!1 &774570026
 GameObject:
   m_ObjectHideFlags: 0
@@ -31652,7 +31652,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -45784,7 +45784,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -46181,8 +46181,8 @@ MonoBehaviour:
   shackleOpenOffset: {x: 0, y: 0.11, z: 0}
   pryDuration: 0.35
   audioSource: {fileID: 1697816978}
-  rattleSfx: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
-  prySfx: {fileID: 8300000, guid: 41e7cf47d83753342b967eabe570b3c7, type: 3}
+  rattleSfx: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
+  prySfx: {fileID: 8300000, guid: c2d9cfe6911fc1e489095612ce33e065, type: 3}
   requiredQuestTag: pry-hatch-lock
   onPried:
     m_PersistentCalls:
@@ -46434,7 +46434,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -48268,7 +48268,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -54224,7 +54224,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 1345431385}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -63099,7 +63099,7 @@ MonoBehaviour:
   lockedLocalOffset: {x: 0.060001392, y: 0, z: 0}
   slideDuration: 0.25
   lockAudioSource: {fileID: 1905408318}
-  lockSfx: {fileID: 8300000, guid: 66ee34e5afabda04aaa64ef645cf4628, type: 3}
+  lockSfx: {fileID: 8300000, guid: 69f4a0d8b219037488fa422be5438022, type: 3}
 --- !u!65 &1195810648
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -67768,7 +67768,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -68722,7 +68722,7 @@ PrefabInstance:
     - target: {fileID: 874945036899468691, guid: 1cdc1fd00a0aec942b0b9d5c165fa1f6, type: 3}
       propertyPath: lockedRattleClip
       value: 
-      objectReference: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+      objectReference: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
     - target: {fileID: 1198744372456165795, guid: 1cdc1fd00a0aec942b0b9d5c165fa1f6, type: 3}
       propertyPath: m_LocalPosition.x
       value: -0.26447296
@@ -68858,7 +68858,7 @@ PrefabInstance:
     - target: {fileID: 3038395542233181797, guid: 1cdc1fd00a0aec942b0b9d5c165fa1f6, type: 3}
       propertyPath: lockedRattleClip
       value: 
-      objectReference: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+      objectReference: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
     - target: {fileID: 3120758022330929216, guid: 1cdc1fd00a0aec942b0b9d5c165fa1f6, type: 3}
       propertyPath: m_StaticEditorFlags
       value: 0
@@ -69776,7 +69776,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -70249,9 +70249,9 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 952989285787224428, guid: e1649470f01b7d24187492b48415d6f5, type: 2}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: 4b9c6de228ebb144da4d4ffe7636292a, type: 3}
+  m_Resource: {fileID: 8300000, guid: 2da1c15c38b785f47b457ac3e7f579c1, type: 3}
   m_PlayOnAwake: 1
-  m_Volume: 0.08
+  m_Volume: 0.45
   m_Pitch: 1
   Loop: 1
   Mute: 0
@@ -70260,7 +70260,7 @@ AudioSource:
   Priority: 128
   DopplerLevel: 0
   MinDistance: 1
-  MaxDistance: 7
+  MaxDistance: 9
   Pan2D: 0
   rolloffMode: 0
   BypassEffects: 0
@@ -71046,7 +71046,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -72925,7 +72925,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_Resource: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+  m_Resource: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
   m_PlayOnAwake: 0
   m_Volume: 0.35
   m_Pitch: 1
@@ -77759,9 +77759,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ImpactSounds
   impactSource: {fileID: 40628259}
   clips:
-  - {fileID: 8300000, guid: 3724b3c7745f0e14681a851ba2791be7, type: 3}
-  - {fileID: 8300000, guid: ee446a1da3147264f800a74767ab7f3e, type: 3}
-  - {fileID: 8300000, guid: c0f846545cb5cbf44b855b92a50f1860, type: 3}
+  - {fileID: 8300000, guid: bac955f0c82638a438d76cc662d128ba, type: 3}
+  - {fileID: 8300000, guid: 1e00b41b6d4c881408c02b0529272c0b, type: 3}
+  - {fileID: 8300000, guid: d17edcfd87b946e48b36dcd1bfe20888, type: 3}
   minVelocity: 1.5
   volumeMultiplier: 0.5
   cooldown: 0.1
@@ -77791,9 +77791,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ItemFoley
   source: {fileID: 1178925247}
-  grabClip: {fileID: 8300000, guid: a66108d82fbf0c5408962ae2d1a3de47, type: 3}
-  placeClip: {fileID: 8300000, guid: 3724b3c7745f0e14681a851ba2791be7, type: 3}
-  throwClip: {fileID: 8300000, guid: 54c27d7bd5573ed40bcd2314dd2bf43d, type: 3}
+  grabClip: {fileID: 8300000, guid: 12c38a50b6fc21540a46b84483a2e7a7, type: 3}
+  placeClip: {fileID: 8300000, guid: bac955f0c82638a438d76cc662d128ba, type: 3}
+  throwClip: {fileID: 8300000, guid: abc100b599551c34d88ee812e382cb44, type: 3}
 --- !u!1 &1604727101
 GameObject:
   m_ObjectHideFlags: 0
@@ -88044,8 +88044,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bfc3052d472cfd84e83eec5e0e20837c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::RainZoneSwitcher
-  enterSnapshot: {fileID: 24500006, guid: e1649470f01b7d24187492b48415d6f5, type: 2}
-  exitSnapshot: {fileID: -1744196256790283500, guid: e1649470f01b7d24187492b48415d6f5, type: 2}
+  enterSnapshot: {fileID: 0}
+  exitSnapshot: {fileID: 0}
   transitionTime: 1.2
   enterFogDensity: 0.1
   exitFogDensity: 0.03
@@ -103819,7 +103819,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 2
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 1343484898}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -118658,7 +118658,7 @@ PrefabInstance:
     - target: {fileID: 2565123186235401928, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: soundOn
       value: 
-      objectReference: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
+      objectReference: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
     - target: {fileID: 2565123186235401928, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: database
       value: 
@@ -118666,7 +118666,7 @@ PrefabInstance:
     - target: {fileID: 2565123186235401928, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: soundOff
       value: 
-      objectReference: {fileID: 8300000, guid: 2cadaee6fee7d474b94e9a2d2f167ef2, type: 3}
+      objectReference: {fileID: 8300000, guid: 66341fad87ca0f346b88dcc52076a848, type: 3}
     - target: {fileID: 4082443097780501385, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: m_Volume
       value: 0.5
@@ -118738,19 +118738,19 @@ PrefabInstance:
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'woodSteps.Array.data[0]'
       value: 
-      objectReference: {fileID: 8300000, guid: bd305ab7277b8da43848db3ad11ee584, type: 3}
+      objectReference: {fileID: 8300000, guid: 3f116801b4d1adc4493f9720e0883de7, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'woodSteps.Array.data[1]'
       value: 
-      objectReference: {fileID: 8300000, guid: 034cd51ed98da7d4691c80eedaa6af4c, type: 3}
+      objectReference: {fileID: 8300000, guid: 26e3d4408f7214a46908d8a8564f59f4, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'woodSteps.Array.data[2]'
       value: 
-      objectReference: {fileID: 8300000, guid: 9a89abf5f23c1ad4091c056664967145, type: 3}
+      objectReference: {fileID: 8300000, guid: d87c7d1af59ccaf45941c5395559688c, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'woodSteps.Array.data[3]'
       value: 
-      objectReference: {fileID: 8300000, guid: e9f1da5d16ec30544aaae5978d55aed4, type: 3}
+      objectReference: {fileID: 8300000, guid: 05c2812d4589967429b1892434e9e167, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: concreteSteps.Array.size
       value: 4
@@ -118758,51 +118758,51 @@ PrefabInstance:
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'metalSteps.Array.data[0]'
       value: 
-      objectReference: {fileID: 8300000, guid: 1f781ca7e012e3d42b439e80e83762d6, type: 3}
+      objectReference: {fileID: 8300000, guid: 862e54dbe9090074c8c1552de6b2ea22, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'metalSteps.Array.data[1]'
       value: 
-      objectReference: {fileID: 8300000, guid: 6b7fa295beae40a46966a25aa463dd47, type: 3}
+      objectReference: {fileID: 8300000, guid: 8374c3bf795c31e4ba8f3c766d013493, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'metalSteps.Array.data[2]'
       value: 
-      objectReference: {fileID: 8300000, guid: c2fd08596304e494292b0141af3e8d44, type: 3}
+      objectReference: {fileID: 8300000, guid: d91306e585dc7d2468d8bb98f069dcf5, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'metalSteps.Array.data[3]'
       value: 
-      objectReference: {fileID: 8300000, guid: 071daadd94e15d744b15fd47caba8e2e, type: 3}
+      objectReference: {fileID: 8300000, guid: 368c50403d9e7fa44949fba07c2b4668, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'stairSteps.Array.data[0]'
       value: 
-      objectReference: {fileID: 8300000, guid: bd305ab7277b8da43848db3ad11ee584, type: 3}
+      objectReference: {fileID: 8300000, guid: 3f116801b4d1adc4493f9720e0883de7, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'stairSteps.Array.data[1]'
       value: 
-      objectReference: {fileID: 8300000, guid: 034cd51ed98da7d4691c80eedaa6af4c, type: 3}
+      objectReference: {fileID: 8300000, guid: 26e3d4408f7214a46908d8a8564f59f4, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'stairSteps.Array.data[2]'
       value: 
-      objectReference: {fileID: 8300000, guid: 9a89abf5f23c1ad4091c056664967145, type: 3}
+      objectReference: {fileID: 8300000, guid: d87c7d1af59ccaf45941c5395559688c, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'stairSteps.Array.data[3]'
       value: 
-      objectReference: {fileID: 8300000, guid: e9f1da5d16ec30544aaae5978d55aed4, type: 3}
+      objectReference: {fileID: 8300000, guid: 05c2812d4589967429b1892434e9e167, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'concreteSteps.Array.data[0]'
       value: 
-      objectReference: {fileID: 8300000, guid: 4cd03bea9bf32ce49a6ec040034fcc32, type: 3}
+      objectReference: {fileID: 8300000, guid: eb6b19f41bb10dd41a0beb6dd788ffd6, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'concreteSteps.Array.data[1]'
       value: 
-      objectReference: {fileID: 8300000, guid: 7da36e38cba9d08409d5a6b4c7037118, type: 3}
+      objectReference: {fileID: 8300000, guid: 0d4fb39a63406374eb100cb51ea1f24e, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'concreteSteps.Array.data[2]'
       value: 
-      objectReference: {fileID: 8300000, guid: c87564799e513534fa2d509261e4aad3, type: 3}
+      objectReference: {fileID: 8300000, guid: c338dbf8d32795646888fc588a33aa56, type: 3}
     - target: {fileID: 6121515108605102530, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: 'concreteSteps.Array.data[3]'
       value: 
-      objectReference: {fileID: 8300000, guid: 9cdf22e8b64407742b986e7b2b2292cf, type: 3}
+      objectReference: {fileID: 8300000, guid: 9bc8788a583da4b4181363c0b306ee5f, type: 3}
     - target: {fileID: 9076684082436980972, guid: b3a38904e7a6f7d43b7f5a8a1ff2b99d, type: 3}
       propertyPath: m_LocalPosition.x
       value: -42.806
@@ -134178,7 +134178,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ImpactSounds
   impactSource: {fileID: 2001721659}
   clips:
-  - {fileID: 8300000, guid: 9199d9652eccba74da17b2aff1f5baa6, type: 3}
+  - {fileID: 8300000, guid: 52b0308bc1ed4104789f9de86009ab09, type: 3}
   minVelocity: 1.5
   volumeMultiplier: 0.1
   cooldown: 0.1
@@ -134195,9 +134195,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ItemFoley
   source: {fileID: 4034899}
-  grabClip: {fileID: 8300000, guid: 82c998ef5caf0d84594954c1720a6687, type: 3}
-  placeClip: {fileID: 8300000, guid: 9199d9652eccba74da17b2aff1f5baa6, type: 3}
-  throwClip: {fileID: 8300000, guid: 54c27d7bd5573ed40bcd2314dd2bf43d, type: 3}
+  grabClip: {fileID: 8300000, guid: ff520b447d3d4b74eba784a8c04539ab, type: 3}
+  placeClip: {fileID: 8300000, guid: 52b0308bc1ed4104789f9de86009ab09, type: 3}
+  throwClip: {fileID: 8300000, guid: abc100b599551c34d88ee812e382cb44, type: 3}
 --- !u!4 &4257779377523448533
 Transform:
   m_ObjectHideFlags: 0
@@ -146343,7 +146343,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 165661319}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -147561,7 +147561,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 697047192}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -150832,7 +150832,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 1418321912}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -154125,7 +154125,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 30583793}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -154573,7 +154573,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 338755814}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -161138,7 +161138,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 865747438}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -163335,7 +163335,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 237032614}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -165386,7 +165386,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ImpactSounds
   impactSource: {fileID: 765154243}
   clips:
-  - {fileID: 8300000, guid: 9199d9652eccba74da17b2aff1f5baa6, type: 3}
+  - {fileID: 8300000, guid: 52b0308bc1ed4104789f9de86009ab09, type: 3}
   minVelocity: 1.5
   volumeMultiplier: 0.1
   cooldown: 0.1
@@ -165403,9 +165403,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ItemFoley
   source: {fileID: 1268269545}
-  grabClip: {fileID: 8300000, guid: 82c998ef5caf0d84594954c1720a6687, type: 3}
-  placeClip: {fileID: 8300000, guid: 9199d9652eccba74da17b2aff1f5baa6, type: 3}
-  throwClip: {fileID: 8300000, guid: 54c27d7bd5573ed40bcd2314dd2bf43d, type: 3}
+  grabClip: {fileID: 8300000, guid: ff520b447d3d4b74eba784a8c04539ab, type: 3}
+  placeClip: {fileID: 8300000, guid: 52b0308bc1ed4104789f9de86009ab09, type: 3}
+  throwClip: {fileID: 8300000, guid: abc100b599551c34d88ee812e382cb44, type: 3}
 --- !u!1 &7667841137833972138
 GameObject:
   m_ObjectHideFlags: 0
@@ -169065,7 +169065,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ImpactSounds
   impactSource: {fileID: 292155527}
   clips:
-  - {fileID: 8300000, guid: 9199d9652eccba74da17b2aff1f5baa6, type: 3}
+  - {fileID: 8300000, guid: 52b0308bc1ed4104789f9de86009ab09, type: 3}
   minVelocity: 1.5
   volumeMultiplier: 0.1
   cooldown: 0.1
@@ -169082,9 +169082,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.ItemFoley
   source: {fileID: 1638399259}
-  grabClip: {fileID: 8300000, guid: 82c998ef5caf0d84594954c1720a6687, type: 3}
-  placeClip: {fileID: 8300000, guid: 9199d9652eccba74da17b2aff1f5baa6, type: 3}
-  throwClip: {fileID: 8300000, guid: 54c27d7bd5573ed40bcd2314dd2bf43d, type: 3}
+  grabClip: {fileID: 8300000, guid: ff520b447d3d4b74eba784a8c04539ab, type: 3}
+  placeClip: {fileID: 8300000, guid: 52b0308bc1ed4104789f9de86009ab09, type: 3}
+  throwClip: {fileID: 8300000, guid: abc100b599551c34d88ee812e382cb44, type: 3}
 --- !u!23 &8063122393651513859
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -169924,7 +169924,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 1318182192}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -173880,7 +173880,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 2
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 1687115299}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -175000,7 +175000,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 1697742824}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -175557,7 +175557,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 2010395950}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -176704,8 +176704,8 @@ MonoBehaviour:
   cookingFoodObject: {fileID: 658136718}
   cookDuration: 10
   stoveAudioSource: {fileID: 955881054}
-  cookStartSfx: {fileID: 8300000, guid: cb65fd05d5e829c40af84a73334033ba, type: 3}
-  cookDoneSfx: {fileID: 8300000, guid: 9199d9652eccba74da17b2aff1f5baa6, type: 3}
+  cookStartSfx: {fileID: 8300000, guid: 6bfdfd14538c63243994eeb2976262a8, type: 3}
+  cookDoneSfx: {fileID: 8300000, guid: 52b0308bc1ed4104789f9de86009ab09, type: 3}
 --- !u!1 &8862452118510982112
 GameObject:
   m_ObjectHideFlags: 0
@@ -177209,7 +177209,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 1840783953}
   rattleAngle: 6
   rattleDuration: 0.3
@@ -179032,7 +179032,7 @@ MonoBehaviour:
   volumeMultiplier: 1.5
   minVelocityThreshold: 75
   muteCreakOnAutoClose: 1
-  lockedRattleClip: {fileID: 8300000, guid: 69a5da11f49b69b45a661ba546b78064, type: 3}
+  lockedRattleClip: {fileID: 8300000, guid: fe188dc94886980498fcf7ed3e0d4929, type: 3}
   feedbackSource: {fileID: 11029600}
   rattleAngle: 6
   rattleDuration: 0.3

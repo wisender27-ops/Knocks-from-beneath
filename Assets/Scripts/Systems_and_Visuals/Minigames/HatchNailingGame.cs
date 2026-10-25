@@ -205,12 +205,12 @@ namespace KnocksFromBeneath
             {
                 case NailStrike.Drove:
                     // Гвоздь входит в дерево — тон удара растёт с глубиной.
-                    Play(source, nailClip, 0.9f + 0.4f * Logic.Depth(best), 0.8f + 0.2f * power);
+                    Play(source, NailHit(), 0.9f + 0.25f * Logic.Depth(best), 0.8f + 0.2f * power);
                     Shake(0.08f + 0.12f * power);
                     break;
                 case NailStrike.NailDone:
                     bool last = Logic.Succeeded;
-                    Play(source, nailClip, last ? 1.2f : 1.4f, 1f);
+                    Play(source, NailHit(), last ? 1.1f : 1.25f, 1f);
                     // Последний гвоздь — тяжёлый глухой удар по всей доске: слышно, что всё.
                     Play(source, plankClip, last ? 0.6f : 0.8f, last ? 1f : 0.35f);
                     if (last) Play(source, thudClip, 0.75f, 0.6f);
@@ -427,6 +427,14 @@ namespace KnocksFromBeneath
             if (HorrorMomentDirector.Instance != null)
                 audio.outputAudioMixerGroup = HorrorMomentDirector.Instance.OutputMixerGroup;
             return audio;
+        }
+
+        // A-01: удар молотка по гвоздю (металл + доска) из библиотеки, иначе прежний клип.
+        private int lastNailHit = -1;
+        private AudioClip NailHit()
+        {
+            AudioClip clip = GameSounds.Pick(GameSounds.Library?.hammerNail, ref lastNailHit);
+            return clip != null ? clip : nailClip;
         }
 
         private static AudioClip FindOwnerKnock()

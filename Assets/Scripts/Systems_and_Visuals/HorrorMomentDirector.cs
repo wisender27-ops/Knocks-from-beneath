@@ -25,10 +25,15 @@ namespace KnocksFromBeneath
         {
             player = inventory != null ? inventory.GetComponentInParent<PlayerController>() : null;
             Instance = this;
-            var bob = player != null ? player.GetComponentInChildren<HeadBobbing>(true) : null;
-            var reference = bob != null ? bob.footstepSource : null;
-            if (reference == null && player != null) reference = player.GetComponent<AudioSource>();
-            OutputMixerGroup = reference != null ? reference.outputAudioMixerGroup : null;
+            // A-01: звуки пугалок идут на шину Horror (раньше копировали группу источника шагов).
+            OutputMixerGroup = AudioRouting.Group(AudioBus.Horror);
+            if (OutputMixerGroup == null)
+            {
+                var bob = player != null ? player.GetComponentInChildren<HeadBobbing>(true) : null;
+                var reference = bob != null ? bob.footstepSource : null;
+                if (reference == null && player != null) reference = player.GetComponent<AudioSource>();
+                OutputMixerGroup = reference != null ? reference.outputAudioMixerGroup : null;
+            }
         }
 
         public bool TryBegin(Object requester, bool ignoreCooldown = false)
@@ -67,7 +72,8 @@ namespace KnocksFromBeneath
             source.minDistance = 1.8f;
             source.maxDistance = distance;
             source.priority = 100;
-            if (Instance != null) source.outputAudioMixerGroup = Instance.OutputMixerGroup;
+            source.outputAudioMixerGroup = AudioRouting.Group(AudioBus.Horror);
+            if (source.outputAudioMixerGroup == null && Instance != null) source.outputAudioMixerGroup = Instance.OutputMixerGroup;
             return source;
         }
 

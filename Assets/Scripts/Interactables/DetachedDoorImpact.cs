@@ -13,6 +13,7 @@ namespace KnocksFromBeneath
         {
             _landingClip = landingClip;
             _source = gameObject.AddComponent<AudioSource>();
+            AudioRouting.Assign(_source, AudioBus.Horror);
             _source.playOnAwake = false;
             _source.spatialBlend = 1f;
             _source.minDistance = 4f;

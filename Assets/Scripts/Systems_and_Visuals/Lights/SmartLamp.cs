@@ -37,7 +37,9 @@ public class SmartLamp : MonoBehaviour
         if (lightSource == null) yield break;
 
         float elapsed = 0;
-        if (audioSource && flickerClip) { audioSource.clip = flickerClip; audioSource.Play(); }
+        // A-01: электрический треск вместо щелчка выключателя с эхом зала.
+        AudioClip flicker = GameSounds.Library?.lampFlicker != null ? GameSounds.Library.lampFlicker : flickerClip;
+        if (audioSource && flicker) { audioSource.clip = flicker; audioSource.pitch = Random.Range(.92f, 1.08f); audioSource.Play(); }
 
         while (elapsed < duration)
         {

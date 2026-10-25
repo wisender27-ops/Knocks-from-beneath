@@ -123,6 +123,14 @@ public class FinaleController : MonoBehaviour
         // 3. Звук
         if (audioSource && evilLaughClip)
             audioSource.PlayOneShot(evilLaughClip);
+        else if (audioSource && GameSounds.Library != null)
+        {
+            // A-01: смеха нет — вместо тишины тяжёлый удар и низкий гул в момент толчка.
+            AudioClip hit = GameSounds.Pick(GameSounds.Library.darkHits);
+            if (hit != null) audioSource.PlayOneShot(hit, .8f);
+            AudioClip sub = GameSounds.Pick(GameSounds.Library.subHits);
+            if (sub != null) audioSource.PlayOneShot(sub, .7f);
+        }
 
         yield return new WaitForSeconds(0.5f);
 
@@ -197,9 +205,12 @@ public class FinaleController : MonoBehaviour
 
         // 7. Звук заколачивания досок
         yield return new WaitForSeconds(0.5f);
-        if (audioSource && nailingWoodClip)
+        AudioClip nailingAbove = GameSounds.Library != null && GameSounds.Library.nailingAbove != null
+            ? GameSounds.Library.nailingAbove : nailingWoodClip;
+        if (audioSource && nailingAbove)
         {
-            audioSource.clip = nailingWoodClip;
+            // A-01: глухие неровные удары молотка над головой, а не зацикленный стук костяшками.
+            audioSource.clip = nailingAbove;
             audioSource.loop = true;
             audioSource.Play();
         }

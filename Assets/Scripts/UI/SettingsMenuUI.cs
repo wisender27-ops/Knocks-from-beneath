@@ -60,7 +60,7 @@ public class SettingsMenuUI : MonoBehaviour
     static readonly Color ControlHover = new Color(.3f, .28f, .24f, 1f);
     // Шкала текста меню: база 28, шаг x1.5 (28 / 42 / 64 / 95 / 142). Заголовок названия и пункты главного меню - на старших ступенях.
     const float TextBase = 28f, TextHeading = 42f;
-    const float RowHeight = 64f, SliderWidth = 400f, ValueWidth = 100f, RowSpacing = 16f;
+    const float RowHeight = 52f, SliderWidth = 400f, ValueWidth = 100f, RowSpacing = 16f;
     const float ControlZoneWidth = SliderWidth + RowSpacing + ValueWidth;
 
     public static SettingsMenuUI BuildRuntime(Transform parent, TMP_FontAsset font, Action onBack)
@@ -68,7 +68,7 @@ public class SettingsMenuUI : MonoBehaviour
         RectTransform panel = Rect("Settings", parent, new Vector2(1160, 0));
         panel.gameObject.AddComponent<Image>().color = PanelColor;
         VerticalLayoutGroup layout = panel.gameObject.AddComponent<VerticalLayoutGroup>();
-        layout.padding = new RectOffset(64, 64, 48, 48); layout.spacing = 8; layout.childAlignment = TextAnchor.UpperLeft;
+        layout.padding = new RectOffset(64, 64, 36, 36); layout.spacing = 4; layout.childAlignment = TextAnchor.UpperLeft;
         layout.childControlWidth = layout.childControlHeight = true; layout.childForceExpandWidth = true; layout.childForceExpandHeight = false;
         panel.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         SettingsMenuUI ui = panel.gameObject.AddComponent<SettingsMenuUI>();
@@ -80,6 +80,9 @@ public class SettingsMenuUI : MonoBehaviour
         Spacer(panel, 14);
 
         ui.masterVolumeSlider = SliderRow(panel, font, "Общая громкость", out ui.masterVolumeValueText);
+        VolumeRow(panel, font, "Музыка", SettingsStore.GetMusicVolume, SettingsStore.SetMusicVolume);
+        VolumeRow(panel, font, "Фоновые звуки", SettingsStore.GetAmbienceVolume, SettingsStore.SetAmbienceVolume);
+        VolumeRow(panel, font, "Эффекты", SettingsStore.GetSfxVolume, SettingsStore.SetSfxVolume);
         ui.mouseSensitivitySlider = SliderRow(panel, font, "Чувствительность мыши", out ui.mouseSensitivityValueText);
         ui.fovSlider = SliderRow(panel, font, "Поле зрения", out ui.fovText);
         SetupSlider(ui.fovSlider, 50, 100, SettingsStore.GetFieldOfView(), value => { SettingsStore.SetFieldOfView(value); ui.fovText.text = Mathf.RoundToInt(value) + "°"; });
@@ -113,7 +116,17 @@ public class SettingsMenuUI : MonoBehaviour
         HorizontalLayoutGroup footer = HorizontalRow("Footer", panel, 64, TextAnchor.MiddleLeft);
         Button back = ButtonBox("Back", footer.transform, font, "НАЗАД", TextBase, 280, 64);
         back.onClick.AddListener(() => onBack?.Invoke());
+        GameAudio.HookSelectables(panel);
         return ui;
+    }
+
+    // A-01: громкость категории (шины MainMixer через GameAudio).
+    static void VolumeRow(Transform panel, TMP_FontAsset font, string title, Func<float> get, Action<float> set)
+    {
+        Slider slider = SliderRow(panel, font, title, out TextMeshProUGUI text);
+        float value = get();
+        text.text = Mathf.RoundToInt(value * 100) + "%";
+        SetupSlider(slider, 0, 1, value, v => { set(v); text.text = Mathf.RoundToInt(v * 100) + "%"; });
     }
     static RectTransform Rect(string name, Transform parent, Vector2 size, Vector2 position = default)
     {

@@ -14,7 +14,7 @@ public static class SettingsStore
     public static int Revision { get; private set; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() { Changed = null; Revision = 0; }
+    static void ResetStatics() { Changed = null; Revision = 0; fadeGain = 1f; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
     static void Initialize()
@@ -28,7 +28,17 @@ public static class SettingsStore
 
     public static float GetMasterVolume(float defaultValue = 1f) => Mathf.Clamp01(PlayerPrefs.GetFloat(Key_MasterVolume, defaultValue));
     public static void SetMasterVolume(float value) { PlayerPrefs.SetFloat(Key_MasterVolume, Mathf.Clamp01(value)); ApplyMasterVolume(); Save(); }
-    public static void ApplyMasterVolume() => AudioListener.volume = GetMasterVolume();
+    public static void ApplyMasterVolume() => AudioListener.volume = GetMasterVolume() * FadeGain;
+    // Затемнение экрана приглушает звук через этот множитель (ведёт GameAudio), а не перезаписывает громкость.
+    static float fadeGain = 1f;
+    public static float FadeGain { get => fadeGain; set { fadeGain = Mathf.Clamp01(value); ApplyMasterVolume(); } }
+    const string MusicKey = "settings_musicVolume", AmbienceKey = "settings_ambienceVolume", SfxKey = "settings_sfxVolume";
+    public static float GetMusicVolume() => Mathf.Clamp01(PlayerPrefs.GetFloat(MusicKey, .8f));
+    public static float GetAmbienceVolume() => Mathf.Clamp01(PlayerPrefs.GetFloat(AmbienceKey, 1f));
+    public static float GetSfxVolume() => Mathf.Clamp01(PlayerPrefs.GetFloat(SfxKey, 1f));
+    public static void SetMusicVolume(float value) { PlayerPrefs.SetFloat(MusicKey, Mathf.Clamp01(value)); Save(); NotifyChanged(); }
+    public static void SetAmbienceVolume(float value) { PlayerPrefs.SetFloat(AmbienceKey, Mathf.Clamp01(value)); Save(); NotifyChanged(); }
+    public static void SetSfxVolume(float value) { PlayerPrefs.SetFloat(SfxKey, Mathf.Clamp01(value)); Save(); NotifyChanged(); }
     public static float GetMouseSensitivity(float defaultValue = 2f) => Mathf.Clamp(PlayerPrefs.GetFloat(Key_MouseSensitivity, defaultValue), .1f, 10f);
     public static void SetMouseSensitivity(float value) { PlayerPrefs.SetFloat(Key_MouseSensitivity, Mathf.Clamp(value, .1f, 10f)); Save(); NotifyChanged(); }
     public static bool GetInvertY() => PlayerPrefs.GetInt(InvertKey, 0) != 0;

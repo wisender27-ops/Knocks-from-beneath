@@ -216,7 +216,11 @@ namespace KnocksFromBeneath
             _stinger.spatialBlend = 0f;
             _stinger.volume = 0.85f;
             _stinger.clip = Resources.Load<AudioClip>("Audio/CornerJumpscare");
+            AudioRouting.Assign(_stinger, AudioBus.Horror);
             if (_stinger.clip != null) _stinger.Play();
+            // A-01: низкий удар под скример — вес в теле, а не только громкость.
+            AudioClip sub = GameSounds.Pick(GameSounds.Library?.subHits);
+            if (sub != null) _stinger.PlayOneShot(sub, .7f);
         }
 
         private void RestoreControl()
@@ -252,6 +256,7 @@ namespace KnocksFromBeneath
             _runEmitter = new GameObject("CornerEscapeAudio");
             _runEmitter.transform.position = _headTarget - Vector3.up;
             AudioSource source = _runEmitter.AddComponent<AudioSource>();
+            AudioRouting.Assign(source, AudioBus.Horror);
             source.playOnAwake = false;
             source.spatialBlend = 1f;
             source.minDistance = 1.5f;
@@ -275,7 +280,8 @@ namespace KnocksFromBeneath
             if (_exitDoor != null)
             {
                 _exitDoor.BreakOffHinges(Vector3.forward, Resources.Load<AudioClip>("Audio/CornerDoorCrack"),
-                    Resources.Load<AudioClip>("Audio/CornerDoorLanding"));
+                    GameSounds.Library?.doorLanding != null ? GameSounds.Library.doorLanding
+                        : Resources.Load<AudioClip>("Audio/CornerDoorLanding"));
                 GameState.frontDoorLocked = false;
             }
             Destroy(_runEmitter);

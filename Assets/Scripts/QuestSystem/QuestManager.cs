@@ -99,6 +99,7 @@ public class QuestManager : MonoBehaviour
             // Сначала увеличиваем индекс, чтобы UpdateUI понял, что квестов больше нет
             currentQuestIndex++;
 
+            GameAudio.PlayQuestCue(true);
             // Теперь вызываем событие (например, мысли игрока о следующем задании)
             activeQuest.onQuestComplete?.Invoke();
         }
@@ -116,6 +117,7 @@ public class QuestManager : MonoBehaviour
         // Direct story transitions already invoke their next step themselves.
         quest.currentAmount = quest.requiredAmount;
         currentQuestIndex++;
+        GameAudio.PlayQuestCue(true);
         UpdateUI();
         NotifyActiveQuestTagIfChanged();
         OnQuestChanged?.Invoke();
@@ -138,6 +140,7 @@ public class QuestManager : MonoBehaviour
         // Always sync to the newest quest — CreateQuest is only
         // ever called from story callbacks, so a new quest = active quest
         currentQuestIndex = questList.Count - 1;
+        GameAudio.PlayQuestCue(false);
 
         UpdateUI();
         NotifyActiveQuestTagIfChanged();

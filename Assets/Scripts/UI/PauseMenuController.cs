@@ -98,6 +98,8 @@ namespace KnocksFromBeneath
             counter.text = $"СЧЁТЧИК {seconds / 3600}:{seconds / 60 % 60:00}:{seconds % 60:00}";
             canvas.gameObject.SetActive(true);
             ShowMenu();
+            GameAudio.HookSelectables(canvas.transform);
+            GameAudio.PlayUi(UiSound.PauseOpen);
         }
 
         public void Resume()
@@ -111,6 +113,7 @@ namespace KnocksFromBeneath
             Cursor.lockState = previousCursorLock;
             Cursor.visible = previousCursorVisible;
             if (canvas != null) canvas.gameObject.SetActive(false);
+            GameAudio.PlayUi(UiSound.PauseClose);
             PlayerPrefs.Save();
         }
 

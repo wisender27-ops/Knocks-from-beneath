@@ -108,7 +108,10 @@ public class LightSwitch : MonoBehaviour
 
         if (switchSound != null)
         {
-            switchSound.Play();
+            // A-01: свои щелчки на включение и выключение; без библиотеки — прежний клип.
+            AudioClip click = isOn ? GameSounds.Library?.switchOn : GameSounds.Library?.switchOff;
+            if (click != null) { switchSound.pitch = Random.Range(.97f, 1.03f); switchSound.PlayOneShot(click, .9f); }
+            else switchSound.Play();
         }
 
         if (_nightTwoPowerTripEnabled && !_powerOutage)
