@@ -193,6 +193,7 @@ public class IntroSequence : MonoBehaviour
 
         SetupBedsideLamp();
         SetupPowerOutageAudio();
+        SetupKnockDirector();
         CornerPeekSequence cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
         cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
     }
@@ -653,6 +654,18 @@ public class IntroSequence : MonoBehaviour
             if (outline == null) outline = flashlightItem.AddComponent<PixelItemOutline>();
             outline.Show();
         }
+    }
+
+    // K-01: источник RandomKnock ползёт под полом к игроку. Границы — первый этаж дома.
+    void SetupKnockDirector()
+    {
+        if (knockController == null || playerInventory == null) return;
+        PlayerController player = playerInventory.GetComponentInParent<PlayerController>();
+        if (player == null) return;
+        KnockDirector director = knockController.GetComponent<KnockDirector>();
+        if (director == null) director = knockController.AddComponent<KnockDirector>();
+        director.Initialize(player, () => skySwitcher == null || !skySwitcher.isDayTime,
+            new Vector2(-46f, 101f), new Vector2(-34f, 119.5f));
     }
 
     void SetupBedsideLamp()
