@@ -28,6 +28,7 @@ namespace KnocksFromBeneath
         private Quaternion hammerRest;
         private Camera camComponent;
         private float baseFov, swingTime = -1f, shake, shakeTime;
+        private Quaternion aimRotation; // взгляд без тряски: тряска — смещение поверх, не накапливается
         private GameObject ui;
         private RectTransform marker;
         private Material nailMaterial;
@@ -54,6 +55,7 @@ namespace KnocksFromBeneath
             CreateAudio();
             camComponent = pc.GetComponentInChildren<Camera>();
             cam = camComponent != null ? camComponent.transform : null;
+            if (cam != null) aimRotation = cam.rotation;
             if (camComponent != null) baseFov = camComponent.fieldOfView;
             hammer = pc.GetComponent<PlayerInventory>()?.hammerInHand?.transform;
             if (hammer != null) hammerRest = hammer.localRotation;
@@ -123,7 +125,7 @@ namespace KnocksFromBeneath
                                 else
                                 {
                                     Play(nailClip, result == NailStrike.NailDone ? 0.9f : 1.08f, 1f);
-                                    shake = Mathf.Max(shake, 0.6f);
+                                    shake = Mathf.Max(shake, 0.15f);
                                     shakeTime = 0f;
                                 }
                             }
@@ -202,25 +204,25 @@ namespace KnocksFromBeneath
             if (cam != null)
             {
                 if (aim)
-                {
-                    Quaternion target = Quaternion.LookRotation(lookAt - cam.position);
-                    cam.rotation = Quaternion.Slerp(cam.rotation, target, 1f - Mathf.Exp(-7f * dt));
-                }
+                    aimRotation = Quaternion.Slerp(aimRotation, Quaternion.LookRotation(lookAt - cam.position),
+                        1f - Mathf.Exp(-7f * dt));
+                Quaternion offset = Quaternion.identity;
                 if (camComponent != null)
                     camComponent.fieldOfView = Mathf.Lerp(camComponent.fieldOfView,
                         aim ? baseFov * ZoomFactor : baseFov, 1f - Mathf.Exp(-5f * dt));
                 if (shake > 0f)
                 {
                     shakeTime += dt;
-                    float a = shake * Mathf.Exp(-shakeTime * 7f);
+                    float a = shake * Mathf.Exp(-shakeTime * 9f);
                     if (a < 0.02f) shake = 0f;
                     else
                     {
-                        float n = shakeTime * 40f;
-                        cam.rotation *= Quaternion.Euler((Mathf.PerlinNoise(n, 0.3f) - 0.5f) * 2f * a,
+                        float n = shakeTime * 25f;
+                        offset = Quaternion.Euler((Mathf.PerlinNoise(n, 0.3f) - 0.5f) * 2f * a,
                             (Mathf.PerlinNoise(0.7f, n) - 0.5f) * 2f * a, 0f);
                     }
                 }
+                cam.rotation = aimRotation * offset;
             }
             if (swingTime >= 0f)
             {
@@ -244,7 +246,7 @@ namespace KnocksFromBeneath
                 if (thudClip != null) source.PlayOneShot(thudClip, Mathf.Clamp01(0.3f + strength * 0.5f));
             }
             hatch?.Jolt(1.5f + strength * 4f);
-            shake = Mathf.Max(shake, 0.6f + strength * 2.4f);
+            shake = Mathf.Max(shake, 0.2f + strength * 0.7f);
             shakeTime = 0f;
         }
 
