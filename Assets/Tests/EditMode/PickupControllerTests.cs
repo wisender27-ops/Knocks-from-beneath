@@ -55,12 +55,12 @@ public class PickupControllerTests
     }
 
     [Test]
-    public void SmallObject_UsesBothHands()
+    public void SmallLightObject_IsNotTwoHanded()
     {
         _itemGo.AddComponent<SphereCollider>().radius = 0.05f;
         Physics.SyncTransforms();
         Assert.That(_pickup.TryGrab(_itemGo), Is.True);
-        Assert.That(_pickup.IsHeldObjectTwoHanded, Is.True);
+        Assert.That(_pickup.IsHeldObjectTwoHanded, Is.False);
     }
 
     [Test]
@@ -115,13 +115,16 @@ public class PickupControllerTests
     }
 
     [Test]
-    public void ColdPie_UsesPhysicalCarry()
+    public void ColdPie_UsesPhysicalCarryAndRestoresCollidersOnRelease()
     {
         _itemGo.AddComponent<PieQuestItem>();
         var collider = _itemGo.AddComponent<BoxCollider>();
         Assert.That(_pickup.TryGrab(_itemGo), Is.True);
         Assert.That(_itemGo.transform.parent, Is.Null);
         Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.False);
+        // Коллайдеры переносимого предмета выключены, чтобы он не цеплялся за стены.
+        Assert.That(collider.enabled, Is.False);
+        _pickup.Release();
         Assert.That(collider.enabled, Is.True);
     }
 

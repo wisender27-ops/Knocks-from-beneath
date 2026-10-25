@@ -556,10 +556,12 @@ public class PickupController : MonoBehaviour
     void ClearHeldObject(bool restartParticles = true)
     {
         ClearQuestPlacementPreviews();
-        for (int i = 0; _kitchenColliders != null && i < _kitchenColliders.Length; i++)
-            if (_kitchenColliders[i] != null) _kitchenColliders[i].enabled = _kitchenColliderStates[i];
+        // Обратный порядок захвата: у декора кухни _carryColliderStates снято уже после
+        // выключения, поэтому исходное состояние возвращает только _kitchenColliderStates.
         for (int i = 0; _carryColliders != null && i < _carryColliders.Length; i++)
             if (_carryColliders[i] != null) _carryColliders[i].enabled = _carryColliderStates[i];
+        for (int i = 0; _kitchenColliders != null && i < _kitchenColliders.Length; i++)
+            if (_kitchenColliders[i] != null) _kitchenColliders[i].enabled = _kitchenColliderStates[i];
         _carryColliders = null;
         _carryColliderStates = null;
         _kitchenColliders = null;
