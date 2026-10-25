@@ -23,8 +23,9 @@ namespace KnocksFromBeneath
         private const float ThroughFloorVolume = 0.72f;
         private const float RageDelayMin = 3f;
         private const float RageDelayMax = 4f;
-        private const float RageJolt = 3.5f;
-        private const float RagePitch = 0.65f;
+        private const float RageJolt = 5f;
+        private const float RagePitch = 0.92f;   // почти родной тон: удар резкий, не тягучий
+        private const float RageGain = 1.8f;     // PlayOneShot усиливает и выше 1
 
         private readonly KnockReply _reply = new KnockReply();
         private PlayerFloorKnock _playerKnock;
@@ -64,7 +65,8 @@ namespace KnocksFromBeneath
             {
                 // Без глушения: удар такой силы пробивает пол.
                 _rageSource = HorrorMomentDirector.CreateSource(transform, "Knock rage under floor", 30f);
-                _rageSource.minDistance = 8f;
+                _rageSource.minDistance = 10f;
+                _rageSource.spatialBlend = 0.6f; // наполовину «в голове» — бьёт по ушам, но слышно, что снизу
                 _rageSource.priority = 10;
             }
             _rageLayers = new[]
@@ -145,11 +147,15 @@ namespace KnocksFromBeneath
                 yield break;
             }
             _rageSource.transform.position = _lastFloor - Vector3.up * 0.6f;
-            // Pitch источника общий для всех one-shot: опускаем весь «аккорд» удара разом.
+            // Pitch источника общий для всех one-shot. Каждый слой дважды — ещё +6 дБ сверху.
             float[] volumes = { 1f, 1f, 0.8f };
             _rageSource.pitch = RagePitch;
             for (int i = 0; i < _rageLayers.Length; i++)
-                if (_rageLayers[i] != null) _rageSource.PlayOneShot(_rageLayers[i], volumes[i]);
+            {
+                if (_rageLayers[i] == null) continue;
+                _rageSource.PlayOneShot(_rageLayers[i], volumes[i] * RageGain);
+                _rageSource.PlayOneShot(_rageLayers[i], volumes[i] * RageGain);
+            }
             if (_playerKnock != null) _playerKnock.Jolt(RageJolt);
             LastRageTime = Time.time;
             if (DirectorActive) _director.HoldKnocks(SilenceSeconds);

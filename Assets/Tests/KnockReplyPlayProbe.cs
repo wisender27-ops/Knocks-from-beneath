@@ -135,13 +135,17 @@ public sealed class KnockReplyPlayProbe : MonoBehaviour
         // Серия кончается через 1.1 с паузы, потом 3–4 с тишины.
         Check(responder.HasRaged && rageAfter > 4f && rageAfter < 5.4f, $"Первый спам — тишина, потом удар со всей силы ({rageAfter:0.0} с после последнего стука)");
         Check(responder.ReplyKnocksPlayed == played, "На спам не повторяет число ударов");
-        float lo = float.MaxValue, hi = float.MinValue;
+        float lo = float.MaxValue, hi = float.MinValue, peak = 0f;
+        var samples = new float[1024];
         for (float t = 0f; t < 0.35f; t += Time.deltaTime)
         {
             yield return new WaitForEndOfFrame();
             float p = Mathf.DeltaAngle(0f, Pitch());
             lo = Mathf.Min(lo, p); hi = Mathf.Max(hi, p);
+            AudioListener.GetOutputData(samples, 0);
+            foreach (float v in samples) peak = Mathf.Max(peak, Mathf.Abs(v));
         }
+        report.notes.Add($"rage peak={peak:0.00} (общая громкость настроек {AudioListener.volume:0.00})");
         Check(hi - lo > 1f, $"Камеру встряхнуло (размах {hi - lo:0.0}°)");
         randomBefore = randomKnock.PlayedKnockCount;
         yield return Wait(6f);
