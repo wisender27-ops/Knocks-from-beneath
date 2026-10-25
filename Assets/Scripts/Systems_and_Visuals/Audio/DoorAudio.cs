@@ -18,6 +18,7 @@ public sealed class DoorAudio : MonoBehaviour
     Vector3 closedPosition;
     float openness, peakSpeed, lastOpenness;
     bool open, armed;
+    int lastOpen = -1;
 
     public static void Attach(Door door)
     {
@@ -73,8 +74,9 @@ public sealed class DoorAudio : MonoBehaviour
             case Kind.Fridge: Play(GameSounds.Pick(lib.doorOpen), .35f, 1.35f); break;
             case Kind.Microwave: Play(lib.doorLatch, .45f, 1.5f); break;
             case Kind.Gate: Play(lib.doorLatch, .7f, .8f); break;
-            case Kind.Closet: Play(lib.doorLatch, .35f, 1.25f); break;
-            default: Play(lib.doorLatch, .55f, Random.Range(.95f, 1.05f)); break;
+            // Запись открытия двери с ручкой (автор: металлический щелчок звучал плохо).
+            case Kind.Closet: Play(GameSounds.Pick(lib.doorOpen, ref lastOpen), .4f, 1.15f); break;
+            default: Play(GameSounds.Pick(lib.doorOpen, ref lastOpen), .7f, Random.Range(.96f, 1.04f)); break;
         }
     }
 

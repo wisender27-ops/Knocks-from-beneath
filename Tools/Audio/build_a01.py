@@ -178,7 +178,7 @@ def fit(a, n):
     return np.concatenate([a] * reps)[:n]
 
 def build_ambience():
-    # Day outside: birds + light wind
+    # Day outside: заменено 2026-10-26 на запись пригорода (freesound 614273 + 797675, см. ThirdPartyCredits) — собрано отдельно.
     birds = load(oga('amb_morning.wav'))
     wind = load(oga('park_ambience_wind.wav'))
     n = len(birds)
@@ -365,8 +365,10 @@ def build_agent():
     for k in range(4):
         rel = f'World/Doors/Close{k+1}.ogg'; emit(rel, fades(trim(load(os.path.join(dd, f'qubodup-DoorClose0{k+1}.flac')), -55), 0.002, 0.1), -17, to_mono=True)
         ogacredit(rel, 'door-open-door-close-set', 'qubodup', f'DoorClose0{k+1}')
-    for k in range(2):
-        rel = f'World/Doors/Open{k+1}.ogg'; emit(rel, fades(trim(load(os.path.join(dd, f'qubodup-DoorOpen0{k+1}.flac')), -55), 0.002, 0.1), -21, to_mono=True)
+    for k in range(4):
+        # Открытие: щелчок ручки + начало хода створки, без длинного хвоста (скрип даёт Door при движении).
+        a = trim(load(os.path.join(dd, f'qubodup-DoorOpen0{k+1}.flac')), -55)[: int(0.9 * SR)]
+        rel = f'World/Doors/Open{k+1}.ogg'; emit(rel, fades(biquad(a, 'hp', 70), 0.002, 0.25), -22, to_mono=True)
         ogacredit(rel, 'door-open-door-close-set', 'qubodup', f'DoorOpen0{k+1}')
     # Плита: ручка + розжиг газа; отключение света: щелчок автомата.
     knob = mono(trim(load(os.path.join(AG, '08_oga_stove-switch', 'turn_stove_on_01_0.ogg')), -50))

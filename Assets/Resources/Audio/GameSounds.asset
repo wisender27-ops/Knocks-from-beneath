@@ -123,6 +123,8 @@ MonoBehaviour:
   doorOpen:
   - {fileID: 8300000, guid: 0259969afbb071544a107040a3790858, type: 3}
   - {fileID: 8300000, guid: fb9101b2805ce28449e1e3bb717e102e, type: 3}
+  - {fileID: 8300000, guid: 0a1cc3a10022caa44af6a01d2421f270, type: 3}
+  - {fileID: 8300000, guid: 98911c16ac1c87d4eabce5ec9c3a1828, type: 3}
   doorClose:
   - {fileID: 8300000, guid: 49bfd822804cbe642a0ef1197a6e35c6, type: 3}
   - {fileID: 8300000, guid: 5e15893de2553ed4bb073d365719baf5, type: 3}

@@ -1,5 +1,4 @@
 # Сторонние ассеты
-
 | Файл в проекте | Что | Источник | Автор | Лицензия | Дата |
 |----------------|-----|----------|-------|----------|------|
 | `Assets/Resources/Audio/Horror/impactWood_heavy_000.ogg` | Тяжёлый удар по дереву (слой «срыва» стучащего, K-02) | https://kenney.nl/assets/impact-sounds | Kenney | CC0 1.0 | 2026-10-25 |
@@ -75,7 +74,6 @@
 | `Assets/Audio/Game/Foley/Items/MetalGrab1.ogg` | A-01: kenney_rpg-audio/metalPot1.ogg | https://kenney.nl/assets/rpg-audio | Kenney (kenney.nl) | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/Foley/Items/MetalGrab2.ogg` | A-01: kenney_rpg-audio/metalPot2.ogg | https://kenney.nl/assets/rpg-audio | Kenney (kenney.nl) | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/Foley/Items/Equip.ogg` | A-01: kenney_rpg-audio/beltHandle2.ogg | https://kenney.nl/assets/rpg-audio | Kenney (kenney.nl) | CC0 1.0 | 2026-10-26 |
-| `Assets/Audio/Game/Ambience/DayOutside.ogg` | A-01: opengameart: amb_morning.wav; opengameart: park_ambience_wind.wav | https://opengameart.org/content/amb-morning-sounds-perfect-loop https://opengameart.org/content/park-ambiences | kresiek-the-furry, thimras | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/Ambience/NightOutside.ogg` | A-01: opengameart: crickets_1.mp3; opengameart: park_ambience_wind.wav | https://opengameart.org/content/crickets-ambient-noise-loopable https://opengameart.org/content/park-ambiences | thimras, wolfgang | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/Ambience/Basement.ogg` | A-01: opengameart: dungeon_ambient_1_0.ogg; opengameart: freezer_0.ogg | https://opengameart.org/content/abandoned-passages-horror-ambience-loop https://opengameart.org/content/loopable-dungeon-ambience | congusbongus, jaggedstone | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/Ambience/FridgeHum.ogg` | A-01: opengameart: TheShopCollection_convenience_store_drinks_fridge_drone.wav | https://opengameart.org/content/the-shop | LEGIT Audio | CC0 1.0 | 2026-10-26 |
@@ -151,3 +149,6 @@
 | `Assets/Audio/Game/World/StoveIgnite.ogg` | A-01: opengameart "turn stove on 01"; freesound #751151 "Gas Stove Ignition 3" (HQ preview) | https://freesound.org/people/C-V/sounds/751151/ https://opengameart.org/content/stove-switch | C-V, TinyWorlds | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/World/BreakerOff.ogg` | A-01: opengameart "switch off" | https://opengameart.org/content/sfx-circuit-breaker | CleytonKauffman | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/World/PlateSetDown.ogg` | A-01: freesound #785256 "Aufraeumen und Aufdecken von Tassen und Tellern" (HQ preview) | https://freesound.org/people/Marschal/sounds/785256/ | Marschal | CC0 1.0 | 2026-10-26 |
+| `Assets/Audio/Game/World/Doors/Open3.ogg` | A-01: opengameart "DoorOpen03" | https://opengameart.org/content/door-open-door-close-set | qubodup | CC0 1.0 | 2026-10-26 |
+| `Assets/Audio/Game/World/Doors/Open4.ogg` | A-01: opengameart "DoorOpen04" | https://opengameart.org/content/door-open-door-close-set | qubodup | CC0 1.0 | 2026-10-26 |
+| `Assets/Audio/Game/Ambience/DayOutside.ogg` | A-01: дневной пригород — freesound #614273 "Spring_Day_Suburb_AMB_EXT" + #797675 "Windy suburban ambiance loop" (HQ preview, вырезан спокойный фрагмент, петля) | https://freesound.org/people/mshahen/sounds/614273/ https://freesound.org/people/HenKonen/sounds/797675/ | mshahen, HenKonen | CC0 1.0 | 2026-10-26 |
