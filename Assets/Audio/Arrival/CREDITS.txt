@@ -1,0 +1,9 @@
+Звуки катсцены приезда (ArrivalCutscene). CC0 1.0 (public domain).
+Источник: GGBotNet — PSX Style Cars, https://opengameart.org/content/psx-style-cars
+Сведены в моно и выровнены по громкости (ffmpeg loudnorm).
+
+TaxiEngineLoop.ogg  <- Car2_Engine_Loop.ogg
+TaxiDoorOpen.ogg    <- Car_Door_Open.ogg
+TaxiDoorClose.ogg   <- Car_Door_Close.ogg
+TaxiTrunkOpen.ogg   <- Car_Trunk_Open.ogg
+TaxiTrunkClose.ogg  <- Car_Hood_Close.ogg

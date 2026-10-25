@@ -45,6 +45,10 @@ public class IntroSequence : MonoBehaviour
     public bool useDebugSkip = false;
     public DebugStoryStage startStage = DebugStoryStage.None;
 
+    [Header("Начало игры")]
+    [Tooltip("Чёрный экран с предысторией и катсцена приезда к дому. Без неё игра стартует сразу в доме.")]
+    public ArrivalCutscene openingCutscene;
+
     [Header("Игровые объекты")]
     public Transform playerTransform;
     public PlayerInventory playerInventory;
@@ -67,6 +71,8 @@ public class IntroSequence : MonoBehaviour
     [Tooltip("Фургон, который после выноса мусора привозит коробки дня 1. Без него коробки просто стоят во дворе.")]
     public DeliveryTruckSequence boxDeliveryTruck;
     public GameObject kitchenNoiseTrigger;
+    [Tooltip("Зона за входной дверью (HouseEntryTrigger) — квест 'Зайти в дом'.")]
+    public GameObject houseEntryTrigger;
     public GameObject finaleTrigger;
     public GameObject nightStartTrigger;
     public GameObject knockController; // Звуки удара и RandomKnock
@@ -196,6 +202,7 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnBedTriggerReached += OnBedTriggerReached;
         GameEvents.OnBedTriggerReached += _eveningRound.HandleBedReached;
         GameEvents.OnKitchenNoiseHeard += OnKitchenTriggerReached;
+        GameEvents.OnHouseEntered += OnHouseEntered;
         GameEvents.OnTrashDeliveryReady += _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed += _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten += _pieQuest.OnPieEaten;
@@ -215,6 +222,7 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnBedTriggerReached -= OnBedTriggerReached;
         GameEvents.OnBedTriggerReached -= _eveningRound.HandleBedReached;
         GameEvents.OnKitchenNoiseHeard -= OnKitchenTriggerReached;
+        GameEvents.OnHouseEntered -= OnHouseEntered;
         GameEvents.OnTrashDeliveryReady -= _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed -= _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten -= _pieQuest.OnPieEaten;
@@ -230,6 +238,8 @@ public class IntroSequence : MonoBehaviour
 
         if (useDebugSkip && startStage != DebugStoryStage.None)
             ApplyDebugSkip();
+        else if (openingCutscene != null)
+            openingCutscene.Play(StartIntro); // предыстория + приезд на такси, затем первые мысли
         else
             Invoke(nameof(StartIntro), 1.0f);
     }
@@ -261,6 +271,7 @@ public class IntroSequence : MonoBehaviour
             }
         }
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(false);
+        if (houseEntryTrigger != null) houseEntryTrigger.SetActive(false);
         if (finaleTrigger != null) finaleTrigger.SetActive(false);
         if (escapeDoorTrigger != null) escapeDoorTrigger.SetActive(false);
         if (hidingSpots != null)
@@ -478,7 +489,20 @@ public class IntroSequence : MonoBehaviour
         ShowImportantThoughts(new string[] {
             "Ну вот. Свой дом. Может, хоть здесь будет спокойно.",
             "Семья съехала, а срач оставила мне. Спасибо."
-        }, _moveInChores.SetupTrashQuest);
+        }, SetupEnterHouseQuest);
+    }
+
+    // Уборка начинается только когда игрок зашёл внутрь.
+    void SetupEnterHouseQuest()
+    {
+        if (houseEntryTrigger != null) houseEntryTrigger.SetActive(true);
+        CreateQuest("Зайти в дом", 1, _moveInChores.SetupTrashQuest, "enter-house");
+    }
+
+    void OnHouseEntered()
+    {
+        if (QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("enter-house"))
+            QuestManager.Instance.AddProgress(1);
     }
 
     void SetupGoToBedQuest()

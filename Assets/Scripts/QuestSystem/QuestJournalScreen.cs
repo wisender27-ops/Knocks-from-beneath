@@ -63,7 +63,12 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
-            if (CornerPeekSequence.IsPlaying) return;
+            if (CornerPeekSequence.IsPlaying || ArrivalCutscene.IsPlaying)
+            {
+                // Ранний выход оставлял подсказку «J / H» на экране на время катсцены.
+                if (hint != null && hint.gameObject.activeSelf) hint.gameObject.SetActive(false);
+                return;
+            }
             if (Input.GetKeyDown(toggleKey))
             {
                 if (IsOpen) Close(); else Open();

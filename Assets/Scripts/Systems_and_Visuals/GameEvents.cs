@@ -24,6 +24,9 @@ public static class GameEvents
     // Игрок дошёл до кровати (BedSleepInteractable)
     public static Action OnBedTriggerReached;
 
+    // Игрок впервые зашёл в дом (HouseEntryTrigger)
+    public static Action OnHouseEntered;
+
     // Игрок нашёл источник шума на кухне (KitchenNoiseTrigger)
     public static Action OnKitchenNoiseHeard;
 

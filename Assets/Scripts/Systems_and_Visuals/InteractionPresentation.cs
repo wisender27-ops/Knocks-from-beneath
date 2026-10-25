@@ -91,7 +91,7 @@ namespace KnocksFromBeneath
             if (canvas == null || actor == null || actor.playerCamera == null) return;
             bool hidden = source == null || !source.isActiveAndEnabled || Time.timeScale <= 0f ||
                 RetroInventoryScreen.IsAnyOpen || QuestJournalScreen.IsAnyOpen ||
-                NarrativeReadingPanel.IsModal || FadeTransitionPresentation.IsActive || CornerPeekSequence.IsPlaying ||
+                NarrativeReadingPanel.IsModal || FadeTransitionPresentation.IsActive || CornerPeekSequence.IsPlaying || ArrivalCutscene.IsPlaying ||
                 !actor.isActiveAndEnabled;
             if (hidden)
             {

@@ -19,6 +19,7 @@ namespace KnocksFromBeneath
         [SerializeField] private Vector3 leftSoleNormal = Vector3.up;
         [SerializeField] private Vector3 rightSoleNormal = Vector3.up;
 
+        private const float NearHeadDistance = .45f;
         private static readonly int MoveX = Animator.StringToHash("MoveX");
         private static readonly int MoveZ = Animator.StringToHash("MoveZ");
         private static readonly int Crouch = Animator.StringToHash("Crouch");
@@ -46,6 +47,13 @@ namespace KnocksFromBeneath
         }
 
         public void EndLockKick() => lockKick = false;
+
+        // Катсцены снимают героя той же камерой, что и игра от первого лица, — на это
+        // время тело должно рисоваться, а не только отбрасывать тень.
+        public static bool ShowToViewCamera { get; set; }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetShowToViewCamera() => ShowToViewCamera = false;
 
         public Animator Animator => animator;
         public SkinnedMeshRenderer HeadRenderer => headRenderer;
@@ -85,6 +93,15 @@ namespace KnocksFromBeneath
         {
             RestoreBodyShadows();
             if (view == null || camera != view || bodyRenderers == null) return;
+            if (ShowToViewCamera)
+            {
+                // Тело остаётся видимым до конца подлёта, чтобы не исчезать рывком; голову
+                // убираем только когда камера уже у самых глаз и иначе оказалась бы внутри неё.
+                if (headRenderer != null && (view.transform.position - headRenderer.bounds.center).sqrMagnitude < NearHeadDistance * NearHeadDistance)
+                    foreach (SkinnedMeshRenderer head in headRenderers)
+                        if (head != null) head.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
+                return;
+            }
             // Исходный меш целиком остаётся невидимым от камеры игрока.
             for (int i = 0; i < bodyRenderers.Length; i++)
                 if (bodyRenderers[i] != null)

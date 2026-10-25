@@ -91,7 +91,7 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
-            if (PlayerInteraction.IsLockSequencePlaying || CornerPeekSequence.IsPlaying) return;
+            if (PlayerInteraction.IsLockSequencePlaying || CornerPeekSequence.IsPlaying || ArrivalCutscene.IsPlaying) return;
             if (Input.GetKeyDown(toggleKey))
             {
                 if (isOpen) Close(); else Open();
