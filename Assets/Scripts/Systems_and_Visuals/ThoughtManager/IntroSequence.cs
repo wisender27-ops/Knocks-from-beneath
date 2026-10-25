@@ -132,6 +132,8 @@ public class IntroSequence : MonoBehaviour
     private AudioSource _powerOutageAudio;
     // K-02: хозяин в подвале отвечает на стук с первой ночи (до неё о нём никто не знает).
     private bool _knockerAwake;
+    private bool _nightTwoStarted; // K-03: уровень «Перестука» по главе
+    private RandomKnock _knockSound;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -145,7 +147,7 @@ public class IntroSequence : MonoBehaviour
         var firstNightScare = gameObject.AddComponent<NightOneScare>();
         firstNightScare.Initialize(playerInventory);
         var floorKnock = gameObject.AddComponent<PlayerFloorKnock>(); // K-02: Q — стук в пол
-        RandomKnock knockSound = knockController != null ? knockController.GetComponent<RandomKnock>() : null;
+        RandomKnock knockSound = _knockSound = knockController != null ? knockController.GetComponent<RandomKnock>() : null;
         floorKnock.Initialize(playerInventory, knockSound != null ? knockSound.ShortestClip : null);
         floorKnock.SetBasementArea(BasementMin, BasementMax, FirstFloorY);
         var followingSteps = gameObject.AddComponent<FollowingFootsteps>();
@@ -203,6 +205,7 @@ public class IntroSequence : MonoBehaviour
         var responder = gameObject.AddComponent<KnockResponder>();
         responder.Initialize(floorKnock, knockController != null ? knockController.GetComponent<KnockDirector>() : null,
             knockSound != null ? knockSound.ShortestClip : null, () => _knockerAwake);
+        gameObject.AddComponent<KnockCallGame>().Initialize(floorKnock, responder, KnockCallLevel, lines => ShowThoughts(lines, null));
         CornerPeekSequence cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
         cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
     }
@@ -214,6 +217,7 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnKitchenNoiseHeard += OnKitchenTriggerReached;
         GameEvents.OnHouseEntered += OnHouseEntered;
         GameEvents.OnNightStarted += WakeKnocker;
+        GameEvents.OnNightTwoStarted += MarkNightTwo;
         GameEvents.OnTrashDeliveryReady += _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed += _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten += _pieQuest.OnPieEaten;
@@ -235,6 +239,7 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnKitchenNoiseHeard -= OnKitchenTriggerReached;
         GameEvents.OnHouseEntered -= OnHouseEntered;
         GameEvents.OnNightStarted -= WakeKnocker;
+        GameEvents.OnNightTwoStarted -= MarkNightTwo;
         GameEvents.OnTrashDeliveryReady -= _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed -= _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten -= _pieQuest.OnPieEaten;
@@ -723,6 +728,20 @@ public class IntroSequence : MonoBehaviour
     }
 
     void WakeKnocker() => _knockerAwake = true;
+    void MarkNightTwo() => _nightTwoStarted = true;
+
+    // K-03: сложность «Перестука» — ночь 1 → 1, день 2 → 2, ночь 2 → 3; 0 — сейчас не стучат.
+    // Ночь 1: только после ухода соседа (в кровати на 2-м этаже стучать нельзя). Ночь 2: пока
+    // стучащий ещё «говорит» — до кухни и до пугалки из-за угла (дальше люк, монстр, финал).
+    int KnockCallLevel()
+    {
+        if (!_knockerAwake) return 0;
+        if (neighborVisit != null && neighborVisit.IsPlaying && !neighborVisit.HasVisited) return 0;
+        if (skySwitcher == null || skySwitcher.isDayTime) return _nightTwoStarted ? 0 : 2;
+        if (!_nightTwoStarted) return 1;
+        if (knockController == null || !knockController.activeInHierarchy) return 0;
+        return _knockSound != null && !_knockSound.IsSilencedPermanently ? 3 : 0; // после пугалки из-за угла стук затих навсегда
+    }
 
     static bool IsDayTwoDebugStage(DebugStoryStage stage) =>
         stage == DebugStoryStage.StartDay2Decoration || stage == DebugStoryStage.StartDay2Dinner ||

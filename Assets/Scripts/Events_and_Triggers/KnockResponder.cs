@@ -39,6 +39,9 @@ namespace KnocksFromBeneath
         private AudioClip[] _rageLayers;
 
         public bool IsReplying => _replyRoutine != null;
+        // K-03: пока идёт «Перестук», удары игрока — ответ на ритм, а не новая серия.
+        public bool Suspended { get; set; }
+        public bool IsBusy => _replyRoutine != null || _reply.IsListening;
         public KnockReplyKind LastReply { get; private set; }
         public int LastReplyCount { get; private set; }
         public int ReplyKnocksPlayed { get; private set; }
@@ -92,7 +95,7 @@ namespace KnocksFromBeneath
 
         private void OnPlayerKnocked(Vector3 floor)
         {
-            if (_replyRoutine != null || (_isAwake != null && !_isAwake())) return;
+            if (Suspended || _replyRoutine != null || (_isAwake != null && !_isAwake())) return;
             _reply.Tap(Time.time);
             _lastFloor = floor;
             if (DirectorActive) _director.Hear(floor, _reply.BurstGap + ListenHold);
@@ -100,7 +103,7 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
-            if (_replyRoutine != null) return;
+            if (_replyRoutine != null || Suspended) return;
             KnockReplyKind kind = _reply.Poll(Time.time, out int count);
             if (kind == KnockReplyKind.None) return;
             LastReply = kind;
@@ -174,16 +177,9 @@ namespace KnocksFromBeneath
 
             if (DirectorActive) _director.HoldKnocks(ReplyDelay + count * ReplyInterval + AfterReplyQuiet);
             yield return WaitPlayable(ReplyDelay);
-            Vector3 under = _lastFloor - Vector3.up * DepthBelowFloor;
             for (int i = 0; i < count; i++)
             {
-                float pitch = UnityEngine.Random.Range(0.92f, 1f);
-                if (!DirectorActive || !_director.PlayReplyKnock(_clip, pitch))
-                {
-                    _source.transform.position = under;
-                    _source.pitch = pitch;
-                    _source.PlayOneShot(_clip);
-                }
+                PlayUnderFloor(_lastFloor, UnityEngine.Random.Range(0.92f, 1f));
                 ReplyKnocksPlayed++;
                 yield return WaitPlayable(ReplyInterval);
             }
@@ -194,6 +190,26 @@ namespace KnocksFromBeneath
             }
             _replyRoutine = null;
             Replied?.Invoke(KnockReplyKind.Repeat, count);
+        }
+
+        // Один удар стучащего: из источника слежки K-01, если она активна, иначе из-под пола под точкой.
+        public void PlayUnderFloor(Vector3 floor, float pitch, float volume = 1f)
+        {
+            if (_clip == null) return;
+            if (DirectorActive && _director.PlayReplyKnock(_clip, pitch, volume)) return;
+            _source.transform.position = floor - Vector3.up * DepthBelowFloor;
+            _source.pitch = pitch;
+            _source.PlayOneShot(_clip, volume);
+        }
+
+        public void HoldKnocks(float seconds)
+        {
+            if (DirectorActive) _director.HoldKnocks(seconds);
+        }
+
+        public void ResetDirectorPitch()
+        {
+            if (DirectorActive) _director.ResetPitch();
         }
 
         private static IEnumerator WaitPlayable(float duration)

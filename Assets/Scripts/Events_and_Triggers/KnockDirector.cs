@@ -86,11 +86,11 @@ namespace KnocksFromBeneath
         }
 
         // Ответный удар из источника под полом — с тем же глушением перекрытиями.
-        public bool PlayReplyKnock(AudioClip clip, float pitch)
+        public bool PlayReplyKnock(AudioClip clip, float pitch, float volume = 1f)
         {
             if (!isActiveAndEnabled || _source == null || clip == null) return false;
             _source.pitch = pitch;
-            _source.PlayOneShot(clip);
+            _source.PlayOneShot(clip, volume);
             return true;
         }
 
