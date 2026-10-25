@@ -37,6 +37,13 @@ public sealed class NeighborhoodPlayProbe : MonoBehaviour
         Set(panel, "autoAdvance", true);
         intro.CancelInvoke();
         intro.StopAllCoroutines();
+        // Проба стартует сразу после входа в Play Mode — посреди катсцены приезда. Её OnDisable
+        // возвращает камеру игроку, иначе телепорты пробы снимают улицу, а не дом.
+        ResumeFocusPause();
+        if (intro.openingCutscene != null) intro.openingCutscene.gameObject.SetActive(false);
+        foreach (var screen in FindObjectsByType<StoryIntroScreen>(FindObjectsSortMode.None)) Destroy(screen.gameObject);
+        // Катсцена возвращает блокировку камеры, снять которую должен был остановленный IntroSequence.
+        player.isCameraLocked = false;
         NarrativeDisplayQueue.InterruptAndEnqueue(this, Empty);
         yield return null;
         Stage("first-night");
@@ -62,10 +69,27 @@ public sealed class NeighborhoodPlayProbe : MonoBehaviour
         yield return new WaitForSecondsRealtime(.4f);
         Check(neighbor.transform.position == before && QuestManager.Instance.IsQuestActive("neighbor-visit"), "Pause keeps visitor and objective stable");
         Time.timeScale = 1f;
-        Stage("door-interaction");
+        Stage("silhouette");
+        var visit = intro.neighborVisit;
+        var porch = visit.porchLightSwitch;
         var doorInput = player.GetComponentInChildren<PlayerDoorOpen>();
         var interaction = player.GetComponent<PlayerInteraction>();
         RaycastHit doorHit;
+        Check(porch != null && !porch.isOn && visit.IsSilhouetteVisible, "Porch light stays off and the visitor is a silhouette");
+        Check(!intro.frontDoor.IsInteractionLocked && QuestManager.Instance.IsQuestActive("neighbor-visit"), "Silhouette adds no lock or objective");
+        Teleport(new Vector3(-42.4f, .84f, 117.4f), neighbor.transform.position + Vector3.up * 1.8f);
+        yield return new WaitForSeconds(.5f);
+        Capture("window-silhouette");
+        Stage("porch-light");
+        porch.ToggleLight();
+        yield return null;
+        Check(porch.isOn && !visit.IsSilhouetteVisible && !visit.IsAtDoor, "Porch light shows a man at the window in the same frame");
+        yield return new WaitForSeconds(.4f);
+        Capture("neighbor-revealed");
+        yield return Until(() => visit.IsAtDoor && (neighbor.transform.position - visit.visitPoint.position).sqrMagnitude < .0025f, 12f, "Revealed neighbor walks from the window to the door");
+        Teleport(new Vector3(-39.25f, .84f, 115.65f), new Vector3(-39.25f, 2.1f, 118.35f));
+        yield return new WaitForSeconds(.3f);
+        Stage("door-interaction");
         bool focused = interaction.TryGetInteractionHit(out doorHit) && doorHit.collider.GetComponentInParent<Door>() == intro.frontDoor;
         Check(focused, "Actual player ray focuses the entrance door");
         if (focused)
@@ -75,7 +99,7 @@ public sealed class NeighborhoodPlayProbe : MonoBehaviour
         }
         yield return Until(() => NarrativeReadingPanel.IsModal, 8f, "Opening entrance starts neighbor dialogue");
         Capture("neighbor-at-door");
-        Check(!QuestManager.Instance.IsQuestActive("neighbor-visit"), "Visitor objective completes once conversation starts");
+        Check(!QuestManager.Instance.IsQuestActive("neighbor-visit") && !QuestManager.Instance.IsQuestActive("neighbor-open-door"), "Visitor objective completes once conversation starts");
         Stage("conversation");
         yield return Until(() => neighbor != null && neighbor.GetComponentInChildren<Animator>().GetBool("Walking"), 65f, "Dialogue completes and walking animation begins");
         Check(!player.isCameraLocked && Time.timeScale > 0f && interaction.enabled, "Dialogue restores movement and interaction");
@@ -116,17 +140,26 @@ public sealed class NeighborhoodPlayProbe : MonoBehaviour
         temporary.player = intro.playerTransform;
         temporary.porchLightSwitch = intro.neighborVisit.porchLightSwitch;
         temporary.knockClip = intro.neighborVisit.knockClip;
+        temporary.windowPeekPoint = intro.neighborVisit.windowPeekPoint;
+        temporary.windowReturnPath = intro.neighborVisit.windowReturnPath;
         bool lockBefore = intro.frontDoor.IsInteractionLocked;
         intro.frontDoor.SetInteractionLocked(true);
         bool lightBefore = temporary.porchLightSwitch != null && temporary.porchLightSwitch.isOn;
+        // Визит начинается при закрытой двери (ночь закрывает её); ждём, пока она докроется.
+        yield return new WaitForSeconds(2f);
         StartCoroutine(temporary.Play());
         yield return new WaitForSeconds(.1f);
-        Check(temporary.IsPlaying && !intro.frontDoor.IsInteractionLocked, "Visitor temporarily allows the locked entrance");
+        Check(temporary.IsPlaying && temporary.IsSilhouetteVisible && temporary.porchLightSwitch != null && !temporary.porchLightSwitch.isOn, "Interrupted visitor starts as a silhouette with the porch dark");
+        // Дверь, открытая в темноте, показывает человека у двери, а не силуэт у окна.
+        intro.frontDoor.OpenDoor();
+        yield return null;
+        var dark = Get<GameObject>(temporary, "neighbor");
+        Check(!temporary.IsSilhouetteVisible && temporary.IsAtDoor && dark != null && (dark.transform.position - temporary.visitPoint.position).sqrMagnitude < .0001f, "Opening the door in the dark always finds a man at the door");
         temporary.enabled = false;
         yield return new WaitForSeconds(1.5f);
         Check(!temporary.IsPlaying && intro.frontDoor.IsInteractionLocked, "Interrupted visit restores captured door lock");
         Check(temporary.porchLightSwitch == null || temporary.porchLightSwitch.isOn == lightBefore, "Interrupted visit restores the existing porch light");
-        Check(Get<GameObject>(temporary, "neighbor") == null && GameObject.Find("Neighbor door knocks") == null, "Interrupted visit removes actor and audio");
+        Check(Get<GameObject>(temporary, "neighbor") == null && GameObject.Find("Neighbor door knocks") == null && GameObject.Find("Neighbor silhouette backlight") == null, "Interrupted visit removes actor, audio and backlight");
         Check(QuestManager.Instance.IsQuestActive("room-decoration") && !NarrativeReadingPanel.IsModal, "Interrupted visit does not enqueue dialogue or replace current quest");
         intro.frontDoor.SetInteractionLocked(lockBefore);
         Destroy(temporary.gameObject);
@@ -134,6 +167,17 @@ public sealed class NeighborhoodPlayProbe : MonoBehaviour
         report.completedUtc = DateTime.UtcNow.ToString("O");
         Set(panel, "autoAdvance", previousAuto);
         Write();
+    }
+    // Редактор, которым управляют извне, теряет фокус, и PauseMenuController ставит паузу.
+    // Собственные проверки паузы проба делает через Time.timeScale, а не через меню.
+    // Снимать паузу нужно до разблокировки камеры в Start: Resume возвращает блокировку,
+    // запомненную в момент паузы.
+    private void Update() => ResumeFocusPause();
+    private static void ResumeFocusPause()
+    {
+        if (!PauseMenuController.IsPaused) return;
+        var menu = FindFirstObjectByType<PauseMenuController>();
+        if (menu != null) menu.Resume();
     }
     private IEnumerator Until(Func<bool> condition, float timeout, string label)
     {
