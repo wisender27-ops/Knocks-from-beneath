@@ -3042,7 +3042,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b08583ad2d0905c428caed5b376be014, type: 2}
+  - {fileID: 2100000, guid: a9c3cdd66dfede94f92ff0d2027e621a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -3979,7 +3979,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: b08583ad2d0905c428caed5b376be014, type: 2}
+  - {fileID: 2100000, guid: a9c3cdd66dfede94f92ff0d2027e621a, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -19536,13 +19536,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MonsterTimer
   timerText: {fileID: 981293623}
   timerDuration: 30
-  yellowThreshold: 20
-  redThreshold: 10
   audioSource: {fileID: 517444888}
   monsterEscapeClip: {fileID: 8300000, guid: 020a21165cbf8d64a945911bf027857c, type: 3}
-  finalMessageFontSize: 36
-  finalMessageWordDelay: 0.6
-  finalMessageHoldDuration: 3
 --- !u!1 &729221267
 GameObject:
   m_ObjectHideFlags: 0

@@ -74,22 +74,20 @@ public class FinaleController : MonoBehaviour
             yield break;
         }
 
-        basementHatch.Seal();
-        Transform hammer = pc.GetComponent<PlayerInventory>().hammerInHand?.transform;
-        Quaternion hammerRotation = hammer != null ? hammer.localRotation : Quaternion.identity;
-        for (int strike = 0; strike < 4; strike++)
+        // M-03 «Гвозди»: доски держат, только если игрок успеет забить гвозди, пока их не выбили.
+        HatchNailingGame nailing = GetComponent<HatchNailingGame>();
+        if (nailing == null) nailing = gameObject.AddComponent<HatchNailingGame>();
+        bool boarded = false;
+        yield return nailing.Play(pc, basementHatch, boardedVisual, nailingWoodClip, result => boarded = result);
+        if (!boarded)
         {
-            if (audioSource != null && nailingWoodClip != null)
-                audioSource.PlayOneShot(nailingWoodClip);
-            for (float elapsed = 0f; elapsed < 0.45f; elapsed += Time.deltaTime)
-            {
-                if (hammer != null)
-                    hammer.localRotation = hammerRotation * Quaternion.Euler(
-                        -35f * Mathf.Sin(elapsed / 0.45f * Mathf.PI), 0f, 0f);
-                yield return null;
-            }
+            basementHatch.OpenForCinematic();
+            for (float t = 0f; t < 2f && !basementHatch.IsOpen; t += Time.deltaTime) yield return null;
+            yield return PushedIntoHoleRoutine(pc);
+            yield break;
         }
-        if (hammer != null) hammer.localRotation = hammerRotation;
+
+        basementHatch.Seal();
         if (boardedVisual != null) boardedVisual.SetActive(true);
         if (QuestManager.Instance != null && QuestManager.Instance.questUiText != null)
             QuestManager.Instance.questUiText.text = "";
@@ -185,6 +183,17 @@ public class FinaleController : MonoBehaviour
 
         if (monsterModel != null)
             monsterModel.SetActive(false);
+
+        // Темноту держит камера, а не затемнение: пока оно на экране, FadeTransitionPresentation
+        // прячет UI, глушит звук и не даёт листать реплики — финал E2 застревал на чёрном экране.
+        if (playerCam != null)
+        {
+            playerCam.cullingMask = 0;
+            playerCam.clearFlags = CameraClearFlags.SolidColor;
+            playerCam.backgroundColor = Color.black;
+        }
+        if (fadeScreen != null)
+            fadeScreen.alpha = 0f;
 
         // 7. Звук заколачивания досок
         yield return new WaitForSeconds(0.5f);

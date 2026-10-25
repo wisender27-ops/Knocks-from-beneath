@@ -55,6 +55,9 @@ namespace KnocksFromBeneath
         }
 
         private void Arm() => _nightTwo = true;
+
+        // Сюжет прошёл фазу кухни — пугалка больше не срабатывает.
+        public void Retire() => _played = true;
         private void Disarm() => _nightTwo = false;
 
         private void Update()

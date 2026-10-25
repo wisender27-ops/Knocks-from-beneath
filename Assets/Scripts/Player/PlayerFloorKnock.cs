@@ -88,6 +88,23 @@ namespace KnocksFromBeneath
             _hintPending = true;
         }
 
+        // K-03: снизу простучали ритм — ждут ответа. Подсказка снова, даже если игрок уже стучал.
+        public void PromptAnswer()
+        {
+            if (_hint == null) return;
+            _hintPending = true;
+        }
+
+        // K-03: игрок сейчас над подвалом (луч не чаще раза в 0.2 с).
+        public bool CheckOverBasement()
+        {
+            UpdateArea(false);
+            return _overBasement;
+        }
+
+        // Точка на полу перед игроком — туда он стучит и оттуда ему отвечают.
+        public Vector3 FloorPoint => _player != null ? _player.transform.position + _player.transform.forward * 0.35f : transform.position;
+
         // Встряска камеры от удара снизу (градусы в пике, гаснет за JoltDuration).
         public void Jolt(float strength)
         {
@@ -105,7 +122,7 @@ namespace KnocksFromBeneath
             KnockCount++;
             _hintUntil = 0f;
             _hintPending = false;
-            Vector3 floor = _player.transform.position + _player.transform.forward * 0.35f;
+            Vector3 floor = FloorPoint;
             if (_source != null && _clip != null)
             {
                 _source.transform.position = floor;
