@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 namespace KnocksFromBeneath
@@ -25,6 +26,12 @@ namespace KnocksFromBeneath
         private const float CutoffPerObstacle = 0.5f;
         private const float VolumePerObstacle = 0.85f;
         private const float OcclusionSmooth = 6f;
+        // K-02: ответ на стук игрока.
+        private const float ListenHold = 3f;       // пока игрок стучит, свой стук стучащий придерживает
+        private const float ReplyDelay = 0.9f;
+        private const float ReplyInterval = 0.5f;
+        private const float AfterReplyQuiet = 3f;
+        private const float SilenceSeconds = 10f;  // на беспорядочный стук — затихает
 
         private readonly KnockTracker _tracker = new KnockTracker();
         private PlayerController _player;
@@ -43,11 +50,23 @@ namespace KnocksFromBeneath
         private float _nextOcclusion;
         private bool _snapOcclusion = true;
 
+        private readonly KnockReply _reply = new KnockReply();
+        private RandomKnock _randomKnock;
+        private AudioClip _replyClip;
+        private PlayerFloorKnock _playerKnock;
+        private Coroutine _replyRoutine;
+        private int _seenKnocks;
+
         public Vector3 SourcePosition => transform.position;
         public bool HasPlayer => _tracker.HasPlayer;
         public float Attention => _tracker.Attention;
         public int Occluders { get; private set; }
         public float CutoffFrequency => _lowPass != null ? _lowPass.cutoffFrequency : OpenCutoff;
+        public bool IsReplying => _replyRoutine != null;
+        public KnockReplyKind LastReply { get; private set; }
+        public int LastReplyCount { get; private set; }
+        public int ReplyKnocksPlayed { get; private set; }
+        public event Action<KnockReplyKind, int> Replied;
 
         public void Initialize(PlayerController player, Func<bool> isNight, Vector2 houseMin, Vector2 houseMax)
         {
@@ -57,20 +76,94 @@ namespace KnocksFromBeneath
             _tracker.BoundsMin = houseMin;
             _tracker.BoundsMax = houseMax;
             ConfigureAudio(GetComponent<AudioSource>());
+            _randomKnock = GetComponent<RandomKnock>();
+            _replyClip = _randomKnock != null ? _randomKnock.ShortestClip : null;
             AudioListener listener = player != null ? player.GetComponentInChildren<AudioListener>(true) : null;
             _listener = listener != null ? listener.transform : Camera.main != null ? Camera.main.transform : null;
             _initialized = true;
             if (isActiveAndEnabled) ResetToHome();
         }
 
+        // K-02: стучащий слышит удары игрока в пол.
+        public void ListenTo(PlayerFloorKnock playerKnock)
+        {
+            if (_playerKnock != null) _playerKnock.Knocked -= OnPlayerKnocked;
+            _playerKnock = playerKnock;
+            if (_playerKnock != null) _playerKnock.Knocked += OnPlayerKnocked;
+        }
+
+        private void OnDestroy() => ListenTo(null);
+
         private void OnEnable()
         {
             if (_initialized) ResetToHome();
+            _seenKnocks = _randomKnock != null ? _randomKnock.PlayedKnockCount : 0;
         }
 
         private void OnDisable()
         {
             if (_initialized) transform.position = _home;
+            _reply.Clear();
+            _replyRoutine = null; // корутина останавливается вместе с объектом
+        }
+
+        private void OnPlayerKnocked(Vector3 floor)
+        {
+            if (!_initialized || !isActiveAndEnabled || _replyRoutine != null) return;
+            if (_isNight != null && !_isNight()) return;
+            _reply.Tap(Time.time);
+            _tracker.Hear(new Vector2(floor.x, floor.z));
+            if (_randomKnock != null) _randomKnock.PauseFor(_reply.BurstGap + ListenHold);
+        }
+
+        private void UpdateReply()
+        {
+            if (_randomKnock != null && _randomKnock.PlayedKnockCount != _seenKnocks)
+            {
+                _seenKnocks = _randomKnock.PlayedKnockCount;
+                if (_playerKnock != null) _playerKnock.NotifyKnockFromBelow();
+            }
+            if (_replyRoutine != null) return;
+            KnockReplyKind kind = _reply.Poll(Time.time, out int count);
+            if (kind == KnockReplyKind.None) return;
+            LastReply = kind;
+            LastReplyCount = count;
+            if (kind == KnockReplyKind.Repeat && _replyClip != null && _source != null)
+                _replyRoutine = StartCoroutine(RepeatRoutine(count));
+            else
+            {
+                if (_randomKnock != null) _randomKnock.PauseFor(SilenceSeconds);
+                Replied?.Invoke(kind, count);
+            }
+        }
+
+        // Повторяет число ударов из-под пола (через тот же источник — с глушением перекрытиями).
+        private IEnumerator RepeatRoutine(int count)
+        {
+            if (_randomKnock != null) _randomKnock.PauseFor(ReplyDelay + count * ReplyInterval + AfterReplyQuiet);
+            yield return WaitPlayable(ReplyDelay);
+            for (int i = 0; i < count; i++)
+            {
+                _source.pitch = UnityEngine.Random.Range(0.92f, 1f);
+                _source.PlayOneShot(_replyClip);
+                ReplyKnocksPlayed++;
+                yield return WaitPlayable(ReplyInterval);
+            }
+            _source.pitch = 1f;
+            if (_randomKnock != null) _randomKnock.PauseFor(AfterReplyQuiet);
+            _replyRoutine = null;
+            Replied?.Invoke(KnockReplyKind.Repeat, count);
+        }
+
+        private static IEnumerator WaitPlayable(float duration)
+        {
+            float elapsed = 0f;
+            while (elapsed < duration)
+            {
+                var director = HorrorMomentDirector.Instance;
+                if (director == null || director.GameplayAvailable) elapsed += Time.deltaTime;
+                yield return null;
+            }
         }
 
         // Направление «под ногами» слышно только у полностью 3D-источника; сцена задаёт 0.7 и
@@ -124,6 +217,7 @@ namespace KnocksFromBeneath
         {
             if (!_initialized || _player == null) return;
             UpdateOcclusion();
+            UpdateReply();
             Vector3 position = _player.transform.position;
             float deltaTime = Time.deltaTime;
             var director = HorrorMomentDirector.Instance;

@@ -142,6 +142,9 @@ public class IntroSequence : MonoBehaviour
         horrorDirector.Initialize(playerInventory);
         var firstNightScare = gameObject.AddComponent<NightOneScare>();
         firstNightScare.Initialize(playerInventory);
+        var floorKnock = gameObject.AddComponent<PlayerFloorKnock>(); // K-02: Q — стук в пол
+        RandomKnock knockSound = knockController != null ? knockController.GetComponent<RandomKnock>() : null;
+        floorKnock.Initialize(playerInventory, knockSound != null ? knockSound.ShortestClip : null);
         var followingSteps = gameObject.AddComponent<FollowingFootsteps>();
         followingSteps.Initialize(playerInventory);
         var kitchenDisturbance = gameObject.AddComponent<KitchenDisturbance>();
@@ -666,6 +669,7 @@ public class IntroSequence : MonoBehaviour
         if (director == null) director = knockController.AddComponent<KnockDirector>();
         director.Initialize(player, () => skySwitcher == null || !skySwitcher.isDayTime,
             new Vector2(-46f, 101f), new Vector2(-34f, 119.5f));
+        director.ListenTo(GetComponent<PlayerFloorKnock>());
     }
 
     void SetupBedsideLamp()

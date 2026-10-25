@@ -69,6 +69,14 @@ namespace KnocksFromBeneath
             Source = Clamp(Source + toTarget / distance * step);
         }
 
+        // K-02: игрок постучал в пол — стучащий сразу знает, где он.
+        public void Hear(Vector2 player)
+        {
+            Attention = 1f;
+            HasPlayer = true;
+            KnownTarget = Clamp(player);
+        }
+
         private Vector2 Clamp(Vector2 point) => new Vector2(
             Mathf.Clamp(point.x, BoundsMin.x, BoundsMax.x),
             Mathf.Clamp(point.y, BoundsMin.y, BoundsMax.y));
