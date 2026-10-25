@@ -43,7 +43,8 @@ public sealed class AmbienceDirector : MonoBehaviour
     {
         Instance = this;
         var lib = GameSounds.Library;
-        day = Bed("Day Outside", lib?.dayOutside, AudioBus.Ambience, .55f, .35f);
+        // Птицы — вдвое тише прежнего (решение автора).
+        day = Bed("Day Outside", lib?.dayOutside, AudioBus.Ambience, .275f, .35f);
         night = Bed("Night Outside", lib?.nightOutside, AudioBus.Ambience, .6f, .3f);
         room = Bed("Room Tone", lib?.roomTone, AudioBus.Ambience, .9f, .5f);
         basement = Bed("Basement", lib?.basement, AudioBus.Ambience, .75f, .4f);
@@ -106,7 +107,8 @@ public sealed class AmbienceDirector : MonoBehaviour
         bool isDay = sky == null || sky.isDayTime;
         bool silent = Time.time < silenceUntil;
 
-        day.target = isDay && !ListenerInBasement ? 1f : 0f;
+        // Птицы только на улице: в доме их не слышно (решение автора).
+        day.target = isDay && !inside ? 1f : 0f;
         night.target = !isDay && !ListenerInBasement ? 1f : 0f;
         room.target = inside && !ListenerInBasement ? (powerOut ? .45f : 1f) : 0f;
         basement.target = ListenerInBasement ? 1f : 0f;
