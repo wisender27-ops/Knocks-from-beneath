@@ -17,6 +17,14 @@ namespace KnocksFromBeneath
         private const float TeleportDistance = 1.5f;
         private const float AudibleDistance = 6f;
         private const float FadeOutDistance = 25f;
+        // Глушение перекрытиями: каждое препятствие на луче «уши → источник» срезает верха
+        // вдвое и чуть убавляет громкость. 1-й этаж ≈ 2 препятствия, 2-й ≈ 3–5.
+        private const float OcclusionInterval = 0.2f;
+        private const float OpenCutoff = 5000f;
+        private const float MinCutoff = 220f;
+        private const float CutoffPerObstacle = 0.5f;
+        private const float VolumePerObstacle = 0.85f;
+        private const float OcclusionSmooth = 6f;
 
         private readonly KnockTracker _tracker = new KnockTracker();
         private PlayerController _player;
@@ -25,9 +33,21 @@ namespace KnocksFromBeneath
         private Vector3 _lastPlayerPosition;
         private bool _initialized;
 
+        private readonly RaycastHit[] _occluders = new RaycastHit[8];
+        private AudioSource _source;
+        private AudioLowPassFilter _lowPass;
+        private Transform _listener;
+        private float _baseVolume = 1f;
+        private float _targetCutoff = OpenCutoff;
+        private float _targetVolume = 1f;
+        private float _nextOcclusion;
+        private bool _snapOcclusion = true;
+
         public Vector3 SourcePosition => transform.position;
         public bool HasPlayer => _tracker.HasPlayer;
         public float Attention => _tracker.Attention;
+        public int Occluders { get; private set; }
+        public float CutoffFrequency => _lowPass != null ? _lowPass.cutoffFrequency : OpenCutoff;
 
         public void Initialize(PlayerController player, Func<bool> isNight, Vector2 houseMin, Vector2 houseMax)
         {
@@ -37,6 +57,8 @@ namespace KnocksFromBeneath
             _tracker.BoundsMin = houseMin;
             _tracker.BoundsMax = houseMax;
             ConfigureAudio(GetComponent<AudioSource>());
+            AudioListener listener = player != null ? player.GetComponentInChildren<AudioListener>(true) : null;
+            _listener = listener != null ? listener.transform : Camera.main != null ? Camera.main.transform : null;
             _initialized = true;
             if (isActiveAndEnabled) ResetToHome();
         }
@@ -54,12 +76,40 @@ namespace KnocksFromBeneath
         // Направление «под ногами» слышно только у полностью 3D-источника; сцена задаёт 0.7 и
         // затухание от 2 м — со второго этажа (≈10 м) стук почти не слышен. Сквозь перекрытия
         // он должен читаться: громкость держится до 6 м и спадает к 25 м.
-        private static void ConfigureAudio(AudioSource source)
+        private void ConfigureAudio(AudioSource source)
         {
+            _source = source;
             if (source == null) return;
             source.spatialBlend = 1f;
             source.minDistance = AudibleDistance;
             source.maxDistance = Mathf.Max(source.maxDistance, FadeOutDistance);
+            _baseVolume = source.volume;
+            _lowPass = GetComponent<AudioLowPassFilter>();
+            if (_lowPass == null) _lowPass = gameObject.AddComponent<AudioLowPassFilter>();
+            _lowPass.cutoffFrequency = OpenCutoff;
+        }
+
+        // Луч раз в 0.2 с (буфер на 8 попаданий) — без поиска по сцене и аллокаций.
+        private void UpdateOcclusion()
+        {
+            if (_source == null || _lowPass == null || _listener == null) return;
+            if (_snapOcclusion || Time.unscaledTime >= _nextOcclusion)
+            {
+                _nextOcclusion = Time.unscaledTime + OcclusionInterval;
+                Vector3 from = _listener.position;
+                Vector3 toSource = transform.position - from;
+                float distance = toSource.magnitude;
+                Occluders = distance > 0.01f
+                    ? Physics.RaycastNonAlloc(from, toSource / distance, _occluders, distance,
+                        Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore)
+                    : 0;
+                _targetCutoff = Mathf.Max(MinCutoff, OpenCutoff * Mathf.Pow(CutoffPerObstacle, Occluders));
+                _targetVolume = Mathf.Pow(VolumePerObstacle, Occluders);
+            }
+            float k = _snapOcclusion ? 1f : 1f - Mathf.Exp(-OcclusionSmooth * Time.unscaledDeltaTime);
+            _snapOcclusion = false;
+            _lowPass.cutoffFrequency = Mathf.Lerp(_lowPass.cutoffFrequency, _targetCutoff, k);
+            _source.volume = Mathf.Lerp(_source.volume, _baseVolume * _targetVolume, k);
         }
 
         private void ResetToHome()
@@ -67,11 +117,13 @@ namespace KnocksFromBeneath
             _tracker.Reset(new Vector2(_home.x, _home.z));
             if (_player != null) _lastPlayerPosition = _player.transform.position;
             Apply();
+            _snapOcclusion = true;
         }
 
         private void Update()
         {
             if (!_initialized || _player == null) return;
+            UpdateOcclusion();
             Vector3 position = _player.transform.position;
             float deltaTime = Time.deltaTime;
             var director = HorrorMomentDirector.Instance;
