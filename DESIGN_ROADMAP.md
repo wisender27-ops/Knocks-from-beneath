@@ -203,7 +203,7 @@
     `Cancel()` на Esc/OnDisable/OnDestroy, корень UI + `Rect/Label/KeyHints`. Новая мини-игра:
     наследник с `WindowName`, `Build`, `Tick`, при необходимости `CanOpen`/`Cancel`.
     `PauseMenuController` блокирует паузу по `MinigameWindow.IsAnyOpen` (раньше — только готовка).
-- [ ] **F-03. `StoryFlags`.** Расширить `GameState` (или новый статический `StoryFlags` рядом) —
+- [~] **F-03. `StoryFlags`.** _(в работе у deskif с 2026-10-25 — не брать)_ Расширить `GameState` (или новый статический `StoryFlags` рядом) —
   bool/int флаги (`knockTrust`, `sawRecording`, `cluesFound`, `frontDoorLocked`, `neighborNoteRead`,
   …), сброс при новой игре (`RuntimeInitializeOnLoadMethod` + старт из меню), запись из
   существующих событий `GameEvents`. Не менять существующие сигнатуры событий.
