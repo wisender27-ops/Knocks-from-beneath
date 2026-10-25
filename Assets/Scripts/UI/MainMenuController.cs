@@ -32,6 +32,7 @@ public class MainMenuController : MonoBehaviour
         Time.timeScale = 1f;
         AudioListener.pause = false;
         SettingsStore.ApplyMasterVolume();
+        StoryFlags.Reset(); // новая игра не наследует флаги прошлого прохождения
         SceneManager.LoadScene(gameSceneName);
     }
 

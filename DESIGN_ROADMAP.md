@@ -203,11 +203,16 @@
     `Cancel()` на Esc/OnDisable/OnDestroy, корень UI + `Rect/Label/KeyHints`. Новая мини-игра:
     наследник с `WindowName`, `Build`, `Tick`, при необходимости `CanOpen`/`Cancel`.
     `PauseMenuController` блокирует паузу по `MinigameWindow.IsAnyOpen` (раньше — только готовка).
-- [~] **F-03. `StoryFlags`.** _(в работе у deskif с 2026-10-25 — не брать)_ Расширить `GameState` (или новый статический `StoryFlags` рядом) —
+- [x] **F-03. `StoryFlags`.** Расширить `GameState` (или новый статический `StoryFlags` рядом) —
   bool/int флаги (`knockTrust`, `sawRecording`, `cluesFound`, `frontDoorLocked`, `neighborNoteRead`,
   …), сброс при новой игре (`RuntimeInitializeOnLoadMethod` + старт из меню), запись из
   существующих событий `GameEvents`. Не менять существующие сигнатуры событий.
   - Приёмка: EditMode-тест сброса и накопления; `frontDoorLocked` продолжает работать.
+  - Сделано: статический `StoryFlags` (`Systems_and_Visuals/StoryFlags.cs`): `KnockTrust` +
+    `AddKnockTrust(±n)`, `SawRecording` + `MarkRecordingSeen()`, `NeighborNoteRead` (сам из
+    `GameEvents.OnNeighborNoteRead`), улики по id `RegisterClue/HasClue/CluesFound` (повтор не
+    считается), `FrontDoorLocked` — обёртка над `GameState.frontDoorLocked`. `Reset()` — при старте
+    Play Mode и в `MainMenuController.StartGame()`. F-04 будет сохранять/восстанавливать эти поля.
 - [ ] **F-04. Чекпойнты по главам.** Сохранение в начале каждого дня/ночи (этап + `StoryFlags` +
   инвентарь) через существующие `DebugStoryStage`-прыжки как механизм восстановления. Пункт
   «Продолжить» и «Выбор главы» в главном меню (`MainMenuController`).
@@ -365,3 +370,4 @@ _(дата — решение — кто/где принято)_
 | 2026-10-25 | F-02 взята в работу (`[~]`, deskif) | — | — | Реализация идёт, статус выставлен, чтобы работа не дублировалась |
 | 2026-10-25 | F-02 | см. коммит | EditMode **110/110** (106 + 4 новых `MinigameWindowTests`: восстановление камеры/взаимодействия/курсора, одно окно за раз, отказ при заблокированной камере, сброс готовки). Play Mode (Main, `StartDinnerCook`): `StoveInteractable.Interact()` → окно открыто, камера заблокирована, взаимодействие выкл., курсор None/скрыт, иерархия UI та же (Shade/CookingArc/Title/Controls/Keys); `Pause()` во время окна не срабатывает (как раньше); завершение → ужин готов, квест `dinner-eat` активен, камера/взаимодействие/курсор Locked восстановлены; пауза/продолжение после окна корректны. Ошибок в консоли нет | Клавиши (Enter/Пробел/Esc) не нажимались физически — завершение вызвано через `Close(true)` из Editor-команды; поведение `Tick()` перенесено дословно. Потеря фокуса окна во время мини-игры паузу по-прежнему не включает (поведение сохранено намеренно) |
 | 2026-10-25 | F-02 — ручная проверка | — | Автор прошёл готовку руками с прыжка `StartDinnerCook` (E → Esc/Enter/Пробел → ужин, управление после окна): «норм» | Добавлено правило сдачи задач (шаг 6 в шапке) |
+| 2026-10-25 | F-03 | см. коммит | EditMode **115/115** (110 + 5 `StoryFlagsTests`: накопление, улики без повторов, событие записки + одна подписка, общий `frontDoorLocked`, сброс). Play Mode (Main, `StartDay2Evening`): на старте флаги нулевые, подписка одна; флаги выставлены → «В главное меню» → `StartGame()` — всё сброшено. Автор прочитал записку на телефоне руками → `NeighborNoteRead = true`. Ошибок в консоли нет | Флаги пока никто не читает (концовки — F-05/B-*); `knockTrust`, `sawRecording`, улики пишутся будущими задачами K-03/C-03/M-05 |
