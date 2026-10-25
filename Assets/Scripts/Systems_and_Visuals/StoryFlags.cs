@@ -50,6 +50,18 @@ public static class StoryFlags
         GameState.frontDoorLocked = false;
     }
 
+    // Чекпойнт главы (F-04) возвращает флаги в состояние на начало главы.
+    public static void Restore(int knockTrust, bool sawRecording, bool neighborNoteRead, bool frontDoorLocked, IEnumerable<string> clueIds)
+    {
+        Reset();
+        KnockTrust = knockTrust;
+        SawRecording = sawRecording;
+        NeighborNoteRead = neighborNoteRead;
+        GameState.frontDoorLocked = frontDoorLocked;
+        if (clueIds != null)
+            foreach (string id in clueIds) RegisterClue(id);
+    }
+
     public static void AddKnockTrust(int delta) => KnockTrust += delta;
     public static void MarkRecordingSeen() => SawRecording = true;
 

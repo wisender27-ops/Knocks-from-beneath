@@ -186,7 +186,7 @@ public class IntroSequence : MonoBehaviour
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
             TeleportPlayerToBed, StartCoroutine, ShowImportantThoughts,
-            onNightFinished: _decoration.SetupDecorationQuest,
+            onNightFinished: () => { SaveChapter(StoryChapter.DayTwo); _decoration.SetupDecorationQuest(); },
             nightScare: firstNightScare.Play,
             neighborVisit: neighborVisit != null ? neighborVisit.Play : (System.Func<IEnumerator>)null,
             didMeetNeighbor: () => neighborVisit != null && neighborVisit.HasVisited);
@@ -237,13 +237,44 @@ public class IntroSequence : MonoBehaviour
         ResetUI();
         ResetTriggers();
 
-        if (useDebugSkip && startStage != DebugStoryStage.None)
-            ApplyDebugSkip();
-        else if (openingCutscene != null)
+        if (ChapterCheckpoints.TryTakeLaunch(out StoryChapter chapter))
+            StartChapter(chapter);
+        else if (useDebugSkip && startStage != DebugStoryStage.None)
+            ApplyDebugSkip(startStage);
+        else
+            StartNewGame();
+    }
+
+    void StartNewGame()
+    {
+        SaveChapter(StoryChapter.DayOne);
+        if (openingCutscene != null)
             openingCutscene.Play(StartIntro); // предыстория + приезд на такси, затем первые мысли
         else
             Invoke(nameof(StartIntro), 1.0f);
     }
+
+    // =====================================================================
+    // Чекпойнты по главам (F-04)
+    // =====================================================================
+
+    // «Продолжить»/«Выбор главы»: флаги и инвентарь главы, затем тот же прыжок, что у дебага.
+    void StartChapter(StoryChapter chapter)
+    {
+        ChapterCheckpoints.ApplyLaunchState(playerInventory);
+        DebugStoryStage stage = ChapterCheckpoints.Info(chapter).Stage;
+        if (stage == DebugStoryStage.None)
+        {
+            StartNewGame();
+            return;
+        }
+        SaveChapter(chapter);
+        ApplyDebugSkip(stage);
+        // Второй день начинается с пробуждения в кровати, как после первой ночи.
+        if (chapter == StoryChapter.DayTwo) TeleportPlayerToBed();
+    }
+
+    void SaveChapter(StoryChapter chapter) => ChapterCheckpoints.Save(chapter, playerInventory);
 
     void ResetUI()
     {
@@ -298,7 +329,7 @@ public class IntroSequence : MonoBehaviour
     // Отладка
     // =====================================================================
 
-    void ApplyDebugSkip()
+    void ApplyDebugSkip(DebugStoryStage startStage)
     {
         Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
@@ -526,6 +557,7 @@ public class IntroSequence : MonoBehaviour
 
     void OnGoToBedFinished()
     {
+        SaveChapter(StoryChapter.NightOne);
         _nightOne.Run();
     }
 
@@ -534,6 +566,7 @@ public class IntroSequence : MonoBehaviour
     // а не сразу после пирога дня 1.
     void StartNightTwo()
     {
+        SaveChapter(StoryChapter.NightTwo);
         StartCoroutine(NightRoutine());
     }
 
