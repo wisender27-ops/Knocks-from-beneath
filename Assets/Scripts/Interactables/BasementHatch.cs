@@ -16,6 +16,7 @@ namespace KnocksFromBeneath
         [SerializeField] private BasementHatchLock lock_;
 
         private float angle;
+        private float jolt;
         private bool isOpen;
         private bool lockedResponseUsed;
         private Action lockedResponseComplete;
@@ -187,6 +188,17 @@ namespace KnocksFromBeneath
             if (!IsBoarded) Open();
         }
 
+        // «Гвозди»: створки закрываются под доски, но люк ещё не заколочен.
+        public void CloseForNailing() => Close();
+
+        // Удар изнутри: створки подпрыгивают на strength градусов и падают обратно.
+        public void Jolt(float strength)
+        {
+            if (leftLeaf == null || rightLeaf == null || IsLockedResponsePlaying) return;
+            jolt = Mathf.Max(jolt, strength);
+            enabled = true;
+        }
+
         private void Open()
         {
             if (leftLeaf == null || rightLeaf == null) return;
@@ -215,14 +227,15 @@ namespace KnocksFromBeneath
             if (IsLockedResponsePlaying) return;
             float target = isOpen ? openAngle : 0f;
             angle = Mathf.MoveTowards(angle, target, degreesPerSecond * Time.deltaTime);
+            jolt = Mathf.MoveTowards(jolt, 0f, (jolt * 9f + 2f) * Time.deltaTime);
             ApplyRotation();
-            if (Mathf.Approximately(angle, target)) enabled = false;
+            if (Mathf.Approximately(angle, target) && jolt <= 0f) enabled = false;
         }
 
         private void ApplyRotation()
         {
-            if (leftLeaf != null) leftLeaf.localRotation = Quaternion.Euler(0f, 0f, angle);
-            if (rightLeaf != null) rightLeaf.localRotation = Quaternion.Euler(0f, 0f, -angle);
+            if (leftLeaf != null) leftLeaf.localRotation = Quaternion.Euler(0f, 0f, angle + jolt);
+            if (rightLeaf != null) rightLeaf.localRotation = Quaternion.Euler(0f, 0f, -angle - jolt * 0.65f);
         }
     }
 }

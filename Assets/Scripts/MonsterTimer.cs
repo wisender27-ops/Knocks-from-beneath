@@ -5,6 +5,8 @@ using TMPro;
 namespace KnocksFromBeneath
 {
 
+// Дедлайн ночи 2 работает без цифр на экране (решение автора, M-03): время читается только
+// через происходящее в мире (P-04). timerText оставлен ради ссылки в сцене и лишь очищается.
 public class MonsterTimer : MonoBehaviour
 {
     public static MonsterTimer Instance;
@@ -14,21 +16,15 @@ public class MonsterTimer : MonoBehaviour
 
     [Header("Настройки")]
     public float timerDuration = 30f;
-    [SerializeField] private float yellowThreshold = 20f;
-    [SerializeField] private float redThreshold = 10f;
 
     [Header("Звук когда таймер истекает")]
     public AudioSource audioSource;
     public AudioClip monsterEscapeClip;
 
-    [Header("Финальное сообщение")]
-    [SerializeField] private float finalMessageFontSize = 36f;
-    [SerializeField] private float finalMessageWordDelay = 0.6f;
-    [SerializeField] private float finalMessageHoldDuration = 3f;
-
     private bool _isRunning = false;
     private bool _paused;
-    private float _defaultFontSize;
+
+    public bool IsRunning => _isRunning;
 
     void Awake()
     {
@@ -43,11 +39,7 @@ public class MonsterTimer : MonoBehaviour
 
     void Start()
     {
-        if (timerText != null)
-        {
-            timerText.text = "";
-            _defaultFontSize = timerText.fontSize;
-        }
+        if (timerText != null) timerText.text = "";
     }
 
     public void StartTimer()
@@ -66,70 +58,21 @@ public class MonsterTimer : MonoBehaviour
         StopAllCoroutines();
         _isRunning = false;
         _paused = false;
-        if (timerText != null)
-        {
-            timerText.text = "";
-            // StopAllCoroutines() может оборвать ShowFinalMessage() на середине — вернуть
-            // размер/цвет шрифта, иначе следующий обычный квест-таймер останется красным 36pt.
-            timerText.fontSize = _defaultFontSize;
-            timerText.color = Color.white;
-        }
     }
 
     IEnumerator TimerRoutine()
     {
-        // Дедлайн работает без UI; чтение обязательной реплики может приостановить отсчёт.
+        // Чтение обязательной реплики может приостановить отсчёт.
         _isRunning = true;
         float remaining = timerDuration;
-
         while (remaining > 0)
         {
-            if (timerText != null)
-            {
-                // Текст меняет цвет — белый → жёлтый → красный
-                if (remaining > yellowThreshold)
-                    timerText.color = Color.white;
-                else if (remaining > redThreshold)
-                    timerText.color = Color.yellow;
-                else
-                    timerText.color = Color.red;
-
-                timerText.text = $"Заколотить подвал: {Mathf.CeilToInt(remaining)} с";
-            }
             if (!_paused) remaining -= Time.deltaTime;
             yield return null;
         }
-
-        // Таймер истёк
-        if (timerText != null) timerText.text = "";
-        OnTimerExpired();
-    }
-
-    void OnTimerExpired()
-    {
+        _isRunning = false;
         // Истечение меняет исход следующего взаимодействия с люком, но не запускает нападение.
         GameEvents.OnMonsterTimerExpired?.Invoke();
-
-        if (timerText != null)
-            StartCoroutine(ShowFinalMessage());
-        else
-            _isRunning = false; // ShowFinalMessage() сама сбросит флаг в конце, если запустилась
-    }
-
-    IEnumerator ShowFinalMessage()
-    {
-        timerText.fontSize = finalMessageFontSize;
-        timerText.color = Color.red;
-
-        timerText.text = "Время вышло";
-        yield return new WaitForSeconds(finalMessageHoldDuration);
-
-        // Убираем надпись
-        timerText.text = "";
-        timerText.fontSize = _defaultFontSize;
-        timerText.color = Color.white;
-
-        _isRunning = false;
     }
 }
 }
