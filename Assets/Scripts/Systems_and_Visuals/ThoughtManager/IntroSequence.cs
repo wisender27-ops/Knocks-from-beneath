@@ -127,6 +127,7 @@ public class IntroSequence : MonoBehaviour
     private DinnerCookingController _dinner;
     private EveningRoundController _eveningRound;
     private BranchEndingController _branchEnding;
+    private CornerPeekSequence _cornerPeek;
     private HideEndingController _hideEnding;
     private bool _hasReactedToPowerOutage;
     private AudioSource _powerOutageAudio;
@@ -206,8 +207,8 @@ public class IntroSequence : MonoBehaviour
         responder.Initialize(floorKnock, knockController != null ? knockController.GetComponent<KnockDirector>() : null,
             knockSound != null ? knockSound.ShortestClip : null, () => _knockerAwake);
         gameObject.AddComponent<KnockCallGame>().Initialize(floorKnock, responder, KnockCallLevel, lines => ShowThoughts(lines, null));
-        CornerPeekSequence cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
-        cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
+        _cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
+        _cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
     }
 
     void OnEnable()
@@ -374,6 +375,7 @@ public class IntroSequence : MonoBehaviour
         }
 
         if (IsDayTwoDebugStage(startStage)) _knockerAwake = true; // ночь 1 уже была
+        if (IsPastKitchenDebugStage(startStage)) _cornerPeek?.Retire(); // пугалка кухни уже позади
         switch (startStage)
         {
             case DebugStoryStage.StartTrashQuest:
@@ -463,6 +465,22 @@ public class IntroSequence : MonoBehaviour
                     MonsterTimer.Instance.StartTimer();
                 _branchEnding.Activate();
                 break;
+        }
+    }
+
+    static bool IsPastKitchenDebugStage(DebugStoryStage stage)
+    {
+        switch (stage)
+        {
+            case DebugStoryStage.StartCrowbarQuest:
+            case DebugStoryStage.StartBreakFloor:
+            case DebugStoryStage.StartLookInHole:
+            case DebugStoryStage.StartHammerQuest:
+            case DebugStoryStage.StartFinale:
+            case DebugStoryStage.StartBranchEndings:
+                return true;
+            default:
+                return false;
         }
     }
 
@@ -928,6 +946,9 @@ public class IntroSequence : MonoBehaviour
     // ради квеста, который засчитывался в другом конце карты.
     void SetupHatchQuest()
     {
+        // Сюжет ушёл от кухни: пугалка из-за угла больше не нужна. Иначе она могла сработать позже
+        // (например, на репликах про молоток), оборвать их и откатить историю к этому квесту.
+        _cornerPeek?.Retire();
         CreateQuest("Проверить люк подвала снаружи", 1, OnHatchLockedFound, "open-basement");
     }
 

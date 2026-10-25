@@ -58,6 +58,10 @@ public sealed class NailingPlayProbe : MonoBehaviour
         Stage("wait-board-quest");
         yield return Until(() => intro.CanBoardBasement(hatch), 30f);
         Check(intro.CanBoardBasement(hatch), "Квест «Заколотить люк» активен, молоток в руках");
+        var peek = intro.GetComponent<CornerPeekSequence>();
+        var played = typeof(CornerPeekSequence).GetField("_played", BindingFlags.Instance | BindingFlags.NonPublic);
+        Check(peek != null && (bool)played.GetValue(peek),
+            "Пугалка из-за угла снята — по дороге из спальни к люку она не оборвёт реплики и не откатит квест");
         yield return Until(() => HorrorMomentDirector.Instance.GameplayAvailable, 10f);
         StandAtHatch();
         yield return Wait(0.3f);
