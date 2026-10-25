@@ -138,6 +138,13 @@ namespace KnocksFromBeneath
             if (!Application.isPlaying) ApplyVisuals();
         }
 
+        void OnDestroy()
+        {
+            if (_material == null) return;
+            if (Application.isPlaying) Destroy(_material);
+            else DestroyImmediate(_material);
+        }
+
         /// <summary>
         /// Создаёт/обновляет полупрозрачный куб. Идемпотентно: можно звать каждый
         /// кадр в редакторе (ExecuteAlways), лишних объектов не плодит.
@@ -164,9 +171,12 @@ namespace KnocksFromBeneath
             transform.localScale = new Vector3(
                 size.x, size.y, size.z);
 
-            if (_material == null)
+            if (_material == null || (_material.hideFlags & HideFlags.DontSave) == 0)
             {
-                _material = new Material(FindMarkerShader());
+                // DontSave: материал пересоздаётся при каждой загрузке, поэтому
+                // в сцену его не пишем — иначе каждое сохранение встраивало
+                // новую копию с новым fileID, а старые копии копились в файле.
+                _material = new Material(FindMarkerShader()) { hideFlags = HideFlags.DontSave };
                 _renderer.sharedMaterial = _material;
             }
             _material.color = markerColor;
