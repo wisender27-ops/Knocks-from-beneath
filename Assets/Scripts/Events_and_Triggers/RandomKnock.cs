@@ -33,6 +33,19 @@ public class RandomKnock : MonoBehaviour
         if (audioSource != null) audioSource.Stop();
     }
     public int PlayedKnockCount { get; private set; }
+
+    // Самый короткий клип — одиночный удар (K-02: им отвечают по счёту).
+    public AudioClip ShortestClip
+    {
+        get
+        {
+            AudioClip shortest = null;
+            if (knockClips == null) return null;
+            foreach (AudioClip clip in knockClips)
+                if (clip != null && (shortest == null || clip.length < shortest.length)) shortest = clip;
+            return shortest;
+        }
+    }
     public float LastKnockTime { get; private set; } = float.NegativeInfinity;
 
     public void PauseFor(float seconds)

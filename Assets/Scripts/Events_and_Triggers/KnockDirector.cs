@@ -43,6 +43,10 @@ namespace KnocksFromBeneath
         private float _nextOcclusion;
         private bool _snapOcclusion = true;
 
+        private RandomKnock _randomKnock;
+        private PlayerFloorKnock _playerKnock;
+        private int _seenKnocks;
+
         public Vector3 SourcePosition => transform.position;
         public bool HasPlayer => _tracker.HasPlayer;
         public float Attention => _tracker.Attention;
@@ -57,20 +61,60 @@ namespace KnocksFromBeneath
             _tracker.BoundsMin = houseMin;
             _tracker.BoundsMax = houseMax;
             ConfigureAudio(GetComponent<AudioSource>());
+            _randomKnock = GetComponent<RandomKnock>();
             AudioListener listener = player != null ? player.GetComponentInChildren<AudioListener>(true) : null;
             _listener = listener != null ? listener.transform : Camera.main != null ? Camera.main.transform : null;
             _initialized = true;
             if (isActiveAndEnabled) ResetToHome();
         }
 
+        // K-02: стук снизу включает подсказку «Q» у игрока.
+        public void SetPlayerKnock(PlayerFloorKnock playerKnock) => _playerKnock = playerKnock;
+
+        // K-02: игрок постучал в пол — стучащий знает, где он, и придерживает свой стук.
+        public void Hear(Vector3 floor, float holdSeconds)
+        {
+            if (!_initialized || !isActiveAndEnabled) return;
+            _tracker.Hear(new Vector2(floor.x, floor.z));
+            HoldKnocks(holdSeconds);
+        }
+
+        // Пауза RandomKnock (останавливает и текущий клип).
+        public void HoldKnocks(float seconds)
+        {
+            if (_randomKnock != null) _randomKnock.PauseFor(seconds);
+        }
+
+        // Ответный удар из источника под полом — с тем же глушением перекрытиями.
+        public bool PlayReplyKnock(AudioClip clip, float pitch)
+        {
+            if (!isActiveAndEnabled || _source == null || clip == null) return false;
+            _source.pitch = pitch;
+            _source.PlayOneShot(clip);
+            return true;
+        }
+
+        public void ResetPitch()
+        {
+            if (_source != null) _source.pitch = 1f;
+        }
+
         private void OnEnable()
         {
             if (_initialized) ResetToHome();
+            _seenKnocks = _randomKnock != null ? _randomKnock.PlayedKnockCount : 0;
         }
 
         private void OnDisable()
         {
             if (_initialized) transform.position = _home;
+        }
+
+        private void NotifyKnockHeard()
+        {
+            if (_randomKnock == null || _randomKnock.PlayedKnockCount == _seenKnocks) return;
+            _seenKnocks = _randomKnock.PlayedKnockCount;
+            if (_playerKnock != null) _playerKnock.NotifyKnockFromBelow();
         }
 
         // Направление «под ногами» слышно только у полностью 3D-источника; сцена задаёт 0.7 и
@@ -124,6 +168,7 @@ namespace KnocksFromBeneath
         {
             if (!_initialized || _player == null) return;
             UpdateOcclusion();
+            NotifyKnockHeard();
             Vector3 position = _player.transform.position;
             float deltaTime = Time.deltaTime;
             var director = HorrorMomentDirector.Instance;

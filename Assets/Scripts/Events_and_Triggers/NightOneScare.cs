@@ -11,6 +11,8 @@ namespace KnocksFromBeneath
         private AudioClip knock, creak;
         private bool played, paused;
         public bool IsPlaying { get; private set; }
+        public int AnsweredKnocks { get; private set; } // сколько ударов было в ответе снизу
+        private int answerCount; // K-02: сколько раз игрок постучал перед ответом (0 — не стучал)
 
         public void Initialize(PlayerInventory inventory)
         {
@@ -36,6 +38,7 @@ namespace KnocksFromBeneath
                 yield return null;
             }
             IsPlaying = true;
+            answerCount = 0;
             Vector3 origin = player.transform.position;
             Vector3 right = player.transform.right;
             try
@@ -46,20 +49,36 @@ namespace KnocksFromBeneath
                 yield return WaitPlayable(0.64f);
                 if (!director.IsOwner(this)) yield break;
                 PlayAt(knock, origin - Vector3.up * 0.1f - right * 1.6f, 0.65f, 0.88f);
+                PlayerFloorKnock floorKnock = PlayerFloorKnock.Instance;
+                if (floorKnock != null) floorKnock.NotifyKnockFromBelow();
+                int knocksBefore = floorKnock != null ? floorKnock.KnockCount : 0;
                 yield return WaitPlayable(1.6f);
 
-                // Ответ следует за первым движением; неподвижный игрок тоже получит сцену.
+                // Ответ следует за первым движением или стуком игрока (K-02); неподвижный игрок
+                // тоже получит сцену. На стук — повтор числа ударов, как только серия закончилась.
+                var reply = new KnockReply();
                 float wait = 0f;
-                while (wait < 4.5f && Vector3.ProjectOnPlane(player.transform.position - origin, Vector3.up).sqrMagnitude < 0.36f)
+                while (wait < 4.5f || reply.IsListening)
                 {
                     if (!director.IsOwner(this)) yield break;
+                    int knocks = floorKnock != null ? floorKnock.KnockCount : 0;
+                    for (; knocksBefore < knocks; knocksBefore++) reply.Tap(Time.time);
+                    if (reply.IsListening)
+                    {
+                        if (reply.Poll(Time.time, out answerCount) != KnockReplyKind.None) break;
+                    }
+                    else if (Vector3.ProjectOnPlane(player.transform.position - origin, Vector3.up).sqrMagnitude >= 0.36f) break;
                     if (director.GameplayAvailable) wait += Time.deltaTime;
                     UpdatePause();
                     yield return null;
                 }
-                yield return WaitPlayable(0.38f);
-                if (!director.IsOwner(this)) yield break;
-                PlayAt(knock, origin - Vector3.up * 0.08f + right * 0.35f, 0.85f, 0.78f);
+                int answers = AnsweredKnocks = answerCount >= 1 && answerCount <= reply.MaxRepeat ? answerCount : 1; // на беспорядочный — один удар
+                for (int i = 0; i < answers; i++)
+                {
+                    yield return WaitPlayable(i == 0 ? 0.38f : 0.5f);
+                    if (!director.IsOwner(this)) yield break;
+                    PlayAt(knock, origin - Vector3.up * 0.08f + right * 0.35f, 0.85f, 0.78f);
+                }
                 yield return WaitPlayable(1.1f);
                 if (!director.IsOwner(this)) yield break;
                 PlayAt(creak, origin + right * 0.65f, 0.38f, 0.92f);

@@ -130,6 +130,8 @@ public class IntroSequence : MonoBehaviour
     private HideEndingController _hideEnding;
     private bool _hasReactedToPowerOutage;
     private AudioSource _powerOutageAudio;
+    // K-02: хозяин в подвале отвечает на стук с первой ночи (до неё о нём никто не знает).
+    private bool _knockerAwake;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -142,6 +144,10 @@ public class IntroSequence : MonoBehaviour
         horrorDirector.Initialize(playerInventory);
         var firstNightScare = gameObject.AddComponent<NightOneScare>();
         firstNightScare.Initialize(playerInventory);
+        var floorKnock = gameObject.AddComponent<PlayerFloorKnock>(); // K-02: Q — стук в пол
+        RandomKnock knockSound = knockController != null ? knockController.GetComponent<RandomKnock>() : null;
+        floorKnock.Initialize(playerInventory, knockSound != null ? knockSound.ShortestClip : null);
+        floorKnock.SetBasementArea(BasementMin, BasementMax, FirstFloorY);
         var followingSteps = gameObject.AddComponent<FollowingFootsteps>();
         followingSteps.Initialize(playerInventory);
         var kitchenDisturbance = gameObject.AddComponent<KitchenDisturbance>();
@@ -194,6 +200,9 @@ public class IntroSequence : MonoBehaviour
         SetupBedsideLamp();
         SetupPowerOutageAudio();
         SetupKnockDirector();
+        var responder = gameObject.AddComponent<KnockResponder>();
+        responder.Initialize(floorKnock, knockController != null ? knockController.GetComponent<KnockDirector>() : null,
+            knockSound != null ? knockSound.ShortestClip : null, () => _knockerAwake);
         CornerPeekSequence cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
         cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
     }
@@ -204,6 +213,7 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnBedTriggerReached += _eveningRound.HandleBedReached;
         GameEvents.OnKitchenNoiseHeard += OnKitchenTriggerReached;
         GameEvents.OnHouseEntered += OnHouseEntered;
+        GameEvents.OnNightStarted += WakeKnocker;
         GameEvents.OnTrashDeliveryReady += _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed += _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten += _pieQuest.OnPieEaten;
@@ -224,6 +234,7 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnBedTriggerReached -= _eveningRound.HandleBedReached;
         GameEvents.OnKitchenNoiseHeard -= OnKitchenTriggerReached;
         GameEvents.OnHouseEntered -= OnHouseEntered;
+        GameEvents.OnNightStarted -= WakeKnocker;
         GameEvents.OnTrashDeliveryReady -= _moveInChores.StartTrashDeliveryQuest;
         GameEvents.OnPieGrabbed -= _pieQuest.HandlePieGrabbed;
         GameEvents.OnPieEaten -= _pieQuest.OnPieEaten;
@@ -357,6 +368,7 @@ public class IntroSequence : MonoBehaviour
             GameEvents.OnNightTwoAwake?.Invoke();
         }
 
+        if (IsDayTwoDebugStage(startStage)) _knockerAwake = true; // ночь 1 уже была
         switch (startStage)
         {
             case DebugStoryStage.StartTrashQuest:
@@ -492,6 +504,7 @@ public class IntroSequence : MonoBehaviour
         playerTransform.position = nightSpawnPosition;
         playerTransform.rotation = Quaternion.Euler(nightSpawnRotation);
         if (cc != null) cc.enabled = true;
+        playerTransform.GetComponent<PlayerController>()?.StandUp();
     }
 
     void TeleportPlayerToNightTwoBed()
@@ -503,6 +516,7 @@ public class IntroSequence : MonoBehaviour
         playerTransform.position = nightTwoBedSpawnPosition;
         playerTransform.rotation = Quaternion.Euler(nightTwoSpawnRotation);
         if (cc != null) cc.enabled = true;
+        playerTransform.GetComponent<PlayerController>()?.StandUp();
     }
 
     void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction callback = null, string questTag = "")
@@ -689,6 +703,12 @@ public class IntroSequence : MonoBehaviour
         }
     }
 
+    // Подвал — под первым этажом дома (пол на 0.8 м). Гараж (бетон на 0.3 м, x > -38.5) и второй
+    // этаж — не над ним: там стучащий не ходит и герой в пол не стучит.
+    static readonly Vector2 BasementMin = new Vector2(-46f, 101f);
+    static readonly Vector2 BasementMax = new Vector2(-38.6f, 118.5f);
+    const float FirstFloorY = 0.8f;
+
     // K-01: источник RandomKnock ползёт под полом к игроку. Границы — первый этаж дома.
     void SetupKnockDirector()
     {
@@ -698,8 +718,16 @@ public class IntroSequence : MonoBehaviour
         KnockDirector director = knockController.GetComponent<KnockDirector>();
         if (director == null) director = knockController.AddComponent<KnockDirector>();
         director.Initialize(player, () => skySwitcher == null || !skySwitcher.isDayTime,
-            new Vector2(-46f, 101f), new Vector2(-34f, 119.5f));
+            BasementMin, BasementMax);
+        director.SetPlayerKnock(GetComponent<PlayerFloorKnock>());
     }
+
+    void WakeKnocker() => _knockerAwake = true;
+
+    static bool IsDayTwoDebugStage(DebugStoryStage stage) =>
+        stage == DebugStoryStage.StartDay2Decoration || stage == DebugStoryStage.StartDay2Dinner ||
+        stage == DebugStoryStage.StartDay2Evening || stage == DebugStoryStage.StartDinnerCook ||
+        stage == DebugStoryStage.StartDinnerEat;
 
     void SetupBedsideLamp()
     {
