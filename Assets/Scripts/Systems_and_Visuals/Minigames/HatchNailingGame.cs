@@ -35,7 +35,7 @@ namespace KnocksFromBeneath
         private Camera camComponent;
         private float baseFov, aimYaw, aimPitch, sensitivity, shake, shakeTime, windup = -1f, strikeTime = -1f;
         private float flicker, lampIntensity;
-        private bool invertY, warned;
+        private bool invertY, warned, released; // released — всё забито: прицел убран, взгляд отпущен
         private Vector3 focus;
         private readonly GameObject[] nails = new GameObject[NailBoarding.NailCount];
         private readonly Vector3[] nailTop = new Vector3[NailBoarding.NailCount];
@@ -209,9 +209,12 @@ namespace KnocksFromBeneath
                     Shake(0.08f + 0.12f * power);
                     break;
                 case NailStrike.NailDone:
-                    Play(source, nailClip, 1.4f, 1f);
-                    Play(source, plankClip, 0.8f, 0.35f);
-                    Shake(0.2f);
+                    bool last = Logic.Succeeded;
+                    Play(source, nailClip, last ? 1.2f : 1.4f, 1f);
+                    // Последний гвоздь — тяжёлый глухой удар по всей доске: слышно, что всё.
+                    Play(source, plankClip, last ? 0.6f : 0.8f, last ? 1f : 0.35f);
+                    if (last) Play(source, thudClip, 0.75f, 0.6f);
+                    Shake(last ? 0.45f : 0.2f);
                     if (Logic.NailsDone == 1 && keys != null) keys.gameObject.SetActive(false);
                     break;
                 case NailStrike.Glance:
@@ -271,11 +274,14 @@ namespace KnocksFromBeneath
 
         private IEnumerator OwnerAnswers()
         {
-            // Тишина — и снизу слабый знакомый перестук «2·1»: под досками остался человек.
-            if (keys != null) keys.gameObject.SetActive(false);
-            float[] taps = { 1.1f, 1.45f, 2.45f };
+            // Сразу видно, что всё: прицел исчезает, молоток опускается, зум уходит, взгляд поднимается
+            // от досок. Потом снизу слабый знакомый перестук «2·1»: под досками остался человек.
+            released = true;
+            windup = -1f;
+            if (ui != null) ui.SetActive(false);
+            float[] taps = { 0.7f, 1.05f, 2.05f };
             int next = 0;
-            for (float t = 0f; t < 3.8f; t += Time.deltaTime)
+            for (float t = 0f; t < 2.6f; t += Time.deltaTime)
             {
                 if (next < taps.Length && t >= taps[next])
                 {
@@ -362,9 +368,15 @@ namespace KnocksFromBeneath
                             (Mathf.PerlinNoise(0.7f, n) - 0.5f) * 2f * a, 0f);
                     }
                 }
+                if (released)
+                {
+                    float ease = 1f - Mathf.Exp(-2.5f * dt);
+                    aimPitch = Mathf.Lerp(aimPitch, -9f, ease);
+                    aimYaw = Mathf.Lerp(aimYaw, 0f, ease);
+                }
                 cam.rotation = baseAim * Quaternion.Euler(aimPitch, aimYaw, 0f) * offset;
                 if (camComponent != null)
-                    camComponent.fieldOfView = Mathf.Lerp(camComponent.fieldOfView, baseFov * ZoomFactor,
+                    camComponent.fieldOfView = Mathf.Lerp(camComponent.fieldOfView, released ? baseFov : baseFov * ZoomFactor,
                         1f - Mathf.Exp(-5f * dt));
             }
             if (hammer != null)
