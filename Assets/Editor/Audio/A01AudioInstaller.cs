@@ -25,7 +25,8 @@ public static class A01AudioInstaller
         lib.ui = System.Enum.GetNames(typeof(UiSound)).Select(n => Clip("UI/" + n)).ToArray();
         lib.thoughtTicks = Clips("UI/ThoughtTick");
         lib.dayOutside = Clip("Ambience/DayOutside"); lib.nightOutside = Clip("Ambience/NightOutside");
-        lib.rain = Clip("Ambience/Rain"); lib.basement = Clip("Ambience/Basement"); lib.roomTone = Clip("Ambience/RoomTone");
+        lib.rain = null; // A-01: слой дождя убран по решению автора
+        lib.basement = Clip("Ambience/Basement"); lib.roomTone = Clip("Ambience/RoomTone");
         lib.fridgeHum = Clip("Ambience/FridgeHum"); lib.lampBuzz = Clip("Ambience/LampBuzz");
         lib.droneMenu = Clip("Music/DroneMenu"); lib.droneNight1 = Clip("Music/DroneNight1");
         lib.droneNight2 = Clip("Music/DroneNight2"); lib.droneBasement = Clip("Music/DroneBasement");

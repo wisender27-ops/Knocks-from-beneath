@@ -33,7 +33,7 @@ MonoBehaviour:
   - {fileID: 8300000, guid: bf0c80f63c7103c46b918e5a1ec1dc06, type: 3}
   dayOutside: {fileID: 8300000, guid: 044afa20b33580443a212dac41985b9f, type: 3}
   nightOutside: {fileID: 8300000, guid: 78f5c339acefe524fa8ef5c810792987, type: 3}
-  rain: {fileID: 8300000, guid: 062ccd415055c8547b18b3c8f0e8c643, type: 3}
+  rain: {fileID: 0}
   basement: {fileID: 8300000, guid: 0ceeb69f84c1a0e488c4abaa8629d770, type: 3}
   roomTone: {fileID: 8300000, guid: 97bba51572228214aaef19eeef738c24, type: 3}
   fridgeHum: {fileID: 8300000, guid: 2da1c15c38b785f47b457ac3e7f579c1, type: 3}

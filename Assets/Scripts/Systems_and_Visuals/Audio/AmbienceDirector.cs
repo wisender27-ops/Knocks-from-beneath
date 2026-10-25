@@ -3,7 +3,7 @@ using UnityEngine;
 namespace KnocksFromBeneath
 {
 // A-01: фон игровой сцены. Создаётся GameAudio, если в сцене есть SkyboxSwitcher.
-// Слои (2D, плавные переходы): день снаружи, ночь снаружи, дождь, тон комнаты, подвал, дрон главы.
+// Слои (2D, плавные переходы): день снаружи, ночь снаружи, тон комнаты, подвал, дрон главы (дождь убран по решению автора).
 // «Внутри/снаружи» — по потолку над слушателем; снапшоты Inside/Outside MainMixer глушат уличный фон в доме.
 // Редкие одиночные звуки: скрип дома ночью, гром во вторую ночь, собака вдалеке.
 // После отключения света дрон и гул замолкают на несколько секунд — самая тихая точка ночи 2.
@@ -24,10 +24,9 @@ public sealed class AmbienceDirector : MonoBehaviour
         public Layer(AudioSource s, float max, float speed) { source = s; this.max = max; this.speed = speed; }
     }
 
-    Layer day, night, rain, room, basement, drone, heartbeatLayer;
+    Layer day, night, room, basement, drone, heartbeatLayer;
     AudioClip currentDrone;
     SkyboxSwitcher sky;
-    ParticleSystem rainParticles;
     Transform listener;
     BasementHatch hatch;
     float basementTopY = float.NegativeInfinity;
@@ -46,7 +45,6 @@ public sealed class AmbienceDirector : MonoBehaviour
         var lib = GameSounds.Library;
         day = Bed("Day Outside", lib?.dayOutside, AudioBus.Ambience, .55f, .35f);
         night = Bed("Night Outside", lib?.nightOutside, AudioBus.Ambience, .6f, .3f);
-        rain = Bed("Rain", lib?.rain, AudioBus.Ambience, .5f, .3f);
         room = Bed("Room Tone", lib?.roomTone, AudioBus.Ambience, .9f, .5f);
         basement = Bed("Basement", lib?.basement, AudioBus.Ambience, .75f, .4f);
         drone = Bed("Drone", null, AudioBus.Music, .42f, .12f);
@@ -106,12 +104,10 @@ public sealed class AmbienceDirector : MonoBehaviour
     {
         if (Time.time >= nextCheck) { nextCheck = Time.time + CheckInterval; Sense(); }
         bool isDay = sky == null || sky.isDayTime;
-        bool raining = rainParticles != null && rainParticles.gameObject.activeInHierarchy && rainParticles.isEmitting;
         bool silent = Time.time < silenceUntil;
 
         day.target = isDay && !ListenerInBasement ? 1f : 0f;
-        night.target = !isDay && !ListenerInBasement ? (raining ? .55f : 1f) : 0f;
-        rain.target = raining && !ListenerInBasement ? (nightTwo ? 1f : .8f) : 0f;
+        night.target = !isDay && !ListenerInBasement ? 1f : 0f;
         room.target = inside && !ListenerInBasement ? (powerOut ? .45f : 1f) : 0f;
         basement.target = ListenerInBasement ? 1f : 0f;
 
@@ -119,7 +115,7 @@ public sealed class AmbienceDirector : MonoBehaviour
             : isDay ? null : nightTwo ? GameSounds.Library?.droneNight2 : GameSounds.Library?.droneNight1;
         UpdateDrone(wantDrone, silent);
 
-        Fade(day); Fade(night); Fade(rain); Fade(room); Fade(basement); Fade(drone);
+        Fade(day); Fade(night); Fade(room); Fade(basement); Fade(drone);
         UpdateScareLayers();
         if (!isDay && !ListenerInBasement) OneShots();
     }
@@ -154,11 +150,6 @@ public sealed class AmbienceDirector : MonoBehaviour
     void Sense()
     {
         if (sky == null) sky = FindFirstObjectByType<SkyboxSwitcher>();
-        if (rainParticles == null)
-        {
-            foreach (var ps in FindObjectsByType<ParticleSystem>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-                if (ps.name == "Rain System") { rainParticles = ps; break; }
-        }
         if (hatch == null)
         {
             hatch = FindFirstObjectByType<BasementHatch>(FindObjectsInactive.Include);
@@ -237,17 +228,16 @@ public sealed class AmbienceDirector : MonoBehaviour
     }
 }
 
-// Главное меню: тихий дрон и дождь за окном.
+// Главное меню: тихий дрон.
 public sealed class MenuAmbience : MonoBehaviour
 {
-    AudioSource drone, rain;
+    AudioSource drone;
 
     void Start()
     {
         var lib = GameSounds.Library;
         if (lib == null) return;
         drone = Loop("Menu Drone", lib.droneMenu, AudioBus.Music);
-        rain = Loop("Menu Rain", lib.rain, AudioBus.Ambience);
     }
 
     AudioSource Loop(string name, AudioClip clip, AudioBus bus)
@@ -263,7 +253,6 @@ public sealed class MenuAmbience : MonoBehaviour
     {
         float dt = Time.unscaledDeltaTime;
         if (drone != null) drone.volume = Mathf.MoveTowards(drone.volume, .5f, dt * .15f);
-        if (rain != null) rain.volume = Mathf.MoveTowards(rain.volume, .28f, dt * .1f);
     }
 }
 }

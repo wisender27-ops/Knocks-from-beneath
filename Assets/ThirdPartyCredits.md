@@ -77,7 +77,6 @@
 | `Assets/Audio/Game/Foley/Items/Equip.ogg` | A-01: kenney_rpg-audio/beltHandle2.ogg | https://kenney.nl/assets/rpg-audio | Kenney (kenney.nl) | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/Ambience/DayOutside.ogg` | A-01: opengameart: amb_morning.wav; opengameart: park_ambience_wind.wav | https://opengameart.org/content/amb-morning-sounds-perfect-loop https://opengameart.org/content/park-ambiences | kresiek-the-furry, thimras | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/Ambience/NightOutside.ogg` | A-01: opengameart: crickets_1.mp3; opengameart: park_ambience_wind.wav | https://opengameart.org/content/crickets-ambient-noise-loopable https://opengameart.org/content/park-ambiences | thimras, wolfgang | CC0 1.0 | 2026-10-26 |
-| `Assets/Audio/Game/Ambience/Rain.ogg` | A-01: opengameart: rain-gutter-loop_0.mp3 | https://opengameart.org/content/rain-gutter-loop | ogrebane | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/Ambience/Basement.ogg` | A-01: opengameart: dungeon_ambient_1_0.ogg; opengameart: freezer_0.ogg | https://opengameart.org/content/abandoned-passages-horror-ambience-loop https://opengameart.org/content/loopable-dungeon-ambience | congusbongus, jaggedstone | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/Ambience/FridgeHum.ogg` | A-01: opengameart: TheShopCollection_convenience_store_drinks_fridge_drone.wav | https://opengameart.org/content/the-shop | LEGIT Audio | CC0 1.0 | 2026-10-26 |
 | `Assets/Audio/Game/Ambience/RoomTone.ogg` | A-01: synthesized (tools/synth.py) | — | Knocks from Beneath | собственный (синтез в задаче A-01) | 2026-10-26 |
