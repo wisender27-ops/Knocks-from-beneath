@@ -16,6 +16,8 @@ namespace KnocksFromBeneath
         private const float ZoomFactor = 0.62f;
         private const float AimYaw = 22f, AimPitch = 17f;
         private const float BeamAngle = 20f, BeamInner = 11f;
+        // Фонарик рассчитан на метры, а до щитка 0.6 м: в полную силу металл засвечивается добела.
+        private const float BeamIntensity = 0.8f;
         private const float GroupOffAngle = 65f, MainOffAngle = 60f;
         private const float FlipSpeed = 900f;          // градусов в секунду: щелчок, а не плавный ход
         private const float PickRadius = 0.016f;       // автоматы стоят через 2.2 см
@@ -62,7 +64,7 @@ namespace KnocksFromBeneath
         private float baseFov, aimYaw, aimPitch, sensitivity, shake, shakeTime;
         private bool invertY, released, kitchenDead; // kitchenDead — после успеха кухня выбита насовсем
         private Light beam;
-        private float beamAngle, beamInner;
+        private float beamAngle, beamInner, beamIntensity;
         private string equippedBefore;
 
         private AudioSource panelSource, humSource, knockSource;
@@ -426,7 +428,9 @@ namespace KnocksFromBeneath
                 beam.enabled = true;
                 beamAngle = beam.spotAngle;
                 beamInner = beam.innerSpotAngle;
+                beamIntensity = beam.intensity;
                 beam.spotAngle = BeamAngle;
+                beam.intensity = Mathf.Min(beamIntensity, BeamIntensity);
                 beam.innerSpotAngle = BeamInner;
             }
         }
@@ -531,6 +535,7 @@ namespace KnocksFromBeneath
             {
                 beam.spotAngle = beamAngle;
                 beam.innerSpotAngle = beamInner;
+                beam.intensity = beamIntensity;
                 // Ночь: фонарик остаётся в руке и светит. Если до щитка в руке был лом/молоток — он возвращается.
                 bool otherTool = !string.IsNullOrEmpty(equippedBefore) && equippedBefore != "Flashlight";
                 if (otherTool && inventory != null) inventory.Equip(equippedBefore);
