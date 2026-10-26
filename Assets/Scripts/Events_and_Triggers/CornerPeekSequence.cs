@@ -3,19 +3,29 @@ using UnityEngine;
 
 namespace KnocksFromBeneath
 {
+    // Пугалка ночи 2 в прихожей (переделана по отзыву автора: раньше голова «выпирала» из стены у шкафа).
+    // Монстр заранее, вне поля зрения, встаёт в тёмном конце коридора у входной двери — лицом в угол,
+    // сгорбившись. Игрок поворачивает в коридор, луч фонарика его находит: пауза, вдох героя, монстр медленно
+    // оборачивается через плечо и смотрит на игрока; удар звука, фонарик мигает — монстр срывается к двери,
+    // вышибает её с петель и исчезает на улице. Имя и API класса прежние (IntroSequence, тесты, пробы).
     public sealed class CornerPeekSequence : MonoBehaviour
     {
+        // Конец коридора у входной двери: между шкафом (z 114.7) и дверью (z 116.75), в полуметре от торца.
+        private static readonly Vector3 StandPoint = new Vector3(-39.25f, 0.78f, 115.7f);
+        private static readonly Vector3 StandFacing = new Vector3(1f, 0f, 0.7f).normalized; // лицом в угол у двери
+        private const float RevealDistance = 4.6f;
+        private const float RevealConeDegrees = 16f;                   // луч фонарика — в центре экрана
+        private const float CloseDistance = 2.4f;                      // вплотную видно и без прямого луча
+        private const float RunSpeed = 5.5f;
+
         private PlayerInventory _inventory;
         private IntroSequence _intro;
         private GameObject _knocks;
         private Door _exitDoor;
-        private Transform _corner;
         private Camera _camera;
-        private bool _nightTwo, _played;
+        private bool _nightTwo, _played, _beamWasOn;
         private GameObject _monster, _runEmitter;
-        private Vector3 _hidden, _shown, _headTarget;
-        private Coroutine _sequence;
-        private Transform _head;
+        private CornerStalkerRig _rig;
         public static bool IsPlaying { get; private set; }
         private PlayerController _player;
         private Behaviour[] _inputs;
@@ -27,9 +37,12 @@ namespace KnocksFromBeneath
         private Rigidbody _playerBody;
         private bool _bodyWasKinematic;
         private AudioSource _stinger;
+        private Light _beam;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetPlaying() => IsPlaying = false;
+
+        private static Vector3 Chest => StandPoint + Vector3.up * 1.45f;
 
         public void Initialize(IntroSequence intro, PlayerInventory inventory, GameObject knocks, Door exitDoor)
         {
@@ -37,15 +50,9 @@ namespace KnocksFromBeneath
             _inventory = inventory;
             _knocks = knocks;
             _exitDoor = exitDoor;
-            _corner = GameObject.Find("closet_door_02")?.transform;
             _camera = Camera.main;
             _player = inventory != null ? inventory.GetComponentInParent<PlayerController>() : null;
-            if (_corner == null) { enabled = false; return; }
-            // Keep the body behind the closet edge; only the leaning head/shoulder clear it.
-            Vector3 edge = _corner.position;
-            _hidden = new Vector3(edge.x + 0.5f, 0.78f, edge.z - 0.3f);
-            _shown = new Vector3(edge.x + 0.15f, 0.78f, edge.z + 0.27f);
-            _headTarget = new Vector3(edge.x - 0.16f, 2.25f, edge.z + 0.08f);
+            _beam = inventory != null ? inventory.flashlightLightSource : null;
         }
 
         private void OnEnable()
@@ -56,8 +63,13 @@ namespace KnocksFromBeneath
 
         private void Arm() => _nightTwo = true;
 
-        // Сюжет прошёл фазу кухни — пугалка больше не срабатывает.
-        public void Retire() => _played = true;
+        // Сюжет ушёл от дома — пугалка больше не срабатывает; если монстр уже стоит в коридоре, он исчезает.
+        public void Retire()
+        {
+            if (!_played && _monster != null) Destroy(_monster);
+            _played = true;
+        }
+
         private void Disarm() => _nightTwo = false;
 
         private void Update()
@@ -66,109 +78,123 @@ namespace KnocksFromBeneath
             if (Time.timeScale == 0f || RetroInventoryScreen.IsAnyOpen) return;
             if ((_player != null && (!_player.enabled || _player.isCameraLocked)) || PlayerInteraction.IsLockSequencePlaying) return;
             if (_intro != null && _intro.HoldsCornerScare) return; // M-04: сначала щиток
-            Vector3 view = _camera.WorldToViewportPoint(_headTarget);
-            if (_camera.transform.position.y > 3.8f || view.z <= 0f || view.z > 3f ||
-                view.x < 0.12f || view.x > 0.88f || view.y < 0.12f || view.y > 0.88f) return;
-            Vector3 direction = _headTarget - _camera.transform.position;
-            Vector3 approach = Vector3.ProjectOnPlane(direction, Vector3.up).normalized;
-            if (_player != null && Vector3.Dot(_player.PlanarVelocity, approach) <= 0.1f) return;
-            if (Physics.Raycast(_camera.transform.position, direction.normalized, direction.magnitude - 0.08f,
-                PhysicsMasks.AllLayers, QueryTriggerInteraction.Ignore)) return;
+            if (_camera.transform.position.y > 3.8f) return;      // игрок на втором этаже
+
+            bool visible = CanSee(Chest, out float distance, out float angle);
+            // Ставим монстра только туда, куда игрок сейчас не смотрит, — никакого «появления из воздуха».
+            if (_monster == null)
+            {
+                if (!visible && Flat(_camera.transform.position - StandPoint).magnitude > 2.5f) SpawnMonster();
+                return;
+            }
+            if (!visible || distance > RevealDistance) return;
+            if (angle > RevealConeDegrees && distance > CloseDistance) return;
+            if (_beam != null && !_beam.enabled && distance > CloseDistance) return; // в темноте его не видно
+
             _played = true;
             HorrorMomentDirector.Instance?.Interrupt();
             _intro?.PrepareCornerScare();
             NarrativeDisplayQueue.InterruptAndEnqueue(this, Play);
         }
 
-        private IEnumerator Play()
+        private bool CanSee(Vector3 point, out float distance, out float angle)
+        {
+            Vector3 eye = _camera.transform.position;
+            Vector3 to = point - eye;
+            distance = to.magnitude;
+            angle = Vector3.Angle(_camera.transform.forward, to);
+            Vector3 view = _camera.WorldToViewportPoint(point);
+            if (view.z <= 0f || view.x < 0.05f || view.x > 0.95f || view.y < 0.05f || view.y > 0.95f) return false;
+            return !Physics.Raycast(eye, to / distance, distance - 0.15f, PhysicsMasks.AllLayers, QueryTriggerInteraction.Ignore);
+        }
+
+        private void SpawnMonster()
         {
             GameObject prefab = Resources.Load<GameObject>("Scares/CornerPeekMonster");
-            if (prefab == null) yield break;
+            if (prefab == null) { _played = true; return; }
+            _monster = Instantiate(prefab, StandPoint, Quaternion.LookRotation(StandFacing));
+            _monster.name = "Hallway Stalker";
+            _rig = _monster.GetComponent<CornerStalkerRig>();
+            if (_rig == null) _rig = _monster.AddComponent<CornerStalkerRig>();
+            _rig.Idle(Random.value);
+        }
+
+        private IEnumerator Play()
+        {
+            if (_monster == null) yield break;
             CaptureControl();
+            _beamWasOn = _beam != null && _beam.enabled;
             try
             {
-            _monster = Instantiate(prefab, _hidden, Quaternion.Euler(0f, 180f, 0f));
-            _monster.SetActive(true);
-            Animator animator = _monster.GetComponentInChildren<Animator>();
-            if (animator != null)
-            {
-                animator.cullingMode = AnimatorCullingMode.AlwaysAnimate;
-                animator.Rebind();
-                animator.Play("Observe", 0, 0.25f);
-                animator.Update(0f);
-                if (animator.isHuman) _head = animator.GetBoneTransform(HumanBodyBones.Head);
-                animator.enabled = false;
-            }
-            CornerPeekPose pose = _monster.AddComponent<CornerPeekPose>();
-            pose.Initialize(animator);
-            float time = 0f;
-            const float emerge = 0.22f;
-            bool startled = false;
-            while (time < emerge)
-            {
-                time += Time.deltaTime;
-                float reveal = Mathf.SmoothStep(0f, 1f, time / emerge);
-                _monster.transform.position = Vector3.Lerp(_hidden, _shown, reveal);
-                ApplyPose(pose, reveal, time);
-                if (!startled && reveal >= 0.25f)
+                SilenceKnocks();
+                Transform head = _rig != null && _rig.Head != null ? _rig.Head : _monster.transform;
+
+                // 1. Заметил: взгляд сам тянется к нему, герой резко вдыхает. Монстр стоит.
+                AudioClip gasp = GameSounds.Pick(GameSounds.Library?.breathScared);
+                PlayOneShot(gasp, 0.75f);
+                PlayOneShot(GameSounds.Library?.riser, 0.35f);
+                for (float t = 0f; t < 1.1f; t += Time.deltaTime)
                 {
-                    startled = true;
-                    PlayJumpscare();
+                    FocusCamera(Chest + Vector3.up * 0.2f, Mathf.SmoothStep(0f, 1f, t / 0.6f), 6f);
+                    yield return null;
                 }
-                if (startled) FocusCamera(Mathf.Clamp01((time - 0.04f) / 0.14f));
-                yield return null;
-            }
-            time = 0f;
-            while (time < 0.25f)
-            {
-                time += Time.deltaTime;
-                ApplyPose(pose, 1f, emerge + time);
-                FocusCamera(1f);
-                yield return null;
-            }
-            time = 0f;
-            while (time < 0.14f)
-            {
-                time += Time.deltaTime;
-                float retreat = Mathf.Clamp01(time / 0.14f);
-                float reveal = 1f - retreat * retreat;
-                _monster.transform.position = Vector3.Lerp(_hidden, _shown, reveal);
-                ApplyPose(pose, reveal, emerge + 0.25f + time);
-                yield return null;
-            }
-            Destroy(_monster);
-            _monster = null;
-            if (_knocks != null)
-                foreach (RandomKnock knock in _knocks.GetComponentsInChildren<RandomKnock>(true))
-                    knock.SilencePermanently();
-            yield return RunToExit();
-            yield return new WaitForSeconds(1.1f);
-            float release = 0f;
-            Quaternion focusRotation = _camera.transform.localRotation;
-            float focusFov = _camera.fieldOfView;
-            while (release < 0.25f)
-            {
-                release += Time.deltaTime;
-                float weight = Mathf.SmoothStep(0f, 1f, release / 0.25f);
-                _camera.transform.localRotation = Quaternion.Slerp(focusRotation, _cameraRotation, weight);
-                _camera.fieldOfView = Mathf.Lerp(focusFov, _cameraFov, weight);
-                yield return null;
-            }
-            RestoreControl();
-            ThoughtManager.Instance?.ShowImportantThoughts(new[] {
-                "Блядь! Это что за хрень?!",
-                "Какого чёрта... Он был прямо передо мной!",
-                "Стук был из подвала. Он оттуда вылез?.."
-            }, () => _intro?.ContinueAfterCornerScare());
-            if (ThoughtManager.Instance == null) _intro?.ContinueAfterCornerScare();
-            _sequence = null;
+
+                // 2. Оборачивается через плечо и смотрит прямо в него. Фонарик дрожит.
+                if (_rig != null) _rig.LookTarget = _camera.transform.position;
+                for (float t = 0f; t < 1.1f; t += Time.deltaTime)
+                {
+                    float turn = Mathf.SmoothStep(0f, 1f, t / 0.75f);
+                    if (_rig != null)
+                    {
+                        _rig.LookTarget = _camera.transform.position;
+                        _rig.LookWeight = turn;
+                    }
+                    FocusCamera(Vector3.Lerp(Chest + Vector3.up * 0.2f, head.position, turn), 1f, 6f + 4f * turn);
+                    if (_beam != null && t > 0.55f) _beam.enabled = Mathf.PerlinNoise(Time.time * 18f, 0.4f) > 0.3f;
+                    yield return null;
+                }
+                if (_beam != null) _beam.enabled = _beamWasOn;
+
+                // 3. Срывается: удар звука, свет моргает, монстр бросается к двери и вышибает её.
+                PlayJumpscare();
+                if (_rig != null) _rig.LookWeight = 0f;
+                yield return RunToExit();
+
+                // 4. Тишина, взгляд возвращается.
+                yield return new WaitForSeconds(0.9f);
+                float release = 0f;
+                Quaternion focusRotation = _camera.transform.localRotation;
+                float focusFov = _camera.fieldOfView;
+                while (release < 0.35f)
+                {
+                    release += Time.deltaTime;
+                    float weight = Mathf.SmoothStep(0f, 1f, release / 0.35f);
+                    _camera.transform.localRotation = Quaternion.Slerp(focusRotation, _cameraRotation, weight);
+                    _camera.fieldOfView = Mathf.Lerp(focusFov, _cameraFov, weight);
+                    yield return null;
+                }
+                RestoreControl();
+                ThoughtManager.Instance?.ShowImportantThoughts(new[] {
+                    "Блядь! Это что за хрень?!",
+                    "Оно стояло прямо тут. Смотрело на меня.",
+                    "Стук был из подвала. Оно оттуда вылезло?.."
+                }, () => _intro?.ContinueAfterCornerScare());
+                if (ThoughtManager.Instance == null) _intro?.ContinueAfterCornerScare();
             }
             finally
             {
                 RestoreControl();
+                if (_beam != null && _beamWasOn) _beam.enabled = true;
                 if (_monster != null) Destroy(_monster);
                 if (_runEmitter != null) Destroy(_runEmitter);
             }
+        }
+
+        private void SilenceKnocks()
+        {
+            if (_knocks == null) return;
+            foreach (RandomKnock knock in _knocks.GetComponentsInChildren<RandomKnock>(true))
+                knock.SilencePermanently();
         }
 
         private void CaptureControl()
@@ -198,30 +224,43 @@ namespace KnocksFromBeneath
             IsPlaying = true;
         }
 
-        private void FocusCamera(float weight)
+        // Мягко подводит взгляд к точке; zoom — на сколько градусов сужается FOV («всматривается»).
+        private void FocusCamera(Vector3 target, float weight, float zoom)
         {
-            Vector3 target = _head != null ? _head.position : _headTarget;
             Vector3 direction = target - _camera.transform.position;
             if (direction.sqrMagnitude < 0.01f) return;
             Quaternion localAim = _camera.transform.parent != null
                 ? Quaternion.Inverse(_camera.transform.parent.rotation) * Quaternion.LookRotation(direction)
                 : Quaternion.LookRotation(direction);
-            _camera.transform.localRotation = Quaternion.Slerp(_cameraRotation, localAim, Mathf.SmoothStep(0f, 1f, weight));
-            _camera.fieldOfView = Mathf.Lerp(_cameraFov, Mathf.Max(35f, _cameraFov - 18f), weight);
+            _camera.transform.localRotation = Quaternion.Slerp(_cameraRotation, localAim, Mathf.Clamp01(weight));
+            _camera.fieldOfView = Mathf.Lerp(_cameraFov, Mathf.Max(35f, _cameraFov - zoom), Mathf.Clamp01(weight));
         }
 
         private void PlayJumpscare()
         {
-            _stinger = gameObject.AddComponent<AudioSource>();
-            _stinger.playOnAwake = false;
-            _stinger.spatialBlend = 0f;
+            EnsureStinger();
             _stinger.volume = 0.85f;
             _stinger.clip = Resources.Load<AudioClip>("Audio/CornerJumpscare");
-            AudioRouting.Assign(_stinger, AudioBus.Horror);
             if (_stinger.clip != null) _stinger.Play();
             // A-01: низкий удар под скример — вес в теле, а не только громкость.
             AudioClip sub = GameSounds.Pick(GameSounds.Library?.subHits);
             if (sub != null) _stinger.PlayOneShot(sub, .7f);
+        }
+
+        private void PlayOneShot(AudioClip clip, float volume)
+        {
+            if (clip == null) return;
+            EnsureStinger();
+            _stinger.PlayOneShot(clip, volume);
+        }
+
+        private void EnsureStinger()
+        {
+            if (_stinger != null) return;
+            _stinger = gameObject.AddComponent<AudioSource>();
+            _stinger.playOnAwake = false;
+            _stinger.spatialBlend = 0f;
+            AudioRouting.Assign(_stinger, AudioBus.Horror);
         }
 
         private void RestoreControl()
@@ -241,21 +280,18 @@ namespace KnocksFromBeneath
             IsPlaying = false;
         }
 
-        private void ApplyPose(CornerPeekPose pose, float reveal, float time)
-        {
-            pose.Apply(reveal, time);
-            if (_head == null || _camera == null) return;
-            Vector3 direction = _camera.transform.position - _head.position;
-            if (direction.sqrMagnitude < 0.001f) return;
-            Quaternion aim = Quaternion.FromToRotation(_head.forward, direction.normalized) * _head.rotation;
-            _head.rotation = Quaternion.Slerp(_head.rotation, aim, 0.8f * reveal);
-        }
-
+        // Разворот к двери, рывок, дверь слетает с петель, монстр уходит в темноту двора. Взгляд провожает его.
         private IEnumerator RunToExit()
         {
+            Transform body = _monster.transform;
+            Vector3 doorway = _exitDoor != null
+                ? new Vector3(_exitDoor.transform.position.x + 0.45f, StandPoint.y, _exitDoor.transform.position.z)
+                : StandPoint + Vector3.forward * 1.1f;
+            Vector3 outside = doorway + Vector3.forward * 3.5f;
             AudioClip run = Resources.Load<AudioClip>("Audio/CornerEscapeRun");
             _runEmitter = new GameObject("CornerEscapeAudio");
-            _runEmitter.transform.position = _headTarget - Vector3.up;
+            _runEmitter.transform.SetParent(body, false);
+            _runEmitter.transform.localPosition = Vector3.up;
             AudioSource source = _runEmitter.AddComponent<AudioSource>();
             AudioRouting.Assign(source, AudioBus.Horror);
             source.playOnAwake = false;
@@ -264,38 +300,66 @@ namespace KnocksFromBeneath
             source.maxDistance = 18f;
             source.dopplerLevel = 0f;
             source.volume = 0.9f;
-            Vector3 start = _runEmitter.transform.position;
-            Vector3 end = _exitDoor != null ? _exitDoor.transform.position : start + Vector3.forward * 3f;
-            if (run != null)
+            if (run != null) { source.clip = run; source.Play(); }
+
+            _rig?.Run(1.25f);
+            Quaternion from = body.rotation, to = Quaternion.LookRotation(Flat(doorway - body.position));
+            for (float t = 0f; t < 0.14f; t += Time.deltaTime)
             {
-                source.clip = run;
-                source.Play();
-                while (isActiveAndEnabled && source != null && source.isPlaying)
+                body.rotation = Quaternion.Slerp(from, to, t / 0.14f);
+                Follow(body);
+                yield return null;
+            }
+            body.rotation = to;
+            bool broken = false;
+            Vector3[] path = { doorway, outside };
+            foreach (Vector3 point in path)
+            {
+                while (_monster != null && Flat(point - body.position).magnitude > 0.05f)
                 {
-                    _runEmitter.transform.position = Vector3.Lerp(start, end, source.time / run.length);
+                    body.position = Vector3.MoveTowards(body.position, point, RunSpeed * Time.deltaTime);
+                    Vector3 heading = Flat(point - body.position);
+                    if (heading.sqrMagnitude > 0.0001f)
+                        body.rotation = Quaternion.Slerp(body.rotation, Quaternion.LookRotation(heading), 1f - Mathf.Exp(-14f * Time.deltaTime));
+                    if (!broken && _exitDoor != null && Flat(_exitDoor.transform.position - body.position).magnitude < 0.9f)
+                    {
+                        broken = true;
+                        BreakDoor();
+                    }
+                    Follow(body);
                     yield return null;
                 }
             }
-            if (!isActiveAndEnabled || _runEmitter == null) yield break;
-            _runEmitter.transform.position = end;
-            if (_exitDoor != null)
+            if (!broken) BreakDoor();
+            if (_monster != null) Destroy(_monster);
+            _monster = null;
+            if (_runEmitter != null)
             {
-                _exitDoor.BreakOffHinges(Vector3.forward, Resources.Load<AudioClip>("Audio/CornerDoorCrack"),
-                    GameSounds.Library?.doorLanding != null ? GameSounds.Library.doorLanding
-                        : Resources.Load<AudioClip>("Audio/CornerDoorLanding"));
-                GameState.frontDoorLocked = false;
+                _runEmitter.transform.SetParent(null, true);
+                Destroy(_runEmitter, 2f);
+                _runEmitter = null;
             }
-            Destroy(_runEmitter);
-            _runEmitter = null;
         }
+
+        private void BreakDoor()
+        {
+            if (_exitDoor == null) return;
+            _exitDoor.BreakOffHinges(Vector3.forward, Resources.Load<AudioClip>("Audio/CornerDoorCrack"),
+                GameSounds.Library?.doorLanding != null ? GameSounds.Library.doorLanding
+                    : Resources.Load<AudioClip>("Audio/CornerDoorLanding"));
+            GameState.frontDoorLocked = false;
+        }
+
+        private void Follow(Transform body) =>
+            FocusCamera(body.position + Vector3.up * 1.5f, 1f, 10f);
+
+        private static Vector3 Flat(Vector3 v) => new Vector3(v.x, 0f, v.z);
 
         private void OnDisable()
         {
             RestoreControl();
             GameEvents.OnNightTwoStarted -= Arm;
             GameEvents.OnDayStarted -= Disarm;
-            if (_sequence != null) StopCoroutine(_sequence);
-            _sequence = null;
             if (_monster != null) Destroy(_monster);
             if (_runEmitter != null) Destroy(_runEmitter);
         }
