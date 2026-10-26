@@ -270,29 +270,16 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            // 8. ЗАПИСКА/ЗВОНОК СОСЕДА (день 2, T-16). Ненайденная улика под тем же предметом — раньше.
-            InspectableClue anchored = InspectableClue.OnAnchor(hitObj.transform);
-            if (anchored != null && !anchored.IsFound && anchored.CanInteract)
-            {
-                anchored.Interact();
-                return;
-            }
-            NeighborNoteInteractable note = hitObj.GetComponentInParent<NeighborNoteInteractable>();
-            if (note != null && (note.CanInteract || anchored == null))
-            {
-                note.Interact();
-                return;
-            }
-
-            // 9. УЛИКА — ОСМОТР (M-05)
-            InspectableClue clue = anchored != null ? anchored : hitObj.GetComponentInParent<InspectableClue>();
+            // 8. УЛИКА — ОСМОТР (M-05). Улика под чужим предметом — и по самому предмету.
+            InspectableClue clue = InspectableClue.OnAnchor(hitObj.transform);
+            if (clue == null) clue = hitObj.GetComponentInParent<InspectableClue>();
             if (clue != null)
             {
                 clue.Interact();
                 return;
             }
 
-            // 10. ЗАМОК ВХОДНОЙ ДВЕРИ (день 2, T-17)
+            // 9. ЗАМОК ВХОДНОЙ ДВЕРИ (день 2, T-17)
             FrontDoorLockInteractable doorLock = hitObj.GetComponentInParent<FrontDoorLockInteractable>();
             if (doorLock != null)
             {
