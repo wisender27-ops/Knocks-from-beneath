@@ -3,19 +3,20 @@ using UnityEngine;
 
 namespace KnocksFromBeneath
 {
-    // Пугалка ночи 2 в прихожей (переделана по отзыву автора: раньше голова «выпирала» из стены у шкафа).
-    // Монстр заранее, вне поля зрения, встаёт в тёмном конце коридора у входной двери — лицом в угол,
-    // сгорбившись. Игрок поворачивает в коридор, луч фонарика его находит: пауза, вдох героя, монстр медленно
-    // оборачивается через плечо и смотрит на игрока; удар звука, фонарик мигает — монстр срывается к двери,
-    // вышибает её с петель и исчезает на улице. Имя и API класса прежние (IntroSequence, тесты, пробы).
+    // Пугалка ночи 2 «из-за угла» — прямой скример (по отзыву автора). Монстр прячется за углом коридора у шкафа
+    // (в самом коридоре, а не в стене). Игрок с фонариком подходит к углу со стороны кухни — монстр за 0.14 с
+    // выпрыгивает прямо перед лицом с тянущейся рукой: удар звука, рывок камеры на морду, тряска, фонарик мигает.
+    // Полсекунды морда в морду — и он срывается в коридор, вышибает входную дверь и исчезает на улице.
     public sealed class CornerPeekSequence : MonoBehaviour
     {
-        // Конец коридора у входной двери: между шкафом (z 114.7) и дверью (z 116.75), в полуметре от торца.
-        private static readonly Vector3 StandPoint = new Vector3(-39.25f, 0.78f, 115.7f);
-        private static readonly Vector3 StandFacing = new Vector3(1f, 0f, 0.7f).normalized; // лицом в угол у двери
-        private const float RevealDistance = 4.6f;
-        private const float RevealConeDegrees = 16f;                   // луч фонарика — в центре экрана
-        private const float CloseDistance = 2.4f;                      // вплотную видно и без прямого луча
+        private static readonly Vector3 Corner = new Vector3(-42.0f, 0.78f, 114.7f);   // западный край шкафа
+        private static readonly Vector3 Hidden = new Vector3(-41.5f, 0.78f, 115.3f);   // в коридоре, за углом
+        private static readonly Vector3 Mouth = new Vector3(-42.3f, 0.78f, 115.0f);    // выход из-за угла, мимо края шкафа
+        private static readonly Vector3 CorridorWaypoint = new Vector3(-40.1f, 0.78f, 115.75f);
+        private const float TriggerDistance = 1.9f;    // до угла по полу
+        private const float FaceDistance = 1.1f;       // где он встаёт перед лицом: морда и тянущаяся рука в кадре
+        private const float LungeSeconds = 0.14f;
+        private const float HoldSeconds = 0.55f;
         private const float RunSpeed = 5.5f;
 
         private PlayerInventory _inventory;
@@ -38,11 +39,10 @@ namespace KnocksFromBeneath
         private bool _bodyWasKinematic;
         private AudioSource _stinger;
         private Light _beam;
+        private float _shake, _shakeTime;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetPlaying() => IsPlaying = false;
-
-        private static Vector3 Chest => StandPoint + Vector3.up * 1.45f;
 
         public void Initialize(IntroSequence intro, PlayerInventory inventory, GameObject knocks, Door exitDoor)
         {
@@ -63,13 +63,8 @@ namespace KnocksFromBeneath
 
         private void Arm() => _nightTwo = true;
 
-        // Сюжет ушёл от дома — пугалка больше не срабатывает; если монстр уже стоит в коридоре, он исчезает.
-        public void Retire()
-        {
-            if (!_played && _monster != null) Destroy(_monster);
-            _played = true;
-        }
-
+        // Сюжет ушёл от дома — пугалка больше не срабатывает.
+        public void Retire() => _played = true;
         private void Disarm() => _nightTwo = false;
 
         private void Update()
@@ -78,18 +73,12 @@ namespace KnocksFromBeneath
             if (Time.timeScale == 0f || RetroInventoryScreen.IsAnyOpen) return;
             if ((_player != null && (!_player.enabled || _player.isCameraLocked)) || PlayerInteraction.IsLockSequencePlaying) return;
             if (_intro != null && _intro.HoldsCornerScare) return; // M-04: сначала щиток
-            if (_camera.transform.position.y > 3.8f) return;      // игрок на втором этаже
-
-            bool visible = CanSee(Chest, out float distance, out float angle);
-            // Ставим монстра только туда, куда игрок сейчас не смотрит, — никакого «появления из воздуха».
-            if (_monster == null)
-            {
-                if (!visible && Flat(_camera.transform.position - StandPoint).magnitude > 2.5f) SpawnMonster();
-                return;
-            }
-            if (!visible || distance > RevealDistance) return;
-            if (angle > RevealConeDegrees && distance > CloseDistance) return;
-            if (_beam != null && !_beam.enabled && distance > CloseDistance) return; // в темноте его не видно
+            Vector3 eye = _camera.transform.position;
+            if (eye.y > 3.8f) return;                                        // игрок на втором этаже
+            if (eye.z > Corner.z + 0.2f) return;                             // уже в коридоре — угол позади
+            if (Flat(eye - Corner).magnitude > TriggerDistance) return;
+            // Идёт к углу (с кухни на север, к входной двери), а не стоит и не пятится.
+            if (_player != null && Vector3.Dot(_player.PlanarVelocity, Flat(Corner - eye).normalized + Vector3.forward) <= 0.3f) return;
 
             _played = true;
             HorrorMomentDirector.Instance?.Interrupt();
@@ -97,71 +86,60 @@ namespace KnocksFromBeneath
             NarrativeDisplayQueue.InterruptAndEnqueue(this, Play);
         }
 
-        private bool CanSee(Vector3 point, out float distance, out float angle)
-        {
-            Vector3 eye = _camera.transform.position;
-            Vector3 to = point - eye;
-            distance = to.magnitude;
-            angle = Vector3.Angle(_camera.transform.forward, to);
-            Vector3 view = _camera.WorldToViewportPoint(point);
-            if (view.z <= 0f || view.x < 0.05f || view.x > 0.95f || view.y < 0.05f || view.y > 0.95f) return false;
-            return !Physics.Raycast(eye, to / distance, distance - 0.15f, PhysicsMasks.AllLayers, QueryTriggerInteraction.Ignore);
-        }
-
-        private void SpawnMonster()
-        {
-            GameObject prefab = Resources.Load<GameObject>("Scares/CornerPeekMonster");
-            if (prefab == null) { _played = true; return; }
-            _monster = Instantiate(prefab, StandPoint, Quaternion.LookRotation(StandFacing));
-            _monster.name = "Hallway Stalker";
-            _rig = _monster.GetComponent<CornerStalkerRig>();
-            if (_rig == null) _rig = _monster.AddComponent<CornerStalkerRig>();
-            _rig.Idle(Random.value);
-        }
-
         private IEnumerator Play()
         {
-            if (_monster == null) yield break;
+            GameObject prefab = Resources.Load<GameObject>("Scares/CornerPeekMonster");
+            if (prefab == null) yield break;
             CaptureControl();
             _beamWasOn = _beam != null && _beam.enabled;
             try
             {
                 SilenceKnocks();
-                Transform head = _rig != null && _rig.Head != null ? _rig.Head : _monster.transform;
+                Vector3 eye = _camera.transform.position;
+                Vector3 face = FacePoint(eye);
+                Quaternion toPlayer = Quaternion.LookRotation(Flat(eye - face));
+                _monster = Instantiate(prefab, Hidden, toPlayer);
+                _monster.name = "Corner Jumpscare";
+                _monster.SetActive(true); // префаб хранится выключенным
+                _rig = _monster.GetComponent<CornerStalkerRig>();
+                if (_rig == null) _rig = _monster.AddComponent<CornerStalkerRig>();
+                _rig.Lunge(0.25f, 0.6f); // кадр 1.6–1.8 с: рука тянется к лицу, голова прямо
+                _rig.LookTarget = eye;
+                _rig.LookWeight = 1f;
+                Transform head = _rig.Head != null ? _rig.Head : _monster.transform;
 
-                // 1. Заметил: взгляд сам тянется к нему, герой резко вдыхает. Монстр стоит.
-                AudioClip gasp = GameSounds.Pick(GameSounds.Library?.breathScared);
-                PlayOneShot(gasp, 0.75f);
-                PlayOneShot(GameSounds.Library?.riser, 0.35f);
-                for (float t = 0f; t < 1.1f; t += Time.deltaTime)
+                // 1. Бросок из-за угла прямо в лицо + удар звука.
+                PlayJumpscare();
+                Shake(2.2f);
+                for (float t = 0f; t < LungeSeconds; t += Time.deltaTime)
                 {
-                    FocusCamera(Chest + Vector3.up * 0.2f, Mathf.SmoothStep(0f, 1f, t / 0.6f), 6f);
+                    float k = 1f - (1f - t / LungeSeconds) * (1f - t / LungeSeconds); // резкий старт, торможение у лица
+                    _monster.transform.position = k < 0.45f
+                        ? Vector3.Lerp(Hidden, Mouth, k / 0.45f)
+                        : Vector3.Lerp(Mouth, face, (k - 0.45f) / 0.55f);
+                    _rig.LookTarget = _camera.transform.position;
+                    FocusCamera(head.position, Mathf.Clamp01(t / 0.07f), 10f);
                     yield return null;
                 }
+                _monster.transform.position = face;
 
-                // 2. Оборачивается через плечо и смотрит прямо в него. Фонарик дрожит.
-                if (_rig != null) _rig.LookTarget = _camera.transform.position;
-                for (float t = 0f; t < 1.1f; t += Time.deltaTime)
+                // 2. Морда в морду: тряска, фонарик захлёбывается.
+                for (float t = 0f; t < HoldSeconds; t += Time.deltaTime)
                 {
-                    float turn = Mathf.SmoothStep(0f, 1f, t / 0.75f);
-                    if (_rig != null)
-                    {
-                        _rig.LookTarget = _camera.transform.position;
-                        _rig.LookWeight = turn;
-                    }
-                    FocusCamera(Vector3.Lerp(Chest + Vector3.up * 0.2f, head.position, turn), 1f, 6f + 4f * turn);
-                    if (_beam != null && t > 0.55f) _beam.enabled = Mathf.PerlinNoise(Time.time * 18f, 0.4f) > 0.3f;
+                    _rig.LookTarget = _camera.transform.position;
+                    FocusCamera(head.position, 1f, 10f);
+                    if (_beam != null && _beamWasOn) _beam.enabled = t > 0.38f || Mathf.PerlinNoise(Time.time * 30f, 0.2f) > 0.35f;
                     yield return null;
                 }
                 if (_beam != null) _beam.enabled = _beamWasOn;
 
-                // 3. Срывается: удар звука, свет моргает, монстр бросается к двери и вышибает её.
-                PlayJumpscare();
-                if (_rig != null) _rig.LookWeight = 0f;
+                // 3. Срывается в коридор и вышибает входную дверь.
+                _rig.LookWeight = 0f;
+                _rig.Run(1.3f);
                 yield return RunToExit();
 
                 // 4. Тишина, взгляд возвращается.
-                yield return new WaitForSeconds(0.9f);
+                yield return new WaitForSeconds(0.8f);
                 float release = 0f;
                 Quaternion focusRotation = _camera.transform.localRotation;
                 float focusFov = _camera.fieldOfView;
@@ -176,8 +154,8 @@ namespace KnocksFromBeneath
                 RestoreControl();
                 ThoughtManager.Instance?.ShowImportantThoughts(new[] {
                     "Блядь! Это что за хрень?!",
-                    "Оно стояло прямо тут. Смотрело на меня.",
-                    "Стук был из подвала. Оно оттуда вылезло?.."
+                    "Какого чёрта... Он был прямо передо мной!",
+                    "Стук был из подвала. Он оттуда вылез?.."
                 }, () => _intro?.ContinueAfterCornerScare());
                 if (ThoughtManager.Instance == null) _intro?.ContinueAfterCornerScare();
             }
@@ -188,6 +166,20 @@ namespace KnocksFromBeneath
                 if (_monster != null) Destroy(_monster);
                 if (_runEmitter != null) Destroy(_runEmitter);
             }
+        }
+
+        // Перед лицом игрока, но не в стене: луч от глаз упирается в стену — встаёт ближе.
+        private static Vector3 FacePoint(Vector3 eye)
+        {
+            Vector3 forward = Flat(Camera.main != null ? Camera.main.transform.forward : Vector3.forward);
+            if (forward.sqrMagnitude < 0.01f) forward = Vector3.forward;
+            forward.Normalize();
+            float distance = FaceDistance;
+            if (Physics.Raycast(new Vector3(eye.x, Corner.y + 1f, eye.z), forward, out RaycastHit hit, FaceDistance + 0.35f,
+                    PhysicsMasks.AllLayers, QueryTriggerInteraction.Ignore))
+                distance = Mathf.Max(0.45f, hit.distance - 0.35f);
+            Vector3 face = new Vector3(eye.x, Corner.y, eye.z) + forward * distance;
+            return face;
         }
 
         private void SilenceKnocks()
@@ -224,7 +216,7 @@ namespace KnocksFromBeneath
             IsPlaying = true;
         }
 
-        // Мягко подводит взгляд к точке; zoom — на сколько градусов сужается FOV («всматривается»).
+        // Рывок взгляда к точке + тряска; zoom — на сколько градусов сужается FOV.
         private void FocusCamera(Vector3 target, float weight, float zoom)
         {
             Vector3 direction = target - _camera.transform.position;
@@ -232,26 +224,37 @@ namespace KnocksFromBeneath
             Quaternion localAim = _camera.transform.parent != null
                 ? Quaternion.Inverse(_camera.transform.parent.rotation) * Quaternion.LookRotation(direction)
                 : Quaternion.LookRotation(direction);
-            _camera.transform.localRotation = Quaternion.Slerp(_cameraRotation, localAim, Mathf.Clamp01(weight));
+            Quaternion offset = Quaternion.identity;
+            if (_shake > 0f)
+            {
+                _shakeTime += Time.deltaTime;
+                float a = _shake * Mathf.Exp(-_shakeTime * 5f);
+                float n = _shakeTime * 32f;
+                offset = Quaternion.Euler((Mathf.PerlinNoise(n, 0.3f) - 0.5f) * 2f * a, (Mathf.PerlinNoise(0.7f, n) - 0.5f) * 2f * a,
+                    (Mathf.PerlinNoise(n, 0.9f) - 0.5f) * a);
+                if (a < 0.02f) _shake = 0f;
+            }
+            _camera.transform.localRotation = Quaternion.Slerp(_cameraRotation, localAim, Mathf.Clamp01(weight)) * offset;
             _camera.fieldOfView = Mathf.Lerp(_cameraFov, Mathf.Max(35f, _cameraFov - zoom), Mathf.Clamp01(weight));
+        }
+
+        private void Shake(float degrees)
+        {
+            _shake = degrees;
+            _shakeTime = 0f;
         }
 
         private void PlayJumpscare()
         {
             EnsureStinger();
-            _stinger.volume = 0.85f;
+            _stinger.volume = 0.95f;
             _stinger.clip = Resources.Load<AudioClip>("Audio/CornerJumpscare");
             if (_stinger.clip != null) _stinger.Play();
             // A-01: низкий удар под скример — вес в теле, а не только громкость.
             AudioClip sub = GameSounds.Pick(GameSounds.Library?.subHits);
-            if (sub != null) _stinger.PlayOneShot(sub, .7f);
-        }
-
-        private void PlayOneShot(AudioClip clip, float volume)
-        {
-            if (clip == null) return;
-            EnsureStinger();
-            _stinger.PlayOneShot(clip, volume);
+            if (sub != null) _stinger.PlayOneShot(sub, .8f);
+            AudioClip gasp = GameSounds.Pick(GameSounds.Library?.breathScared);
+            if (gasp != null) _stinger.PlayOneShot(gasp, .6f);
         }
 
         private void EnsureStinger()
@@ -280,13 +283,13 @@ namespace KnocksFromBeneath
             IsPlaying = false;
         }
 
-        // Разворот к двери, рывок, дверь слетает с петель, монстр уходит в темноту двора. Взгляд провожает его.
+        // Бегом по коридору к двери, дверь слетает с петель, монстр уходит в темноту двора. Взгляд провожает его.
         private IEnumerator RunToExit()
         {
             Transform body = _monster.transform;
             Vector3 doorway = _exitDoor != null
-                ? new Vector3(_exitDoor.transform.position.x + 0.45f, StandPoint.y, _exitDoor.transform.position.z)
-                : StandPoint + Vector3.forward * 1.1f;
+                ? new Vector3(_exitDoor.transform.position.x + 0.45f, Corner.y, _exitDoor.transform.position.z)
+                : CorridorWaypoint + Vector3.forward * 1.1f;
             Vector3 outside = doorway + Vector3.forward * 3.5f;
             AudioClip run = Resources.Load<AudioClip>("Audio/CornerEscapeRun");
             _runEmitter = new GameObject("CornerEscapeAudio");
@@ -302,17 +305,8 @@ namespace KnocksFromBeneath
             source.volume = 0.9f;
             if (run != null) { source.clip = run; source.Play(); }
 
-            _rig?.Run(1.25f);
-            Quaternion from = body.rotation, to = Quaternion.LookRotation(Flat(doorway - body.position));
-            for (float t = 0f; t < 0.14f; t += Time.deltaTime)
-            {
-                body.rotation = Quaternion.Slerp(from, to, t / 0.14f);
-                Follow(body);
-                yield return null;
-            }
-            body.rotation = to;
             bool broken = false;
-            Vector3[] path = { doorway, outside };
+            Vector3[] path = { Mouth, CorridorWaypoint, doorway, outside }; // мимо края шкафа, а не сквозь
             foreach (Vector3 point in path)
             {
                 while (_monster != null && Flat(point - body.position).magnitude > 0.05f)
@@ -320,13 +314,13 @@ namespace KnocksFromBeneath
                     body.position = Vector3.MoveTowards(body.position, point, RunSpeed * Time.deltaTime);
                     Vector3 heading = Flat(point - body.position);
                     if (heading.sqrMagnitude > 0.0001f)
-                        body.rotation = Quaternion.Slerp(body.rotation, Quaternion.LookRotation(heading), 1f - Mathf.Exp(-14f * Time.deltaTime));
+                        body.rotation = Quaternion.Slerp(body.rotation, Quaternion.LookRotation(heading), 1f - Mathf.Exp(-16f * Time.deltaTime));
                     if (!broken && _exitDoor != null && Flat(_exitDoor.transform.position - body.position).magnitude < 0.9f)
                     {
                         broken = true;
                         BreakDoor();
                     }
-                    Follow(body);
+                    FocusCamera(body.position + Vector3.up * 1.5f, 1f, 8f);
                     yield return null;
                 }
             }
@@ -349,9 +343,6 @@ namespace KnocksFromBeneath
                     : Resources.Load<AudioClip>("Audio/CornerDoorLanding"));
             GameState.frontDoorLocked = false;
         }
-
-        private void Follow(Transform body) =>
-            FocusCamera(body.position + Vector3.up * 1.5f, 1f, 10f);
 
         private static Vector3 Flat(Vector3 v) => new Vector3(v.x, 0f, v.z);
 

@@ -13,10 +13,10 @@ namespace KnocksFromBeneath
         [Tooltip("Насколько сильно каждая кость участвует в повороте (грудь, шея, голова) — в сумме 1.")]
         [SerializeField] private Vector3 lookShares = new Vector3(0.4f, 0.25f, 0.35f);
         [SerializeField] private float maxYaw = 145f; // неестественный выворот через плечо
-        [SerializeField] private float maxPitch = 30f;
 
         private Animator animator;
         private Transform chest, neck, head;
+        private Vector3 faceLocal = Vector3.forward; // куда смотрит морда в осях кости головы
         private PlayableGraph runGraph;
 
         public Vector3 LookTarget { get; set; }
@@ -33,6 +33,8 @@ namespace KnocksFromBeneath
             if (chest == null) chest = animator.GetBoneTransform(HumanBodyBones.Chest);
             neck = animator.GetBoneTransform(HumanBodyBones.Neck);
             head = animator.GetBoneTransform(HumanBodyBones.Head);
+            // В позе префаба морда смотрит вперёд по корню — запоминаем это направление в осях головы.
+            if (head != null) faceLocal = Quaternion.Inverse(head.rotation) * transform.forward;
         }
 
         // Стоит, сгорбившись: idle с произвольной фазы, чтобы поза не была «нулевым кадром».
@@ -43,9 +45,19 @@ namespace KnocksFromBeneath
             animator.Update(0f);
         }
 
+        // Бросок: «хватающий» замах из Attack (Superhuman Choke Lift) — рука тянется к лицу игрока.
+        public void Lunge(float phase, float speed)
+        {
+            if (animator == null) return;
+            animator.speed = speed;
+            animator.Play("Attack", 0, Mathf.Clamp01(phase));
+            animator.Update(0f);
+        }
+
         public void Run(float speed)
         {
             if (animator == null || runClip == null || runGraph.IsValid()) return;
+            animator.speed = 1f;
             runGraph = PlayableGraph.Create("Corner Stalker Run");
             runGraph.SetTimeUpdateMode(DirectorUpdateMode.GameTime);
             var output = AnimationPlayableOutput.Create(runGraph, "Run", animator);
@@ -55,27 +67,27 @@ namespace KnocksFromBeneath
             runGraph.Play();
         }
 
+        // Поверх анимации доворачивает морду на цель: грудь и шея берут часть угла, голова — остаток.
+        // Угол считается от того, куда морда смотрит сейчас (анимация может уводить голову в сторону).
         private void LateUpdate()
         {
             if (LookWeight <= 0.001f || head == null) return;
-            Transform body = transform;
-            Vector3 from = head.position;
-            Vector3 local = body.InverseTransformDirection(LookTarget - from);
-            if (local.sqrMagnitude < 0.0001f) return;
-            float yaw = Mathf.Clamp(Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg, -maxYaw, maxYaw) * LookWeight;
-            float flat = new Vector2(local.x, local.z).magnitude;
-            float pitch = Mathf.Clamp(-Mathf.Atan2(local.y, flat) * Mathf.Rad2Deg, -maxPitch, maxPitch) * LookWeight;
-            Turn(chest, yaw * lookShares.x, pitch * lookShares.x);
-            Turn(neck, yaw * lookShares.y, pitch * lookShares.y);
-            Turn(head, yaw * lookShares.z, pitch * lookShares.z);
+            Vector3 desired = LookTarget - head.position;
+            if (desired.sqrMagnitude < 0.0001f) return;
+            Turn(chest, desired, lookShares.x);
+            Turn(neck, desired, lookShares.y / Mathf.Max(0.01f, 1f - lookShares.x));
+            Turn(head, desired, 1f);
         }
 
-        // Оси берутся у корня: поворот родителя уже унёс детей, доли складываются в полный угол.
-        private void Turn(Transform bone, float yaw, float pitch)
+        private void Turn(Transform bone, Vector3 desired, float share)
         {
             if (bone == null) return;
-            Vector3 right = Quaternion.AngleAxis(yaw, transform.up) * transform.right;
-            bone.rotation = Quaternion.AngleAxis(pitch, right) * Quaternion.AngleAxis(yaw, transform.up) * bone.rotation;
+            Vector3 face = head.rotation * faceLocal;
+            Quaternion full = Quaternion.FromToRotation(face, desired);
+            full.ToAngleAxis(out float angle, out Vector3 axis);
+            if (angle > 180f) angle -= 360f;
+            angle = Mathf.Clamp(angle, -maxYaw, maxYaw) * share * LookWeight;
+            bone.rotation = Quaternion.AngleAxis(angle, axis) * bone.rotation;
         }
 
         private void OnDestroy()
