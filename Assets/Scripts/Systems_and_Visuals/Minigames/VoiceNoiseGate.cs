@@ -14,6 +14,8 @@ namespace KnocksFromBeneath
         public const float LimitFloorDb = -38f;    // в тихой комнате лимит не опускается ниже этого
         public const float HearingRadius = 8f;     // голос слышно по всему этажу; дальше — всё равно слышно, медленнее
         public const float Headroom = 1.5f;        // шкала показывает до полутора лимитов
+        public const float MaxFloorRise = 6f;      // фон не поднимается выше калиброванного больше чем на столько
+        public const float FloorTrackBand = 6f;    // вверх фон тянется только за звуком у самого фона, не за голосом
 
         public float NoiseFloor { get; private set; } = -60f;
         public float Level { get; private set; } = SilenceDb;
@@ -24,7 +26,7 @@ namespace KnocksFromBeneath
         public float Pulse { get; private set; }
         public bool Found { get; private set; }
 
-        private float calibrated, calibrationSum;
+        private float calibrated, calibrationSum, calibratedFloor;
 
         // 0 — тишина (фон), 1 — ровно лимит, выше — громче лимита (до Headroom).
         public float Loudness
@@ -46,12 +48,16 @@ namespace KnocksFromBeneath
                 calibrationSum += Level * dt;
                 calibrated += dt;
                 NoiseFloor = Mathf.Clamp(calibrationSum / calibrated, SilenceDb, -10f);
+                calibratedFloor = NoiseFloor;
                 Loud = false;
                 return;
             }
             Loud = Level > Limit;
+            // Вниз — быстро. Вверх — медленно, только за звуком у самого фона и не выше калибровки + MaxFloorRise:
+            // иначе ровное бормотание чуть ниже лимита поднимало бы фон, а с ним и лимит, до обычного голоса.
             if (Level < NoiseFloor) NoiseFloor = Mathf.MoveTowards(NoiseFloor, Level, 12f * dt);
-            else if (!Loud) NoiseFloor = Mathf.MoveTowards(NoiseFloor, Level, 1f * dt);
+            else if (Level < NoiseFloor + FloorTrackBand)
+                NoiseFloor = Mathf.Min(Mathf.MoveTowards(NoiseFloor, Level, 1f * dt), calibratedFloor + MaxFloorRise);
             NoiseFloor = Mathf.Max(SilenceDb, NoiseFloor);
         }
 

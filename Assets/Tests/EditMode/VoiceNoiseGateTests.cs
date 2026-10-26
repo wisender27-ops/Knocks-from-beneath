@@ -89,6 +89,27 @@ public class VoiceNoiseGateTests
     }
 
     [Test]
+    public void SteadyMurmurUnderTheLimit_DoesNotRaiseTheLimit()
+    {
+        var gate = Calibrated(Quiet);
+        float limit = gate.Limit;
+        Run(gate, 30f, gate.Limit - 2f, 50f); // бубнит чуть тише лимита полминуты
+        Assert.That(gate.Limit, Is.EqualTo(limit).Within(0.5f));
+        Run(gate, 1f, -18f, Near);
+        Assert.That(gate.Found, Is.True, "normal voice is still heard afterwards");
+    }
+
+    [Test]
+    public void RisingRoomNoise_IsTrackedOnlyALittle()
+    {
+        var gate = Calibrated(Quiet);
+        Run(gate, 60f, Quiet + 4f, 50f); // вентилятор чуть громче
+        Assert.That(gate.NoiseFloor, Is.EqualTo(Quiet + 4f).Within(0.5f));
+        Run(gate, 60f, Quiet + 20f, 50f); // фон сильно вырос — следуем не дальше MaxFloorRise
+        Assert.That(gate.NoiseFloor, Is.LessThanOrEqualTo(Quiet + VoiceNoiseGate.MaxFloorRise + 0.01f));
+    }
+
+    [Test]
     public void Loudness_IsOneAtTheLimit()
     {
         var gate = Calibrated(Quiet);

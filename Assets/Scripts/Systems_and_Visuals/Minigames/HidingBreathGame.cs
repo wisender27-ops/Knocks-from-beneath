@@ -98,6 +98,10 @@ namespace KnocksFromBeneath
         private AudioClip micClip;
         private readonly float[] micWindow = new float[1024];
         private float micLevel = VoiceNoiseGate.SilenceDb;
+        private int micPosition;
+        private float micStalled, micLastSound;
+        private const float MicDeadSeconds = 2f;        // ровно ноль столько времени — запись запрещена или пустая
+        private const float MicStallSeconds = 0.5f;     // позиция записи не двигается — микрофон отключили
         private RandomKnock[] otherKnocks;
         private float nextBreath, nextBeat, beatFlash;
 
@@ -175,8 +179,8 @@ namespace KnocksFromBeneath
             for (int i = 1; i < Climb.Length && !Done; i++)
                 yield return Walk(Climb[i], i <= 2 ? 1.25f : 0.95f);
 
-            // Поднялся. Игрок не под кроватью — увидел его на лестнице.
-            if (!Done && !hidden)
+            // Поднялся. Игрок не под кроватью и не заползает туда — увидел его на лестнице.
+            if (!Done && !hidden && Active == null)
             {
                 yield return CatchInOpen();
                 yield break;
@@ -209,11 +213,9 @@ namespace KnocksFromBeneath
         // IHidingSearch: E у кровати — герой лезет под неё и лежит, пока сцена не решится.
         public IEnumerator Run(int zoneIndex, Action<bool> onFinished)
         {
-            if (player == null || !sceneRunning || Done)
-            {
-                onFinished?.Invoke(false);
-                yield break;
-            }
+            // Спрятаться уже нельзя (сцена кончилась или решилась): исход сообщила сама сцена, здесь — ничего.
+            // false значил бы «переждал» и выдал бы «Заколотить люк» без пряток.
+            if (player == null || !sceneRunning || Done) yield break;
             Active = this;
             finished = onFinished;
             CaptureControl();
@@ -286,6 +288,9 @@ namespace KnocksFromBeneath
             micDevice = devices[0];
             micClip = Microphone.Start(micDevice, true, 1, 16000);
             micLevel = VoiceNoiseGate.SilenceDb;
+            micPosition = 0;
+            micStalled = 0f;
+            micLastSound = Time.time;
         }
 
         private void StopMicrophone()
@@ -294,16 +299,37 @@ namespace KnocksFromBeneath
             micClip = null;
         }
 
-        // Последние ~64 мс с микрофона (буфер не пересоздаётся каждый кадр).
+        // Последние ~64 мс с микрофона (буфер не пересоздаётся каждый кадр). Микрофон отключили (запись стоит)
+        // или Windows запретила доступ (запись идёт, но ровно ноль) — переходим на задержку дыхания.
         private void SampleMicrophone()
         {
             if (micClip == null) return;
+            if (!Microphone.IsRecording(micDevice)) { MicrophoneLost(); return; }
             int position = Microphone.GetPosition(micDevice);
-            if (position <= 0) return;
+            if (position == micPosition)
+            {
+                micStalled += Time.unscaledDeltaTime;
+                if (micStalled > MicStallSeconds) MicrophoneLost();
+                return;
+            }
+            micPosition = position;
+            micStalled = 0f;
             int offset = position - micWindow.Length;
             if (offset < 0) offset += micClip.samples;
             if (!micClip.GetData(micWindow, offset)) return;
             micLevel = VoiceNoiseGate.ToDb(micWindow, micWindow.Length);
+            if (micLevel > VoiceNoiseGate.SilenceDb + 0.5f) micLastSound = Time.time;
+            else if (Time.time - micLastSound > MicDeadSeconds) MicrophoneLost();
+        }
+
+        private void MicrophoneLost()
+        {
+            StopMicrophone();
+            micLevel = VoiceNoiseGate.SilenceDb;
+            if (!hidden) return;
+            BuildUi(); // шкала микрофона → полоска воздуха и «Пробел»
+            ThoughtManager.Instance?.TryShowInteractionThoughts("hide-mic-lost",
+                new[] { "Микрофон не слышно. Задерживай дыхание — Пробел." }, 0f);
         }
 
         // ---------------------------------------------------------------- подсказка у кровати
@@ -740,7 +766,7 @@ namespace KnocksFromBeneath
             yaw = Mathf.Clamp(yaw + Input.GetAxis("Mouse X") * sensitivity, -LookYaw, LookYaw);
             pitch = Mathf.Clamp(pitch - mouseY, -LookUp, LookDown);
             body.rotation = Quaternion.LookRotation(Vector3.back) * Quaternion.Euler(0f, yaw, 0f);
-            float tremor = Breath != null ? Breath.Pulse * 0.3f : 0f;
+            float tremor = Pulse * 0.3f;
             float time = Time.time * 7f;
             cam.localRotation = Quaternion.Euler(pitch + (Mathf.PerlinNoise(time, 0.2f) - 0.5f) * tremor,
                 (Mathf.PerlinNoise(0.6f, time) - 0.5f) * tremor, 0f);
