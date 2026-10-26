@@ -273,6 +273,7 @@ public class PickupController : MonoBehaviour
         if (obj == null || _heldObj != null || holdPoint == null) return false;
         if (obj.GetComponent<Rigidbody>() == null) return false;
 
+        CameraPlacementController.Instance?.BeforeGrab(obj);
         GrabPhysicsObject(obj);
         return true;
     }
@@ -379,6 +380,11 @@ public class PickupController : MonoBehaviour
     public void HandleInteractPressed()
     {
         if (_heldObj == null) return;
+        if (CameraPlacementController.Instance != null && CameraPlacementController.Instance.IsCamera(_heldObj))
+        {
+            if (!CameraPlacementController.Instance.TryPlaceHeld(this)) DropObject();
+            return;
+        }
         if (_questPlacementZones != null)
         {
             PlacementZone closest = null;
@@ -551,6 +557,16 @@ public class PickupController : MonoBehaviour
             _heldObjRb.AddForce(playerCamera.transform.forward * dropForwardImpulse, ForceMode.Impulse);
 
         ClearHeldObject();
+    }
+
+    public bool ReleaseForCameraPlacement(GameObject item)
+    {
+        if (item == null || item != _heldObj || _heldObjRb == null) return false;
+        item.layer = _originalLayer;
+        item.transform.SetParent(null, true);
+        RestoreHeldRigidbody(_heldObjRb, true);
+        ClearHeldObject(false);
+        return true;
     }
 
     void ClearHeldObject(bool restartParticles = true)

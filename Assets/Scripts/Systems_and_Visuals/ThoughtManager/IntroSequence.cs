@@ -134,6 +134,7 @@ public class IntroSequence : MonoBehaviour
     private CornerPeekSequence _cornerPeek;
     private HideEndingController _hideEnding;
     private HidingBreathGame _hidingScene;
+    private CameraPlacementController _cameraPlacement;
     private bool _hasReactedToPowerOutage;
     private AudioSource _powerOutageAudio;
     // K-02: хозяин в подвале отвечает на стук с первой ночи (до неё о нём никто не знает).
@@ -151,6 +152,8 @@ public class IntroSequence : MonoBehaviour
     void Awake()
     {
         FadeTransitionPresentation.Ensure(fadeScreen);
+        _cameraPlacement = gameObject.AddComponent<CameraPlacementController>();
+        _cameraPlacement.Initialize(roomZones, OnCameraPlaced, OnCameraRemoved);
         var horrorDirector = gameObject.AddComponent<HorrorMomentDirector>();
         horrorDirector.Initialize(playerInventory);
         var firstNightScare = gameObject.AddComponent<NightOneScare>();
@@ -303,6 +306,7 @@ public class IntroSequence : MonoBehaviour
     void StartChapter(StoryChapter chapter)
     {
         ChapterCheckpoints.ApplyLaunchState(playerInventory);
+        _cameraPlacement?.RestoreFromCheckpoint();
         _eveningRound.ApplyRestoredLock();
         FindFirstObjectByType<FrontDoorLockInteractable>()?.SnapToState();
         DebugStoryStage stage = ChapterCheckpoints.Info(chapter).Stage;
@@ -375,6 +379,10 @@ public class IntroSequence : MonoBehaviour
     void ApplyDebugSkip(DebugStoryStage startStage)
     {
         Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
+
+        if (startStage == DebugStoryStage.StartPieQuest || startStage == DebugStoryStage.StartPieMicrowaveQuest ||
+            startStage == DebugStoryStage.StartPieEatQuest || startStage == DebugStoryStage.StartGoToBed)
+            _cameraPlacement?.RevealForDebug();
 
         if (startStage != DebugStoryStage.None && startStage != DebugStoryStage.StartTrashQuest &&
             startStage != DebugStoryStage.StartTrashDeliveryQuest && startStage != DebugStoryStage.StartBoxQuest && roomZones != null)
@@ -654,8 +662,24 @@ public class IntroSequence : MonoBehaviour
 
     void SetupGoToBedQuest()
     {
+        if (_cameraPlacement != null && _cameraPlacement.Available && !_cameraPlacement.IsPlaced)
+        {
+            CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place");
+            return;
+        }
         // nightStartTrigger.SetActive(true) убрано — кровать всегда видна
         CreateQuest("Лечь спать", 1, OnGoToBedFinished, "go-to-bed");
+    }
+
+    void OnCameraPlaced()
+    {
+        if (IsQuestActive("camera-place")) QuestManager.Instance?.AddProgress(1);
+    }
+
+    void OnCameraRemoved()
+    {
+        if (IsQuestActive("go-to-bed"))
+            CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place");
     }
 
     public void OnBedTriggerReached()

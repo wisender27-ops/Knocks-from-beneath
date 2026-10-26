@@ -19,6 +19,8 @@ public static class StoryFlags
     public static bool SawRecording { get; private set; }
     // Прочитана записка соседа (GameEvents.OnNeighborNoteRead) — открывает звонок M6.
     public static bool NeighborNoteRead { get; private set; }
+    // 0 — камера не установлена; 1 и выше — устойчивый номер места для записи.
+    public static int CameraPlacementSlot { get; private set; }
     public static int CluesFound => clues.Count;
     public static IReadOnlyCollection<string> Clues => clues;
 
@@ -49,6 +51,7 @@ public static class StoryFlags
         KnockAnswered = false;
         SawRecording = false;
         NeighborNoteRead = false;
+        CameraPlacementSlot = 0;
         clues.Clear();
         GameState.frontDoorLocked = false;
     }
@@ -70,6 +73,7 @@ public static class StoryFlags
     public static void AddKnockTrust(int delta) => KnockTrust += delta;
     public static void MarkKnockAnswered() => KnockAnswered = true;
     public static void MarkRecordingSeen() => SawRecording = true;
+    public static void SetCameraPlacementSlot(int slot) => CameraPlacementSlot = Mathf.Clamp(slot, 0, 2);
 
     // Возвращает true только для новой улики — повторный осмотр не накручивает счётчик.
     public static bool RegisterClue(string id) => !string.IsNullOrEmpty(id) && clues.Add(id);

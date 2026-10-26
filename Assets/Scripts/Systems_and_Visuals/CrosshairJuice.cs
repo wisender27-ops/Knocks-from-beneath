@@ -131,6 +131,13 @@ public class CrosshairJuice : MonoBehaviour
             _targetColor = new Color(defaultColor.r, defaultColor.g, defaultColor.b, 0);
             _targetHint = "";
 
+            if (CameraPlacementController.Instance != null &&
+                CameraPlacementController.Instance.TryGetHeldHint(interaction.pickup, out string cameraHint))
+            {
+                _targetHint = cameraHint;
+                return;
+            }
+
             // Коробка (и любой предмет квеста на расстановку) — подсказываем E,
             // когда игрок дошёл до зоны с местом. Раньше этой ветки не было
             // вообще: предмет в руках гасил прицел и подсказку, и игрок с

@@ -12,6 +12,7 @@ public class PlacementZone : MonoBehaviour
 
     [Tooltip("Срабатывает на каждую успешно установленную коробку — для внешних слушателей (звук, партиклы и т.п.).")]
     public UnityEvent onBoxPlaced = new UnityEvent();
+    public event System.Action<GameObject> BoxPlaced;
 
     [Tooltip("Теги квестов, которым эта зона засчитывает прогресс. Коробки дня 1 — box-delivery/box-collect, декор дня 2 — room-decoration.")]
     public string[] progressQuestTags = { "box-delivery", "box-collect" };
@@ -438,6 +439,7 @@ public class PlacementZone : MonoBehaviour
         }
 
         onBoxPlaced?.Invoke();
+        BoxPlaced?.Invoke(box);
         RevealItems();
     }
 

@@ -67,6 +67,32 @@ public class ChapterCheckpointsTests
     }
 
     [Test]
+    public void CameraPlacement_IsRestoredFromTheChosenChapter()
+    {
+        StoryFlags.SetCameraPlacementSlot(1);
+        ChapterCheckpoints.Save(StoryChapter.NightOne, null);
+        StoryFlags.SetCameraPlacementSlot(2);
+        ChapterCheckpoints.Save(StoryChapter.DayTwo, null);
+        StoryFlags.Reset();
+
+        ChapterCheckpoints.RequestChapter(StoryChapter.NightOne);
+        ChapterCheckpoints.TryTakeLaunch(out _);
+        ChapterCheckpoints.ApplyLaunchState(null);
+        Assert.That(StoryFlags.CameraPlacementSlot, Is.EqualTo(1));
+    }
+
+    [Test]
+    public void OldCheckpointWithoutCameraSlot_RestoresNoPlacement()
+    {
+        PlayerPrefs.SetString("kfb.progress.chapter.1", "{\"chapter\":1}");
+        StoryFlags.SetCameraPlacementSlot(2);
+        ChapterCheckpoints.RequestChapter(StoryChapter.NightOne);
+        ChapterCheckpoints.TryTakeLaunch(out _);
+        ChapterCheckpoints.ApplyLaunchState(null);
+        Assert.That(StoryFlags.CameraPlacementSlot, Is.Zero);
+    }
+
+    [Test]
     public void Launch_IsTakenOnce_AndNewGameClearsIt()
     {
         ChapterCheckpoints.Save(StoryChapter.DayTwo, null);
