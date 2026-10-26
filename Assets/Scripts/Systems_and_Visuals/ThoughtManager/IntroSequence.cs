@@ -796,6 +796,8 @@ public class IntroSequence : MonoBehaviour
     }
 
     void WakeKnocker() => _knockerAwake = true;
+    // Первая ночь началась или пройдена (в т.ч. прыжком на день 2) — улики дня 2 (M-05) доступны.
+    public bool FirstNightPassed => _knockerAwake;
     void MarkNightTwo() => _nightTwoStarted = true;
 
     // K-03: сложность «Перестука» — ночь 1 → 1, день 2 → 2, ночь 2 → 3; 0 — сейчас не стучат.

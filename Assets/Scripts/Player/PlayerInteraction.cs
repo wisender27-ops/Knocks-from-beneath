@@ -270,11 +270,12 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            // 8. ЗАПИСКА/ЗВОНОК СОСЕДА (день 2, T-16)
-            NeighborNoteInteractable note = hitObj.GetComponentInParent<NeighborNoteInteractable>();
-            if (note != null)
+            // 8. УЛИКА — ОСМОТР (M-05). Улика под чужим предметом — и по самому предмету.
+            InspectableClue clue = InspectableClue.OnAnchor(hitObj.transform);
+            if (clue == null) clue = hitObj.GetComponentInParent<InspectableClue>();
+            if (clue != null)
             {
-                note.Interact();
+                clue.Interact();
                 return;
             }
 

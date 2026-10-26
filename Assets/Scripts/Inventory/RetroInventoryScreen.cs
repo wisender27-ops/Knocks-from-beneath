@@ -7,11 +7,8 @@ namespace KnocksFromBeneath
 {
     public sealed class RetroInventoryScreen : MonoBehaviour
     {
-        private const int PreviewLayer = 30;
         private const float ReferenceWidth = 640f;
         private const float ReferenceHeight = 360f;
-        private const float PreviewDistance = 2.6f;
-        private const float PreviewFrameFill = 0.76f;
         private static readonly Color BackgroundColor = new Color32(33, 33, 34, 255);
 
         [SerializeField] private PlayerInventory inventory;
@@ -27,21 +24,18 @@ namespace KnocksFromBeneath
         private TextMeshProUGUI emptyText;
         private RawImage previewImage;
         private RawImage noiseImage;
-        private Camera previewCamera;
-        private RenderTexture previewTexture;
+        private ItemPreviewStage previewStage;
         private Texture2D noiseTexture;
         private GameObject previewObject;
         private InventoryItemDefinition previewDefinition;
         private bool isInspecting;
         private bool draggingPreview;
         private Vector3 lastMousePosition;
-        private float previewZoom = 1f;
         private TextMeshProUGUI titleText;
         private TextMeshProUGUI leftArrowText;
         private TextMeshProUGUI rightArrowText;
         private TextMeshProUGUI feedbackText;
         private float feedbackUntil;
-        private readonly List<Material> previewMaterials = new List<Material>(4);
         private PlayerController playerController;
         private PlayerInteraction playerInteraction;
         private int selectedIndex;
@@ -81,11 +75,7 @@ namespace KnocksFromBeneath
         private void OnDestroy()
         {
             ClearPreview();
-            if (previewTexture != null)
-            {
-                previewTexture.Release();
-                Destroy(previewTexture);
-            }
+            previewStage?.Dispose();
             if (noiseTexture != null) Destroy(noiseTexture);
         }
 
@@ -215,8 +205,7 @@ namespace KnocksFromBeneath
             descriptionText.rectTransform.sizeDelta = value ? new Vector2(266f, 152f) : new Vector2(236f, 142f);
             previewImage.rectTransform.anchoredPosition = value ? new Vector2(-150f, 16f) : new Vector2(132f, -8f);
             previewImage.rectTransform.sizeDelta = value ? new Vector2(280f, 224f) : new Vector2(240f, 192f);
-            previewZoom = 1f;
-            if (previewObject != null) previewObject.transform.localScale = Vector3.one;
+            previewStage.SetZoom(1f);
             Refresh();
         }
 
@@ -242,16 +231,9 @@ namespace KnocksFromBeneath
                 pitch -= delta.y * 0.4f;
                 lastMousePosition = Input.mousePosition;
             }
-            previewObject.transform.Rotate(Vector3.up, yaw, Space.World);
-            previewObject.transform.Rotate(Vector3.right, pitch, Space.World);
-            previewZoom = Mathf.Clamp(previewZoom + Input.mouseScrollDelta.y * 0.1f, 0.6f, 1.5f);
-            previewObject.transform.localScale = Vector3.one * previewZoom;
-            if (Input.GetKeyDown(KeyCode.R))
-            {
-                previewObject.transform.rotation = Quaternion.identity;
-                previewZoom = 1f;
-                previewObject.transform.localScale = Vector3.one;
-            }
+            previewStage.Rotate(yaw, pitch);
+            previewStage.SetZoom(Mathf.Clamp(previewStage.Zoom + Input.mouseScrollDelta.y * 0.1f, 0.6f, 1.5f));
+            if (Input.GetKeyDown(KeyCode.R)) previewStage.ResetView();
         }
 
         private void ClampSelection()
@@ -304,11 +286,7 @@ namespace KnocksFromBeneath
             previewDefinition = definition;
             if (definition == null || definition.PreviewPrefab == null) return;
 
-            Vector3 previewCenter = new Vector3(0f, -1000f, PreviewDistance);
-            previewObject = new GameObject("InventoryPreview_" + definition.Id);
-            previewObject.SetActive(false);
-            previewObject.transform.SetParent(transform, false);
-            previewObject.transform.SetPositionAndRotation(previewCenter, Quaternion.identity);
+            previewObject = previewStage.Begin("InventoryPreview_" + definition.Id).gameObject;
 
             GameObject model = Instantiate(definition.PreviewPrefab, previewObject.transform);
             // Disabled scripts still receive Awake on activation; strip only the inactive clone.
@@ -321,43 +299,12 @@ namespace KnocksFromBeneath
             for (int i = 0; i < behaviours.Length; i++) behaviours[i].enabled = false;
             ParticleSystem[] particles = model.GetComponentsInChildren<ParticleSystem>(true);
             for (int i = 0; i < particles.Length; i++) particles[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            model.SetActive(true);
-            model.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(12f, 25f, 0f));
-            SetLayerRecursively(previewObject.transform, PreviewLayer);
-            PreparePreviewMaterials(model, definition.PreviewTextureOverride);
-
-            Collider[] colliders = model.GetComponentsInChildren<Collider>(true);
-            for (int i = 0; i < colliders.Length; i++) colliders[i].enabled = false;
-            Rigidbody[] bodies = model.GetComponentsInChildren<Rigidbody>(true);
-            for (int i = 0; i < bodies.Length; i++)
-            {
-                bodies[i].isKinematic = true;
-                bodies[i].detectCollisions = false;
-            }
-            previewObject.SetActive(true);
-
-            Bounds bounds = CalculateBounds(model);
-            float visibleHeight = 2f * PreviewDistance * Mathf.Tan(previewCamera.fieldOfView * 0.5f * Mathf.Deg2Rad);
-            float visibleWidth = visibleHeight * previewTexture.width / previewTexture.height;
-            float rotatingWidth = Mathf.Sqrt(bounds.size.x * bounds.size.x + bounds.size.z * bounds.size.z);
-            float widthScale = rotatingWidth > 0.001f ? visibleWidth * PreviewFrameFill / rotatingWidth : float.MaxValue;
-            float heightScale = bounds.size.y > 0.001f ? visibleHeight * PreviewFrameFill / bounds.size.y : float.MaxValue;
-            model.transform.localScale *= Mathf.Min(widthScale, heightScale);
-
-            bounds = CalculateBounds(model);
-            model.transform.position += previewCenter - bounds.center;
-            previewZoom = 1f;
+            previewStage.Present(model, definition.PreviewTextureOverride);
         }
 
         private void ClearPreview()
         {
-            if (previewObject != null)
-            {
-                previewObject.SetActive(false);
-                Destroy(previewObject);
-            }
-            for (int i = 0; i < previewMaterials.Count; i++) Destroy(previewMaterials[i]);
-            previewMaterials.Clear();
+            previewStage?.Clear();
             previewObject = null;
             previewDefinition = null;
         }
@@ -414,9 +361,8 @@ namespace KnocksFromBeneath
             descriptionText.fontSizeMax = 18f;
 
             previewImage = CreateRawImage("Preview", frame, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(300f, 235f));
-            previewTexture = new RenderTexture(320, 256, 16, RenderTextureFormat.ARGB32) { name = "InventoryPreviewRT", filterMode = FilterMode.Point };
-            previewTexture.Create();
-            previewImage.texture = previewTexture;
+            previewStage = new ItemPreviewStage(transform, "InventoryPreview", -1000f, 320, 256);
+            previewImage.texture = previewStage.Texture;
 
             emptyText = CreateText("Empty", frame, "Карманы пусты", 20f, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(400f, 50f));
             feedbackText = CreateText("Feedback", frame, string.Empty, 14f, TextAlignmentOptions.Center, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 64f), new Vector2(592f, 24f));
@@ -428,43 +374,6 @@ namespace KnocksFromBeneath
             leftArrowText.text = "<";
             rightArrowText.text = ">";
             descriptionText.color = UiStyle.Ash;
-
-            BuildPreviewStage();
-        }
-
-        private void BuildPreviewStage()
-        {
-            GameObject cameraObject = new GameObject("InventoryPreviewCamera", typeof(Camera));
-            cameraObject.transform.SetParent(transform, false);
-            cameraObject.transform.position = new Vector3(0f, -1000f, 0f);
-            cameraObject.transform.rotation = Quaternion.identity;
-            previewCamera = cameraObject.GetComponent<Camera>();
-            previewCamera.clearFlags = CameraClearFlags.SolidColor;
-            previewCamera.backgroundColor = new Color(0f, 0f, 0f, 0f);
-            previewCamera.cullingMask = 1 << PreviewLayer;
-            previewCamera.fieldOfView = 37f;
-            previewCamera.nearClipPlane = 0.1f;
-            previewCamera.farClipPlane = 10f;
-            previewCamera.targetTexture = previewTexture;
-            previewCamera.allowHDR = false;
-            previewCamera.allowMSAA = false;
-
-            CreatePreviewLight("Key", new Vector3(-1f, -999f, 0.2f), new Vector3(32f, -28f, 0f), 1.25f);
-            CreatePreviewLight("Fill", new Vector3(1f, -999f, 1f), new Vector3(48f, 145f, 0f), 0.38f);
-        }
-
-        private void CreatePreviewLight(string lightName, Vector3 position, Vector3 rotation, float intensity)
-        {
-            GameObject lightObject = new GameObject("Inventory" + lightName, typeof(Light));
-            lightObject.transform.SetParent(transform, false);
-            lightObject.transform.position = position;
-            lightObject.transform.rotation = Quaternion.Euler(rotation);
-            lightObject.layer = PreviewLayer;
-            Light lightComponent = lightObject.GetComponent<Light>();
-            lightComponent.type = LightType.Directional;
-            lightComponent.intensity = intensity;
-            lightComponent.color = lightName == "Key" ? new Color(0.78f, 0.82f, 0.7f) : new Color(0.34f, 0.39f, 0.48f);
-            lightComponent.cullingMask = 1 << PreviewLayer;
         }
 
         private TextMeshProUGUI CreateText(string objectName, Transform parent, string value, float size, TextAlignmentOptions alignment, Vector2 anchorMin, Vector2 anchorMax, Vector2 position, Vector2 dimensions)
@@ -519,57 +428,10 @@ namespace KnocksFromBeneath
             return texture;
         }
 
-        private static Bounds CalculateBounds(GameObject target)
-        {
-            Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0) return new Bounds(target.transform.position, Vector3.one);
-            Bounds result = renderers[0].bounds;
-            for (int i = 1; i < renderers.Length; i++) result.Encapsulate(renderers[i].bounds);
-            return result;
-        }
-
-        private void PreparePreviewMaterials(GameObject target, Texture2D textureOverride)
-        {
-            Shader shader = Shader.Find("Universal Render Pipeline/Unlit");
-            if (shader == null) return;
-
-            Renderer[] renderers = target.GetComponentsInChildren<Renderer>();
-            for (int rendererIndex = 0; rendererIndex < renderers.Length; rendererIndex++)
-            {
-                Material[] source = renderers[rendererIndex].sharedMaterials;
-                Material[] replacements = new Material[source.Length];
-                for (int materialIndex = 0; materialIndex < source.Length; materialIndex++)
-                {
-                    Material replacement = new Material(shader) { name = "InventoryPreviewMaterial" };
-                    Material original = source[materialIndex];
-                    if (original != null)
-                    {
-                        Texture texture = textureOverride;
-                        if (texture == null && original.HasProperty("_BaseMap")) texture = original.GetTexture("_BaseMap");
-                        if (texture == null && original.HasProperty("_MainTex")) texture = original.GetTexture("_MainTex");
-                        if (texture != null) replacement.SetTexture("_BaseMap", texture);
-                        Color tint = original.HasProperty("_BaseColor")
-                            ? original.GetColor("_BaseColor")
-                            : original.HasProperty("_Color") ? original.GetColor("_Color") : Color.white;
-                        replacement.SetColor("_BaseColor", Color.Lerp(tint, Color.white, 0.18f));
-                    }
-                    replacements[materialIndex] = replacement;
-                    previewMaterials.Add(replacement);
-                }
-                renderers[rendererIndex].sharedMaterials = replacements;
-            }
-        }
-
-        private static void SetLayerRecursively(Transform root, int layer)
-        {
-            root.gameObject.layer = layer;
-            for (int i = 0; i < root.childCount; i++) SetLayerRecursively(root.GetChild(i), layer);
-        }
-
         private void SetVisible(bool value)
         {
             if (canvas != null) canvas.enabled = value;
-            if (previewCamera != null) previewCamera.enabled = value;
+            if (previewStage != null) previewStage.Visible = value;
         }
     }
 }
