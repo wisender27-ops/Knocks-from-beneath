@@ -278,7 +278,15 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            // 9. ЗАМОК ВХОДНОЙ ДВЕРИ (день 2, T-17)
+            // 9. УЛИКА — ОСМОТР (M-05)
+            InspectableClue clue = hitObj.GetComponentInParent<InspectableClue>();
+            if (clue != null)
+            {
+                clue.Interact();
+                return;
+            }
+
+            // 10. ЗАМОК ВХОДНОЙ ДВЕРИ (день 2, T-17)
             FrontDoorLockInteractable doorLock = hitObj.GetComponentInParent<FrontDoorLockInteractable>();
             if (doorLock != null)
             {
