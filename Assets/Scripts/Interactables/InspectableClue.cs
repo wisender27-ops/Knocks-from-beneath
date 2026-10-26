@@ -36,7 +36,7 @@ namespace KnocksFromBeneath
         [SerializeField] private float detailPeek;
         [Tooltip("Насколько предмет утоплен в поверхность, м: бумажка из-под него ложится на саму поверхность.")]
         [SerializeField] private float surfaceSink;
-        [Tooltip("Предмет, под которым лежит деталь (если улика — не сам этот объект). Пока его нет в доме, улики нет.")]
+        [Tooltip("Предмет, под которым лежит деталь (если улика — не сам этот объект). Деталь лежит на месте, даже пока его нет в доме.")]
         [SerializeField] private GameObject anchor;
 
         [Header("Зацепка на видной грани (необязательно)")]
@@ -112,15 +112,13 @@ namespace KnocksFromBeneath
         {
             get
             {
-                if (anchor != null && !anchor.activeInHierarchy) return false;
                 if (!afterFirstNight) return true;
                 if (intro == null) intro = FindFirstObjectByType<IntroSequence>();
                 return intro != null && intro.FirstNightPassed;
             }
         }
 
-        // Деталь и зацепка появляются на самом предмете, когда улика становится доступной
-        // (вещи дня 2 сдвинулись за ночь — из-под них показалась бумажка). Дальше Update не нужен.
+        // Деталь и зацепка появляются на самом предмете, когда улика становится доступной. Дальше Update не нужен.
         private void Update()
         {
             if (worldDetails == null && previewMesh != null && Available) ShowWorldDetails();
