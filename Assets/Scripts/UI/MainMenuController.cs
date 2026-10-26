@@ -23,6 +23,7 @@ public class MainMenuController : MonoBehaviour
     private readonly List<GameObject> mainButtons = new List<GameObject>();
     private readonly List<GameObject> chapterButtons = new List<GameObject>();
     private bool chaptersOpen;
+    private const float LockedAlpha = 0.45f;
 
     void Awake()
     {
@@ -123,14 +124,27 @@ public class MainMenuController : MonoBehaviour
         foreach (Transform child in mainPanel.transform)
             if (child.name.StartsWith("Btn") && child.GetComponent<Button>() != null) mainButtons.Add(child.gameObject);
 
+        // Открытые главы, за ними одна следующая — серая и неактивная, дальше только подсказка.
         int slot = chapters.transform.GetSiblingIndex() + 1;
+        bool lockedShown = false;
         foreach (ChapterCheckpoints.ChapterInfo info in ChapterCheckpoints.Chapters)
         {
             StoryChapter chapter = info.Chapter;
             bool open = ChapterCheckpoints.IsUnlocked(chapter);
-            string label = open ? info.Title : ((int)chapter + 1) + ". ▒▒▒▒▒▒";
-            GameObject button = CloneButton(start, "BtnChapter" + (int)chapter, label, () => StartChapter(chapter));
-            button.GetComponent<Button>().interactable = open;
+            if (!open && lockedShown)
+            {
+                GameObject hint = CloneHint(start, "Следующие главы откроются по мере прохождения");
+                hint.transform.SetSiblingIndex(slot++);
+                chapterButtons.Add(hint);
+                break;
+            }
+            GameObject button = CloneButton(start, "BtnChapter" + (int)chapter, info.Title, () => StartChapter(chapter));
+            if (!open)
+            {
+                lockedShown = true;
+                button.GetComponent<Button>().interactable = false;
+                button.AddComponent<CanvasGroup>().alpha = LockedAlpha;
+            }
             button.transform.SetSiblingIndex(slot++);
             chapterButtons.Add(button);
         }
@@ -148,6 +162,27 @@ public class MainMenuController : MonoBehaviour
         button.onClick = new Button.ButtonClickedEvent();
         button.onClick.AddListener(onClick);
         SetLabel(copy.transform, label);
+        return copy;
+    }
+
+    // Строка-пояснение в стиле кнопок, но мельче, курсивом и без нажатия.
+    static GameObject CloneHint(Transform source, string text)
+    {
+        GameObject copy = Instantiate(source.gameObject, source.parent, false);
+        copy.name = "ChaptersHint";
+        Destroy(copy.GetComponent<Button>());
+        LayoutElement layout = copy.GetComponent<LayoutElement>();
+        if (layout != null) layout.preferredHeight *= 0.6f;
+        TMP_Text label = copy.GetComponentInChildren<TMP_Text>(true);
+        if (label != null)
+        {
+            label.text = text;
+            label.fontSize *= 0.5f;
+            label.fontStyle |= FontStyles.Italic;
+            label.raycastTarget = false;
+            Color color = label.color;
+            label.color = new Color(color.r * 0.8f, color.g * 0.8f, color.b * 0.8f, LockedAlpha);
+        }
         return copy;
     }
 
