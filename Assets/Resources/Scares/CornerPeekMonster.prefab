@@ -580,9 +580,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.CornerStalkerRig
   runClip: {fileID: 7400000, guid: f853d7a38fd531c4c8e27303b7f1dd64, type: 2}
+  walkClip: {fileID: -3840084151542393336, guid: 286d3638b8a33b44eb27924f3d6fd13d, type: 3}
+  walkClipSpeed: 0.75
+  standClip: {fileID: 4925837963642883786, guid: 27d5ee9cda47041449faed095269a255, type: 3}
+  peekClip: {fileID: 7400000, guid: 97f0d38b25bb5654b8a734f7c1ab22a8, type: 2}
   lookShares: {x: 0.4, y: 0.25, z: 0.35}
   maxYaw: 145
-  maxPitch: 30
 --- !u!1 &4057570121714600431
 GameObject:
   m_ObjectHideFlags: 0

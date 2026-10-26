@@ -34,7 +34,9 @@ public enum DebugStoryStage
     StartDinnerCook,
     StartDinnerEat,
     // M-04: ночь 2, свет выбило, фонарик в руках — игрок у щитка в гараже.
-    StartBreakerPanel
+    StartBreakerPanel,
+    // M-07: ночь 2, игрок у стола с молотком в своей спальне — взял молоток, и начинаются прятки под кроватью.
+    StartHidingSpots
 }
 
 public class IntroSequence : MonoBehaviour
@@ -131,6 +133,7 @@ public class IntroSequence : MonoBehaviour
     private BranchEndingController _branchEnding;
     private CornerPeekSequence _cornerPeek;
     private HideEndingController _hideEnding;
+    private HidingBreathGame _hidingScene;
     private bool _hasReactedToPowerOutage;
     private AudioSource _powerOutageAudio;
     // K-02: хозяин в подвале отвечает на стук с первой ночи (до неё о нём никто не знает).
@@ -187,11 +190,17 @@ public class IntroSequence : MonoBehaviour
             decorationZones, CreateQuest, ShowThoughts,
             onDecorationFinished: _dinner.SetupIngredientQuest);
 
+        // M-07: укрытие ночи 2 — под кроватью героя, в спальне с молотком (старые зоны hidingSpots не используются).
+        _hidingScene = gameObject.AddComponent<HidingBreathGame>();
+        _hidingScene.Initialize(playerInventory, () => _hideEnding.HandleHideRequested(), () => _hideEnding.HandleCaughtInOpen());
         _hideEnding = new HideEndingController(
-            hidingSpots, hidingSpotAmbushPoints, playerTransform,
+            new[] { _hidingScene.Zone }, new Transform[1], playerTransform,
             StartCoroutine, ShowThoughts, LockPlayerCamera,
             tryClaimEnding: () => _branchEnding.TryResolve(), // общая защёлка всех концовок ночи 2
-            endGame: EndGame);
+            endGame: EndGame,
+            search: _hidingScene,
+            onHideStarted: () => { if (IsQuestActive("hide-bed")) QuestManager.Instance?.AddProgress(1); },
+            onSurvived: ReturnToHatchAfterHiding);
 
         _branchEnding = new BranchEndingController(
             SetupHammerQuest, escapeDoorTrigger, _hideEnding.SetZonesActive,
@@ -472,7 +481,7 @@ public class IntroSequence : MonoBehaviour
                 GrantDebugItem("Crowbar");
                 GrantDebugItem("Hammer");
                 FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
-                OnHammerPickedUp();
+                SetupBoardBasementQuest();
                 break;
             case DebugStoryStage.StartBreakerPanel:
                 GrantDebugItem("Flashlight");
@@ -488,12 +497,14 @@ public class IntroSequence : MonoBehaviour
                 SetupBreakerQuest();
                 break;
             case DebugStoryStage.StartBranchEndings:
+            case DebugStoryStage.StartHidingSpots:
                 GrantDebugItem("Flashlight");
                 GrantDebugItem("Crowbar");
                 FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
                 if (MonsterTimer.Instance != null)
                     MonsterTimer.Instance.StartTimer();
                 _branchEnding.Activate();
+                if (startStage == DebugStoryStage.StartHidingSpots) TeleportPlayerToHammer();
                 break;
         }
     }
@@ -508,6 +519,7 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartHammerQuest:
             case DebugStoryStage.StartFinale:
             case DebugStoryStage.StartBranchEndings:
+            case DebugStoryStage.StartHidingSpots:
                 return true;
             default:
                 return false;
@@ -528,6 +540,7 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartHammerQuest:
             case DebugStoryStage.StartFinale:
             case DebugStoryStage.StartBranchEndings:
+            case DebugStoryStage.StartHidingSpots:
                 return true;
             default:
                 return false;
@@ -577,6 +590,21 @@ public class IntroSequence : MonoBehaviour
         if (cc != null) cc.enabled = false;
         playerTransform.position = stand + Vector3.up * feet;
         playerTransform.rotation = Quaternion.LookRotation(-(BreakerPanelRotation * Vector3.forward));
+        if (cc != null) cc.enabled = true;
+    }
+
+    // M-07 (дебаг): у стола с молотком в спальне героя, фонарик в руке. Задание «Найти молоток» уже поставила
+    // развилка (BranchEndingController.Activate) — второе такое же застряло бы перед «Спрятаться под кровать».
+    void TeleportPlayerToHammer()
+    {
+        playerInventory?.Equip("Flashlight");
+        if (playerInventory != null && playerInventory.flashlightLightSource != null)
+            playerInventory.flashlightLightSource.enabled = true;
+        if (playerTransform == null) return;
+        CharacterController cc = playerTransform.GetComponent<CharacterController>();
+        if (cc != null) cc.enabled = false;
+        playerTransform.position = new Vector3(-42.4f, 4.18f, 114.3f);
+        playerTransform.rotation = Quaternion.LookRotation(Vector3.right);
         if (cc != null) cc.enabled = true;
     }
 
@@ -1220,18 +1248,35 @@ public class IntroSequence : MonoBehaviour
     }
 
     // --- 9. Молоток и финал ---
+    // M-07: молоток взят — снизу открывается люк, оно поднимается в спальню. Спрятаться под кровать («Дыхание»):
+    // переждал — ReturnToHatchAfterHiding, нашло или застало снаружи — E3 (HideEndingController).
     public void OnHammerPickedUp()
     {
         MonsterTimer.Instance?.PauseTimer();
+        _hideEnding.ActivateZones();
+        _hidingScene.BeginScene();
+        CreateQuest("Спрятаться под кровать", 1, questTag: "hide-bed");
+        // Обычные мысли, не «важные»: важные ставят игру на паузу до нажатия, а оно уже идёт.
         ShowThoughts(new string[] {
+            "Люк… Оно вылезло.",
+            "Идёт сюда. Под кровать!"
+        }, null);
+    }
+
+    void ReturnToHatchAfterHiding()
+    {
+        ShowThoughts(new string[] {
+            "Ушло вниз.",
             "Заколочу. И наконец всё закончится.",
             "Надо вернуться к люку."
-        }, () =>
-        {
-            if (finaleTrigger != null) finaleTrigger.SetActive(true);
-            CreateQuest("Заколотить люк подвала", 1, questTag: "board-basement");
-            MonsterTimer.Instance?.ResumeTimer();
-        });
+        }, SetupBoardBasementQuest);
+    }
+
+    void SetupBoardBasementQuest()
+    {
+        if (finaleTrigger != null) finaleTrigger.SetActive(true);
+        CreateQuest("Заколотить люк подвала", 1, questTag: "board-basement");
+        MonsterTimer.Instance?.ResumeTimer();
     }
 
     public bool CanBoardBasement(BasementHatch hatch)

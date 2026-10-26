@@ -23,12 +23,14 @@ public sealed class DebugStoryStageDrawer : PropertyDrawer
         DebugStoryStage.StartDinnerEat,
         DebugStoryStage.StartDay2Evening,
         DebugStoryStage.StartNight,
+        DebugStoryStage.StartBreakerPanel,
         DebugStoryStage.StartKitchenNoise,
         DebugStoryStage.StartFlashlightQuest,
         DebugStoryStage.StartCrowbarQuest,
         DebugStoryStage.StartBreakFloor,
         DebugStoryStage.StartLookInHole,
         DebugStoryStage.StartBranchEndings,
+        DebugStoryStage.StartHidingSpots,
         DebugStoryStage.StartHammerQuest,
         DebugStoryStage.StartFinale
     };
@@ -50,12 +52,14 @@ public sealed class DebugStoryStageDrawer : PropertyDrawer
         "Start Day 2 Eat Dinner",
         "Start Day 2 Evening",
         "Start Night 2",
+        "Start Breaker Panel (M-04)",
         "Start Kitchen Noise Quest",
         "Start Flashlight Quest",
         "Start Crowbar Quest",
         "Start Break Floor Quest",
         "Start Look In Hole Quest",
         "Start Branch Endings",
+        "Start Hide Under Bed (M-07)",
         "Start Hammer Quest",
         "Start Finale"
     };

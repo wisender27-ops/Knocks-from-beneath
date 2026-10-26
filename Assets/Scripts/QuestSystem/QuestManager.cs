@@ -42,6 +42,7 @@ public class QuestManager : MonoBehaviour
     private Vector2 _toastOrigin;
     private bool _toastOriginCaptured;
     private string _lastQueuedText;
+    private Coroutine _toastRoutine;
     private string _lastActiveQuestTag = null;
 
     void Awake()
@@ -217,11 +218,26 @@ public class QuestManager : MonoBehaviour
             : $"{quest.questTitle} ({Mathf.Max(0, quest.requiredAmount - quest.currentAmount)})";
         if (!newQuest && text == _lastQueuedText) return;
         _lastQueuedText = text;
+        // Тост задания идёт своей корутиной, параллельно мыслям: в общей очереди он держал её 3.65 с,
+        // и между мыслями появлялись паузы. Новое задание сменяет прежний тост.
         if (isActiveAndEnabled && Application.isPlaying)
-            NarrativeDisplayQueue.Enqueue(this, () => PlayQuestTextColorTransition(text));
+        {
+            if (_toastRoutine != null) StopCoroutine(_toastRoutine);
+            _toastRoutine = StartCoroutine(PlayQuestTextColorTransition(text));
+        }
     }
 
     public void HideToast()
+    {
+        if (_toastRoutine != null)
+        {
+            StopCoroutine(_toastRoutine);
+            _toastRoutine = null;
+        }
+        ResetToast();
+    }
+
+    void ResetToast()
     {
         if (questUiText == null) return;
         questUiText.color = baseQuestColor;
@@ -279,7 +295,8 @@ public class QuestManager : MonoBehaviour
             SyncToastBacking();
             yield return null;
         }
-        HideToast();
+        ResetToast();
+        _toastRoutine = null;
     }
 }
 }
