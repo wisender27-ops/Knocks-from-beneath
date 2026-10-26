@@ -64,52 +64,40 @@
 
 ---
 
-## 2. Снимок текущего состояния (проверено 2026-10-25, коммит `001087b`)
+## 2. Снимок текущего состояния (проверено 2026-10-26, Q-03)
 
-Сюжетная цепочка (`Systems_and_Visuals/ThoughtManager/IntroSequence.cs`, 1064 строки,
-оркестрирует контроллеры через `CreateQuest/ShowThoughts`, теги квестов в `QuestManager`):
+Сюжетная цепочка (`Systems_and_Visuals/ThoughtManager/IntroSequence.cs`, ~1200 строк,
+оркестрирует контроллеры через `CreateQuest/ShowThoughts`, теги квестов в `QuestManager`).
+Главы и чекпойнты — `ChapterCheckpoints` (сохранение в начале каждого дня/ночи).
 
-- **День 1:** катсцена приезда (`ArrivalCutscene`) → «Зайти в дом» → мусор (`MoveInChoresController`,
-  `TrashManager`) → вынести мешок → фургон и коробки (`DeliveryTruckSequence`) → разнести коробки
-  по комнатам (`PlacementZone`) → пирог: холодильник → микроволновка → съесть (`PieQuestController`)
-  → «Лечь спать».
-- **Ночь 1:** стук (`NightOneController`), визит соседа (`NeighborVisitSequence`): «видел, как ты
-  ходишь на первом этаже», хотя герой спал. Утро.
-- **День 2:** убрать разбросанные вещи на кухне (`RoomDecorationController`) → собрать продукты →
-  приготовить на плите (`DinnerCookingController`, мини-игра `DinnerCookingWindow` — стрелка,
-  остановить пробелом в янтарной зоне, одна попытка) → съесть → записка соседа (необязательно,
-  `NeighborNoteInteractable`) → «Лечь спать» (`EveningRoundController`).
-- **Ночь 2:** блэкаут → шум на кухне → фонарик → выключатель → кто-то пробежал по лестнице →
-  люк подвала снаружи → заперт → лом → сорвать замок (`BasementHatchLock`, катсцена) → осветить
-  лестницу (`HoleEventController`) → «Заколочу» → молоток → таймер 30 с (`MonsterTimer`) →
-  `FinaleController.BeginBoarding`: успел → заколотил, голос снизу «Выпусти меня, сука!» →
-  экран «КОНЕЦ»; не успел → люк открывается, монстр сзади сталкивает героя в подвал (в коде — `PushedIntoHoleRoutine`/`Hole Bottom Spot`, это и есть дно подвала).
+- **День 1:** катсцена приезда → «Зайти в дом» → мусор (`MoveInChoresController`) → фургон и коробки
+  (`DeliveryTruckSequence`, `PlacementZone`) → пирог (`PieQuestController`) → «Лечь спать».
+- **Ночь 1:** стук (`NightOneController`, `NightOneScare`) → сосед (`NeighborVisitSequence`): свет на
+  крыльце выключен, в окне силуэт; включил свет — это сосед (N-01). Если игрок, идя к двери, стучал в
+  пол и ему ответили — сосед спрашивает про стук (K-05). После соседа — «Перестук» ур.1 (K-03). Утро.
+- **День 2:** убрать вещи на кухне → продукты → готовка (`DinnerCookingWindow` на `MinigameWindow`) →
+  ужин → записка соседа (необязательно) → «Лечь спать»; засов входной двери можно задвинуть
+  (необязательно, B-01). «Перестук» ур.2.
+- **Ночь 2:** блэкаут → шум на кухне (стук идёт за игроком под полом, K-01) → пугалка «из-за угла»
+  (`CornerPeekSequence`: монстр выбивает входную дверь и убегает) → фонарик → лом → замок люка →
+  осветить лестницу → «Оно исчезло» → молоток → невидимый дедлайн (`MonsterTimer`, на экране ничего) →
+  «Гвозди» (`NailBoarding`/`HatchNailingGame`, M-03): все гвозди → E1 «Тихо»; доски сорвало или дедлайн
+  истёк → E2 «Внизу» (`PushedIntoHoleRoutine`). Карточка концовки — `EndingScreen` + `EndingRegistry`.
 
 Важные факты:
-- **Выбора по факту нет.** `BranchEndingController.Activate()` выключает побег через дверь и
-  укрытия; `HandleDoorEscape()` пустой; `EveningRoundController.LockFrontDoor()` всегда `false`;
-  `GameState.frontDoorLocked` больше никто не выставляет. Код концовок «прятки»
-  (`HideEndingController`, `HidingSpotTrigger`, титул «ТЫ ОСТАЛСЯ ЗДЕСЬ (2/4)») и побега
-  (`EscapeDoorTrigger`) жив, но не достижим.
-- **Стук без механики.** `RandomKnock` играет случайный клип раз в `minDelay..maxDelay` с;
-  есть `PauseFor`, `SilencePermanently`, `PlayedKnockCount`. Игрок на стук не влияет.
-- **Сохранений нет** (PlayerPrefs только у настроек `SettingsStore`, `PauseMenuController`,
-  `NarrativeReadingPanel`). Есть дебаг-прыжки по этапам: `DebugStoryStage` +
-  `Assets/Editor/DebugStoryStageDrawer.cs`.
-- **Мини-игра готовки** (`Interactables/DinnerCookingWindow.cs`) — эталон контракта окна:
-  гейт по `FadeTransitionPresentation.IsActive`, `QuestJournalScreen.IsAnyOpen`,
-  `RetroInventoryScreen.IsAnyOpen`, `Time.timeScale`, `player.isCameraLocked`; сохраняет и
-  восстанавливает `isCameraLocked`, `PlayerInteraction.enabled`, `Cursor.lockState/visible`;
-  UI строит кодом (ScreenSpaceOverlay, TMP, `UiKeyHints`, `UiStyle`).
-- **Пугалки** координирует `HorrorMomentDirector` (`TryBegin/End/Interrupt`, кулдаун, гейт
-  `CanPresent`). Эмбиент-монстр — `MonsterWatcherManager` (только ночью). Шаги за спиной —
-  `FollowingFootsteps`.
-- **Игрок:** `PlayerController` (`Player/PlayerMovement.cs`) — есть присед (`IsCrouching`),
-  `isCameraLocked`. Занятые клавиши: WASD/стрелки, E, Space, Enter, Esc, Tab, LShift, LCtrl, C,
-  R, Z, J, H, 1–4. **Свободны:** Q, F, G, K, V, X, T и др.
-- **Инвентарь:** `PlayerInventory` (флаги `hasCrowbar/hasFlashlight/hasHammer`),
-  `RetroInventoryScreen` с 3D-превью через RenderTexture — можно переиспользовать для осмотра.
-- Тесты: `Assets/Tests/EditMode` (19 файлов) + Play-пробы `Assets/Tests/*PlayProbe.cs`.
+- **Выбора на развилке пока нет.** `BranchEndingController.Activate()` выключает побег и укрытия;
+  код E3 (`HideEndingController`, «ТЫ ОСТАЛСЯ ЗДЕСЬ (3/5)») и побега (`EscapeDoorTrigger`) жив, но
+  недостижим. Засов (B-01) ни на что не влияет. B-02/B-03 отложены до совместной сессии с автором:
+  входную дверь монстр выбивает раньше развилки, а к развилке игрок уже во дворе.
+- **Стук-язык:** `PlayerFloorKnock` (Q, сидя, над подвалом), `KnockResponder` (повтор/тишина/«срыв»),
+  `KnockCallGame` (перестук, `StoryFlags.KnockTrust`), `KnockDirector` (слежка + глушение перекрытиями).
+- **Флаги** — `StoryFlags`: `KnockTrust`, `KnockAnswered`, `SawRecording`, `NeighborNoteRead`, улики,
+  `FrontDoorLocked`; сохраняются в чекпойнтах. Камеры (C-*), улик (M-05), звонка (M-06) ещё нет.
+- **Меню:** «Продолжить», «Новая игра», «Выбор главы» (глава открывается после выхода из игры; видны
+  открытые, одна следующая неактивная и подсказка). Галереи концовок нет (B-06).
+- **Звук** — шины `MainMixer`, `GameAudio`, `AmbienceDirector` (A-01).
+- Дебаг-прыжки: `IntroSequence.useDebugSkip` + `startStage` (`DebugStoryStage`); прогресс глав не пишут.
+- Тесты: `Assets/Tests/EditMode` (29 файлов, 178 тестов) + Play-пробы `Assets/Tests/*PlayProbe.cs` (8).
 
 ---
 
@@ -391,7 +379,7 @@
 - [ ] **Q-01. Полный прогон** каждой концовки в Play Mode с чек-листом (подбор/экип/использование,
   пауза/меню/курсор/камера, переходы квестов, Missing references).
 - [ ] **Q-02. Хронометраж** всей игры и каждой мини-игры, правка сложности.
-- [~] **Q-03. Обновить** _(в работе у ENDERWIS)_ `.codex/studio/project-map.md` и этот снимок под новое состояние.
+- [x] **Q-03. Обновить** `.codex/studio/project-map.md` и этот снимок под новое состояние.
 
 ### Фаза 7 — Эксперимент: озвучка (только после Фаз 0–6)
 
@@ -498,3 +486,4 @@ _(дата — решение — кто/где принято)_
 | 2026-10-26 | K-05, B-01 (только засов, без последствий для концовок), Q-03 взяты в работу (`[~]`, ENDERWIS) | — | — | B-02/B-03 и последствия двери отложены на совместную сессию с автором: в ночь 2 монстр выбивает входную дверь (`CornerPeekSequence`), а к развилке игрок уже во дворе — старый «побег через дверь» не стыкуется |
 | 2026-10-26 | K-05 | см. коммит | EditMode **178/178** (+3 `KnockReactionsTests`: пороги доверия только на переходе, мысли только на первый повтор и «срыв», `KnockAnswered` сбрасывается и восстанавливается; `ChapterCheckpointsTests` проверяет флаг в снимке). Компиляция ок | Play Mode не запускался — проверяет автор. Тексты реплик — на вкус автора. Пороги доверия 3 / −2 — по числу раундов (макс. +5 за игру) |
 | 2026-10-26 | B-01 (засов) | см. коммит | EditMode **178/178** (`EveningRoundControllerTests` переписаны: запирание только в вечернем квесте и без прогресса, отпирание всегда, кровать сохраняет выбор, восстановление из флага, засов отодвигается всегда). Компиляция ок | Play Mode не запускался — проверяет автор (прыжок `StartDay2Evening`: засов → дверь не открывается → отодвинуть). Попадание луча в щеколду и анимация не проверены; последствия для ночи 2 нет до B-02 |
+| 2026-10-26 | Q-03 | см. коммит | Раздел 2 переписан под код на `b914236`; `.codex/studio/project-map.md` обновлён (число скриптов/тестов, StoryFlags/ChapterCheckpoints/EndingRegistry, стук-язык, мини-игры, звук, команды Unity CLI, файлы, которые Editor пересохраняет сам) | Только документация. После B-02 и Фазы 4 снимок снова устареет — Q-03 стоит повторить в конце Фазы 6 |
