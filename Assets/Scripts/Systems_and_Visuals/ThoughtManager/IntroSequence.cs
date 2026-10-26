@@ -33,7 +33,7 @@ public enum DebugStoryStage
     StartNightOne,
     StartDinnerCook,
     StartDinnerEat,
-    // M-04: ночь 2, свет выбило, фонарик в руках — игрок у щитка в прихожей.
+    // M-04: ночь 2, свет выбило, фонарик в руках — игрок у щитка в гараже.
     StartBreakerPanel
 }
 
@@ -137,7 +137,7 @@ public class IntroSequence : MonoBehaviour
     private bool _knockerAwake;
     private bool _nightTwoStarted; // K-03: уровень «Перестука» по главе
     private RandomKnock _knockSound;
-    // M-04 «Щиток»: после «Свет не работает» и фонарика — щиток в прихожей.
+    // M-04 «Щиток»: после «Свет не работает» и фонарика — щиток в гараже.
     private BreakerPanel _breakerPanel;
     private bool _breakerPending;
 
@@ -561,7 +561,7 @@ public class IntroSequence : MonoBehaviour
         playerTransform.GetComponent<PlayerController>()?.StandUp();
     }
 
-    // M-04: в коридоре прихожей, в паре шагов от щитка, лицом к нему.
+    // M-04: в гараже, в паре шагов от щитка, лицом к нему.
     void TeleportPlayerToBreakerPanel()
     {
         if (playerTransform == null) return;
@@ -570,9 +570,13 @@ public class IntroSequence : MonoBehaviour
         if (Physics.Raycast(playerTransform.position + Vector3.up * 0.5f, Vector3.down, out RaycastHit floor, 4f,
                 Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
             feet = playerTransform.position.y - floor.point.y;
+        Vector3 stand = BreakerPanelPosition + BreakerPanelRotation * Vector3.forward * 1.6f;
+        if (Physics.Raycast(stand, Vector3.down, out RaycastHit standFloor, 3f,
+                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            stand.y = standFloor.point.y;
         if (cc != null) cc.enabled = false;
-        playerTransform.position = new Vector3(BreakerPanelPosition.x - 1.6f, FirstFloorY + feet, BreakerPanelPosition.z);
-        playerTransform.rotation = Quaternion.LookRotation(Vector3.right);
+        playerTransform.position = stand + Vector3.up * feet;
+        playerTransform.rotation = Quaternion.LookRotation(-(BreakerPanelRotation * Vector3.forward));
         if (cc != null) cc.enabled = true;
     }
 
@@ -867,7 +871,7 @@ public class IntroSequence : MonoBehaviour
         {
             // Квест ставится до мыслей: мысли может оборвать пугалка, а квест держит сюжет.
             SetupBreakerQuest();
-            ShowThoughts(new[] { "Фонарик есть.", "Наверное, выбило автоматы. Щиток внизу, в прихожей." }, null);
+            ShowThoughts(new[] { "Фонарик есть.", "Наверное, выбило автоматы. Щиток в гараже." }, null);
             return;
         }
         ShowThoughts(new[] { "Фонарик есть. Теперь проверю, откуда шум." }, SetupSearchNoiseQuest);
@@ -877,14 +881,15 @@ public class IntroSequence : MonoBehaviour
     // M-04 «Щиток»
     // =====================================================================
 
-    // Торцевая стена коридора у входной двери — над подвалом, стук может подойти под ноги.
-    static readonly Vector3 BreakerPanelPosition = new Vector3(-38.6f, 2.2f, 115.65f);
+    // Гараж: стена, общая с домом, слева от двери из дома (за стеллажом). За ней подвал — стук подходит к щитку из-за стены.
+    static readonly Vector3 BreakerPanelPosition = new Vector3(-38.25f, 1.85f, 106.6f);
+    static readonly Quaternion BreakerPanelRotation = Quaternion.LookRotation(Vector3.right);
 
     void SetupBreakerPanel()
     {
         GameObject prefab = Resources.Load<GameObject>("Props/BreakerPanel");
         if (prefab == null) return;
-        GameObject panel = Instantiate(prefab, BreakerPanelPosition, Quaternion.LookRotation(Vector3.left));
+        GameObject panel = Instantiate(prefab, BreakerPanelPosition, BreakerPanelRotation);
         panel.name = "Breaker Panel";
         _breakerPanel = panel.GetComponent<BreakerPanel>();
         if (_breakerPanel == null) return;
@@ -892,7 +897,7 @@ public class IntroSequence : MonoBehaviour
         QuestItemMarker.Ensure(panel).ConfigureCondition(() => _breakerPanel != null && _breakerPanel.CanInteract);
     }
 
-    // Пока герой идёт к щитку, пугалка из-за угла ждёт: монстр выбивает входную дверь прямо у щитка.
+    // Пока герой идёт к щитку, пугалка из-за угла ждёт: по сюжету она после щитка, на пути к кухне.
     public bool HoldsCornerScare => _breakerPending || BreakerPanel.IsPlaying;
 
     void SetupBreakerQuest()
@@ -905,14 +910,14 @@ public class IntroSequence : MonoBehaviour
         _breakerPending = false;
         if (restored)
         {
-            // Ток есть везде, кроме кухни: её автомат не держит (и техника на кухне тоже стоит). В прихожей загорается свет.
+            // Ток есть везде, кроме кухни: её автомат не держит (и техника на кухне тоже стоит). В гараже загорается свет.
             LightSwitch.RestoreHousePower(IsKitchenLine, IsKitchenAppliance);
-            StartCoroutine(HallLightComesOn());
+            StartCoroutine(GarageLightComesOn());
         }
         QuestManager.Instance?.AddProgress(1);
         ShowThoughts(restored
             ? new[] { "Есть. Свет.", "А кухня не держит. Автомат сам выбивает.", "Стук ведь тоже оттуда... Проверю кухню." }
-            : new[] { "Оно прямо подо мной...", "К чёрту щиток. Обойдусь фонариком.", "Надо понять, откуда этот стук." },
+            : new[] { "Оно прямо за стеной...", "К чёрту щиток. Обойдусь фонариком.", "Надо понять, откуда этот стук." },
             SetupSearchNoiseQuest);
     }
 
@@ -922,16 +927,16 @@ public class IntroSequence : MonoBehaviour
     // Свет без выключателя в доме — только техника кухни (микроволновка, холодильник).
     static bool IsKitchenAppliance(Light light) => light != null && light.transform.position.x < -43f;
 
-    IEnumerator HallLightComesOn()
+    IEnumerator GarageLightComesOn()
     {
-        GameObject hall = GameObject.Find("lightswitchEntryInside");
-        LightSwitch hallSwitch = hall != null ? hall.GetComponent<LightSwitch>() : null;
-        if (hallSwitch == null || hallSwitch.lightsToControl == null) yield break;
+        GameObject garage = GameObject.Find("lightswitchGarage");
+        LightSwitch garageSwitch = garage != null ? garage.GetComponent<LightSwitch>() : null;
+        if (garageSwitch == null || garageSwitch.lightsToControl == null) yield break;
         AudioClip flickerClip = Resources.Load<AudioClip>("Audio/Breaker/LightsFlickerOn");
-        Light first = hallSwitch.lightsToControl.Length > 0 ? hallSwitch.lightsToControl[0] : null;
+        Light first = garageSwitch.lightsToControl.Length > 0 ? garageSwitch.lightsToControl[0] : null;
         if (flickerClip != null && first != null)
         {
-            AudioSource source = HorrorMomentDirector.CreateSource(first.transform, "Hall Light Flicker", 8f);
+            AudioSource source = HorrorMomentDirector.CreateSource(first.transform, "Garage Light Flicker", 8f);
             AudioRouting.Assign(source, AudioBus.World);
             source.PlayOneShot(flickerClip, 0.7f);
             Destroy(source.gameObject, flickerClip.length + 0.5f);
@@ -941,10 +946,10 @@ public class IntroSequence : MonoBehaviour
         foreach (float wait in blinks)
         {
             on = !on;
-            foreach (Light l in hallSwitch.lightsToControl) if (l != null) l.enabled = on;
+            foreach (Light l in garageSwitch.lightsToControl) if (l != null) l.enabled = on;
             yield return new WaitForSeconds(wait);
         }
-        hallSwitch.ForceTurnOn();
+        garageSwitch.ForceTurnOn();
     }
 
     void HandlePowerOutageSwitchAttempt()

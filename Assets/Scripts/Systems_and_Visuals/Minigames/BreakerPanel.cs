@@ -21,7 +21,7 @@ namespace KnocksFromBeneath
         private const float GroupOffAngle = 65f, MainOffAngle = 60f;
         private const float FlipSpeed = 900f;          // градусов в секунду: щелчок, а не плавный ход
         private const float PickRadius = 0.016f;       // автоматы стоят через 2.2 см
-        private const float DoorClosedAngle = -90f;    // в модели дверца сохранена открытой
+        private const float DoorClosedAngle = -94.5f;  // в модели дверца сохранена открытой; при -94.5° ложится плоско
         private const float DepthBelowFloor = 1.2f;
 
         private static readonly string[] GroupBones = {
@@ -167,6 +167,7 @@ namespace KnocksFromBeneath
             bool success = Board.Succeeded;
             if (ui != null) ui.SetActive(false);
             yield return success ? PowerReturns() : KnockReachesPanel();
+            yield return CloseDoor();
             Finish();
             finished?.Invoke(success);
         }
@@ -306,9 +307,10 @@ namespace KnocksFromBeneath
                 Sfx(knockSource, scrapeClip, 0.6f, 0.5f);
         }
 
+        // Щиток в гараже, а гараж не над подвалом: стук подходит к стене за щитком, под пол дома.
         private Vector3 KnockPoint(float approach)
         {
-            Vector3 under = transform.position + transform.forward * StandDistance;
+            Vector3 under = transform.position - transform.forward * 0.5f;
             under.y = floorY - DepthBelowFloor;
             Vector3 start = knockStart;
             start.y = floorY - DepthBelowFloor;
@@ -342,7 +344,7 @@ namespace KnocksFromBeneath
             }
         }
 
-        // Стук дошёл: удар прямо под ногами, фонарик гаснет, в темноте дыхание и скрежет уходит под полом.
+        // Стук дошёл: удар прямо за стеной у пола, фонарик гаснет, в темноте дыхание и скрежет уходит под домом.
         private IEnumerator KnockReachesPanel()
         {
             Vector3 under = KnockPoint(1f);
@@ -380,6 +382,20 @@ namespace KnocksFromBeneath
                 UpdateView(Time.deltaTime);
                 yield return null;
             }
+        }
+
+        // Уходя, герой захлопывает дверцу до конца.
+        private IEnumerator CloseDoor()
+        {
+            doorTarget = DoorClosedAngle;
+            for (float t = 0f; t < 0.8f && !Mathf.Approximately(doorAngle, doorTarget); t += Time.deltaTime)
+            {
+                UpdateView(Time.deltaTime);
+                yield return null;
+            }
+            doorAngle = doorTarget;
+            ApplyPose();
+            Sfx(panelSource, doorCloseClip, 1f, 0.9f);
         }
 
         private IEnumerator Flicker(float seconds)
