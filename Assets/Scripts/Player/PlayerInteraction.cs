@@ -278,7 +278,15 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            // 9. ЗАМОК ВХОДНОЙ ДВЕРИ (день 2, T-17)
+            // 9. ЩИТОК (ночь 2, M-04)
+            BreakerPanel panel = hitObj.GetComponentInParent<BreakerPanel>();
+            if (panel != null)
+            {
+                panel.Interact(this);
+                return;
+            }
+
+            // 10. ЗАМОК ВХОДНОЙ ДВЕРИ (день 2, T-17)
             FrontDoorLockInteractable doorLock = hitObj.GetComponentInParent<FrontDoorLockInteractable>();
             if (doorLock != null)
             {

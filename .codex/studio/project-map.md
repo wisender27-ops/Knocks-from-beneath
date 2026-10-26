@@ -33,7 +33,8 @@ Recheck relevant entries before changes. This is a snapshot, not a replacement f
   KnockResponder (replies), KnockCallGame/KnockPattern (call-and-response minigame M1).
 - Minigames: Systems_and_Visuals/Minigames/MinigameWindow (shared window contract: one at a time,
   camera/cursor/interaction restore, pause blocked); NailBoarding + HatchNailingGame (finale M3,
-  in-world); ClueInspectWindow + ClueInspection + ClueDetailBuilder ("Осмотр" M5). Inspectable
+  in-world); BreakerBoard + BreakerPanel (night-2 fuse box M4, prefab
+  Resources/Props/BreakerPanel spawned by IntroSequence); ClueInspectWindow + ClueInspection + ClueDetailBuilder ("Осмотр" M5). Inspectable
   clues: Interactables/InspectableClue on owner-leftover copies under "Main Plot/Owner Clues (M-05)";
   the 3D preview (RT, layer 30) is Inventory/ItemPreviewStage, shared with RetroInventoryScreen.
   Scares are arbitrated by HorrorMomentDirector.

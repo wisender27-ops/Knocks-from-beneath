@@ -517,6 +517,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5166539647980272744}
   - component: {fileID: 6767945134403029735}
+  - component: {fileID: 7452068916268987085}
   m_Layer: 0
   m_Name: CornerPeekMonster
   m_TagString: Untagged
@@ -566,6 +567,22 @@ Animator:
   m_AllowConstantClipSamplingOptimization: 1
   m_KeepAnimatorStateOnDisable: 0
   m_WriteDefaultValuesOnDisable: 0
+--- !u!114 &7452068916268987085
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3723262483496963315}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b4c8321eccbc584582ce45e48d0e94a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.CornerStalkerRig
+  runClip: {fileID: 7400000, guid: f853d7a38fd531c4c8e27303b7f1dd64, type: 2}
+  lookShares: {x: 0.4, y: 0.25, z: 0.35}
+  maxYaw: 145
+  maxPitch: 30
 --- !u!1 &4057570121714600431
 GameObject:
   m_ObjectHideFlags: 0

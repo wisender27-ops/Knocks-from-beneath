@@ -81,6 +81,8 @@ namespace KnocksFromBeneath
                     Set(stove.transform, "Готовить ужин", false, false, hit, out focus);
             InspectableClue clue = t.GetComponentInParent<InspectableClue>();
             if (clue != null) return clue.CanInteract && Set(clue.transform, "Осмотреть", false, false, hit, out focus);
+            BreakerPanel panel = t.GetComponentInParent<BreakerPanel>();
+            if (panel != null) return panel.CanInteract && Set(panel.transform, "Открыть щиток", false, false, hit, out focus);
             FrontDoorLockInteractable bolt = t.GetComponentInParent<FrontDoorLockInteractable>();
             if (bolt != null) return bolt.CanInteract && Set(bolt.transform, bolt.IsLocked ? "Отодвинуть засов" : "Задвинуть засов", false, false, hit, out focus);
             if (door != null && door.isActiveAndEnabled)
