@@ -1071,10 +1071,10 @@ public class IntroSequence : MonoBehaviour
 
     // T-21: раньше тут был Application.Quit() сразу после последней реплики — в билде игра
     // просто закрывалась. Теперь показываем карточку концовки и возвращаемся в главное меню.
-    void EndGame(string endingTitle)
+    void EndGame(EndingId ending)
     {
         if (EndingScreen.Instance != null)
-            EndingScreen.Instance.ShowEnding(endingTitle);
+            EndingScreen.Instance.ShowEnding(ending);
     }
 
     void SetupHammerQuest()

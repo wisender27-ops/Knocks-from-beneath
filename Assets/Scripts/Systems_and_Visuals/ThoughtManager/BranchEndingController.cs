@@ -23,7 +23,7 @@ public sealed class BranchEndingController
         Func<IEnumerator, Coroutine> startCoroutine,
         Action<string[], Action> showThoughts,
         Action<bool> lockCamera,
-        Action<string> endGame)
+        Action<EndingId> endGame)
     {
         _activateHammerPath = activateHammerPath;
         _escapeDoorTrigger = escapeDoorTrigger;

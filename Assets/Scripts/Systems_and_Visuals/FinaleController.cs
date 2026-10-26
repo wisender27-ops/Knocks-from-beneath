@@ -95,8 +95,8 @@ public class FinaleController : MonoBehaviour
             ThoughtManager.Instance.ShowImportantThoughts(new[] {
                 "Вот. Теперь не выберется.",
                 "Тихо. Наконец-то тихо."
-            }, ShowEnding);
-        else ShowEnding();
+            }, () => ShowEnding(EndingId.Boarded));
+        else ShowEnding(EndingId.Boarded);
     }
 
     IEnumerator PushedIntoHoleRoutine(PlayerController pc)
@@ -229,21 +229,21 @@ public class FinaleController : MonoBehaviour
             ThoughtManager.Instance.ShowImportantThoughts(new string[] {
                 "Нет! Не закрывай люк!",
                 "Выпусти меня, сука!"
-            }, ShowEnding);
+            }, () => ShowEnding(EndingId.Pushed));
         }
         else
         {
-            ShowEnding();
+            ShowEnding(EndingId.Pushed);
         }
     }
 
-    void ShowEnding()
+    void ShowEnding(EndingId ending)
     {
         // T-21: раньше тут был Application.Quit() сразу после реплики — в билде игра просто
         // закрывалась без всякой карточки итога. Теперь как и у остальных трёх концовок —
         // экран "КОНЕЦ: ..." и возврат в главное меню (EndingScreen).
         if (EndingScreen.Instance != null)
-            EndingScreen.Instance.ShowEnding("КОНЕЦ");
+            EndingScreen.Instance.ShowEnding(ending);
     }
 }
 }

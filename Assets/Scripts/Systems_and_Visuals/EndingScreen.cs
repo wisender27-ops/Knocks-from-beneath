@@ -34,9 +34,11 @@ public class EndingScreen : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    public void ShowEnding(string title)
+    // Концовка открывается в реестре сразу — даже если игрок выйдет до конца карточки.
+    public void ShowEnding(EndingId ending)
     {
-        StartCoroutine(ShowEndingRoutine(title));
+        EndingRegistry.MarkSeen(ending);
+        StartCoroutine(ShowEndingRoutine(EndingRegistry.ScreenTitle(ending)));
     }
 
     IEnumerator ShowEndingRoutine(string title)

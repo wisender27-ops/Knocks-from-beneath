@@ -22,7 +22,7 @@ public class BranchEndingControllerTests
             () => _hammer = true, _escape, active => _hide = active, null,
             routine => { _coroutines++; return null; },
             (lines, complete) => { _thoughts++; complete?.Invoke(); },
-            locked => _cameraLocks++, title => _endings++);
+            locked => _cameraLocks++, ending => _endings++);
     }
 
     [TearDown]
