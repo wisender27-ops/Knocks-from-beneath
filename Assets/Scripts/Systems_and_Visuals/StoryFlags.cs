@@ -13,6 +13,8 @@ public static class StoryFlags
 
     // Доверие стучащего снизу (перестук M1): успех повышает, провал/игнор понижает.
     public static int KnockTrust { get; private set; }
+    // Стучащий хоть раз ответил игроку — повтором его стука или в перестуке (K-05: сосед, реплики).
+    public static bool KnockAnswered { get; private set; }
     // Игрок увидел аномалию на записи видеокамеры (M2).
     public static bool SawRecording { get; private set; }
     // Прочитана записка соседа (GameEvents.OnNeighborNoteRead) — открывает звонок M6.
@@ -44,6 +46,7 @@ public static class StoryFlags
     public static void Reset()
     {
         KnockTrust = 0;
+        KnockAnswered = false;
         SawRecording = false;
         NeighborNoteRead = false;
         clues.Clear();
@@ -51,10 +54,12 @@ public static class StoryFlags
     }
 
     // Чекпойнт главы (F-04) возвращает флаги в состояние на начало главы.
-    public static void Restore(int knockTrust, bool sawRecording, bool neighborNoteRead, bool frontDoorLocked, IEnumerable<string> clueIds)
+    public static void Restore(int knockTrust, bool sawRecording, bool neighborNoteRead, bool frontDoorLocked, IEnumerable<string> clueIds,
+        bool knockAnswered = false)
     {
         Reset();
         KnockTrust = knockTrust;
+        KnockAnswered = knockAnswered;
         SawRecording = sawRecording;
         NeighborNoteRead = neighborNoteRead;
         GameState.frontDoorLocked = frontDoorLocked;
@@ -63,6 +68,7 @@ public static class StoryFlags
     }
 
     public static void AddKnockTrust(int delta) => KnockTrust += delta;
+    public static void MarkKnockAnswered() => KnockAnswered = true;
     public static void MarkRecordingSeen() => SawRecording = true;
 
     // Возвращает true только для новой улики — повторный осмотр не накручивает счётчик.

@@ -190,9 +190,20 @@ namespace KnocksFromBeneath
             }
             _replyRoutine = null;
             Replied?.Invoke(KnockReplyKind.Repeat, count);
+            StoryFlags.MarkKnockAnswered(); // после события — подписчик видит, первый ли это ответ
         }
 
         // Один удар стучащего: из источника слежки K-01, если она активна, иначе из-под пола под точкой.
+        // K-05: мысль героя на ответ снизу — только на первый повтор за игру и на «срыв».
+        public static string[] HeroReaction(KnockReplyKind kind, bool firstAnswer, bool raged)
+        {
+            if (kind == KnockReplyKind.Repeat && firstAnswer)
+                return new[] { "...Столько же ударов. Он повторил.", "Это не эхо. Эхо так не умеет." };
+            if (kind == KnockReplyKind.Silence && raged)
+                return new[] { "Твою мать!", "Он... разозлился? Больше так не долблю." };
+            return null;
+        }
+
         public void PlayUnderFloor(Vector3 floor, float pitch, float volume = 1f)
         {
             if (_clip == null) return;

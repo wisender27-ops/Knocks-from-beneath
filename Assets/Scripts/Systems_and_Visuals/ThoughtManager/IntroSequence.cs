@@ -206,6 +206,12 @@ public class IntroSequence : MonoBehaviour
         var responder = gameObject.AddComponent<KnockResponder>();
         responder.Initialize(floorKnock, knockController != null ? knockController.GetComponent<KnockDirector>() : null,
             knockSound != null ? knockSound.ShortestClip : null, () => _knockerAwake);
+        responder.Replied += (kind, count) =>
+        {
+            // Флаг ответа ставится после события — здесь он ещё говорит, был ли ответ раньше.
+            string[] lines = KnockResponder.HeroReaction(kind, !StoryFlags.KnockAnswered, responder.LastRageTime == Time.time);
+            if (lines != null) ShowThoughts(lines, null);
+        };
         gameObject.AddComponent<KnockCallGame>().Initialize(floorKnock, responder, KnockCallLevel, lines => ShowThoughts(lines, null));
         _cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
         _cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);

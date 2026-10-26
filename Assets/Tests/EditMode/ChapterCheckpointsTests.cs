@@ -47,6 +47,7 @@ public class ChapterCheckpointsTests
     public void Continue_RestoresFlagsOfLastChapter()
     {
         StoryFlags.AddKnockTrust(2);
+        StoryFlags.MarkKnockAnswered();
         StoryFlags.MarkRecordingSeen();
         StoryFlags.RegisterClue("photo");
         StoryFlags.FrontDoorLocked = true;
@@ -59,6 +60,7 @@ public class ChapterCheckpointsTests
 
         Assert.That(chapter, Is.EqualTo(StoryChapter.NightTwo));
         Assert.That(StoryFlags.KnockTrust, Is.EqualTo(2));
+        Assert.That(StoryFlags.KnockAnswered, Is.True);
         Assert.That(StoryFlags.SawRecording, Is.True);
         Assert.That(StoryFlags.HasClue("photo"), Is.True);
         Assert.That(StoryFlags.FrontDoorLocked, Is.True);

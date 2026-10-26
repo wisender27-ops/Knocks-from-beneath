@@ -34,6 +34,7 @@ public static class ChapterCheckpoints
     {
         public int chapter;
         public int knockTrust;
+        public bool knockAnswered;
         public bool sawRecording;
         public bool neighborNoteRead;
         public bool frontDoorLocked;
@@ -108,6 +109,7 @@ public static class ChapterCheckpoints
         {
             chapter = (int)chapter,
             knockTrust = StoryFlags.KnockTrust,
+            knockAnswered = StoryFlags.KnockAnswered,
             sawRecording = StoryFlags.SawRecording,
             neighborNoteRead = StoryFlags.NeighborNoteRead,
             frontDoorLocked = StoryFlags.FrontDoorLocked,
@@ -175,7 +177,7 @@ public static class ChapterCheckpoints
         StoryFlags.Reset();
         if (snapshot == null) return;
         StoryFlags.Restore(snapshot.knockTrust, snapshot.sawRecording, snapshot.neighborNoteRead,
-            snapshot.frontDoorLocked, snapshot.clues);
+            snapshot.frontDoorLocked, snapshot.clues, snapshot.knockAnswered);
         if (inventory == null || snapshot.items == null) return;
         for (int i = 0; i < snapshot.items.Length; i++)
         {

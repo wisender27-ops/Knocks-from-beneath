@@ -152,6 +152,7 @@ namespace KnocksFromBeneath
                 if (outcome != KnockCallOutcome.Wrong) break;
             }
 
+            int trustBefore = StoryFlags.KnockTrust;
             if (outcome == KnockCallOutcome.Correct)
             {
                 yield return Wait(AckDelay);
@@ -162,11 +163,34 @@ namespace KnocksFromBeneath
                     _responder.ResetDirectorPitch();
                 }
                 StoryFlags.AddKnockTrust(1);
+                StoryFlags.MarkKnockAnswered();
                 _successes++;
             }
             else StoryFlags.AddKnockTrust(-1);
             Finish(outcome);
-            _showThoughts?.Invoke(Reaction(outcome));
+            _showThoughts?.Invoke(WithTrustLine(Reaction(outcome), TrustLine(trustBefore, StoryFlags.KnockTrust)));
+        }
+
+        public const int TrustedLevel = 3;
+        public const int DistrustLevel = -2;
+
+        // K-05: доверие перешло порог — герой это замечает (одна мысль на переход, не каждый раунд).
+        public static string TrustLine(int before, int after)
+        {
+            if (before < TrustedLevel && after >= TrustedLevel)
+                return "Он отвечает сразу. Будто ждёт меня. Будто доверяет.";
+            if (before > DistrustLevel && after <= DistrustLevel)
+                return "Он больше не зовёт. Обиделся? На что вообще обижается подвал...";
+            return null;
+        }
+
+        private static string[] WithTrustLine(string[] lines, string trustLine)
+        {
+            if (trustLine == null) return lines;
+            var all = new string[lines.Length + 1];
+            lines.CopyTo(all, 0);
+            all[lines.Length] = trustLine;
+            return all;
         }
 
         private string[] Reaction(KnockCallOutcome outcome)
