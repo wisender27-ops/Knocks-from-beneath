@@ -32,7 +32,8 @@ Recheck relevant entries before changes. This is a snapshot, not a replacement f
   (source follows player under the floor), PlayerFloorKnock (Q, crouched, above basement),
   KnockResponder (replies), KnockCallGame/KnockPattern (call-and-response minigame M1).
 - Minigames: Systems_and_Visuals/Minigames/MinigameWindow (shared window contract: one at a time,
-  camera/cursor/interaction restore, pause blocked); NailBoarding + HatchNailingGame (finale M3,
+  camera/cursor/interaction restore, pause blocked); BreakerBoard + BreakerPanel (night-2 fuse box M4, prefab Resources/Props/BreakerPanel spawned by IntroSequence);
+  NailBoarding + HatchNailingGame (finale M3,
   in-world). Scares are arbitrated by HorrorMomentDirector.
 - Audio: Systems_and_Visuals/Audio (MainMixer buses Music/UI/SFX{Foley,Horror,Voice}/Ambience,
   AudioRouting, GameAudio, AmbienceDirector); clips in Assets/Audio/Game, library in Resources.

@@ -32,7 +32,9 @@ public enum DebugStoryStage
     StartGoToBed,
     StartNightOne,
     StartDinnerCook,
-    StartDinnerEat
+    StartDinnerEat,
+    // M-04: ночь 2, свет выбило, фонарик в руках — игрок у щитка в прихожей.
+    StartBreakerPanel
 }
 
 public class IntroSequence : MonoBehaviour
@@ -135,6 +137,9 @@ public class IntroSequence : MonoBehaviour
     private bool _knockerAwake;
     private bool _nightTwoStarted; // K-03: уровень «Перестука» по главе
     private RandomKnock _knockSound;
+    // M-04 «Щиток»: после «Свет не работает» и фонарика — щиток в прихожей.
+    private BreakerPanel _breakerPanel;
+    private bool _breakerPending;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -215,6 +220,7 @@ public class IntroSequence : MonoBehaviour
         gameObject.AddComponent<KnockCallGame>().Initialize(floorKnock, responder, KnockCallLevel, lines => ShowThoughts(lines, null));
         _cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
         _cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
+        SetupBreakerPanel();
     }
 
     void OnEnable()
@@ -468,6 +474,19 @@ public class IntroSequence : MonoBehaviour
                 FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
                 OnHammerPickedUp();
                 break;
+            case DebugStoryStage.StartBreakerPanel:
+                GrantDebugItem("Flashlight");
+                playerInventory?.Equip("Flashlight");
+                if (playerInventory != null && playerInventory.EquippedItemId != "Flashlight") playerInventory.ActivateItem("Flashlight");
+                if (playerInventory != null && playerInventory.flashlightLightSource != null)
+                    playerInventory.flashlightLightSource.enabled = true;
+                LightSwitch.CutHousePower(false);
+                _hasReactedToPowerOutage = true;
+                _breakerPending = _breakerPanel != null;
+                if (_bedsideBulb != null) _bedsideBulb.Break();
+                TeleportPlayerToBreakerPanel();
+                SetupBreakerQuest();
+                break;
             case DebugStoryStage.StartBranchEndings:
                 GrantDebugItem("Flashlight");
                 GrantDebugItem("Crowbar");
@@ -499,6 +518,7 @@ public class IntroSequence : MonoBehaviour
     {
         switch (stage)
         {
+            case DebugStoryStage.StartBreakerPanel:
             case DebugStoryStage.StartNight:
             case DebugStoryStage.StartKitchenNoise:
             case DebugStoryStage.StartFlashlightQuest:
@@ -539,6 +559,21 @@ public class IntroSequence : MonoBehaviour
         playerTransform.rotation = Quaternion.Euler(nightSpawnRotation);
         if (cc != null) cc.enabled = true;
         playerTransform.GetComponent<PlayerController>()?.StandUp();
+    }
+
+    // M-04: в коридоре прихожей, в паре шагов от щитка, лицом к нему.
+    void TeleportPlayerToBreakerPanel()
+    {
+        if (playerTransform == null) return;
+        CharacterController cc = playerTransform.GetComponent<CharacterController>();
+        float feet = 1f;
+        if (Physics.Raycast(playerTransform.position + Vector3.up * 0.5f, Vector3.down, out RaycastHit floor, 4f,
+                Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            feet = playerTransform.position.y - floor.point.y;
+        if (cc != null) cc.enabled = false;
+        playerTransform.position = new Vector3(BreakerPanelPosition.x - 1.6f, FirstFloorY + feet, BreakerPanelPosition.z);
+        playerTransform.rotation = Quaternion.LookRotation(Vector3.right);
+        if (cc != null) cc.enabled = true;
     }
 
     void TeleportPlayerToNightTwoBed()
@@ -828,13 +863,95 @@ public class IntroSequence : MonoBehaviour
     public void OnFlashlightPickedUp()
     {
         if (flashlightItem != null && flashlightItem.TryGetComponent<PixelItemOutline>(out var outline)) outline.Hide();
+        if (_breakerPending && _breakerPanel != null)
+        {
+            // Квест ставится до мыслей: мысли может оборвать пугалка, а квест держит сюжет.
+            SetupBreakerQuest();
+            ShowThoughts(new[] { "Фонарик есть.", "Наверное, выбило автоматы. Щиток внизу, в прихожей." }, null);
+            return;
+        }
         ShowThoughts(new[] { "Фонарик есть. Теперь проверю, откуда шум." }, SetupSearchNoiseQuest);
+    }
+
+    // =====================================================================
+    // M-04 «Щиток»
+    // =====================================================================
+
+    // Торцевая стена коридора у входной двери — над подвалом, стук может подойти под ноги.
+    static readonly Vector3 BreakerPanelPosition = new Vector3(-38.6f, 2.2f, 115.65f);
+
+    void SetupBreakerPanel()
+    {
+        GameObject prefab = Resources.Load<GameObject>("Props/BreakerPanel");
+        if (prefab == null) return;
+        GameObject panel = Instantiate(prefab, BreakerPanelPosition, Quaternion.LookRotation(Vector3.left));
+        panel.name = "Breaker Panel";
+        _breakerPanel = panel.GetComponent<BreakerPanel>();
+        if (_breakerPanel == null) return;
+        _breakerPanel.Configure(() => IsQuestActive("breaker-panel"), OnBreakerPanelFinished);
+        QuestItemMarker.Ensure(panel).ConfigureCondition(() => _breakerPanel != null && _breakerPanel.CanInteract);
+    }
+
+    // Пока герой идёт к щитку, пугалка из-за угла ждёт: монстр выбивает входную дверь прямо у щитка.
+    public bool HoldsCornerScare => _breakerPending || BreakerPanel.IsPlaying;
+
+    void SetupBreakerQuest()
+    {
+        CreateQuest("Проверить щиток", 1, null, "breaker-panel");
+    }
+
+    void OnBreakerPanelFinished(bool restored)
+    {
+        _breakerPending = false;
+        if (restored)
+        {
+            // Ток есть везде, кроме кухни: её автомат не держит (и техника на кухне тоже стоит). В прихожей загорается свет.
+            LightSwitch.RestoreHousePower(IsKitchenLine, IsKitchenAppliance);
+            StartCoroutine(HallLightComesOn());
+        }
+        QuestManager.Instance?.AddProgress(1);
+        ShowThoughts(restored
+            ? new[] { "Есть. Свет.", "А кухня не держит. Автомат сам выбивает.", "Стук ведь тоже оттуда... Проверю кухню." }
+            : new[] { "Оно прямо подо мной...", "К чёрту щиток. Обойдусь фонариком.", "Надо понять, откуда этот стук." },
+            SetupSearchNoiseQuest);
+    }
+
+    static bool IsKitchenLine(LightSwitch lightSwitch) =>
+        lightSwitch != null && lightSwitch.name.IndexOf("Kitchen", System.StringComparison.OrdinalIgnoreCase) >= 0;
+
+    // Свет без выключателя в доме — только техника кухни (микроволновка, холодильник).
+    static bool IsKitchenAppliance(Light light) => light != null && light.transform.position.x < -43f;
+
+    IEnumerator HallLightComesOn()
+    {
+        GameObject hall = GameObject.Find("lightswitchEntryInside");
+        LightSwitch hallSwitch = hall != null ? hall.GetComponent<LightSwitch>() : null;
+        if (hallSwitch == null || hallSwitch.lightsToControl == null) yield break;
+        AudioClip flickerClip = Resources.Load<AudioClip>("Audio/Breaker/LightsFlickerOn");
+        Light first = hallSwitch.lightsToControl.Length > 0 ? hallSwitch.lightsToControl[0] : null;
+        if (flickerClip != null && first != null)
+        {
+            AudioSource source = HorrorMomentDirector.CreateSource(first.transform, "Hall Light Flicker", 8f);
+            AudioRouting.Assign(source, AudioBus.World);
+            source.PlayOneShot(flickerClip, 0.7f);
+            Destroy(source.gameObject, flickerClip.length + 0.5f);
+        }
+        float[] blinks = { 0.15f, 0.08f, 0.35f, 0.06f, 0.5f };
+        bool on = false;
+        foreach (float wait in blinks)
+        {
+            on = !on;
+            foreach (Light l in hallSwitch.lightsToControl) if (l != null) l.enabled = on;
+            yield return new WaitForSeconds(wait);
+        }
+        hallSwitch.ForceTurnOn();
     }
 
     void HandlePowerOutageSwitchAttempt()
     {
         if (_hasReactedToPowerOutage) return;
         _hasReactedToPowerOutage = true;
+        _breakerPending = _breakerPanel != null;
         if (_bedsideBulb != null) _bedsideBulb.Break();
         if (_checkingLight)
         {
@@ -868,6 +985,7 @@ public class IntroSequence : MonoBehaviour
     void ResetPowerOutageThought()
     {
         _hasReactedToPowerOutage = false;
+        _breakerPending = false;
         _stairRunPlayed = false;
     }
 

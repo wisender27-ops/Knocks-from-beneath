@@ -44,6 +44,17 @@ public class LightSwitch : MonoBehaviour
 
     private static bool _nightTwoPowerTripEnabled;
     private static bool _powerOutage;
+    private static readonly System.Collections.Generic.List<Light> _trippedLights = new System.Collections.Generic.List<Light>();
+    private bool _lineDead; // M-04: после щитка линия этого выключателя осталась без тока
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetStatics()
+    {
+        _nightTwoPowerTripEnabled = false;
+        _powerOutage = false;
+        _trippedLights.Clear();
+    }
+
 
     private void EnableNightTwoPowerTrip()
     {
@@ -61,6 +72,8 @@ public class LightSwitch : MonoBehaviour
     {
         _nightTwoPowerTripEnabled = false;
         _powerOutage = false;
+        _lineDead = false;
+        _trippedLights.Clear();
         ApplyLightState();
     }
 
@@ -120,9 +133,13 @@ public class LightSwitch : MonoBehaviour
         ApplyLightState();
     }
 
-    private static void TripHousePower()
+    private static void TripHousePower() => CutHousePower(true);
+
+    // notify=false — дебаг-прыжок к щитку: свет погашен, а реакция героя на выключатель не нужна.
+    public static void CutHousePower(bool notify)
     {
         _powerOutage = true;
+        _trippedLights.Clear();
 
         Transform houseRoot = GameObject.Find("Разный мусор")?.transform;
         if (houseRoot != null)
@@ -131,6 +148,7 @@ public class LightSwitch : MonoBehaviour
             foreach (Light lightSource in houseRoot.GetComponentsInChildren<Light>(true))
             {
                 if (lightSource == null || (outdoorLights != null && lightSource.transform.IsChildOf(outdoorLights))) continue;
+                if (lightSource.enabled) _trippedLights.Add(lightSource);
                 lightSource.enabled = false;
             }
         }
@@ -139,12 +157,36 @@ public class LightSwitch : MonoBehaviour
         foreach (LightSwitch lightSwitch in switches)
             if (lightSwitch != null) lightSwitch.ApplyLightState();
 
-        GameEvents.OnPowerOutageSwitchAttempt?.Invoke();
+        if (notify) GameEvents.OnPowerOutageSwitchAttempt?.Invoke();
+    }
+
+    // M-04 «Щиток»: ток вернулся, кроме линий, для которых dead == true. Выключатели снова работают
+    // (и больше не выбивают дом); свет без выключателя, погашенный аварией, загорается, если deadLight не против.
+    public static void RestoreHousePower(System.Predicate<LightSwitch> dead, System.Predicate<Light> deadLight)
+    {
+        _powerOutage = false;
+        _nightTwoPowerTripEnabled = false;
+        LightSwitch[] switches = FindObjectsByType<LightSwitch>(FindObjectsSortMode.None);
+        var deadLights = new System.Collections.Generic.HashSet<Light>();
+        var switched = new System.Collections.Generic.HashSet<Light>();
+        foreach (LightSwitch lightSwitch in switches)
+        {
+            if (lightSwitch == null) continue;
+            lightSwitch._lineDead = dead != null && dead(lightSwitch);
+            if (lightSwitch.lightsToControl == null) continue;
+            foreach (Light l in lightSwitch.lightsToControl)
+                if (l != null) (lightSwitch._lineDead ? deadLights : switched).Add(l);
+        }
+        foreach (Light l in _trippedLights)
+            if (l != null && !switched.Contains(l) && !deadLights.Contains(l) && (deadLight == null || !deadLight(l))) l.enabled = true;
+        _trippedLights.Clear();
+        foreach (LightSwitch lightSwitch in switches)
+            if (lightSwitch != null) lightSwitch.ApplyLightState();
     }
 
     void ApplyLightState()
     {
-        bool effectiveIsOn = isOn && !_powerOutage;
+        bool effectiveIsOn = isOn && !_powerOutage && !_lineDead;
 
         // 1. Управляем источниками света
         if (lightsToControl != null)

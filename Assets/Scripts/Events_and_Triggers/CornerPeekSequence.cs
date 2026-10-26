@@ -65,6 +65,7 @@ namespace KnocksFromBeneath
             if (!_nightTwo || _played || _camera == null || _inventory == null || !_inventory.hasFlashlight) return;
             if (Time.timeScale == 0f || RetroInventoryScreen.IsAnyOpen) return;
             if ((_player != null && (!_player.enabled || _player.isCameraLocked)) || PlayerInteraction.IsLockSequencePlaying) return;
+            if (_intro != null && _intro.HoldsCornerScare) return; // M-04: сначала щиток
             Vector3 view = _camera.WorldToViewportPoint(_headTarget);
             if (_camera.transform.position.y > 3.8f || view.z <= 0f || view.z > 3f ||
                 view.x < 0.12f || view.x > 0.88f || view.y < 0.12f || view.y > 0.88f) return;
