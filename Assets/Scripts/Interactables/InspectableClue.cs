@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace KnocksFromBeneath
@@ -53,10 +54,32 @@ namespace KnocksFromBeneath
         [SerializeField] private string[] thoughtLines;
 
         private static IntroSequence intro;
+        private static readonly List<InspectableClue> anchoredClues = new List<InspectableClue>();
         private Transform worldDetails;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-        private static void ResetStatics() => intro = null;
+        private static void ResetStatics()
+        {
+            intro = null;
+            anchoredClues.Clear();
+        }
+
+        // Улика на чужом предмете, в который смотрит игрок: у неё нет своего коллайдера, E по предмету.
+        public static InspectableClue OnAnchor(Transform target)
+        {
+            for (int i = 0; i < anchoredClues.Count; i++)
+            {
+                InspectableClue clue = anchoredClues[i];
+                if (clue != null && target.IsChildOf(clue.anchor.transform)) return clue;
+            }
+            return null;
+        }
+
+        // Регистрация в Awake/OnDestroy, а не OnEnable: после показа детали компонент выключается.
+        private void Awake()
+        {
+            if (anchor != null) anchoredClues.Add(this);
+        }
 
         public string ClueId => clueId;
         public string DisplayName => displayName;
@@ -116,6 +139,7 @@ namespace KnocksFromBeneath
 
         private void OnDestroy()
         {
+            anchoredClues.Remove(this);
             if (worldDetails != null) Destroy(worldDetails.gameObject);
         }
 

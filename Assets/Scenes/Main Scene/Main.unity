@@ -68012,7 +68012,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1308844461}
   serializedVersion: 2
-  m_LocalRotation: {x: -0.66176414, y: 0.24913497, z: 0.24913499, w: 0.6617641}
+  m_LocalRotation: {x: -0.50000006, y: -0.5, z: -0.50000006, w: 0.5}
   m_LocalPosition: {x: -46.1978, y: -7.3529963, z: -5.001465}
   m_LocalScale: {x: -7.3480644, y: -7.3480644, z: -7.3480644}
   m_ConstrainProportionsScale: 0
@@ -68037,10 +68037,10 @@ MonoBehaviour:
   previewMesh: {fileID: -8315674757156143015, guid: 24031b3214b03cc4ab8acdc5750b00a4, type: 3}
   previewMaterials:
   - {fileID: 2100000, guid: f09de1faad159964bb7dc11e8354a91f, type: 2}
-  previewScale: {x: -7.3480644, y: -7.3480635, z: -7.3480644}
-  previewRotation: {x: -0.7071068, y: 0.00000002101411, z: 0.000000013959239, w: 0.70710677}
-  detailPosition: {x: 0.0000000011641532, y: -0.01782091, z: -0.0099321725}
-  detailNormal: {x: 0, y: -1, z: 0}
+  previewScale: {x: -7.3480644, y: -7.3480644, z: -7.3480644}
+  previewRotation: {x: 0.7071068, y: 0, z: 0, w: -0.70710677}
+  detailPosition: {x: -0.005, y: -0, z: -0}
+  detailNormal: {x: -1, y: -0, z: -0}
   detailUp: {x: 0, y: 0, z: -1}
   detailSize: {x: 0.15, y: 0.08}
   paperLabel: 1
@@ -68049,7 +68049,7 @@ MonoBehaviour:
     REPEAT IT.
 
     PAUSES TOO.'
-  detailPeek: -0.0045016
+  detailPeek: 0
   surfaceSink: 0
   anchor: {fileID: 0}
   tellText: 
@@ -94012,8 +94012,8 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2099318673}
-  - component: {fileID: 2099318675}
   - component: {fileID: 2099318674}
+  - component: {fileID: 2099318675}
   m_Layer: 0
   m_Name: OwnerPhoneNote
   m_TagString: Untagged

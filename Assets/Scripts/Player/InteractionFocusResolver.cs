@@ -79,9 +79,14 @@ namespace KnocksFromBeneath
             if (stove != null && door == null)
                 return intro != null && intro.CanCookDinner() && !stove.IsReady && !stove.IsCooking &&
                     Set(stove.transform, "Готовить ужин", false, false, hit, out focus);
+            // Одна точка на предмет: ненайденная улика под ним важнее его собственного действия.
+            InspectableClue anchored = InspectableClue.OnAnchor(t);
+            if (anchored != null && !anchored.IsFound && anchored.CanInteract)
+                return Set(anchored.transform, "Осмотреть", false, false, hit, out focus);
             NeighborNoteInteractable note = t.GetComponentInParent<NeighborNoteInteractable>();
-            if (note != null) return note.CanInteract && Set(note.transform, "Прочитать записку", false, false, hit, out focus);
-            InspectableClue clue = t.GetComponentInParent<InspectableClue>();
+            if (note != null && (note.CanInteract || anchored == null))
+                return note.CanInteract && Set(note.transform, "Прочитать записку", false, false, hit, out focus);
+            InspectableClue clue = anchored != null ? anchored : t.GetComponentInParent<InspectableClue>();
             if (clue != null) return clue.CanInteract && Set(clue.transform, "Осмотреть", false, false, hit, out focus);
             FrontDoorLockInteractable bolt = t.GetComponentInParent<FrontDoorLockInteractable>();
             if (bolt != null) return bolt.CanInteract && Set(bolt.transform, bolt.IsLocked ? "Отодвинуть засов" : "Задвинуть засов", false, false, hit, out focus);
