@@ -270,9 +270,8 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            // 8. УЛИКА — ОСМОТР (M-05). Улика под чужим предметом — и по самому предмету.
-            InspectableClue clue = InspectableClue.OnAnchor(hitObj.transform);
-            if (clue == null) clue = hitObj.GetComponentInParent<InspectableClue>();
+            // 8. УЛИКА — ОСМОТР (M-05)
+            InspectableClue clue = hitObj.GetComponentInParent<InspectableClue>();
             if (clue != null)
             {
                 clue.Interact();

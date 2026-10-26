@@ -79,9 +79,7 @@ namespace KnocksFromBeneath
             if (stove != null && door == null)
                 return intro != null && intro.CanCookDinner() && !stove.IsReady && !stove.IsCooking &&
                     Set(stove.transform, "Готовить ужин", false, false, hit, out focus);
-            // Улика под чужим предметом (записка под телефоном) осматривается и по самому предмету.
-            InspectableClue clue = InspectableClue.OnAnchor(t);
-            if (clue == null) clue = t.GetComponentInParent<InspectableClue>();
+            InspectableClue clue = t.GetComponentInParent<InspectableClue>();
             if (clue != null) return clue.CanInteract && Set(clue.transform, "Осмотреть", false, false, hit, out focus);
             FrontDoorLockInteractable bolt = t.GetComponentInParent<FrontDoorLockInteractable>();
             if (bolt != null) return bolt.CanInteract && Set(bolt.transform, bolt.IsLocked ? "Отодвинуть засов" : "Задвинуть засов", false, false, hit, out focus);
