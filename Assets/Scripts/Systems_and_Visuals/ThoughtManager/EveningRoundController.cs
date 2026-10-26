@@ -5,6 +5,9 @@ namespace KnocksFromBeneath
 {
 
 // Завершение дня 2 у кровати. Имена API и тег сохранены для существующих вызовов.
+// B-01: пока идёт вечерний квест, засов входной двери можно задвинуть (необязательно, квест не
+// продвигает). Отодвинуть можно всегда — иначе ночью 2 игрок заперт в доме. Последствия для
+// концовок — в B-02 (отложено до совместной сессии с автором).
 public sealed class EveningRoundController
 {
     private readonly Door _frontDoor;
@@ -27,12 +30,33 @@ public sealed class EveningRoundController
     public void SetupEveningWalkQuest()
     {
         _createQuest("Лечь спать", 1, OnEveningFinished, "evening-walk");
+        _showThoughts(new[] { "Может, на ночь задвинуть засов на входной двери?" }, null);
     }
 
-    // Совместимость со старыми вызовами: вечернее запирание больше недоступно.
+    public bool CanLockFrontDoor =>
+        !GameState.frontDoorLocked && QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("evening-walk");
+
     public bool LockFrontDoor()
     {
-        return false;
+        if (!CanLockFrontDoor) return false;
+        GameState.frontDoorLocked = true;
+        if (_frontDoor != null) _frontDoor.SetInteractionLocked(true);
+        _showThoughts(new[] { "Вот так. Теперь хоть кто-то снаружи не войдёт." }, null);
+        return true;
+    }
+
+    public bool UnlockFrontDoor()
+    {
+        if (!GameState.frontDoorLocked) return false;
+        GameState.frontDoorLocked = false;
+        if (_frontDoor != null) _frontDoor.SetInteractionLocked(false);
+        return true;
+    }
+
+    // Чекпойнт главы вернул флаг «заперто» — дверь должна быть заперта и на деле.
+    public void ApplyRestoredLock()
+    {
+        if (_frontDoor != null) _frontDoor.SetInteractionLocked(GameState.frontDoorLocked);
     }
 
     // Вызывается из IntroSequence через тот же GameEvents.OnBedTriggerReached, на который

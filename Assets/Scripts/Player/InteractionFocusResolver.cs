@@ -82,7 +82,7 @@ namespace KnocksFromBeneath
             NeighborNoteInteractable note = t.GetComponentInParent<NeighborNoteInteractable>();
             if (note != null) return note.CanInteract && Set(note.transform, "Прочитать записку", false, false, hit, out focus);
             FrontDoorLockInteractable bolt = t.GetComponentInParent<FrontDoorLockInteractable>();
-            if (bolt != null) return bolt.CanInteract && Set(bolt.transform, "Запереть засов", false, false, hit, out focus);
+            if (bolt != null) return bolt.CanInteract && Set(bolt.transform, bolt.IsLocked ? "Отодвинуть засов" : "Задвинуть засов", false, false, hit, out focus);
             if (door != null && door.isActiveAndEnabled)
                 return Set(door.transform, door.IsInteractionLocked ? "Заперто" : door.isOpen ? "Закрыть" : "Открыть",
                     door.IsInteractionLocked, true, hit, out focus);

@@ -288,6 +288,8 @@ public class IntroSequence : MonoBehaviour
     void StartChapter(StoryChapter chapter)
     {
         ChapterCheckpoints.ApplyLaunchState(playerInventory);
+        _eveningRound.ApplyRestoredLock();
+        FindFirstObjectByType<FrontDoorLockInteractable>()?.SnapToState();
         DebugStoryStage stage = ChapterCheckpoints.Info(chapter).Stage;
         if (stage == DebugStoryStage.None)
         {
@@ -1154,9 +1156,16 @@ public class IntroSequence : MonoBehaviour
         _dinner.OnDinnerEaten();
     }
 
+    public bool CanLockFrontDoor => _eveningRound.CanLockFrontDoor;
+
     public bool OnFrontDoorLocked()
     {
         return _eveningRound.LockFrontDoor();
+    }
+
+    public bool OnFrontDoorUnlocked()
+    {
+        return _eveningRound.UnlockFrontDoor();
     }
 
     private void ShowThoughts(string[] lines, System.Action onComplete)

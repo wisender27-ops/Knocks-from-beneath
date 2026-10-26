@@ -4,7 +4,8 @@ using UnityEngine;
 namespace KnocksFromBeneath
 {
 
-// Старый компонент засова сохранён для ссылок сцены; взаимодействие отключено.
+// Засов входной двери (B-01): задвинуть — вечером дня 2 (EveningRoundController), отодвинуть — всегда,
+// пока заперто. Состояние — GameState.frontDoorLocked; щеколда показывает его.
 public class FrontDoorLockInteractable : MonoBehaviour
 {
     [Tooltip("Подвижная часть щеколды. Если не задана — видимой реакции не будет, логика замка не изменится.")]
@@ -22,9 +23,13 @@ public class FrontDoorLockInteractable : MonoBehaviour
 
     private Vector3 _openLocalPosition;
     private bool _capturedOpenPosition;
-    private bool _locked;
+    private IntroSequence _intro;
 
-    public bool CanInteract => false;
+    public bool IsLocked => GameState.frontDoorLocked;
+    // Опрашивается фокусом взаимодействия каждый кадр — IntroSequence ищется один раз.
+    public bool CanInteract => IsLocked || (Intro != null && Intro.CanLockFrontDoor);
+
+    private IntroSequence Intro => _intro != null ? _intro : _intro = FindFirstObjectByType<IntroSequence>();
 
     void Awake()
     {
@@ -40,19 +45,12 @@ public class FrontDoorLockInteractable : MonoBehaviour
 
     public void Interact()
     {
-        if (!CanInteract) return;
-
-        var intro = FindFirstObjectByType<IntroSequence>();
-        if (intro == null) return;
-
-        // Сохранённый путь старого взаимодействия, недоступный после отключения засова.
-        if (!intro.OnFrontDoorLocked()) return;
-
-        _locked = true;
-        ShowLocked();
+        if (!CanInteract || Intro == null) return;
+        bool changed = IsLocked ? Intro.OnFrontDoorUnlocked() : Intro.OnFrontDoorLocked();
+        if (changed) ShowState();
     }
 
-    void ShowLocked()
+    void ShowState()
     {
         CaptureOpenPosition();
 
@@ -60,8 +58,20 @@ public class FrontDoorLockInteractable : MonoBehaviour
             lockAudioSource.PlayOneShot(lockSfx);
 
         if (bolt != null && _capturedOpenPosition)
-            StartCoroutine(SlideRoutine(_openLocalPosition + lockedLocalOffset));
+        {
+            StopAllCoroutines();
+            StartCoroutine(SlideRoutine(TargetPosition));
+        }
     }
+
+    // Загрузка главы: щеколда сразу в положении по флагу, без звука.
+    public void SnapToState()
+    {
+        CaptureOpenPosition();
+        if (bolt != null && _capturedOpenPosition) bolt.localPosition = TargetPosition;
+    }
+
+    Vector3 TargetPosition => IsLocked ? _openLocalPosition + lockedLocalOffset : _openLocalPosition;
 
     IEnumerator SlideRoutine(Vector3 target)
     {

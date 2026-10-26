@@ -69,6 +69,7 @@ public class EveningRoundControllerTests
         var controller = CreateController();
         _questManager.CreateQuest("Другое", 1, questTag: "some-other-quest");
 
+        Assert.That(controller.CanLockFrontDoor, Is.False);
         Assert.That(controller.LockFrontDoor(), Is.False);
 
         Assert.That(GameState.frontDoorLocked, Is.False);
@@ -76,71 +77,71 @@ public class EveningRoundControllerTests
     }
 
     [Test]
-    public void LockFrontDoor_RefusesWhenEveningWalkActive()
+    public void LockFrontDoor_DuringEveningWalk_LocksWithoutQuestProgress()
     {
         var controller = CreateController();
-        _questManager.CreateQuest("Обход", 1, questTag: "evening-walk");
+        _questManager.CreateQuest("Лечь спать", 1, questTag: "evening-walk");
 
-        Assert.That(controller.LockFrontDoor(), Is.False);
+        Assert.That(controller.LockFrontDoor(), Is.True);
 
-        Assert.That(GameState.frontDoorLocked, Is.False);
-        Assert.That(_door.IsInteractionLocked, Is.False);
-        Assert.That(_questManager.questList[0].currentAmount, Is.Zero);
+        Assert.That(GameState.frontDoorLocked, Is.True);
+        Assert.That(_door.IsInteractionLocked, Is.True);
+        Assert.That(_questManager.questList[0].currentAmount, Is.Zero, "Запирание необязательно — квест не продвигает");
+        Assert.That(controller.CanLockFrontDoor, Is.False);
+        Assert.That(controller.LockFrontDoor(), Is.False, "Повторно не запирается");
     }
 
     [Test]
-    public void HandleBedReached_CompletesQuestWithoutLockingDoor()
+    public void UnlockFrontDoor_WorksAnyTimeAfterLocking()
+    {
+        var controller = CreateController();
+        _questManager.CreateQuest("Лечь спать", 1, questTag: "evening-walk");
+        controller.LockFrontDoor();
+        _questManager.questList.Clear(); // ночь 2: вечернего квеста уже нет
+
+        Assert.That(controller.UnlockFrontDoor(), Is.True);
+
+        Assert.That(GameState.frontDoorLocked, Is.False);
+        Assert.That(_door.IsInteractionLocked, Is.False);
+        Assert.That(controller.UnlockFrontDoor(), Is.False);
+    }
+
+    [Test]
+    public void HandleBedReached_CompletesQuest_KeepsLockChoice()
     {
         var controller = CreateController();
         controller.SetupEveningWalkQuest();
         _questManager.CreateQuest("Сон", 1, _recorder.QuestCompletion, "evening-walk");
+        controller.LockFrontDoor();
 
         controller.HandleBedReached();
 
-        Assert.That(GameState.frontDoorLocked, Is.False);
-        Assert.That(_door.IsInteractionLocked, Is.False);
+        Assert.That(GameState.frontDoorLocked, Is.True);
+        Assert.That(_door.IsInteractionLocked, Is.True);
         Assert.That(_questManager.questList[0].currentAmount, Is.EqualTo(1));
         Assert.That(_recorder.FinishedEvenings, Is.EqualTo(1));
     }
 
     [Test]
-    public void LockFrontDoor_RepeatedCallsNeverAddProgress()
-    {
-        var controller = CreateController();
-        _questManager.CreateQuest("Обход", 1, questTag: "evening-walk");
-
-        Assert.That(controller.LockFrontDoor(), Is.False);
-        Assert.That(controller.LockFrontDoor(), Is.False);
-        Assert.That(_questManager.questList[0].currentAmount, Is.Zero);
-        Assert.That(GameState.frontDoorLocked, Is.False);
-    }
-
-    [Test]
-    public void LockFrontDoor_DoesNotChangeExistingLockedFlag()
+    public void ApplyRestoredLock_LocksDoorFromFlag()
     {
         var controller = CreateController();
         GameState.frontDoorLocked = true;
-        _questManager.CreateQuest("Сон", 1, questTag: "evening-walk");
 
-        Assert.That(controller.LockFrontDoor(), Is.False);
+        controller.ApplyRestoredLock();
 
-        Assert.That(GameState.frontDoorLocked, Is.True);
-        Assert.That(_door.IsInteractionLocked, Is.False);
-        Assert.That(_questManager.questList[0].currentAmount, Is.Zero);
+        Assert.That(_door.IsInteractionLocked, Is.True);
     }
 
     [Test]
-    public void FrontDoorLockInteractable_CannotInteractOrChangeQuest()
+    public void FrontDoorLockInteractable_TogglesThroughIntroOnly()
     {
         CreateController();
-        _questManager.CreateQuest("Сон", 1, questTag: "evening-walk");
         var doorLock = _doorGo.AddComponent<FrontDoorLockInteractable>();
 
-        Assert.That(doorLock.CanInteract, Is.False);
-        doorLock.Interact();
-
-        Assert.That(GameState.frontDoorLocked, Is.False);
-        Assert.That(_door.IsInteractionLocked, Is.False);
-        Assert.That(_questManager.questList[0].currentAmount, Is.Zero);
+        Assert.That(doorLock.CanInteract, Is.False, "Без вечернего квеста и без засова — нельзя");
+        GameState.frontDoorLocked = true;
+        Assert.That(doorLock.IsLocked, Is.True);
+        Assert.That(doorLock.CanInteract, Is.True, "Задвинутый засов можно отодвинуть всегда");
     }
 }
