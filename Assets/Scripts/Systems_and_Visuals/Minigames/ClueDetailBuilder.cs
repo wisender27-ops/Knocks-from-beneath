@@ -31,7 +31,7 @@ namespace KnocksFromBeneath
             bool tuck = world && under;
             // Бумажка из-под предмета торчит только в доме; в превью она целиком на дне, в кадре.
             float peek = world || !under ? clue.DetailPeek : 0f;
-            position += up * peek + normal * (tuck ? -TuckDepth : SurfaceGap);
+            position += up * peek + normal * (tuck ? -(TuckDepth + clue.SurfaceSink) : SurfaceGap);
             return Build(parent, "ClueDetail", position, normal, up, clue.DetailSize, clue.DetailText, clue.PaperLabel, world);
         }
 

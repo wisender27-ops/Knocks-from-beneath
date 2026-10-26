@@ -3596,6 +3596,8 @@ MonoBehaviour:
 
     HE ANSWERS THE SAME'
   detailPeek: 0
+  surfaceSink: 0
+  anchor: {fileID: 0}
   tellText: /// //// //
   tellPosition: {x: 0, y: 0.0025108, z: 0.00009369792}
   tellNormal: {x: 0, y: 1, z: 0}
@@ -6521,164 +6523,6 @@ MeshCollider:
   m_Convex: 0
   m_CookingOptions: 30
   m_Mesh: {fileID: 6660795296640138148, guid: 2a67684986f42914aa9361ae5fd1ed85, type: 3}
---- !u!1 &217946467
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 217946468}
-  - component: {fileID: 217946472}
-  - component: {fileID: 217946471}
-  - component: {fileID: 217946470}
-  - component: {fileID: 217946469}
-  m_Layer: 0
-  m_Name: OwnerPhone
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &217946468
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 217946467}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0.7067204, y: 0.023357382, z: 0.023357298, w: -0.70672137}
-  m_LocalPosition: {x: -48.691727, y: -6.9390907, z: -7.9734726}
-  m_LocalScale: {x: 34.491257, y: 34.491257, z: 34.491257}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 2146676962}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &217946469
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 217946467}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: fee6a7e764df892428096d8deba1bece, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.InspectableClue
-  clueId: clue-below
-  displayName: "\u0421\u0442\u0430\u0440\u044B\u0439 \u0442\u0435\u043B\u0435\u0444\u043E\u043D"
-  afterFirstNight: 1
-  previewMesh: {fileID: 8336156039792668776, guid: 24031b3214b03cc4ab8acdc5750b00a4, type: 3}
-  previewMaterials:
-  - {fileID: 2100000, guid: 4b55d10b029fc8445ad9dd298aa6a44c, type: 2}
-  previewScale: {x: 34.49126, y: 34.491253, z: 34.49125}
-  previewRotation: {x: -0.7071063, y: -0.000000017338436, z: 0.000000034932814, w: 0.70710725}
-  detailPosition: {x: 0.0004338238, y: -0.00020225986, z: -0.0017123146}
-  detailNormal: {x: 0, y: 0, z: -1}
-  detailUp: {x: 1, y: 0, z: 0}
-  detailSize: {x: 0.16, y: 0.07}
-  paperLabel: 1
-  detailText: 'IF I''M DOWN THERE -
-
-    ANSWER ME.
-
-    W.H.'
-  detailPeek: 0.20205949
-  tellText: 
-  tellPosition: {x: 0.0004338238, y: 0.0032160059, z: 0.00033768645}
-  tellNormal: {x: 0, y: 1, z: 0}
-  tellUp: {x: 0, y: 0, z: 1}
-  tellSize: {x: 0.08, y: 0.03}
-  foundCaption: "\u041F\u043E\u0434 \u0442\u0435\u043B\u0435\u0444\u043E\u043D\u043E\u043C
-    \u0437\u0430\u043F\u0438\u0441\u043A\u0430: \xAB\u0415\u0441\u043B\u0438 \u044F
-    \u0432\u043D\u0438\u0437\u0443 \u2014 \u043E\u0442\u0432\u0435\u0447\u0430\u0439
-    \u043C\u043D\u0435. \u0423. \u0425.\xBB"
-  thoughtLines:
-  - "\u0423. \u0425. \u2014 \u0423\u043E\u043B\u0442\u0435\u0440 \u0425\u0435\u0439\u043B."
-  - "\xAB\u0415\u0441\u043B\u0438 \u044F \u0432\u043D\u0438\u0437\u0443\xBB\u2026
-    \u041E\u043D \u0447\u0442\u043E, \u0442\u0430\u043C? \u0414\u043E \u0441\u0438\u0445
-    \u043F\u043E\u0440?"
---- !u!65 &217946470
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 217946467}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.010999231, y: 0.0068365308, z: 0.004100001}
-  m_Center: {x: 0.0004338238, y: -0.00020225983, z: 0.0003376752}
---- !u!23 &217946471
-MeshRenderer:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 217946467}
-  m_Enabled: 1
-  m_CastShadows: 1
-  m_ReceiveShadows: 1
-  m_DynamicOccludee: 1
-  m_StaticShadowCaster: 0
-  m_MotionVectors: 1
-  m_LightProbeUsage: 1
-  m_ReflectionProbeUsage: 1
-  m_RayTracingMode: 2
-  m_RayTraceProcedural: 0
-  m_RayTracingAccelStructBuildFlagsOverride: 0
-  m_RayTracingAccelStructBuildFlags: 1
-  m_SmallMeshCulling: 1
-  m_ForceMeshLod: -1
-  m_MeshLodSelectionBias: 0
-  m_RenderingLayerMask: 1
-  m_RendererPriority: 0
-  m_Materials:
-  - {fileID: 2100000, guid: 4b55d10b029fc8445ad9dd298aa6a44c, type: 2}
-  m_StaticBatchInfo:
-    firstSubMesh: 0
-    subMeshCount: 0
-  m_StaticBatchRoot: {fileID: 0}
-  m_ProbeAnchor: {fileID: 0}
-  m_LightProbeVolumeOverride: {fileID: 0}
-  m_ScaleInLightmap: 0.75
-  m_ReceiveGI: 1
-  m_PreserveUVs: 0
-  m_IgnoreNormalsForChartDetection: 0
-  m_ImportantGI: 0
-  m_StitchLightmapSeams: 1
-  m_SelectedEditorRenderState: 3
-  m_MinimumChartSize: 4
-  m_AutoUVMaxDistance: 0.5
-  m_AutoUVMaxAngle: 89
-  m_LightmapParameters: {fileID: 0}
-  m_GlobalIlluminationMeshLod: 0
-  m_SortingLayerID: 0
-  m_SortingLayer: 0
-  m_SortingOrder: 0
-  m_MaskInteraction: 0
-  m_AdditionalVertexStreams: {fileID: 0}
---- !u!33 &217946472
-MeshFilter:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 217946467}
-  m_Mesh: {fileID: 8336156039792668776, guid: 24031b3214b03cc4ab8acdc5750b00a4, type: 3}
 --- !u!1 &222229723
 GameObject:
   m_ObjectHideFlags: 0
@@ -14386,22 +14230,26 @@ MonoBehaviour:
   - {fileID: 2100000, guid: 97e2d160a63c0654181ed61b000455d6, type: 2}
   previewScale: {x: -10.641596, y: -11.897494, z: -11.897492}
   previewRotation: {x: 0.70710677, y: -0.00000004172746, z: 0.00000010577856, w: 0.7071069}
-  detailPosition: {x: 0, y: -4.656613e-10, z: -0.0016205484}
-  detailNormal: {x: 0, y: 0, z: -1}
-  detailUp: {x: -1, y: 0, z: 0}
-  detailSize: {x: 0.14, y: 0.07}
+  detailPosition: {x: 0, y: -4.656613e-10, z: 0.0028459965}
+  detailNormal: {x: 0, y: 0, z: 1}
+  detailUp: {x: 1, y: 0, z: 0}
+  detailSize: {x: 0.15, y: 0.07}
   paperLabel: 1
-  detailText: 'EX LIBRIS
+  detailText: 'THIS BOOK BELONGS TO
 
     WALTER HALE'
-  detailPeek: 0.1494745
+  detailPeek: 0
+  surfaceSink: 0
+  anchor: {fileID: 0}
   tellText: 
   tellPosition: {x: 0, y: 0.011868406, z: 0.000612724}
   tellNormal: {x: 0, y: 1, z: 0}
   tellUp: {x: 0, y: 0, z: 1}
   tellSize: {x: 0.08, y: 0.03}
-  foundCaption: "\u042D\u043A\u0441\u043B\u0438\u0431\u0440\u0438\u0441: \xABEx libris
-    Walter Hale\xBB. \u041A\u043D\u0438\u0433\u0430 \u043F\u0440\u0435\u0436\u043D\u0435\u0433\u043E
+  foundCaption: "\u041D\u0430 \u043E\u0431\u043B\u043E\u0436\u043A\u0435 \u043D\u0430\u043A\u043B\u0435\u0439\u043A\u0430:
+    \xAB\u042D\u0442\u0430 \u043A\u043D\u0438\u0433\u0430 \u043F\u0440\u0438\u043D\u0430\u0434\u043B\u0435\u0436\u0438\u0442
+    \u0423\u043E\u043B\u0442\u0435\u0440\u0443 \u0425\u0435\u0439\u043B\u0443\xBB.
+    \u041A\u043D\u0438\u0433\u0430 \u043F\u0440\u0435\u0436\u043D\u0435\u0433\u043E
     \u0445\u043E\u0437\u044F\u0438\u043D\u0430. \u041E\u043D \u0435\u0451 \u043D\u0435
     \u0437\u0430\u0431\u0440\u0430\u043B."
   thoughtLines:
@@ -68165,7 +68013,7 @@ Transform:
   m_GameObject: {fileID: 1308844461}
   serializedVersion: 2
   m_LocalRotation: {x: -0.66176414, y: 0.24913497, z: 0.24913499, w: 0.6617641}
-  m_LocalPosition: {x: -41.1067, y: -7.0898895, z: -9.847588}
+  m_LocalPosition: {x: -46.1978, y: -7.3529963, z: -5.001465}
   m_LocalScale: {x: -7.3480644, y: -7.3480644, z: -7.3480644}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -68191,8 +68039,8 @@ MonoBehaviour:
   - {fileID: 2100000, guid: f09de1faad159964bb7dc11e8354a91f, type: 2}
   previewScale: {x: -7.3480644, y: -7.3480635, z: -7.3480644}
   previewRotation: {x: -0.7071068, y: 0.00000002101411, z: 0.000000013959239, w: 0.70710677}
-  detailPosition: {x: -0.0049502123, y: 0, z: -0.0099321725}
-  detailNormal: {x: -1, y: 0, z: 0}
+  detailPosition: {x: 0.0000000011641532, y: -0.01782091, z: -0.0099321725}
+  detailNormal: {x: 0, y: -1, z: 0}
   detailUp: {x: 0, y: 0, z: -1}
   detailSize: {x: 0.15, y: 0.08}
   paperLabel: 1
@@ -68202,6 +68050,8 @@ MonoBehaviour:
 
     PAUSES TOO.'
   detailPeek: -0.0045016
+  surfaceSink: 0
+  anchor: {fileID: 0}
   tellText: 
   tellPosition: {x: 0.0000000011641532, y: 0.01782091, z: -0.0099321725}
   tellNormal: {x: 0, y: 1, z: 0}
@@ -68237,8 +68087,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.009900428, y: 0.035641816, z: 0.039864346}
-  m_Center: {x: 0.0000009552834, y: -3.9041126e-10, z: -0.009932143}
+  m_Size: {x: 0.0099004265, y: 0.03564182, z: 0.039864346}
+  m_Center: {x: 0.0000000011641532, y: 0, z: -0.0099321725}
 --- !u!23 &1308844465
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -94153,6 +94003,110 @@ Transform:
   - {fileID: 1939808891}
   m_Father: {fileID: 918200840}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2099318672
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2099318673}
+  - component: {fileID: 2099318675}
+  - component: {fileID: 2099318674}
+  m_Layer: 0
+  m_Name: OwnerPhoneNote
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &2099318673
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099318672}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -44.717583, y: -7.4246716, z: -3.1724777}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2146676962}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2099318674
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099318672}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fee6a7e764df892428096d8deba1bece, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.InspectableClue
+  clueId: clue-below
+  displayName: "\u0417\u0430\u043F\u0438\u0441\u043A\u0430 \u043F\u043E\u0434 \u0442\u0435\u043B\u0435\u0444\u043E\u043D\u043E\u043C"
+  afterFirstNight: 1
+  previewMesh: {fileID: -4420810282019988501, guid: 24031b3214b03cc4ab8acdc5750b00a4, type: 3}
+  previewMaterials:
+  - {fileID: 2100000, guid: ddd7aeaa6f0f7594bb6efe533c6c875b, type: 2}
+  previewScale: {x: 46.43645, y: 46.43645, z: 46.436455}
+  previewRotation: {x: 0.7071075, y: -0.000000096944575, z: -0.00000010164063, w: -0.70710605}
+  detailPosition: {x: 0.0004380045, y: -0.0001608081, z: -0.0017460315}
+  detailNormal: {x: 0, y: 0, z: -1}
+  detailUp: {x: 0, y: -1, z: 0}
+  detailSize: {x: 0.22, y: 0.11}
+  paperLabel: 1
+  detailText: 'IF I''M DOWN THERE -
+
+    ANSWER ME.
+
+    W.H.'
+  detailPeek: 0.16374207
+  surfaceSink: 0.0071138507
+  anchor: {fileID: 3945205215384648133}
+  tellText: 
+  tellPosition: {x: 0.0004380045, y: 0.0032574576, z: 0.00030396954}
+  tellNormal: {x: 0, y: 1, z: 0}
+  tellUp: {x: 0, y: 0, z: 1}
+  tellSize: {x: 0.08, y: 0.03}
+  foundCaption: "\u041F\u043E\u0434 \u0442\u0435\u043B\u0435\u0444\u043E\u043D\u043E\u043C
+    \u0437\u0430\u043F\u0438\u0441\u043A\u0430: \xAB\u0415\u0441\u043B\u0438 \u044F
+    \u0432\u043D\u0438\u0437\u0443 \u2014 \u043E\u0442\u0432\u0435\u0447\u0430\u0439
+    \u043C\u043D\u0435. \u0423. \u0425.\xBB"
+  thoughtLines:
+  - "\u0412\u0447\u0435\u0440\u0430 \u0435\u0451 \u0437\u0434\u0435\u0441\u044C \u043D\u0435
+    \u0431\u044B\u043B\u043E."
+  - "\u0423. \u0425.\u2026 \u0423\u043E\u043B\u0442\u0435\u0440 \u0425\u0435\u0439\u043B?
+    \u041F\u0440\u0435\u0436\u043D\u0438\u0439 \u0445\u043E\u0437\u044F\u0438\u043D."
+  - "\xAB\u0415\u0441\u043B\u0438 \u044F \u0432\u043D\u0438\u0437\u0443\xBB\u2026
+    \u041E\u043D \u0447\u0442\u043E, \u0442\u0430\u043C? \u0414\u043E \u0441\u0438\u0445
+    \u043F\u043E\u0440?"
+--- !u!65 &2099318675
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2099318672}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.07, y: 0.03, z: 0.22}
+  m_Center: {x: 0, y: 0, z: 0}
 --- !u!114 &2103840017
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -95932,7 +95886,7 @@ Transform:
   - {fileID: 530908408}
   - {fileID: 108144415}
   - {fileID: 1308844462}
-  - {fileID: 217946468}
+  - {fileID: 2099318673}
   m_Father: {fileID: 1279739769}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1044343860091688

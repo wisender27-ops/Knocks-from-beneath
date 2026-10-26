@@ -33,6 +33,10 @@ namespace KnocksFromBeneath
         [TextArea] [SerializeField] private string detailText;
         [Tooltip("Сдвиг бумажки вдоль её «верха», м: край выходит за грань и торчит из-под предмета — зацепка для глаза.")]
         [SerializeField] private float detailPeek;
+        [Tooltip("Насколько предмет утоплен в поверхность, м: бумажка из-под него ложится на саму поверхность.")]
+        [SerializeField] private float surfaceSink;
+        [Tooltip("Предмет, под которым лежит деталь (если улика — не сам этот объект). Пока его нет в доме, улики нет.")]
+        [SerializeField] private GameObject anchor;
 
         [Header("Зацепка на видной грани (необязательно)")]
         [Tooltip("Царапины и т.п. на грани, которую видно с места — намёк, что предмет стоит осмотреть.")]
@@ -67,6 +71,7 @@ namespace KnocksFromBeneath
         public bool PaperLabel => paperLabel;
         public string DetailText => detailText;
         public float DetailPeek => detailPeek;
+        public float SurfaceSink => surfaceSink;
         public bool HasTell => !string.IsNullOrEmpty(tellText);
         public string TellText => tellText;
         public Vector3 TellPosition => tellPosition;
@@ -84,6 +89,7 @@ namespace KnocksFromBeneath
         {
             get
             {
+                if (anchor != null && !anchor.activeInHierarchy) return false;
                 if (!afterFirstNight) return true;
                 if (intro == null) intro = FindFirstObjectByType<IntroSequence>();
                 return intro != null && intro.FirstNightPassed;
@@ -101,10 +107,11 @@ namespace KnocksFromBeneath
         private void ShowWorldDetails()
         {
             // В корне сцены, а не дочерним: у предметов отрицательный масштаб, текст отразился бы зеркально.
+            Transform pose = anchor != null ? anchor.transform : transform;
             worldDetails = new GameObject(name + " Clue").transform;
-            worldDetails.SetPositionAndRotation(transform.position, Quaternion.identity);
-            ClueDetailBuilder.BuildDetail(worldDetails, this, transform.rotation, transform.lossyScale, true);
-            ClueDetailBuilder.BuildTell(worldDetails, this, transform.rotation, transform.lossyScale, true);
+            worldDetails.SetPositionAndRotation(pose.position, Quaternion.identity);
+            ClueDetailBuilder.BuildDetail(worldDetails, this, pose.rotation, pose.lossyScale, true);
+            ClueDetailBuilder.BuildTell(worldDetails, this, pose.rotation, pose.lossyScale, true);
         }
 
         private void OnDestroy()
@@ -137,20 +144,28 @@ namespace KnocksFromBeneath
             if (tellFace != Vector3.zero) tellNormal = tellFace.normalized;
             if (tellFaceUp != Vector3.zero) tellUp = tellFaceUp.normalized;
             if (tellArea != Vector2.zero) tellSize = tellArea;
-            CaptureMesh();
+            CaptureMesh(anchor != null ? anchor : gameObject);
         }
 
-        private void CaptureMesh()
+        // Улика на чужом предмете (вызывать до Configure): поза и меш превью берутся у него,
+        // у самой улики остаётся только коллайдер у торчащей детали.
+        public void ConfigureAnchor(GameObject target, float sink)
         {
-            MeshFilter filter = GetComponent<MeshFilter>();
-            MeshRenderer meshRenderer = GetComponent<MeshRenderer>();
+            anchor = target;
+            surfaceSink = sink;
+        }
+
+        private void CaptureMesh(GameObject source)
+        {
+            MeshFilter filter = source.GetComponent<MeshFilter>();
+            MeshRenderer meshRenderer = source.GetComponent<MeshRenderer>();
             if (filter == null || filter.sharedMesh == null) return;
             previewMesh = filter.sharedMesh;
             previewMaterials = meshRenderer != null ? meshRenderer.sharedMaterials : new Material[0];
-            previewScale = transform.lossyScale;
+            previewScale = source.transform.lossyScale;
             // Без поворота вокруг вертикали: в превью важно, где верх, а не куда предмет смотрит в комнате.
-            Vector3 euler = transform.rotation.eulerAngles;
-            previewRotation = Quaternion.Euler(0f, -euler.y, 0f) * transform.rotation;
+            Vector3 euler = source.transform.rotation.eulerAngles;
+            previewRotation = Quaternion.Euler(0f, -euler.y, 0f) * source.transform.rotation;
             Bounds bounds = previewMesh.bounds;
             Vector3 n = detailNormal;
             detailPosition = bounds.center + Vector3.Scale(bounds.extents, n);
