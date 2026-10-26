@@ -17,6 +17,8 @@ public enum StoryChapter
 // Чекпойнты по главам (F-04): в начале каждого дня/ночи сохраняются глава, StoryFlags и
 // инвентарь. Восстанавливает IntroSequence теми же прыжками, что и дебаг (DebugStoryStage).
 // Меню кладёт сюда запрос запуска, сцена игры забирает его в IntroSequence.Start.
+// Глава открывается в «Выборе главы» не сразу, а когда игрок, дойдя до неё, выходит из игры —
+// в главное меню или совсем (CommitReached). Дебаг-прыжки прогресс не пишут.
 public static class ChapterCheckpoints
 {
     public sealed class ChapterInfo
@@ -48,18 +50,20 @@ public static class ChapterCheckpoints
         new ChapterInfo(StoryChapter.NightTwo, "4. Вторая ночь", DebugStoryStage.StartNight),
     };
 
-    private const string LastKey = "kfb.save.last";
-    private const string UnlockedKey = "kfb.save.unlocked";
-    private const string ChapterKeyPrefix = "kfb.save.chapter.";
+    // Ключи kfb.save.* (до правки) забиты дебаг-прыжками — прогресс начинается заново.
+    private const string LastKey = "kfb.progress.last";
+    private const string UnlockedKey = "kfb.progress.unlocked";
+    private const string ChapterKeyPrefix = "kfb.progress.chapter.";
 
     private static bool hasLaunch;
     private static StoryChapter launchChapter;
     private static Snapshot launchSnapshot;
+    private static int reachedThisSession = -1;
+    private static bool savesDisabled;
 
     public static bool HasSave => PlayerPrefs.HasKey(LastKey);
     public static StoryChapter LastChapter => (StoryChapter)PlayerPrefs.GetInt(LastKey, 0);
     public static bool IsUnlocked(StoryChapter chapter) => (int)chapter <= PlayerPrefs.GetInt(UnlockedKey, -1);
-    public static bool AnyChapterBeyondFirst => PlayerPrefs.GetInt(UnlockedKey, -1) >= (int)StoryChapter.NightOne;
 
     public static ChapterInfo Info(StoryChapter chapter)
     {
@@ -68,14 +72,38 @@ public static class ChapterCheckpoints
     }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    private static void ResetSession()
+    {
+        ResetLaunch();
+        reachedThisSession = -1;
+        savesDisabled = false;
+        Application.quitting -= CommitReached;
+        Application.quitting += CommitReached;
+    }
+
     private static void ResetLaunch()
     {
         hasLaunch = false;
         launchSnapshot = null;
     }
 
+    // Сессия запущена дебаг-прыжком: ни сохранений, ни открытия глав.
+    public static void DisableSaves() => savesDisabled = true;
+
+    // Выход из игры (главное меню или закрытие): открыть главы, до которых игрок дошёл.
+    public static void CommitReached()
+    {
+        if (reachedThisSession > PlayerPrefs.GetInt(UnlockedKey, -1))
+        {
+            PlayerPrefs.SetInt(UnlockedKey, reachedThisSession);
+            PlayerPrefs.Save();
+        }
+        reachedThisSession = -1;
+    }
+
     public static void Save(StoryChapter chapter, PlayerInventory inventory)
     {
+        if (savesDisabled) return;
         var snapshot = new Snapshot
         {
             chapter = (int)chapter,
@@ -100,8 +128,8 @@ public static class ChapterCheckpoints
         }
         PlayerPrefs.SetString(ChapterKeyPrefix + (int)chapter, JsonUtility.ToJson(snapshot));
         PlayerPrefs.SetInt(LastKey, (int)chapter);
-        PlayerPrefs.SetInt(UnlockedKey, Mathf.Max(PlayerPrefs.GetInt(UnlockedKey, -1), (int)chapter));
         PlayerPrefs.Save();
+        reachedThisSession = Mathf.Max(reachedThisSession, (int)chapter);
     }
 
     // «Продолжить» — последняя сохранённая глава с её флагами и инвентарём.
@@ -123,7 +151,12 @@ public static class ChapterCheckpoints
         return true;
     }
 
-    public static void ClearLaunch() => ResetLaunch();
+    // Запуск из меню — настоящая игра, даже если до этого в сессии был дебаг-прыжок.
+    public static void ClearLaunch()
+    {
+        ResetLaunch();
+        savesDisabled = false;
+    }
 
     // Забирает запрос один раз: перезагрузка сцены после этого — обычная новая игра.
     public static bool TryTakeLaunch(out StoryChapter chapter)

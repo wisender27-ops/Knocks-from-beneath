@@ -8,8 +8,8 @@ public class ChapterCheckpointsTests
     // Тесты пишут в настоящие PlayerPrefs — сохраняем и возвращаем ключи прохождения.
     static readonly string[] Keys =
     {
-        "kfb.save.last", "kfb.save.unlocked",
-        "kfb.save.chapter.0", "kfb.save.chapter.1", "kfb.save.chapter.2", "kfb.save.chapter.3",
+        "kfb.progress.last", "kfb.progress.unlocked",
+        "kfb.progress.chapter.0", "kfb.progress.chapter.1", "kfb.progress.chapter.2", "kfb.progress.chapter.3",
     };
     readonly Dictionary<string, string> backup = new Dictionary<string, string>();
     readonly Dictionary<string, int> backupInts = new Dictionary<string, int>();
@@ -22,11 +22,13 @@ public class ChapterCheckpointsTests
         foreach (string key in Keys)
         {
             if (!PlayerPrefs.HasKey(key)) continue;
-            if (key.StartsWith("kfb.save.chapter.")) backup[key] = PlayerPrefs.GetString(key);
+            if (key.StartsWith("kfb.progress.chapter.")) backup[key] = PlayerPrefs.GetString(key);
             else backupInts[key] = PlayerPrefs.GetInt(key);
             PlayerPrefs.DeleteKey(key);
         }
         ChapterCheckpoints.ClearLaunch();
+        ChapterCheckpoints.CommitReached();
+        foreach (string key in Keys) PlayerPrefs.DeleteKey(key);
         StoryFlags.Reset();
     }
 
@@ -86,8 +88,8 @@ public class ChapterCheckpointsTests
         StoryFlags.Reset();
 
         Assert.That(ChapterCheckpoints.LastChapter, Is.EqualTo(StoryChapter.DayOne));
+        ChapterCheckpoints.CommitReached();
         Assert.That(ChapterCheckpoints.IsUnlocked(StoryChapter.NightTwo), Is.True);
-        Assert.That(ChapterCheckpoints.AnyChapterBeyondFirst, Is.True);
 
         ChapterCheckpoints.RequestChapter(StoryChapter.NightOne);
         ChapterCheckpoints.TryTakeLaunch(out _);
@@ -99,7 +101,30 @@ public class ChapterCheckpointsTests
     public void FreshProfile_HasNoSave()
     {
         Assert.That(ChapterCheckpoints.HasSave, Is.False);
-        Assert.That(ChapterCheckpoints.AnyChapterBeyondFirst, Is.False);
+        Assert.That(ChapterCheckpoints.IsUnlocked(StoryChapter.DayOne), Is.False);
         Assert.That(ChapterCheckpoints.RequestContinue(), Is.False);
+    }
+
+    [Test]
+    public void ReachedChapter_OpensOnlyAfterExit()
+    {
+        ChapterCheckpoints.Save(StoryChapter.DayOne, null);
+        ChapterCheckpoints.Save(StoryChapter.NightOne, null);
+        Assert.That(ChapterCheckpoints.IsUnlocked(StoryChapter.DayOne), Is.False);
+        Assert.That(ChapterCheckpoints.HasSave, Is.True);
+
+        ChapterCheckpoints.CommitReached();
+        Assert.That(ChapterCheckpoints.IsUnlocked(StoryChapter.NightOne), Is.True);
+        Assert.That(ChapterCheckpoints.IsUnlocked(StoryChapter.DayTwo), Is.False);
+    }
+
+    [Test]
+    public void DebugSession_DoesNotSaveOrUnlock()
+    {
+        ChapterCheckpoints.DisableSaves();
+        ChapterCheckpoints.Save(StoryChapter.NightTwo, null);
+        ChapterCheckpoints.CommitReached();
+        Assert.That(ChapterCheckpoints.HasSave, Is.False);
+        Assert.That(ChapterCheckpoints.IsUnlocked(StoryChapter.NightTwo), Is.False);
     }
 }

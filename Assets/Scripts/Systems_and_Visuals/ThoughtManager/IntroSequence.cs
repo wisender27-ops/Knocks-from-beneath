@@ -257,7 +257,10 @@ public class IntroSequence : MonoBehaviour
         if (ChapterCheckpoints.TryTakeLaunch(out StoryChapter chapter))
             StartChapter(chapter);
         else if (useDebugSkip && startStage != DebugStoryStage.None)
+        {
+            ChapterCheckpoints.DisableSaves(); // проверки с прыжка не открывают главы игроку
             ApplyDebugSkip(startStage);
+        }
         else
             StartNewGame();
     }

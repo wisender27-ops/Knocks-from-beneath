@@ -33,6 +33,7 @@ public class MainMenuController : MonoBehaviour
         Cursor.visible = true;
 
         SettingsStore.ApplyMasterVolume();
+        ChapterCheckpoints.CommitReached(); // вышли из игры в меню — открываем пройденные главы
         BuildChapterMenu();
         ShowMain();
     }
@@ -101,7 +102,7 @@ public class MainMenuController : MonoBehaviour
         if (settingsPanel != null) settingsPanel.SetActive(false);
         chaptersOpen = false;
         foreach (GameObject button in chapterButtons) if (button != null) button.SetActive(false);
-        foreach (GameObject button in mainButtons) if (button != null) button.SetActive(button.name != "BtnChapters" || ChapterCheckpoints.AnyChapterBeyondFirst);
+        foreach (GameObject button in mainButtons) if (button != null) button.SetActive(true);
     }
 
     void BuildChapterMenu()
@@ -126,7 +127,7 @@ public class MainMenuController : MonoBehaviour
         foreach (ChapterCheckpoints.ChapterInfo info in ChapterCheckpoints.Chapters)
         {
             StoryChapter chapter = info.Chapter;
-            bool open = ChapterCheckpoints.IsUnlocked(chapter) || chapter == StoryChapter.DayOne;
+            bool open = ChapterCheckpoints.IsUnlocked(chapter);
             string label = open ? info.Title : ((int)chapter + 1) + ". ▒▒▒▒▒▒";
             GameObject button = CloneButton(start, "BtnChapter" + (int)chapter, label, () => StartChapter(chapter));
             button.GetComponent<Button>().interactable = open;
