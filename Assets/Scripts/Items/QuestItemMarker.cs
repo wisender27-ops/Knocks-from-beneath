@@ -17,6 +17,7 @@ namespace KnocksFromBeneath
         private TrashPile trash;
         private PieQuestItem pie;
         private string[] explicitTags;
+        private System.Func<bool> condition;
         private float opacity, nextVisibilityCheck, distance, phase;
         private bool unobstructed;
         private Vector2 screenPoint;
@@ -61,6 +62,8 @@ namespace KnocksFromBeneath
         }
 
         public void ConfigureTags(string[] tags) => explicitTags = tags;
+        // Для предметов без квестового тега: метка видна, пока условие истинно.
+        public void ConfigureCondition(System.Func<bool> condition) => this.condition = condition;
 
         public static void SuppressLegacyParticles(Transform root)
         {
@@ -129,6 +132,7 @@ namespace KnocksFromBeneath
                     case CollectableItem.ItemType.Grocery: return quests.IsQuestActive("dinner-ingredients");
                 }
             }
+            if (condition != null) return condition();
             if (explicitTags != null)
                 foreach (string tag in explicitTags) if (quests.IsQuestActive(tag)) return true;
             return false;

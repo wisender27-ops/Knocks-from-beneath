@@ -34,6 +34,33 @@ public class FrontDoorLockInteractable : MonoBehaviour
     void Awake()
     {
         CaptureOpenPosition();
+        // Та же янтарная метка, что у сюжетных предметов, — пока засов можно задвинуть.
+        QuestItemMarker.Ensure(gameObject).ConfigureCondition(() => !IsLocked && Intro != null && Intro.CanLockFrontDoor);
+    }
+
+    // Звуки входной двери (засов, дёргание запертой двери, открытие) звучат из щеколды, а не из
+    // петель/центра створки. DoorAudio заводит свой источник уже после нашего Start — ждём кадр.
+    IEnumerator Start()
+    {
+        yield return null;
+        Vector3 latch = bolt != null ? bolt.position : transform.position;
+        Door door = GetComponentInParent<Door>();
+        if (door != null)
+            foreach (AudioSource source in door.GetComponentsInChildren<AudioSource>(true))
+                if (source != lockAudioSource && source.spatialBlend > 0f && source.transform != door.transform)
+                    MoveToLatch(source, latch);
+        if (lockAudioSource != null)
+        {
+            MoveToLatch(lockAudioSource, latch);
+            lockAudioSource.spatialBlend = 1f;
+            AudioRouting.Assign(lockAudioSource, AudioBus.World);
+        }
+    }
+
+    static void MoveToLatch(AudioSource source, Vector3 latch)
+    {
+        source.transform.position = latch;
+        source.minDistance = Mathf.Min(source.minDistance, 0.4f); // вблизи слышно, с какой стороны
     }
 
     void CaptureOpenPosition()
