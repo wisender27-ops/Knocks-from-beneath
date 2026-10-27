@@ -5,7 +5,7 @@ namespace KnocksFromBeneath
 {
     // C-01: camera and tripod are imported art; only their interaction colliders are created here.
     // The tripod is a carried item: while it is in the hands every slot shows a ghost, E puts it
-    // on the aimed slot. The camera is mounted on the tripod wherever it stands and moves with it.
+    // on the aimed slot. A mounted camera becomes part of the tripod and is carried with it.
     public sealed class CameraPlacementController : MonoBehaviour
     {
         private readonly struct SlotPose
@@ -231,15 +231,7 @@ namespace KnocksFromBeneath
 
         public void BeforeGrab(GameObject item, PickupController pickup)
         {
-            if (item == cameraObject && cameraMounted)
-            {
-                cameraMounted = false;
-                cameraObject.transform.SetParent(null, true);
-                Rigidbody body = cameraObject.GetComponent<Rigidbody>();
-                if (body != null) { body.isKinematic = false; body.useGravity = true; }
-                NotifyRemoved();
-            }
-            else if (item == tripod)
+            if (item == tripod)
             {
                 tripodSlot = -1;
                 tripodBody.isKinematic = false;
@@ -399,20 +391,16 @@ namespace KnocksFromBeneath
             return ghost;
         }
 
+        // Once mounted the camera is part of the tripod for good: without its own rigidbody its
+        // colliders join the tripod body, so grabbing either one carries both together.
         private void MountCamera()
         {
-            if (cameraObject == null || tripod == null) return;
+            if (cameraObject == null || tripod == null || cameraMounted) return;
             Rigidbody body = cameraObject.GetComponent<Rigidbody>();
             if (body != null)
             {
-                if (!body.isKinematic)
-                {
-                    body.linearVelocity = Vector3.zero;
-                    body.angularVelocity = Vector3.zero;
-                }
                 body.isKinematic = true;
-                body.useGravity = false;
-                body.interpolation = RigidbodyInterpolation.None;
+                Destroy(body);
             }
             // The licensed camera's lens points along its local -Z; the view transform above points +Z.
             Vector3 forward = Vector3.ProjectOnPlane(
@@ -423,7 +411,7 @@ namespace KnocksFromBeneath
             Vector3 head = tripod.transform.TransformPoint(headLocal);
             SnapBottom(cameraObject, new Vector3(head.x, ObjectBounds(tripod).max.y, head.z));
             cameraObject.transform.SetParent(tripod.transform, true);
-            if (body != null) { body.position = cameraObject.transform.position; body.rotation = cameraObject.transform.rotation; }
+            Physics.SyncTransforms();
             cameraMounted = true;
         }
 
