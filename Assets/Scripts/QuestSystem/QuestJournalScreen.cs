@@ -99,7 +99,7 @@ namespace KnocksFromBeneath
 
         public void Open()
         {
-            if (FadeTransitionPresentation.IsActive || manager == null || IsOpen || closing || IsAnyOpen || Time.timeScale == 0f ||
+            if (DeathTapeEffect.IsActive || FadeTransitionPresentation.IsActive || manager == null || IsOpen || closing || IsAnyOpen || Time.timeScale == 0f ||
                 RetroInventoryScreen.IsAnyOpen ||
                 (playerController != null && playerController.isCameraLocked) ||
                 (playerInteraction != null && playerInteraction.IsEatingPie)) return;

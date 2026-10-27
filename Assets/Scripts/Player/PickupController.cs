@@ -273,7 +273,7 @@ public class PickupController : MonoBehaviour
         if (obj == null || _heldObj != null || holdPoint == null) return false;
         if (obj.GetComponent<Rigidbody>() == null) return false;
 
-        CameraPlacementController.Instance?.BeforeGrab(obj);
+        CameraPlacementController.Instance?.BeforeGrab(obj, this);
         GrabPhysicsObject(obj);
         return true;
     }
@@ -380,7 +380,7 @@ public class PickupController : MonoBehaviour
     public void HandleInteractPressed()
     {
         if (_heldObj == null) return;
-        if (CameraPlacementController.Instance != null && CameraPlacementController.Instance.IsCamera(_heldObj))
+        if (CameraPlacementController.Instance != null && CameraPlacementController.Instance.IsGear(_heldObj))
         {
             if (!CameraPlacementController.Instance.TryPlaceHeld(this)) DropObject();
             return;

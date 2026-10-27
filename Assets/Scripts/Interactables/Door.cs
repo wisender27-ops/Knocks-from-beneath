@@ -509,6 +509,21 @@ public class Door : MonoBehaviour
 
     public bool IsInteractionLocked => interactionLocked;
 
+    public bool IsFullyOpen
+    {
+        get
+        {
+            if (_detached) return true;
+            if (!_isOpen) return false;
+            if (slideInsteadOfSwing)
+                return Vector3.Distance(transform.position, closedWorldPosition + slideDirection * slideDistance) <= 0.02f;
+            Quaternion openRotation = useOuterEdgeHinge
+                ? Quaternion.AngleAxis(angleRotation, Vector3.up) * closedWorldRotation
+                : BuildRotation(baseAxisAngle + angleRotation);
+            return Quaternion.Angle(useOuterEdgeHinge ? transform.rotation : transform.localRotation, openRotation) <= 2f;
+        }
+    }
+
     public void SetInteractionLocked(bool isLocked)
     {
         if (_detached) return;

@@ -86,6 +86,7 @@ namespace KnocksFromBeneath
         private Vector3 monsterPos;
         private float stepCarry;
         private Light deskLamp;
+        private Door bedroomDoor;
         private Light[] roomLights = new Light[0];
         private bool[] roomLightStates = new bool[0];
 
@@ -122,6 +123,7 @@ namespace KnocksFromBeneath
             player = playerInventory != null ? playerInventory.GetComponentInParent<PlayerController>() : null;
             hideRequested = onHideRequested;
             caughtInOpen = onCaughtInOpen;
+            bedroomDoor = GameObject.Find("Door_001")?.GetComponent<Door>();
             BuildZone();
         }
 
@@ -186,6 +188,7 @@ namespace KnocksFromBeneath
                 yield break;
             }
             yield return Linger(1.2f, false);
+            yield return OpenBedroomDoor();
             yield return Walk(Doorway, 0.75f);
             yield return Walk(Table, 0.75f);
             yield return Linger(2f, false);       // на столе нет молотка
@@ -370,6 +373,17 @@ namespace KnocksFromBeneath
             foreach (var r in monsterRenderers) if (r != null) r.enabled = visible;
         }
 
+        private IEnumerator OpenBedroomDoor()
+        {
+            if (Done || bedroomDoor == null || !bedroomDoor.isActiveAndEnabled) yield break;
+            StandStill(0.3f);
+            bedroomDoor.StopHolding();
+            bedroomDoor.OpenDoor();
+            // isOpen меняется сразу; движение начинается только после фактического поворота створки.
+            while (!Done && bedroomDoor != null && bedroomDoor.isActiveAndEnabled && !bedroomDoor.IsFullyOpen)
+                yield return null;
+        }
+
         private IEnumerator Walk(Vector3 target, float speed)
         {
             if (Done) yield break;
@@ -518,6 +532,7 @@ namespace KnocksFromBeneath
                 AimAtMonster(look0, 1f);
                 yield return null;
             }
+            yield return DeathTapeEffect.Play(GetComponent<IntroSequence>()?.fadeScreen);
             if (monster != null) Destroy(monster, 6f);
             monster = null;
             Finish(false);
@@ -604,6 +619,7 @@ namespace KnocksFromBeneath
                     UnityEngine.Random.Range(-shake, shake), 0f);
                 yield return null;
             }
+            yield return DeathTapeEffect.Play(GetComponent<IntroSequence>()?.fadeScreen);
             if (monster != null) Destroy(monster, 6f);
             monster = null;
         }
@@ -797,6 +813,7 @@ namespace KnocksFromBeneath
 
         private void OnDisable()
         {
+            DeathTapeEffect.Cancel();
             if (promptUi != null) promptUi.SetActive(false);
             if (!sceneRunning && Active != this) return;
             stopped = true;

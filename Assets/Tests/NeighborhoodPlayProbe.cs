@@ -121,11 +121,11 @@ public sealed class NeighborhoodPlayProbe : MonoBehaviour
         float closest = float.MaxValue;
         foreach (var bed in beds)
         {
-            float distance = (bed.transform.position - intro.nightSpawnPosition).sqrMagnitude;
+            float distance = (bed.transform.position - intro.nightTwoBedSpawnPosition).sqrMagnitude;
             if (distance < closest) { closest = distance; nearest = bed; }
         }
         Check(nearest != null && nearest.CanInteract, "Existing bed is interactive for return quest");
-        Teleport(intro.nightSpawnPosition, nearest != null ? nearest.transform.position : intro.nightSpawnPosition + Vector3.forward);
+        Teleport(intro.nightTwoBedSpawnPosition, nearest != null ? nearest.transform.position : intro.nightTwoBedSpawnPosition + Vector3.forward);
         if (nearest != null) nearest.Interact();
         Stage("morning");
         yield return Until(() => QuestManager.Instance.IsQuestActive("room-decoration"), 35f, "Real bed interaction continues into day-two cleanup");

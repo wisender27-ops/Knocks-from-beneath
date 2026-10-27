@@ -229,6 +229,12 @@ public sealed class HideEndingController
     {
         _lockCamera?.Invoke(true);
 
+        if (_search != null)
+        {
+            _endGame(EndingId.Hidden);
+            yield break;
+        }
+
         // С мини-игрой монстр уже стоит перед игроком — второй не нужен.
         Transform ambush = (_ambushPoints != null && zoneIndex >= 0 && zoneIndex < _ambushPoints.Length) ? _ambushPoints[zoneIndex] : null;
         if (_search == null && MonsterWatcherManager.Instance != null && ambush != null)

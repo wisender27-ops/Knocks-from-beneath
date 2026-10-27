@@ -63,10 +63,9 @@ public class IntroSequence : MonoBehaviour
     public SkyboxSwitcher skySwitcher;
     public CanvasGroup fadeScreen;
     public GameObject nightTrigger;
-    public Vector3 nightSpawnPosition;
-    public Vector3 nightSpawnRotation;
 
-    [Header("Ночь 2 — точка пробуждения")]
+    // Кровать героя (bed_03, правая спальня) — сюда игрок ложится и здесь же просыпается в обе ночи и утром дня 2.
+    [Header("Кровать героя — точка пробуждения")]
     public Vector3 nightTwoBedSpawnPosition = new Vector3(-43f, 4.16f, 118.6f);
     public Vector3 nightTwoSpawnRotation = new Vector3(0f, 140f, 0f);
 
@@ -405,7 +404,7 @@ public class IntroSequence : MonoBehaviour
             if (skySwitcher != null) skySwitcher.isDayTime = false;
             RenderSettings.fog = false;
             if (knockController != null) knockController.SetActive(true);
-            TeleportPlayerToNightTwoBed();
+            TeleportPlayerToBed();
         }
         if (IsNightDebugStage(startStage) && startStage != DebugStoryStage.StartNight)
         {
@@ -588,8 +587,8 @@ public class IntroSequence : MonoBehaviour
 
         CharacterController cc = playerTransform.GetComponent<CharacterController>();
         if (cc != null) cc.enabled = false;
-        playerTransform.position = nightSpawnPosition;
-        playerTransform.rotation = Quaternion.Euler(nightSpawnRotation);
+        playerTransform.position = nightTwoBedSpawnPosition;
+        playerTransform.rotation = Quaternion.Euler(nightTwoSpawnRotation);
         if (cc != null) cc.enabled = true;
         playerTransform.GetComponent<PlayerController>()?.StandUp();
     }
@@ -626,18 +625,6 @@ public class IntroSequence : MonoBehaviour
         playerTransform.position = new Vector3(-42.4f, 4.18f, 114.3f);
         playerTransform.rotation = Quaternion.LookRotation(Vector3.right);
         if (cc != null) cc.enabled = true;
-    }
-
-    void TeleportPlayerToNightTwoBed()
-    {
-        if (playerTransform == null) return;
-
-        CharacterController cc = playerTransform.GetComponent<CharacterController>();
-        if (cc != null) cc.enabled = false;
-        playerTransform.position = nightTwoBedSpawnPosition;
-        playerTransform.rotation = Quaternion.Euler(nightTwoSpawnRotation);
-        if (cc != null) cc.enabled = true;
-        playerTransform.GetComponent<PlayerController>()?.StandUp();
     }
 
     void CreateQuest(string title, int amount, UnityEngine.Events.UnityAction callback = null, string questTag = "")
@@ -741,7 +728,7 @@ public class IntroSequence : MonoBehaviour
         GameEvents.OnNightTwoStarted?.Invoke();
         if (skySwitcher != null) skySwitcher.isDayTime = false;
         RenderSettings.fog = false;
-        TeleportPlayerToNightTwoBed();
+        TeleportPlayerToBed();
 
         if (knockController != null) knockController.SetActive(false);
 

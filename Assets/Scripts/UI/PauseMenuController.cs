@@ -81,7 +81,7 @@ namespace KnocksFromBeneath
         public void Pause()
         {
             // Выполняется раньше экранов: Esc закрывает инвентарь без открытия паузы в том же кадре.
-            if (paused || Time.timeScale <= 0f || MinigameWindow.IsAnyOpen || RetroInventoryScreen.IsAnyOpen ||
+            if (paused || DeathTapeEffect.IsActive || Time.timeScale <= 0f || MinigameWindow.IsAnyOpen || RetroInventoryScreen.IsAnyOpen ||
                 QuestJournalScreen.IsAnyOpen || NarrativeReadingPanel.IsModal || FadeTransitionPresentation.IsActive) return;
             previousTimeScale = Time.timeScale;
             previousAudioPause = AudioListener.pause;

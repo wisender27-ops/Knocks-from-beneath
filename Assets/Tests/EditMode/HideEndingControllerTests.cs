@@ -230,6 +230,8 @@ public class HideEndingControllerTests
         search.Finished(true);
 
         Assert.That(_cameraLockedValue, Is.True);
+        Assert.That(_endGameCalled, Is.True, "death proceeds to the existing ending without waiting for dialogue input");
+        Assert.That(_shownThoughts, Is.Empty);
         _lastOnComplete?.Invoke();
         Assert.That(_lastEnding, Is.EqualTo(EndingId.Hidden));
     }
@@ -288,6 +290,8 @@ public class HideEndingControllerTests
         controller.HandleCaughtInOpen();
 
         Assert.That(_cameraLockedValue, Is.True);
+        Assert.That(_endGameCalled, Is.True, "death proceeds automatically");
+        Assert.That(_shownThoughts, Is.Empty);
         _lastOnComplete?.Invoke();
         Assert.That(_lastEnding, Is.EqualTo(EndingId.Hidden));
         Assert.That(controller.ZonesOpen, Is.False);

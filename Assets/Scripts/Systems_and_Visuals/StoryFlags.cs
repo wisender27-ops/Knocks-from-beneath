@@ -73,7 +73,7 @@ public static class StoryFlags
     public static void AddKnockTrust(int delta) => KnockTrust += delta;
     public static void MarkKnockAnswered() => KnockAnswered = true;
     public static void MarkRecordingSeen() => SawRecording = true;
-    public static void SetCameraPlacementSlot(int slot) => CameraPlacementSlot = Mathf.Clamp(slot, 0, 2);
+    public static void SetCameraPlacementSlot(int slot) => CameraPlacementSlot = Mathf.Clamp(slot, 0, 8);
 
     // Возвращает true только для новой улики — повторный осмотр не накручивает счётчик.
     public static bool RegisterClue(string id) => !string.IsNullOrEmpty(id) && clues.Add(id);
