@@ -28,7 +28,7 @@ public sealed class GameAudio : MonoBehaviour
     int settingsRevision = -1;
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
-    static void ResetStatics() { Instance = null; lastQuestCue = -10f; nextThoughtTick = 0f; lastThoughtTick = -1; }
+    static void ResetStatics() { Instance = null; lastQuestCue = -10f; nextThoughtTick = 0f; lastThoughtTick = -1; audibleThroughFadeUntil = 0f; }
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
     static void Bootstrap()
@@ -71,10 +71,17 @@ public sealed class GameAudio : MonoBehaviour
             new GameObject("Menu Ambience").AddComponent<MenuAmbience>();
     }
 
+    // Звук, который должен прозвучать на чёрном экране (грохот будит героя): затемнение
+    // на это время не приглушает звук.
+    static float audibleThroughFadeUntil;
+
+    public static void HearThroughFade(float seconds) =>
+        audibleThroughFadeUntil = Mathf.Max(audibleThroughFadeUntil, Time.unscaledTime + seconds);
+
     void Update()
     {
         float dt = Time.unscaledDeltaTime;
-        float fadeTarget = FadeTransitionPresentation.IsActive ? 0f : 1f;
+        float fadeTarget = FadeTransitionPresentation.IsActive && Time.unscaledTime >= audibleThroughFadeUntil ? 0f : 1f;
         fadeGain = Mathf.MoveTowards(fadeGain, fadeTarget, dt / FadeSeconds);
         if (!Mathf.Approximately(fadeGain, SettingsStore.FadeGain)) SettingsStore.FadeGain = fadeGain;
 

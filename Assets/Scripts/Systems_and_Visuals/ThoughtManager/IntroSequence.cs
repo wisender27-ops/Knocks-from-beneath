@@ -242,6 +242,8 @@ public class IntroSequence : MonoBehaviour
             if (lines != null) ShowThoughts(lines, null);
         };
         gameObject.AddComponent<KnockCallGame>().Initialize(floorKnock, responder, KnockCallLevel, lines => ShowThoughts(lines, null));
+        gameObject.AddComponent<DayKnocks>().Initialize(responder, floorKnock, () => _knockerAwake &&
+            skySwitcher != null && skySwitcher.isDayTime && (knockController == null || !knockController.activeInHierarchy));
         _cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
         _cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
         SetupBreakerPanel();
@@ -755,6 +757,8 @@ public class IntroSequence : MonoBehaviour
         bool brokenIn = GameState.frontDoorLocked && frontDoor != null;
         if (brokenIn)
         {
+            // Экран ещё чёрный, а затемнение глушит звук — грохот должен быть слышен до самого пробуждения.
+            GameAudio.HearThroughFade(4f);
             yield return new WaitForSeconds(1f);
             BreakInFrontDoor();
             yield return new WaitForSeconds(1f);
@@ -803,6 +807,7 @@ public class IntroSequence : MonoBehaviour
             Resources.Load<AudioClip>("Audio/FrontDoorBreakIn"),
             GameSounds.Library?.doorLanding != null ? GameSounds.Library.doorLanding
                 : Resources.Load<AudioClip>("Audio/CornerDoorLanding"));
+        frontDoor.gameObject.AddComponent<BrokenDoorRemark>();
         GameState.frontDoorLocked = false;
     }
 

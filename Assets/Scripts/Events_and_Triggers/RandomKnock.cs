@@ -14,6 +14,14 @@ public class RandomKnock : MonoBehaviour
     [SerializeField] private float minDelay = 2f;
     [SerializeField] private float maxDelay = 5f;
 
+    // Решение автора 2026-10-27: сплошной стук ночью отвлекает от страха — стучит сериями,
+    // между сериями долгая тишина.
+    [Header("Серии")]
+    [SerializeField] private int minSeriesKnocks = 2;
+    [SerializeField] private int maxSeriesKnocks = 4;
+    [SerializeField] private float minRest = 20f;
+    [SerializeField] private float maxRest = 40f;
+
     private void OnEnable()
     {
         if (_silencedPermanently) return;
@@ -64,9 +72,15 @@ public class RandomKnock : MonoBehaviour
 
     private IEnumerator KnockRoutine()
     {
+        int leftInSeries = SeriesLength();
         while (true)
         {
             float waitTime = Random.Range(Mathf.Max(0f, minDelay), Mathf.Max(minDelay, maxDelay));
+            if (leftInSeries <= 0)
+            {
+                waitTime = Random.Range(Mathf.Max(0f, minRest), Mathf.Max(minRest, maxRest));
+                leftInSeries = SeriesLength();
+            }
             yield return new WaitForSeconds(waitTime);
             while (Time.time < _pausedUntil) yield return null;
 
@@ -79,8 +93,11 @@ public class RandomKnock : MonoBehaviour
             audioSource.PlayOneShot(clip);
             LastKnockTime = Time.time;
             PlayedKnockCount++;
+            leftInSeries--;
             yield return new WaitForSeconds(clip.length);
         }
     }
+
+    int SeriesLength() => Random.Range(Mathf.Max(1, minSeriesKnocks), Mathf.Max(minSeriesKnocks, maxSeriesKnocks) + 1);
 }
 }

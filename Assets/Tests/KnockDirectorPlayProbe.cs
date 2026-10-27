@@ -96,7 +96,7 @@ public sealed class KnockDirectorPlayProbe : MonoBehaviour
 
         Stage("random-knock");
         int knocks = randomKnock.PlayedKnockCount;
-        yield return Move(2f, 12f); // пауза RandomKnock 2–5 с + клип до 5 с
+        yield return Move(2f, 50f); // серия RandomKnock или тишина между сериями до 40 с + клип до 5 с
         Check(randomKnock.PlayedKnockCount > knocks, "RandomKnock продолжает стучать из движущегося источника");
         Check(knock.Occluders >= 1 && knock.CutoffFrequency < 2500f, $"Стук глушится перекрытиями ({knock.Occluders} шт., {knock.CutoffFrequency:0} Гц)");
         report.notes.Add($"home={home} final={knock.SourcePosition} knocks={randomKnock.PlayedKnockCount}");

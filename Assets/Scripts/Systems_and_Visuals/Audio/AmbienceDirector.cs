@@ -109,7 +109,8 @@ public sealed class AmbienceDirector : MonoBehaviour
 
         // Птицы только на улице: в доме их не слышно (решение автора).
         day.target = isDay && !inside ? 1f : 0f;
-        night.target = !isDay && !ListenerInBasement ? 1f : 0f;
+        // Ночной уличный фон — тоже только на улице: снапшот «внутри» глушил его недостаточно (решение автора).
+        night.target = !isDay && !inside ? 1f : 0f;
         room.target = inside && !ListenerInBasement ? (powerOut ? .45f : 1f) : 0f;
         basement.target = ListenerInBasement ? 1f : 0f;
 
