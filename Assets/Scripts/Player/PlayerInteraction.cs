@@ -107,7 +107,7 @@ public class PlayerInteraction : MonoBehaviour
                 if (TryStartEatHeldPie(held))
                     return;
 
-                if (TryInteractWhileHolding())
+                if (TryFillHeldGlass(held) || TryInteractWhileHolding())
                     return;
 
                 if (pickup != null)
@@ -307,6 +307,15 @@ public class PlayerInteraction : MonoBehaviour
 
         StartCoroutine(EatPieRoutine(pie));
         return true;
+    }
+
+    // B-07: стакан в руках, луч на раковине — налить воды.
+    bool TryFillHeldGlass(GameObject held)
+    {
+        WaterGlassInteractable glass = held != null ? held.GetComponent<WaterGlassInteractable>() : null;
+        if (glass == null || glass.Scene == null || !TryGetInteractionHit(out RaycastHit hit)) return false;
+        KitchenSinkTarget sink = hit.transform.GetComponentInParent<KitchenSinkTarget>();
+        return sink != null && sink.Scene == glass.Scene && glass.Scene.TryFill();
     }
 
     bool TryInteractWhileHolding()

@@ -145,6 +145,16 @@ public class CrosshairJuice : MonoBehaviour
             // поставить.
             if (TryGetBoxPlacementHint(heldObj)) return;
 
+            // B-07: стакан — у раковины «E — налить воды», с водой «F — выпить воды».
+            WaterGlassInteractable glass = heldObj.GetComponent<WaterGlassInteractable>();
+            if (glass != null && glass.Scene != null)
+            {
+                bool atSink = interaction.TryGetInteractionHit(out RaycastHit sinkHit) &&
+                    sinkHit.transform.GetComponentInParent<KitchenSinkTarget>() != null;
+                _targetHint = glass.Scene.HeldHint(atSink) ?? "";
+                return;
+            }
+
             PieQuestItem heldPie = heldObj.GetComponent<PieQuestItem>();
             if (heldPie == null) return;
 

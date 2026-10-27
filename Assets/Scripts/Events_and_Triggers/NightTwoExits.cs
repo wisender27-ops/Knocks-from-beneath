@@ -72,6 +72,10 @@ namespace KnocksFromBeneath
             if (open) SetBackDoorsLocked(false);
         }
 
+        // B-07 «Стакан воды»: на время сцены задние двери открываются — открыть их значит умереть (следит сама сцена).
+        public System.Collections.Generic.IReadOnlyList<Door> BackDoors => _backDoors;
+        public void SetBackDoorsNightLock(bool locked) => SetBackDoorsLocked(locked);
+
         private void LockBackDoors()
         {
             _watching = false;

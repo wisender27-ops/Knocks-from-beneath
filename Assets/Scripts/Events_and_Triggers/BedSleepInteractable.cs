@@ -11,7 +11,8 @@ public class BedSleepInteractable : MonoBehaviour
         {
             QuestManager quests = QuestManager.Instance;
             return quests != null &&
-                   (quests.IsQuestActive("go-to-bed") || quests.IsQuestActive("evening-walk") || quests.IsQuestActive("neighbor-return-bed"));
+                   (quests.IsQuestActive("go-to-bed") || quests.IsQuestActive("evening-walk") || quests.IsQuestActive("neighbor-return-bed") ||
+                    quests.IsQuestActive(GlassOfWaterScene.BedQuestTag));
         }
     }
 

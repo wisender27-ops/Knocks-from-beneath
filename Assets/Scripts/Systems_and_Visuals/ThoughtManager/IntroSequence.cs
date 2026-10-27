@@ -135,6 +135,7 @@ public class IntroSequence : MonoBehaviour
     private EveningRoundController _eveningRound;
     private BranchEndingController _branchEnding;
     private NightTwoExits _exits;
+    private GlassOfWaterScene _glassOfWater;
     private CornerPeekSequence _cornerPeek;
     private HideEndingController _hideEnding;
     private HidingBreathGame _hidingScene;
@@ -220,6 +221,10 @@ public class IntroSequence : MonoBehaviour
             ? holeEventController.basementHatch : FindFirstObjectByType<BasementHatch>();
         _exits.Initialize(playerTransform, hatch != null ? hatch.transform.position : Vector3.zero,
             _branchEnding.HandleBackyardReached, _branchEnding.HandleRoadReached);
+        _glassOfWater = gameObject.AddComponent<GlassOfWaterScene>();
+        _glassOfWater.Initialize(this, playerTransform, frontDoor, _exits, ShowThoughts,
+            (title, amount, callback, tag) => CreateQuest(title, amount, callback, tag),
+            ending => EndingScreen.Instance?.ShowEnding(ending, RetryNightTwo));
 
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
@@ -765,6 +770,13 @@ public class IntroSequence : MonoBehaviour
         }
         else
         {
+            // B-07: не заперто — он вошёл тихо, сначала «Стакан воды»; лёг — блэкаут, проснулся уже по-обычному.
+            if (_glassOfWater != null)
+            {
+                yield return _glassOfWater.Play(fadeScreen);
+                if (!_glassOfWater.Survived) yield break; // смерть: карточка E3 и повтор ночи 2
+                TeleportPlayerToBed();
+            }
             if (frontDoor != null) frontDoor.OpenDoor();
             yield return new WaitForSeconds(2f);
         }
@@ -1020,7 +1032,7 @@ public class IntroSequence : MonoBehaviour
     }
 
     // Пока герой идёт к щитку, пугалка из-за угла ждёт: по сюжету она после щитка, на пути к кухне.
-    public bool HoldsCornerScare => _breakerPending || BreakerPanel.IsPlaying;
+    public bool HoldsCornerScare => _breakerPending || BreakerPanel.IsPlaying || (_glassOfWater != null && _glassOfWater.IsRunning);
 
     void SetupBreakerQuest()
     {
@@ -1330,6 +1342,13 @@ public class IntroSequence : MonoBehaviour
     {
         if (EndingScreen.Instance != null)
             EndingScreen.Instance.ShowEnding(ending);
+    }
+
+    // B-07: смерть в «Стакане воды» — сразу снова ночь 2 с чекпойнта (дебаг-прыжок повторяется тем же прыжком).
+    void RetryNightTwo()
+    {
+        if (!ChapterCheckpoints.SavesDisabled) ChapterCheckpoints.RequestChapter(StoryChapter.NightTwo);
+        UnityEngine.SceneManagement.SceneManager.LoadScene(gameObject.scene.name);
     }
 
     void SetupHammerQuest()

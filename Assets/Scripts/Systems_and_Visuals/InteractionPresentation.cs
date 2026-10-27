@@ -225,7 +225,9 @@ namespace KnocksFromBeneath
             else if (held != null)
             {
                 bool specific = hint.StartsWith("E ") || hint.StartsWith("Нажмите E");
+                bool drink = hint.StartsWith("F — "); // B-07: стакан воды — своя клавиша
                 Control("E", specific ? CleanHint(hint) : "ОПУСТИТЬ");
+                if (drink) Control("F", hint.Substring(4));
                 if (manipulate)
                 {
                     Control("R / ПКМ", "ВРАЩАТЬ");
@@ -233,7 +235,7 @@ namespace KnocksFromBeneath
                     Control("СКМ", "СБРОС ВРАЩЕНИЯ");
                 }
                 Control("ЛКМ", "БРОСИТЬ");
-                if (!specific && !string.IsNullOrEmpty(hint)) context.text = hint;
+                if (!specific && !drink && !string.IsNullOrEmpty(hint)) context.text = hint;
                 if (pickup.IsCarryObstructed) context.text = "Нет места для предмета — отойдите от препятствия";
             }
             else if (focus.IsValid)

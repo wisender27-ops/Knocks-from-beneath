@@ -35,13 +35,14 @@ public class EndingScreen : MonoBehaviour
     }
 
     // Концовка открывается в реестре сразу — даже если игрок выйдет до конца карточки.
-    public void ShowEnding(EndingId ending)
+    // afterCard — вместо выхода в меню (B-07: смерть в «Стакане воды» сразу повторяет ночь 2).
+    public void ShowEnding(EndingId ending, System.Action afterCard = null)
     {
         EndingRegistry.MarkSeen(ending);
-        StartCoroutine(ShowEndingRoutine(EndingRegistry.ScreenTitle(ending)));
+        StartCoroutine(ShowEndingRoutine(EndingRegistry.ScreenTitle(ending), afterCard));
     }
 
-    IEnumerator ShowEndingRoutine(string title)
+    IEnumerator ShowEndingRoutine(string title, System.Action afterCard)
     {
         PlayerController.CursorFree = true;
         Cursor.lockState = CursorLockMode.None;
@@ -71,6 +72,11 @@ public class EndingScreen : MonoBehaviour
 
         yield return new WaitForSeconds(holdDuration);
 
+        if (afterCard != null)
+        {
+            afterCard();
+            yield break;
+        }
         SceneManager.LoadScene(mainMenuSceneName);
     }
 }

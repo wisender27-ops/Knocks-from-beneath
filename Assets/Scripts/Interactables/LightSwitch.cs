@@ -135,6 +135,9 @@ public class LightSwitch : MonoBehaviour
 
     private static void TripHousePower() => CutHousePower(true);
 
+    // B-07: «Стакан воды» идёт до аварии — пока сцена не кончилась, выключатели дом не выбивают.
+    public static void SetNightTwoPowerTrip(bool enabled) => _nightTwoPowerTripEnabled = enabled;
+
     // notify=false — дебаг-прыжок к щитку: свет погашен, а реакция героя на выключатель не нужна.
     public static void CutHousePower(bool notify)
     {

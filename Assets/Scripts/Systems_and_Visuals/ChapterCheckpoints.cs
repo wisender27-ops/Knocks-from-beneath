@@ -91,6 +91,7 @@ public static class ChapterCheckpoints
 
     // Сессия запущена дебаг-прыжком: ни сохранений, ни открытия глав.
     public static void DisableSaves() => savesDisabled = true;
+    public static bool SavesDisabled => savesDisabled;
 
     // Выход из игры (главное меню или закрытие): открыть главы, до которых игрок дошёл.
     public static void CommitReached()
