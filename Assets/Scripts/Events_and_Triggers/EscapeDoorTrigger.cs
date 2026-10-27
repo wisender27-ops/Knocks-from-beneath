@@ -3,10 +3,8 @@ using UnityEngine;
 namespace KnocksFromBeneath
 {
 
-// Концовка 2 (побег через входную дверь), ночь 2 — T-19. По форме тот же одноразовый
-// OnTriggerEnter, что KitchenNoiseTrigger/BedSleepInteractable уже используют.
-// Активность (SetActive) контролирует BranchEndingController.Activate() — выключен, если
-// дверь заперта на день 2 (GameState.frontDoorLocked).
+// Старый триггер побега у входной двери (T-19). С B-02 всегда выключен (IntroSequence.ResetTriggers): побег (E4)
+// засчитывает NightTwoExits — по дороге, мимо люка. Оставлен, чтобы ссылка в сцене не стала Missing Script.
 public class EscapeDoorTrigger : MonoBehaviour
 {
     private bool _triggered;

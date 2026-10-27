@@ -358,6 +358,12 @@ public class Door : MonoBehaviour
 
     public void BreakOffHinges(Vector3 outward, AudioClip breakClip, AudioClip landingClip)
     {
+        BreakOffHinges(detachedLandingCenter, Quaternion.Euler(detachedLandingEuler), breakClip, landingClip);
+    }
+
+    // B-02: точка падения задаётся вызывающим — выбитая снаружи дверь ложится в прихожей, а не на крыльце.
+    public void BreakOffHinges(Vector3 landingCenter, Quaternion landingRotation, AudioClip breakClip, AudioClip landingClip)
+    {
         if (_detached) return;
         _detached = true;
         StopAllCoroutines();
@@ -409,8 +415,7 @@ public class Door : MonoBehaviour
         body.interpolation = RigidbodyInterpolation.Interpolate;
         leafCollider.enabled = false;
         DetachedDoorImpact impact = gameObject.AddComponent<DetachedDoorImpact>();
-        impact.Initialize(breakClip, landingClip, detachedLandingCenter, Quaternion.Euler(detachedLandingEuler),
-            leafCollider, body);
+        impact.Initialize(breakClip, landingClip, landingCenter, landingRotation, leafCollider, body);
     }
 
     [Header("Постановочное выбивание двери")]

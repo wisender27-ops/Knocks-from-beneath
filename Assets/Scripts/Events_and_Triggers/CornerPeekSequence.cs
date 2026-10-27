@@ -6,7 +6,9 @@ namespace KnocksFromBeneath
     // Пугалка ночи 2 «из-за угла» — прямой скример (по отзыву автора). Монстр прячется за углом коридора у шкафа
     // (в самом коридоре, а не в стене). Игрок с фонариком подходит к углу со стороны кухни — монстр за 0.14 с
     // выпрыгивает прямо перед лицом с тянущейся рукой: удар звука, рывок камеры на морду, тряска, фонарик мигает.
-    // Полсекунды морда в морду — и он срывается в коридор, вышибает входную дверь и исчезает на улице.
+    // Полсекунды морда в морду — и он срывается в коридор и через входную дверь исчезает на улице. Дверь к этому
+    // моменту уже открыта (B-02): засов не задвинут — вошёл тихо, задвинут — выбил её в начале ночи; если игрок
+    // успел закрыть — монстр распахивает её на бегу.
     public sealed class CornerPeekSequence : MonoBehaviour
     {
         private static readonly Vector3 Corner = new Vector3(-42.0f, 0.78f, 114.7f);   // западный край шкафа
@@ -23,6 +25,7 @@ namespace KnocksFromBeneath
         private IntroSequence _intro;
         private GameObject _knocks;
         private Door _exitDoor;
+        private Vector3 _doorway; // проём снимается до того, как дверь могут выбить и унести с петель
         private Camera _camera;
         private bool _nightTwo, _played, _beamWasOn;
         private GameObject _monster, _runEmitter;
@@ -50,6 +53,9 @@ namespace KnocksFromBeneath
             _inventory = inventory;
             _knocks = knocks;
             _exitDoor = exitDoor;
+            _doorway = exitDoor != null
+                ? new Vector3(exitDoor.transform.position.x + 0.45f, Corner.y, exitDoor.transform.position.z)
+                : CorridorWaypoint + Vector3.forward * 1.1f;
             _camera = Camera.main;
             _player = inventory != null ? inventory.GetComponentInParent<PlayerController>() : null;
             _beam = inventory != null ? inventory.flashlightLightSource : null;
@@ -133,7 +139,7 @@ namespace KnocksFromBeneath
                 }
                 if (_beam != null) _beam.enabled = _beamWasOn;
 
-                // 3. Срывается в коридор и вышибает входную дверь.
+                // 3. Срывается в коридор и убегает через входную дверь.
                 _rig.LookWeight = 0f;
                 _rig.Run(1.3f);
                 yield return RunToExit();
@@ -283,13 +289,11 @@ namespace KnocksFromBeneath
             IsPlaying = false;
         }
 
-        // Бегом по коридору к двери, дверь слетает с петель, монстр уходит в темноту двора. Взгляд провожает его.
+        // Бегом по коридору к двери (закрытую распахивает), монстр уходит в темноту двора. Взгляд провожает его.
         private IEnumerator RunToExit()
         {
             Transform body = _monster.transform;
-            Vector3 doorway = _exitDoor != null
-                ? new Vector3(_exitDoor.transform.position.x + 0.45f, Corner.y, _exitDoor.transform.position.z)
-                : CorridorWaypoint + Vector3.forward * 1.1f;
+            Vector3 doorway = _doorway;
             Vector3 outside = doorway + Vector3.forward * 3.5f;
             AudioClip run = Resources.Load<AudioClip>("Audio/CornerEscapeRun");
             _runEmitter = new GameObject("CornerEscapeAudio");
@@ -305,7 +309,7 @@ namespace KnocksFromBeneath
             source.volume = 0.9f;
             if (run != null) { source.clip = run; source.Play(); }
 
-            bool broken = false;
+            bool opened = false;
             Vector3[] path = { Mouth, CorridorWaypoint, doorway, outside }; // мимо края шкафа, а не сквозь
             foreach (Vector3 point in path)
             {
@@ -315,16 +319,16 @@ namespace KnocksFromBeneath
                     Vector3 heading = Flat(point - body.position);
                     if (heading.sqrMagnitude > 0.0001f)
                         body.rotation = Quaternion.Slerp(body.rotation, Quaternion.LookRotation(heading), 1f - Mathf.Exp(-16f * Time.deltaTime));
-                    if (!broken && _exitDoor != null && Flat(_exitDoor.transform.position - body.position).magnitude < 0.9f)
+                    if (!opened && Flat(doorway - body.position).magnitude < 0.9f)
                     {
-                        broken = true;
-                        BreakDoor();
+                        opened = true;
+                        PushDoorOpen();
                     }
                     FocusCamera(body.position + Vector3.up * 1.5f, 1f, 8f);
                     yield return null;
                 }
             }
-            if (!broken) BreakDoor();
+            if (!opened) PushDoorOpen();
             if (_monster != null) Destroy(_monster);
             _monster = null;
             if (_runEmitter != null)
@@ -335,12 +339,10 @@ namespace KnocksFromBeneath
             }
         }
 
-        private void BreakDoor()
+        private void PushDoorOpen()
         {
-            if (_exitDoor == null) return;
-            _exitDoor.BreakOffHinges(Vector3.forward, Resources.Load<AudioClip>("Audio/CornerDoorCrack"),
-                GameSounds.Library?.doorLanding != null ? GameSounds.Library.doorLanding
-                    : Resources.Load<AudioClip>("Audio/CornerDoorLanding"));
+            if (_exitDoor == null || _exitDoor.IsDetached || _exitDoor.isOpen) return;
+            _exitDoor.BurstOpen();
             GameState.frontDoorLocked = false;
         }
 

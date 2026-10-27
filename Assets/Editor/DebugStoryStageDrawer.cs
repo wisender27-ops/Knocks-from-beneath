@@ -31,6 +31,7 @@ public sealed class DebugStoryStageDrawer : PropertyDrawer
         DebugStoryStage.StartLookInHole,
         DebugStoryStage.StartBranchEndings,
         DebugStoryStage.StartHidingSpots,
+        DebugStoryStage.StartNightTwoExits,
         DebugStoryStage.StartHammerQuest,
         DebugStoryStage.StartFinale
     };
@@ -60,6 +61,7 @@ public sealed class DebugStoryStageDrawer : PropertyDrawer
         "Start Look In Hole Quest",
         "Start Branch Endings",
         "Start Hide Under Bed (M-07)",
+        "Start Night 2 Exits (B-02)",
         "Start Hammer Quest",
         "Start Finale"
     };

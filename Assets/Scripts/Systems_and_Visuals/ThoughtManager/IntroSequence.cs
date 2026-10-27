@@ -38,7 +38,9 @@ public enum DebugStoryStage
     // M-07: ночь 2, игрок у стола с молотком в своей спальне — взял молоток, и начинаются прятки под кроватью.
     StartHidingSpots,
     // C-02: утро дня 2, камера стоит на штативе — сразу показывается ночная запись (до телевизора C-03).
-    PlayNightRecording
+    PlayNightRecording,
+    // B-02: ночь 2 после пряток — мысль-выбор, открыты люк (E1/E2), задние двери (E3) и дорога (E4). Игрок в спальне.
+    StartNightTwoExits
 }
 
 public class IntroSequence : MonoBehaviour
@@ -106,7 +108,7 @@ public class IntroSequence : MonoBehaviour
     public NeighborVisitSequence neighborVisit;
 
     [Header("Ночь 2 — развилка концовок (T-19)")]
-    [Tooltip("Триггер у входной двери — концовка 'побег'. Включается BranchEndingController, если дверь не заперта.")]
+    [Tooltip("Старый триггер побега у входной двери — всегда выключен. Побег (E4) теперь по дороге, NightTwoExits (B-02).")]
     public GameObject escapeDoorTrigger;
 
     [Header("Ночь 2 — укрытия (T-20)")]
@@ -132,6 +134,7 @@ public class IntroSequence : MonoBehaviour
     private DinnerCookingController _dinner;
     private EveningRoundController _eveningRound;
     private BranchEndingController _branchEnding;
+    private NightTwoExits _exits;
     private CornerPeekSequence _cornerPeek;
     private HideEndingController _hideEnding;
     private HidingBreathGame _hidingScene;
@@ -210,9 +213,13 @@ public class IntroSequence : MonoBehaviour
             onHideStarted: () => { if (IsQuestActive("hide-bed")) QuestManager.Instance?.AddProgress(1); },
             onSurvived: ReturnToHatchAfterHiding);
 
+        _exits = gameObject.AddComponent<NightTwoExits>();
         _branchEnding = new BranchEndingController(
-            SetupHammerQuest, escapeDoorTrigger, _hideEnding.SetZonesActive,
-            playerTransform, StartCoroutine, ShowThoughts, LockPlayerCamera, EndGame);
+            SetupHammerQuest, _exits.SetOpen, _hideEnding.SetZonesActive, LockPlayerCamera, EndGame);
+        BasementHatch hatch = holeEventController != null && holeEventController.basementHatch != null
+            ? holeEventController.basementHatch : FindFirstObjectByType<BasementHatch>();
+        _exits.Initialize(playerTransform, hatch != null ? hatch.transform.position : Vector3.zero,
+            _branchEnding.HandleBackyardReached, _branchEnding.HandleRoadReached);
 
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
@@ -525,6 +532,16 @@ public class IntroSequence : MonoBehaviour
                 _branchEnding.Activate();
                 if (startStage == DebugStoryStage.StartHidingSpots) TeleportPlayerToHammer();
                 break;
+            case DebugStoryStage.StartNightTwoExits:
+                GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
+                GrantDebugItem("Hammer");
+                if (hammerItem != null) hammerItem.SetActive(false); // молоток уже взят — второй раз прятки не начнутся
+                FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
+                MonsterTimer.Instance?.StartTimer();
+                MonsterTimer.Instance?.PauseTimer(); // ReturnToHatchAfterHiding продолжит его, как после пряток
+                ReturnToHatchAfterHiding();
+                break;
         }
     }
 
@@ -539,6 +556,7 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartFinale:
             case DebugStoryStage.StartBranchEndings:
             case DebugStoryStage.StartHidingSpots:
+            case DebugStoryStage.StartNightTwoExits:
                 return true;
             default:
                 return false;
@@ -560,6 +578,7 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartFinale:
             case DebugStoryStage.StartBranchEndings:
             case DebugStoryStage.StartHidingSpots:
+            case DebugStoryStage.StartNightTwoExits:
                 return true;
             default:
                 return false;
@@ -732,7 +751,19 @@ public class IntroSequence : MonoBehaviour
 
         if (knockController != null) knockController.SetActive(false);
 
-        yield return new WaitForSeconds(2f);
+        // B-02: засов задвинут — монстр выбивает дверь, грохот будит героя; нет — тихо вошёл, дверь стоит открытой.
+        bool brokenIn = GameState.frontDoorLocked && frontDoor != null;
+        if (brokenIn)
+        {
+            yield return new WaitForSeconds(1f);
+            BreakInFrontDoor();
+            yield return new WaitForSeconds(1f);
+        }
+        else
+        {
+            if (frontDoor != null) frontDoor.OpenDoor();
+            yield return new WaitForSeconds(2f);
+        }
         if (nightTrigger != null) nightTrigger.SetActive(true);
 
         while (elapsed > 0)
@@ -745,6 +776,7 @@ public class IntroSequence : MonoBehaviour
 
         GameEvents.OnNightTwoAwake?.Invoke();
 
+        if (brokenIn) ShowThoughts(new[] { "Что это грохнуло?!", "Внизу… у входной двери." }, null);
         SetupCheckLightQuest(false);
         RandomKnock firstKnock = knockController != null ? knockController.GetComponentInChildren<RandomKnock>(true) : null;
         int knockCount = firstKnock != null ? firstKnock.PlayedKnockCount : 0;
@@ -759,6 +791,19 @@ public class IntroSequence : MonoBehaviour
         }, () => {
             if (_checkingLight) CreateQuest("Проверить выключатель света", 1, questTag: "night-two-light");
         });
+    }
+
+    // Выбитая снаружи входная дверь падает в прихожую, вдоль коридора — мимо неё потом пробегает монстр.
+    static readonly Vector3 BrokenFrontDoorLanding = new Vector3(-40.3f, 0.82f, 115.6f);
+    static readonly Quaternion BrokenFrontDoorRotation = Quaternion.Euler(0f, 70f, 0f);
+
+    void BreakInFrontDoor()
+    {
+        frontDoor.BreakOffHinges(BrokenFrontDoorLanding, BrokenFrontDoorRotation,
+            Resources.Load<AudioClip>("Audio/FrontDoorBreakIn"),
+            GameSounds.Library?.doorLanding != null ? GameSounds.Library.doorLanding
+                : Resources.Load<AudioClip>("Audio/CornerDoorLanding"));
+        GameState.frontDoorLocked = false;
     }
 
     // =====================================================================
@@ -1240,12 +1285,11 @@ public class IntroSequence : MonoBehaviour
         });
     }
 
-    // --- Развилка ночи 2 (T-19): побег через дверь — тонкий проброс, EscapeDoorTrigger
-    // зовёт напрямую тем же паттерном, что Stove/Microwave/FrontDoorLock. ---
+    // --- Старый EscapeDoorTrigger (всегда выключен): тот же исход, что выход на дорогу (E4). ---
 
     public void OnEscapedThroughDoor()
     {
-        _branchEnding.HandleDoorEscape();
+        _branchEnding.HandleRoadReached();
     }
 
     // --- Развилка ночи 2 (T-20): прятки — тонкий проброс, HidingSpotTrigger зовёт напрямую. ---
@@ -1305,13 +1349,17 @@ public class IntroSequence : MonoBehaviour
         }, null);
     }
 
+    // B-02: развилка. Квест — люк (E1/E2); задние двери (E3) и дорога мимо люка (E4) открыты без отдельного квеста.
     void ReturnToHatchAfterHiding()
     {
         ShowThoughts(new string[] {
             "Ушло вниз.",
-            "Заколочу. И наконец всё закончится.",
-            "Надо вернуться к люку."
-        }, SetupBoardBasementQuest);
+            "Заколотить люк… или бежать отсюда?"
+        }, () =>
+        {
+            SetupBoardBasementQuest();
+            _branchEnding.OpenExits();
+        });
     }
 
     void SetupBoardBasementQuest()
