@@ -38,6 +38,10 @@ Recheck relevant entries before changes. This is a snapshot, not a replacement f
   clues: Interactables/InspectableClue on owner-leftover copies under "Main Plot/Owner Clues (M-05)";
   the 3D preview (RT, layer 30) is Inventory/ItemPreviewStage, shared with RetroInventoryScreen.
   Scares are arbitrated by HorrorMomentDirector.
+- Camcorder (C-01/C-02): CameraPlacementController (tripod, RecordingView). Night tape = Systems_and_Visuals/Recording:
+  NightTape (pure timeline: figure path, doors, clock stamp, sounds — seekable), NightRecording (own camera at
+  RecordingView → 320x240 RT; per-camera hooks give it night lights, the monster and open doors, hide hero/camcorder),
+  NightTapeViewer (MinigameWindow, Resources/Shaders/VhsTape on a RawImage). Debug jump: DebugStoryStage.PlayNightRecording.
 - Audio: Systems_and_Visuals/Audio (MainMixer buses Music/UI/SFX{Foley,Horror,Voice}/Ambience,
   AudioRouting, GameAudio, AmbienceDirector); clips in Assets/Audio/Game, library in Resources.
 - Input System 1.19.0 is installed; activeInputHandler=2 (Both). Gameplay uses

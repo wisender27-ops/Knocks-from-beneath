@@ -36,7 +36,9 @@ public enum DebugStoryStage
     // M-04: ночь 2, свет выбило, фонарик в руках — игрок у щитка в гараже.
     StartBreakerPanel,
     // M-07: ночь 2, игрок у стола с молотком в своей спальне — взял молоток, и начинаются прятки под кроватью.
-    StartHidingSpots
+    StartHidingSpots,
+    // C-02: утро дня 2, камера стоит на штативе — сразу показывается ночная запись (до телевизора C-03).
+    PlayNightRecording
 }
 
 public class IntroSequence : MonoBehaviour
@@ -135,6 +137,9 @@ public class IntroSequence : MonoBehaviour
     private HideEndingController _hideEnding;
     private HidingBreathGame _hidingScene;
     private CameraPlacementController _cameraPlacement;
+    // C-02: на ночной записи двери открываются от закрытого положения — снимаем его до того, как их тронут.
+    private TapeDoor[] _tapeDoors;
+    private NightTapeViewer _nightTape;
     private bool _hasReactedToPowerOutage;
     private AudioSource _powerOutageAudio;
     // K-02: хозяин в подвале отвечает на стук с первой ночи (до неё о нём никто не знает).
@@ -154,6 +159,7 @@ public class IntroSequence : MonoBehaviour
         FadeTransitionPresentation.Ensure(fadeScreen);
         _cameraPlacement = gameObject.AddComponent<CameraPlacementController>();
         _cameraPlacement.Initialize(roomZones, OnCameraPlaced, OnCameraRemoved);
+        _tapeDoors = NightRecording.CaptureDoors(frontDoor);
         var horrorDirector = gameObject.AddComponent<HorrorMomentDirector>();
         horrorDirector.Initialize(playerInventory);
         var firstNightScare = gameObject.AddComponent<NightOneScare>();
@@ -438,6 +444,12 @@ public class IntroSequence : MonoBehaviour
                 break;
             case DebugStoryStage.StartDay2Decoration:
                 _decoration.SetupDecorationQuest();
+                break;
+            case DebugStoryStage.PlayNightRecording:
+                StoryFlags.SetCameraPlacementSlot(1);
+                _cameraPlacement?.RestoreFromCheckpoint();
+                _decoration.SetupDecorationQuest();
+                StartCoroutine(PlayNightRecordingWhenFree());
                 break;
             case DebugStoryStage.StartDay2Dinner:
                 _dinner.SetupIngredientQuest();
@@ -868,7 +880,26 @@ public class IntroSequence : MonoBehaviour
     static bool IsDayTwoDebugStage(DebugStoryStage stage) =>
         stage == DebugStoryStage.StartDay2Decoration || stage == DebugStoryStage.StartDay2Dinner ||
         stage == DebugStoryStage.StartDay2Evening || stage == DebugStoryStage.StartDinnerCook ||
-        stage == DebugStoryStage.StartDinnerEat;
+        stage == DebugStoryStage.StartDinnerEat || stage == DebugStoryStage.PlayNightRecording;
+
+    // C-02: ночная запись с точки штатива во весь экран. Без установленной камеры записи нет.
+    public bool PlayNightRecording()
+    {
+        Transform view = _cameraPlacement != null ? _cameraPlacement.RecordingView : null;
+        if (view == null) return false;
+        if (_nightTape == null) _nightTape = gameObject.AddComponent<NightTapeViewer>();
+        return _nightTape.Open(view, _tapeDoors, null);
+    }
+
+    // Окно не откроется, пока камера занята (пробуждение, мысли, пауза) — пробуем, пока не освободится.
+    IEnumerator PlayNightRecordingWhenFree()
+    {
+        for (int attempt = 0; attempt < 40; attempt++)
+        {
+            yield return new WaitForSeconds(0.5f);
+            if (PlayNightRecording()) yield break;
+        }
+    }
 
     void SetupBedsideLamp()
     {

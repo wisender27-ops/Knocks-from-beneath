@@ -195,7 +195,7 @@ namespace KnocksFromBeneath
         internal static void DrawAll()
         {
             if (Event.current.type != EventType.Repaint || Time.timeScale == 0f || FadeTransitionPresentation.IsActive || ArrivalCutscene.IsPlaying ||
-                RetroInventoryScreen.IsAnyOpen || QuestJournalScreen.IsAnyOpen || !NarrativeDisplayQueue.CanShowInteractionHint) return;
+                RetroInventoryScreen.IsAnyOpen || QuestJournalScreen.IsAnyOpen || MinigameWindow.IsAnyOpen || !NarrativeDisplayQueue.CanShowInteractionHint) return;
             Color previousColor = GUI.color;
             Matrix4x4 previousMatrix = GUI.matrix;
             float unit = Mathf.Clamp(Screen.height / 720f, .75f, 2.5f);

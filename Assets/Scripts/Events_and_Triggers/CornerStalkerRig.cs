@@ -41,6 +41,10 @@ namespace KnocksFromBeneath
         // Завал головы набок вокруг направления взгляда, градусы (M-07: морда боком в щели под кроватью).
         public float HeadRoll { get; set; }
         public Transform Head => head;
+        // C-02: ночная запись сама семплирует эти клипы по времени плёнки (перемотка, стоп-кадр).
+        public AnimationClip WalkClip => walkClip;
+        public AnimationClip StandClip => standClip;
+        public float WalkClipSpeed => walkClipSpeed;
         // Под кроватью корпус уже сложен клипом — доворачивают только шея и голова.
         public static readonly Vector3 PeekLookShares = new Vector3(0f, 0.45f, 0.55f);
 
