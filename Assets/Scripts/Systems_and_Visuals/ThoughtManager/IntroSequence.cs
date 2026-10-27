@@ -136,6 +136,7 @@ public class IntroSequence : MonoBehaviour
     private BranchEndingController _branchEnding;
     private NightTwoExits _exits;
     private GlassOfWaterScene _glassOfWater;
+    private PhoneFlashlight _phoneFlashlight;
     private CornerPeekSequence _cornerPeek;
     private HideEndingController _hideEnding;
     private HidingBreathGame _hidingScene;
@@ -165,6 +166,8 @@ public class IntroSequence : MonoBehaviour
         _tapeDoors = NightRecording.CaptureDoors(frontDoor);
         var horrorDirector = gameObject.AddComponent<HorrorMomentDirector>();
         horrorDirector.Initialize(playerInventory);
+        _phoneFlashlight = gameObject.AddComponent<PhoneFlashlight>();
+        _phoneFlashlight.Initialize(playerInventory);
         var firstNightScare = gameObject.AddComponent<NightOneScare>();
         firstNightScare.Initialize(playerInventory);
         var floorKnock = gameObject.AddComponent<PlayerFloorKnock>(); // K-02: Q — стук в пол
@@ -225,6 +228,7 @@ public class IntroSequence : MonoBehaviour
         _glassOfWater.Initialize(this, playerTransform, frontDoor, _exits, ShowThoughts,
             (title, amount, callback, tag) => CreateQuest(title, amount, callback, tag),
             ending => EndingScreen.Instance?.ShowEnding(ending, RetryNightTwo));
+        _phoneFlashlight.SetThreatScenes(neighborVisit, _glassOfWater);
 
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
@@ -428,6 +432,9 @@ public class IntroSequence : MonoBehaviour
         }
 
         if (IsDayTwoDebugStage(startStage)) _knockerAwake = true; // ночь 1 уже была
+        if (IsPastKitchenDebugStage(startStage) || startStage == DebugStoryStage.StartBreakerPanel ||
+            startStage == DebugStoryStage.StartKitchenNoise)
+            _phoneFlashlight?.DrainBattery();
         if (IsPastKitchenDebugStage(startStage)) _cornerPeek?.Retire(); // пугалка кухни уже позади
         switch (startStage)
         {
@@ -874,8 +881,9 @@ public class IntroSequence : MonoBehaviour
     // --- 4. Найти фонарик ---
     void SetupFlashlightQuest()
     {
+        _phoneFlashlight?.DrainBattery();
         CreateQuest("Найти фонарик", 1, OnFlashlightPickedUp, "flashlight-find");
-        ShowThoughts(new[] { "Пойду возьму фонарик." }, ShowFlashlightOutline);
+        ShowThoughts(new[] { "Телефон разрядился... Пора искать настоящий фонарик." }, ShowFlashlightOutline);
     }
 
     void ShowFlashlightOutline()

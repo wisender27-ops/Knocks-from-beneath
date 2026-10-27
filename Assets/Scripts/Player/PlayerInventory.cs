@@ -46,10 +46,12 @@ namespace KnocksFromBeneath
         private int currentItemIndex;
         private string equippedItemId = string.Empty;
         private Animator crowbarAnim;
+        private PhoneFlashlight phoneFlashlight;
 
         public event Action Changed;
         public IReadOnlyList<InventoryEntry> Entries => entries;
         public string EquippedItemId => equippedItemId;
+        public void SetPhoneFlashlight(PhoneFlashlight phone) => phoneFlashlight = phone;
 
         public bool HasItem(string id)
         {
@@ -173,6 +175,7 @@ namespace KnocksFromBeneath
         // Раньше его каждый кадр переносили к ладони рук от первого лица — их больше нет.
         public void ActivateItem(string itemName)
         {
+            phoneFlashlight?.Hide();
             SetHeldObjectsInactive();
             GameObject item = itemName == "Crowbar" && hasCrowbar ? crowbarInHand
                 : itemName == "Flashlight" && hasFlashlight ? flashlightInHand

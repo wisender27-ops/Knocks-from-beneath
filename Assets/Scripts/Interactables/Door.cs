@@ -298,38 +298,27 @@ public class Door : MonoBehaviour
         return true;
     }
 
+    private bool _doorMovementNotified;
+
     private void ManageCreakSound(float velocity)
     {
         if (sfxSource == null || doorCreakClip == null) return;
 
-        // Сюжетное закрытие на ночь: скрип не должен быть слышен вообще.
-        // Стоит ДАЖЕ если флаг почему-то ещё не снят — лучше лишний кадр
-        // тишины, чем щелчок скрипа в момент перехода.
         if (_suppressCreak)
         {
-            sfxSource.volume = 0f;
-            if (sfxSource.isPlaying) sfxSource.Pause();
+            _doorMovementNotified = false;
             return;
         }
 
         if (velocity > minVelocityThreshold)
         {
-            if (!sfxSource.isPlaying)
+            if (!_doorMovementNotified)
             {
-                sfxSource.Play();
+                _doorMovementNotified = true;
                 TriggerMonsterEvent();
             }
-
-            float targetVolume = Mathf.Clamp((velocity / 100f) * volumeMultiplier, 0f, 1f);
-            sfxSource.volume = Mathf.Lerp(sfxSource.volume, targetVolume, Time.deltaTime * 12f);
-            sfxSource.pitch = Mathf.Clamp(0.85f + (velocity * 0.003f), 0.85f, 1.15f);
         }
-        else
-        {
-            sfxSource.volume = Mathf.Lerp(sfxSource.volume, 0f, Time.deltaTime * 15f);
-            if (sfxSource.volume < 0.01f && sfxSource.isPlaying)
-                sfxSource.Pause();
-        }
+        else _doorMovementNotified = false;
     }
 
     public void CloseDoor()

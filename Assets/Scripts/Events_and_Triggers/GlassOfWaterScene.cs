@@ -50,6 +50,22 @@ namespace KnocksFromBeneath
         private bool _voiced, _filling, _filled, _drinking, _drunk, _inBed, _dead, _watchersWere;
 
         public bool IsRunning { get; private set; }
+        public bool MonsterInView
+        {
+            get
+            {
+                if (!IsRunning || _dead || _monster == null || _camera == null || _playerTransform == null ||
+                    _playerTransform.position.y > GroundFloorMaxY) return false;
+                Vector3 eye = _camera.transform.position;
+                Vector3 head = _rig != null && _rig.Head != null ? _rig.Head.position : MonsterSpot + Vector3.up * 1.7f;
+                Vector3 view = _camera.WorldToViewportPoint(head);
+                if (view.z <= 0f || view.x < 0f || view.x > 1f || view.y < 0f || view.y > 1f) return false;
+                Vector3 delta = head - eye;
+                float distance = delta.magnitude;
+                return distance <= 0.3f || !Physics.Raycast(eye, delta / distance, distance - 0.3f,
+                    Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore);
+            }
+        }
         public bool Survived { get; private set; }
         public bool IsGlassHeld => _glass != null && _pickup != null && _pickup.GetHeldObject() == _glass;
         public bool CanFill => IsRunning && !_dead && !_filling && !_filled && IsGlassHeld && IsQuestActive(FillQuestTag);
