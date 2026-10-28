@@ -27,7 +27,23 @@ namespace KnocksFromBeneath
         private ItemPreviewStage previewStage;
         private Texture2D noiseTexture;
         private GameObject previewObject;
-        private InventoryItemDefinition previewDefinition;
+        private sealed class PreviewSlot
+        {
+            public RawImage Image;
+            public ItemPreviewStage Stage;
+            public InventoryItemDefinition Definition;
+            public float Angle;
+        }
+
+        private readonly PreviewSlot[] previewSlots = new PreviewSlot[3];
+        private int frontSlot;
+        private int pendingSelection;
+        private int pendingFrontSlot;
+        private int carouselDirection;
+        private float carouselProgress;
+        private bool carouselMoving;
+        private bool backSlotReplaced;
+        private RectTransform carouselRoot;
         private bool isInspecting;
         private bool draggingPreview;
         private Vector3 lastMousePosition;
@@ -75,7 +91,7 @@ namespace KnocksFromBeneath
         private void OnDestroy()
         {
             ClearPreview();
-            previewStage?.Dispose();
+            for (int i = 0; i < previewSlots.Length; i++) previewSlots[i]?.Stage.Dispose();
             if (noiseTexture != null) Destroy(noiseTexture);
         }
 
@@ -95,14 +111,13 @@ namespace KnocksFromBeneath
                 if (isInspecting) SetInspection(false); else Close();
                 return;
             }
-            if (Input.GetKeyDown(KeyCode.C) && inventory.Entries.Count > 0) SetInspection(!isInspecting);
-            if (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return)) UseSelected();
+            UpdateCarousel();
+            if (!carouselMoving && Input.GetKeyDown(KeyCode.C) && inventory.Entries.Count > 0) SetInspection(!isInspecting);
+            if (!carouselMoving && (Input.GetKeyDown(KeyCode.Space) || Input.GetKeyDown(KeyCode.Return))) UseSelected();
             if (isInspecting) UpdateInspection();
             else if (Input.GetKeyDown(KeyCode.LeftArrow) || Input.GetKeyDown(KeyCode.A)) SelectRelative(-1);
             else if (Input.GetKeyDown(KeyCode.RightArrow) || Input.GetKeyDown(KeyCode.D)) SelectRelative(1);
 
-            if (previewObject != null && !isInspecting)
-                previewObject.transform.Rotate(Vector3.up, rotationSpeed * Time.unscaledDeltaTime, Space.World);
 
             if (feedbackUntil > 0f && Time.unscaledTime >= feedbackUntil)
             {
@@ -163,12 +178,73 @@ namespace KnocksFromBeneath
         private void SelectRelative(int direction)
         {
             int count = inventory.Entries.Count;
-            if (count == 0) return;
-            selectedIndex = (selectedIndex + direction + count) % count;
+            if (count < 2 || carouselMoving) return;
+            carouselDirection = direction > 0 ? 1 : -1;
+            pendingSelection = (selectedIndex + carouselDirection + count) % count;
+            pendingFrontSlot = (frontSlot + (count == 2 || carouselDirection > 0 ? 1 : 2)) % 3;
+            carouselProgress = 0f;
+            backSlotReplaced = false;
+            carouselMoving = true;
             GameAudio.PlayUi(UiSound.InventoryMove);
             feedbackText.text = string.Empty;
             feedbackUntil = 0f;
-            Refresh();
+        }
+
+        private void UpdateCarousel()
+        {
+            if (isInspecting) return;
+            if (carouselMoving)
+            {
+                carouselProgress = Mathf.Min(1f, carouselProgress + Time.unscaledDeltaTime / 0.28f);
+                float eased = Mathf.SmoothStep(0f, 1f, carouselProgress);
+                int count = inventory.Entries.Count;
+                float step = count == 2 ? 180f : 120f;
+                // В дальней точке исходящий сосед заменяется следующим: на экране максимум три модели.
+                if (count > 3 && !backSlotReplaced && eased >= 0.5f)
+                {
+                    int outgoing = (frontSlot + (carouselDirection > 0 ? 2 : 1)) % 3;
+                    int incoming = (pendingSelection + carouselDirection + count) % count;
+                    PopulateSlot(previewSlots[outgoing], inventory.Entries[incoming].Definition);
+                    backSlotReplaced = true;
+                }
+                for (int i = 0; i < previewSlots.Length; i++)
+                {
+                    PreviewSlot slot = previewSlots[i];
+                    if (!slot.Image.gameObject.activeSelf) continue;
+                    float fade = 1f;
+                    if (count > 3 && i == (frontSlot + (carouselDirection > 0 ? 2 : 1)) % 3)
+                        fade = Mathf.Abs(eased * 2f - 1f);
+                    LayoutSlot(slot, slot.Angle + carouselDirection * step * eased, fade);
+                }
+                if (carouselProgress >= 1f)
+                {
+                    selectedIndex = pendingSelection;
+                    frontSlot = pendingFrontSlot;
+                    carouselMoving = false;
+                    Refresh();
+                }
+            }
+            for (int i = 0; i < previewSlots.Length; i++)
+            {
+                PreviewSlot slot = previewSlots[i];
+                if (slot.Image.gameObject.activeSelf)
+                    slot.Stage.Rotate(rotationSpeed * Time.unscaledDeltaTime, 0f);
+            }
+            // Задние предметы рисуются раньше переднего, не перекрывая его.
+            for (int pass = 0; pass < 3; pass++)
+                for (int i = 0; i < 2; i++)
+                    if (carouselRoot.GetChild(i).localScale.x > carouselRoot.GetChild(i + 1).localScale.x)
+                        carouselRoot.GetChild(i).SetSiblingIndex(i + 1);
+        }
+
+        private static void LayoutSlot(PreviewSlot slot, float angle, float alpha = 1f)
+        {
+            float radians = angle * Mathf.Deg2Rad;
+            float depth = (Mathf.Cos(radians) + 1f) * 0.5f;
+            slot.Image.rectTransform.anchoredPosition = new Vector2(132f - Mathf.Sin(radians) * 90f, 22f - Mathf.Cos(radians) * 30f);
+            slot.Image.rectTransform.sizeDelta = new Vector2(240f, 192f);
+            slot.Image.rectTransform.localScale = Vector3.one * Mathf.Lerp(0.48f, 1f, depth);
+            slot.Image.color = new Color(1f, 1f, 1f, alpha * Mathf.Lerp(0.55f, 1f, depth));
         }
 
         private void UseSelected()
@@ -187,14 +263,14 @@ namespace KnocksFromBeneath
             }
             else
             {
-                feedbackText.color = UiStyle.Rust;
-                feedbackText.text = "Здесь это не пригодится";
+                feedbackText.text = string.Empty;
             }
             feedbackUntil = Time.unscaledTime + 3f;
         }
 
         private void SetInspection(bool value)
         {
+            carouselMoving = false;
             isInspecting = value;
             draggingPreview = false;
             titleText.text = value ? "► ОСМОТР" : "► ИНВЕНТАРЬ";
@@ -203,6 +279,8 @@ namespace KnocksFromBeneath
             nameText.rectTransform.sizeDelta = value ? new Vector2(266f, 34f) : new Vector2(592f, 30f);
             descriptionText.rectTransform.anchoredPosition = value ? new Vector2(350f, -116f) : new Vector2(24f, -126f);
             descriptionText.rectTransform.sizeDelta = value ? new Vector2(266f, 152f) : new Vector2(236f, 142f);
+            previewImage.rectTransform.localScale = Vector3.one;
+            previewImage.color = Color.white;
             previewImage.rectTransform.anchoredPosition = value ? new Vector2(-150f, 16f) : new Vector2(132f, -8f);
             previewImage.rectTransform.sizeDelta = value ? new Vector2(280f, 224f) : new Vector2(240f, 192f);
             previewStage.SetZoom(1f);
@@ -244,6 +322,7 @@ namespace KnocksFromBeneath
         private void Refresh()
         {
             if (!isOpen || inventory == null) return;
+            carouselMoving = false;
             ClampSelection();
             bool hasItems = inventory.Entries.Count > 0;
             // Стрелки выбора имеют смысл, только когда есть между чем выбирать.
@@ -259,7 +338,7 @@ namespace KnocksFromBeneath
             {
                 if (isInspecting) SetInspection(false);
                 actionHints.Set("TAB", "ЗАКРЫТЬ");
-                ReplacePreview(null);
+                ClearPreview();
                 return;
             }
 
@@ -277,36 +356,79 @@ namespace KnocksFromBeneath
             else
                 actionHints.Set("C", "ОСМОТР", "ПРОБЕЛ", useAction, "TAB", "ЗАКРЫТЬ");
             ReplacePreview(entry.Definition);
+            for (int offset = 0; offset < 3; offset++)
+            {
+                PreviewSlot slot = previewSlots[(frontSlot + offset) % 3];
+                bool visible = offset < inventory.Entries.Count && (!isInspecting || offset == 0);
+                slot.Image.gameObject.SetActive(visible);
+                slot.Stage.Visible = visible;
+                if (!visible) { if (offset != 0) PopulateSlot(slot, null); continue; }
+                if (offset != 0)
+                {
+                    int index = (selectedIndex + (offset == 1 ? 1 : -1) + inventory.Entries.Count) % inventory.Entries.Count;
+                    PopulateSlot(slot, inventory.Entries[index].Definition);
+                }
+                slot.Angle = offset == 0 ? 0f : inventory.Entries.Count == 2 ? -180f : offset == 1 ? -120f : 120f;
+                if (!isInspecting) LayoutSlot(slot, slot.Angle);
+            }
         }
 
         private void ReplacePreview(InventoryItemDefinition definition)
         {
-            if (previewDefinition == definition) return;
-            ClearPreview();
-            previewDefinition = definition;
-            if (definition == null || definition.PreviewPrefab == null) return;
+            PreviewSlot slot = previewSlots[frontSlot];
+            PopulateSlot(slot, definition);
+            previewImage = slot.Image;
+            previewStage = slot.Stage;
+            previewObject = slot.Stage.Root;
+        }
 
-            previewObject = previewStage.Begin("InventoryPreview_" + definition.Id).gameObject;
-
-            GameObject model = Instantiate(definition.PreviewPrefab, previewObject.transform);
-            // Disabled scripts still receive Awake on activation; strip only the inactive clone.
+        private void PopulateSlot(PreviewSlot slot, InventoryItemDefinition definition)
+        {
+            if (slot.Definition == definition) return;
+            slot.Stage.Clear();
+            slot.Definition = definition;
+            slot.Image.texture = slot.Stage.Texture;
+            slot.Image.uvRect = new Rect(0f, 0f, 1f, 1f);
+            if (definition == null) return;
+            if (definition.PreviewPrefab == null)
+            {
+                if (definition.Icon != null)
+                {
+                    Sprite icon = definition.Icon;
+                    Rect rect = icon.textureRect;
+                    slot.Image.texture = icon.texture;
+                    slot.Image.uvRect = new Rect(rect.x / icon.texture.width, rect.y / icon.texture.height,
+                        rect.width / icon.texture.width, rect.height / icon.texture.height);
+                }
+                return;
+            }
+            Transform root = slot.Stage.Begin("InventoryPreview_" + definition.Id);
+            GameObject model = Instantiate(definition.PreviewPrefab, root);
+            // Скрипты удаляются с неактивной копии до её активации.
             MonoBehaviour[] scripts = model.GetComponentsInChildren<MonoBehaviour>(true);
             for (int i = scripts.Length - 1; i >= 0; i--)
                 if (scripts[i] != null) DestroyImmediate(scripts[i]);
-            // A RequireComponent dependency can reject removal. Never activate a surviving script.
             if (model.GetComponentsInChildren<MonoBehaviour>(true).Length > 0) return;
             Behaviour[] behaviours = model.GetComponentsInChildren<Behaviour>(true);
             for (int i = 0; i < behaviours.Length; i++) behaviours[i].enabled = false;
             ParticleSystem[] particles = model.GetComponentsInChildren<ParticleSystem>(true);
             for (int i = 0; i < particles.Length; i++) particles[i].Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
-            previewStage.Present(model, definition.PreviewTextureOverride);
+            slot.Stage.Present(model, definition.PreviewTextureOverride);
         }
 
         private void ClearPreview()
         {
-            previewStage?.Clear();
+            carouselMoving = false;
+            for (int i = 0; i < previewSlots.Length; i++)
+            {
+                PreviewSlot slot = previewSlots[i];
+                if (slot == null) continue;
+                slot.Stage.Clear();
+                slot.Stage.Visible = false;
+                slot.Definition = null;
+                slot.Image.gameObject.SetActive(false);
+            }
             previewObject = null;
-            previewDefinition = null;
         }
 
         private void BuildInterface()
@@ -360,9 +482,17 @@ namespace KnocksFromBeneath
             descriptionText.fontSizeMin = 12f;
             descriptionText.fontSizeMax = 18f;
 
-            previewImage = CreateRawImage("Preview", frame, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(300f, 235f));
-            previewStage = new ItemPreviewStage(transform, "InventoryPreview", -1000f, 320, 256);
-            previewImage.texture = previewStage.Texture;
+            carouselRoot = CreateRect("Carousel", frame, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
+            for (int i = 0; i < previewSlots.Length; i++)
+            {
+                PreviewSlot slot = new PreviewSlot();
+                slot.Image = CreateRawImage("Preview" + i, carouselRoot, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), Vector2.zero, new Vector2(240f, 192f));
+                slot.Stage = new ItemPreviewStage(transform, "InventoryPreview" + i, -1000f - i * 40f, 320, 256);
+                slot.Image.texture = slot.Stage.Texture;
+                previewSlots[i] = slot;
+            }
+            previewImage = previewSlots[0].Image;
+            previewStage = previewSlots[0].Stage;
 
             emptyText = CreateText("Empty", frame, "Карманы пусты", 20f, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(400f, 50f));
             feedbackText = CreateText("Feedback", frame, string.Empty, 14f, TextAlignmentOptions.Center, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 64f), new Vector2(592f, 24f));
@@ -431,7 +561,8 @@ namespace KnocksFromBeneath
         private void SetVisible(bool value)
         {
             if (canvas != null) canvas.enabled = value;
-            if (previewStage != null) previewStage.Visible = value;
+            for (int i = 0; i < previewSlots.Length; i++)
+                if (previewSlots[i] != null) previewSlots[i].Stage.Visible = value && previewSlots[i].Image.gameObject.activeSelf;
         }
     }
 }
