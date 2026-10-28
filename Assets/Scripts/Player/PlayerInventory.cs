@@ -70,6 +70,7 @@ namespace KnocksFromBeneath
             if (physicalPickup == null) physicalPickup = GetComponentInParent<PickupController>();
             SetHeldObjectsInactive();
             ImportLegacyState();
+            AddItem("Phone");
         }
 
         private void OnDisable() { CancelInvoke(nameof(CheckHit)); }
@@ -123,6 +124,9 @@ namespace KnocksFromBeneath
         {
             if (index < 0 || index >= entries.Count) return false;
             InventoryEntry entry = entries[index];
+
+            if (entry.Definition.Id == "Phone")
+                return phoneFlashlight != null && phoneFlashlight.TryUse();
 
             if (entry.Definition.IsEquippable)
             {

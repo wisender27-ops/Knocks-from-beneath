@@ -5,34 +5,42 @@ using UnityEngine;
 public class PhoneFlashlightTests
 {
     [Test]
-    public void PhoneIsAvailableOnlyAtNightAndTurnsOffAtDaybreak()
+    public void InventoryPhoneHasExistingModelAndCannotBeConsumed()
     {
-        var state = new PhoneFlashlightState();
-        state.Toggle();
-        Assert.That(state.IsOn, Is.False);
-        state.BeginNight();
-        state.Toggle();
-        Assert.That(state.IsOn, Is.True);
-        state.BeginDay();
-        Assert.That(state.Available, Is.False);
-        Assert.That(state.IsOn, Is.False);
+        var database = UnityEditor.AssetDatabase.LoadAssetAtPath<InventoryDatabase>("Assets/Inventory/InventoryDatabase.asset");
+        var phone = database.Find("Phone");
+        Assert.That(phone, Is.Not.Null);
+        Assert.That(phone.Category, Is.EqualTo(InventoryItemCategory.Item));
+        Assert.That(phone.MaxStack, Is.EqualTo(1));
+        Assert.That(phone.PreviewPrefab, Is.EqualTo(Resources.Load<GameObject>(PhoneFlashlight.ModelResource)));
     }
 
     [Test]
-    public void DrainedPhoneStaysUnavailableUntilTheNextDay()
+    public void PhoneCanBeUsedDuringDayAndNightWithoutDaybreakHidingIt()
+    {
+        var state = new PhoneFlashlightState();
+        state.Toggle();
+        Assert.That(state.IsOn, Is.True);
+        state.BeginNight();
+        state.Toggle();
+        Assert.That(state.IsOn, Is.False);
+        state.Toggle();
+        state.BeginDay();
+        Assert.That(state.Available, Is.True);
+        Assert.That(state.IsOn, Is.True);
+    }
+
+    [Test]
+    public void StoryDrainAllowsPlayerToImmediatelyTurnPhoneBackOn()
     {
         var state = new PhoneFlashlightState();
         state.BeginNight();
         state.Toggle();
         state.Drain();
-        state.BeginNight();
-        state.Toggle();
         Assert.That(state.IsOn, Is.False);
-        Assert.That(state.Available, Is.False);
-        state.BeginDay();
-        state.BeginNight();
         state.Toggle();
         Assert.That(state.IsOn, Is.True);
+        Assert.That(state.Available, Is.True);
     }
 
     [Test]

@@ -24,6 +24,8 @@ namespace KnocksFromBeneath
         private TextMeshProUGUI currentProgress;
         private TextMeshProUGUI completedHeading;
         private UiKeyHints hint;
+        private PhoneFlashlight phoneFlashlight;
+        private bool phoneHintVisible;
         private TMP_FontAsset font;
         private float transition;
         private bool closing;
@@ -46,6 +48,11 @@ namespace KnocksFromBeneath
             if (manager != null && manager.questUiText != null) font = manager.questUiText.font;
             BuildInterface();
             SetHidden();
+        }
+
+        private void Start()
+        {
+            phoneFlashlight = FindAnyObjectByType<PhoneFlashlight>();
         }
 
         private void OnEnable()
@@ -80,6 +87,13 @@ namespace KnocksFromBeneath
                 (playerController == null || !playerController.isCameraLocked) &&
                 (playerInteraction == null || !playerInteraction.IsEatingPie);
             if (hint.gameObject.activeSelf != showHint) hint.gameObject.SetActive(showHint);
+            bool showPhone = phoneFlashlight != null && phoneFlashlight.CanShowControlHint;
+            if (phoneHintVisible != showPhone)
+            {
+                phoneHintVisible = showPhone;
+                if (showPhone) hint.Set("F", "ФОНАРИК ТЕЛЕФОНА", "J", "ЗАДАНИЯ", "H", "ИСТОРИЯ");
+                else hint.Set("J", "ЗАДАНИЯ", "H", "ИСТОРИЯ");
+            }
 
             if (!IsOpen && !closing) return;
             transition = Mathf.MoveTowards(transition, IsOpen ? 1f : 0f, Time.unscaledDeltaTime / 0.18f);

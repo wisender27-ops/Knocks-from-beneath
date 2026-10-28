@@ -14,7 +14,6 @@ namespace KnocksFromBeneath
         private Camera playerCamera;
         private GameObject phone;
         private Light beam;
-        private UiKeyHints hint;
         private NeighborVisitSequence neighborVisit;
         private GlassOfWaterScene waterScene;
         private bool sceneBlackout;
@@ -29,7 +28,6 @@ namespace KnocksFromBeneath
             pickup = player != null ? player.GetComponent<PickupController>() : null;
             playerCamera = player != null ? player.GetComponentInChildren<Camera>(true) : null;
             if (inventory != null) inventory.SetPhoneFlashlight(this);
-            BuildHint();
         }
 
         public void SetThreatScenes(NeighborVisitSequence neighbor, GlassOfWaterScene water)
@@ -49,7 +47,6 @@ namespace KnocksFromBeneath
             GameEvents.OnNightStarted -= BeginNight;
             GameEvents.OnDayStarted -= BeginDay;
             Hide();
-            if (hint != null) hint.gameObject.SetActive(false);
         }
 
         private void OnDestroy()
@@ -94,6 +91,9 @@ namespace KnocksFromBeneath
             !NarrativeReadingPanel.IsModal && !FadeTransitionPresentation.IsActive &&
             !PlayerInteraction.IsLockSequencePlaying;
 
+        public bool CanShowControlHint => isActiveAndEnabled && GameplayAvailable && playerCamera != null &&
+            (pickup == null || pickup.GetHeldObject() == null);
+
         private void Update()
         {
             bool neighborThreat = neighborVisit != null && neighborVisit.IsPlaying && neighborVisit.IsSilhouetteVisible;
@@ -121,15 +121,14 @@ namespace KnocksFromBeneath
             }
             bool handsBusy = pickup != null && pickup.GetHeldObject() != null;
             if (handsBusy && state.IsOn) Hide();
-            bool available = state.Available && !sceneBlackout && GameplayAvailable && !handsBusy && playerCamera != null;
-            if (hint != null && hint.gameObject.activeSelf != available) hint.gameObject.SetActive(available);
+            bool available = GameplayAvailable && !handsBusy && playerCamera != null;
             if (!available) return;
 
-            if (!introductionShown && Time.time >= hintReadyAt && ThoughtManager.Instance != null &&
+            if (state.IsNight && !introductionShown && Time.time >= hintReadyAt && ThoughtManager.Instance != null &&
                 ThoughtManager.Instance.TryShowInteractionThoughts("phone-light-intro", Introduction))
                 introductionShown = true;
 
-            if (Input.GetKeyDown(KeyCode.F)) TogglePhone();
+            if (Input.GetKeyDown(KeyCode.F)) TryUse();
         }
 
         public static bool IsNearNeighborDoor(Vector3 position, Vector3 door)
@@ -138,13 +137,17 @@ namespace KnocksFromBeneath
             return position.y < 2.3f && dx * dx + dz * dz <= 3.5f * 3.5f;
         }
 
-        private void TogglePhone()
+        public bool TryUse()
         {
-            if (state.IsOn) { Hide(); return; }
-            if (!EnsureVisual()) return;
+            if (!isActiveAndEnabled) return false;
+            if (state.IsOn) { Hide(); return true; }
+            if (playerCamera == null ||
+                (pickup != null && pickup.GetHeldObject() != null)) return false;
+            if (!EnsureVisual()) return false;
             inventory?.Unequip();
             state.Toggle();
             ApplyVisibility();
+            return state.IsOn;
         }
 
         private bool EnsureVisual()
@@ -182,29 +185,18 @@ namespace KnocksFromBeneath
             if (beam != null) beam.enabled = state.IsOn;
         }
 
-        private void BuildHint()
-        {
-            Canvas canvas = UiStyle.OverlayCanvas(transform, "PhoneLightHintCanvas", 400, new Vector2(1280f, 720f), false);
-            hint = UiKeyHints.Create(canvas.transform, "PhoneLightHint", UiStyle.Font(), .85f,
-                new Color(UiStyle.Ivory.r, UiStyle.Ivory.g, UiStyle.Ivory.b, .8f));
-            hint.RectTransform.anchorMin = hint.RectTransform.anchorMax = hint.RectTransform.pivot = new Vector2(0f, 0f);
-            hint.RectTransform.anchoredPosition = new Vector2(30f, 65f);
-            hint.Set("F", "ФОНАРИК ТЕЛЕФОНА");
-            hint.gameObject.SetActive(false);
-        }
     }
 
     public sealed class PhoneFlashlightState
     {
-        private bool night;
-        private bool drained;
+        public bool IsNight { get; private set; }
         public bool IsOn { get; private set; }
-        public bool Available => night && !drained;
+        public bool Available => true;
 
-        public void BeginNight() { night = true; }
-        public void BeginDay() { night = false; drained = false; IsOn = false; }
-        public void Drain() { drained = true; IsOn = false; }
+        public void BeginNight() { IsNight = true; }
+        public void BeginDay() { IsNight = false; }
+        public void Drain() { IsOn = false; }
         public void Hide() { IsOn = false; }
-        public void Toggle() { if (Available) IsOn = !IsOn; }
+        public void Toggle() { IsOn = !IsOn; }
     }
 }

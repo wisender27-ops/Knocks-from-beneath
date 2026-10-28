@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6cf46e9a7fe692a40b0890db01e263fe, type: 3}
+  m_Name: Phone
+  m_EditorClassIdentifier: KnocksFromBeneath.Runtime::KnocksFromBeneath.InventoryItemDefinition
+  id: Phone
+  displayName: "\u0422\u0435\u043B\u0435\u0444\u043E\u043D"
+  description: "\u041C\u043E\u0439 \u0442\u0435\u043B\u0435\u0444\u043E\u043D. \u0424\u043E\u043D\u0430\u0440\u0438\u043A
+    \u043C\u043E\u0436\u043D\u043E \u0432\u043A\u043B\u044E\u0447\u0438\u0442\u044C
+    \u0432 \u043B\u044E\u0431\u043E\u0435 \u0432\u0440\u0435\u043C\u044F."
+  category: 0
+  maxStack: 1
+  icon: {fileID: 0}
+  previewPrefab: {fileID: 5459156068211151414, guid: 083e0cb28b69ad84697a9c100a126745, type: 3}
+  previewTextureOverride: {fileID: 0}
