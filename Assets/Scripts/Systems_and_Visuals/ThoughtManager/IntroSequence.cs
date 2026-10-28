@@ -280,6 +280,34 @@ public class IntroSequence : MonoBehaviour
         _cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
         _cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
         SetupBreakerPanel();
+        _hintClues = FindObjectsByType<InspectableClue>(FindObjectsSortMode.None);
+        gameObject.AddComponent<KnockHints>().Initialize(playerTransform, responder,
+            knockSound != null ? knockSound.ShortestClip : null, KnockHintTarget, FirstFloorY);
+    }
+
+    private InspectableClue[] _hintClues;
+
+    Transform KnockHintTarget()
+    {
+        if (!_knockerAwake || playerTransform == null) return null;
+        if (_nightTwoStarted)
+            return IsQuestActive("breaker-panel") && _breakerPanel != null ? _breakerPanel.transform : null;
+        if (skySwitcher == null || !skySwitcher.isDayTime || _hintClues == null) return null;
+        InspectableClue nearest = null;
+        float distance = float.PositiveInfinity;
+        foreach (var clue in _hintClues)
+        {
+            if (clue == null || !clue.gameObject.activeInHierarchy || clue.IsFound || !clue.CanInteract) continue;
+            // Хозяин остаётся под первым этажом: не зовёт под гараж или верхнюю спальню.
+            Vector3 p = clue.transform.position;
+            if (p.x < BasementMin.x || p.x > BasementMax.x || p.z < BasementMin.y || p.z > BasementMax.y ||
+                p.y > FirstFloorY + 2f) continue;
+            float d = (playerTransform.position - p).sqrMagnitude;
+            if (d >= distance) continue;
+            distance = d;
+            nearest = clue;
+        }
+        return nearest != null ? nearest.transform : null;
     }
 
     void OnEnable()
