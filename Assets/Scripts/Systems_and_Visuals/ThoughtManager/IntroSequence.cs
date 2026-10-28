@@ -40,7 +40,11 @@ public enum DebugStoryStage
     // B-02: ночь 2 после пряток — мысль-выбор, открыты люк (E1/E2), задние двери (E3) и дорога (E4). Игрок в спальне.
     StartNightTwoExits,
     // C-01: вечер дня 1, всё сделано, остался квест видеокамеры: монолог героя → камера и штатив → «Лечь спать».
-    StartCameraQuest
+    StartCameraQuest,
+    // P-03 / B-05: ночь 2, сразу в подвал (спуск по лестнице, монстр на слух, камера хозяина). Фонарик и лом выданы.
+    StartBasement,
+    // B-05: ночь 2 у люка с молотком, условия E5 выполнены — у люка появляется выбор «заколотить / спуститься».
+    StartHatchChoice
 }
 
 public class IntroSequence : MonoBehaviour
@@ -159,6 +163,8 @@ public class IntroSequence : MonoBehaviour
     // M-04 «Щиток»: после «Свет не работает» и фонарика — щиток в гараже.
     private BreakerPanel _breakerPanel;
     private bool _breakerPending;
+    private BasementChapter _basement;
+    private HatchDescentWindow _hatchChoice;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -174,6 +180,10 @@ public class IntroSequence : MonoBehaviour
         horrorDirector.Initialize(playerInventory);
         _phoneFlashlight = gameObject.AddComponent<PhoneFlashlight>();
         _phoneFlashlight.Initialize(playerInventory);
+        _basement = gameObject.AddComponent<BasementChapter>();
+        _basement.Initialize(playerTransform, playerInventory, (title, amount, done, tag) => CreateQuest(title, amount, done, tag),
+            ShowImportantThoughts, ShowThoughts, EndGame, () => { if (knockController != null) knockController.SetActive(false); });
+        _hatchChoice = gameObject.AddComponent<HatchDescentWindow>();
         var firstNightScare = gameObject.AddComponent<NightOneScare>();
         firstNightScare.Initialize(playerInventory);
         var floorKnock = gameObject.AddComponent<PlayerFloorKnock>(); // K-02: Q — стук в пол
@@ -600,6 +610,28 @@ public class IntroSequence : MonoBehaviour
                 MonsterTimer.Instance?.PauseTimer(); // ReturnToHatchAfterHiding продолжит его, как после пряток
                 ReturnToHatchAfterHiding();
                 break;
+            case DebugStoryStage.StartHatchChoice:
+                // Условия E5 выполнены дебагом; игрок у люка, как после пряток.
+                StoryFlags.AddKnockTrust(AnswerEnding.TrustNeeded);
+                StoryFlags.MarkRecordingSeen();
+                GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
+                GrantDebugItem("Hammer");
+                if (hammerItem != null) hammerItem.SetActive(false);
+                FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
+                MonsterTimer.Instance?.StartTimer();
+                MonsterTimer.Instance?.PauseTimer();
+                ReturnToHatchAfterHiding();
+                TeleportPlayerToHatch();
+                break;
+            case DebugStoryStage.StartBasement:
+                GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
+                playerInventory?.Equip("Flashlight");
+                if (playerInventory != null && playerInventory.flashlightLightSource != null)
+                    playerInventory.flashlightLightSource.enabled = true;
+                BeginDescent(FindFirstObjectByType<BasementHatch>(), true);
+                break;
         }
     }
 
@@ -615,6 +647,8 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartBranchEndings:
             case DebugStoryStage.StartHidingSpots:
             case DebugStoryStage.StartNightTwoExits:
+            case DebugStoryStage.StartBasement:
+            case DebugStoryStage.StartHatchChoice:
                 return true;
             default:
                 return false;
@@ -637,6 +671,8 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartBranchEndings:
             case DebugStoryStage.StartHidingSpots:
             case DebugStoryStage.StartNightTwoExits:
+            case DebugStoryStage.StartBasement:
+            case DebugStoryStage.StartHatchChoice:
                 return true;
             default:
                 return false;
@@ -1490,10 +1526,11 @@ public class IntroSequence : MonoBehaviour
     // B-02: развилка. Квест — люк (E1/E2); задние двери (E3) и дорога мимо люка (E4) открыты без отдельного квеста.
     void ReturnToHatchAfterHiding()
     {
-        ShowThoughts(new string[] {
-            "Ушло вниз.",
-            "Заколотить люк… или бежать отсюда?"
-        }, () =>
+        // B-05: если стучащему можно верить (любые два из трёх условий), появляется третий путь — спуститься.
+        string[] lines = AnswerEnding.IsAvailable()
+            ? new[] { "Ушло вниз.", "Заколотить люк… или бежать отсюда?", "А тот, кто стучал мне все эти дни? Он всё ещё там, внизу." }
+            : new[] { "Ушло вниз.", "Заколотить люк… или бежать отсюда?" };
+        ShowThoughts(lines, () =>
         {
             if (_branchEnding.IsResolved) return;
             SetupBoardBasementQuest();
@@ -1513,6 +1550,38 @@ public class IntroSequence : MonoBehaviour
         return hatch != null && holeEventController != null &&
             hatch == holeEventController.basementHatch && playerInventory != null &&
             playerInventory.hasHammer && IsQuestActive("board-basement");
+    }
+
+    // B-05: у люка с молотком, пока квест «Заколотить люк» активен и условия E5 выполнены, E открывает выбор.
+    public bool CanChooseDescent(BasementHatch hatch) =>
+        CanBoardBasement(hatch) && !_basement.IsActive && AnswerEnding.IsAvailable();
+
+    public bool OpenHatchChoice(BasementHatch hatch)
+    {
+        if (!CanChooseDescent(hatch)) return false;
+        return _hatchChoice.Open(() => TryBoardBasement(hatch), () => BeginDescent(hatch, false));
+    }
+
+    // Спуск занимает общую защёлку концовок ночи 2: люк больше не заколотить, выходы закрыты.
+    void BeginDescent(BasementHatch hatch, bool debugJump)
+    {
+        if (!_branchEnding.TryResolve() && !debugJump) return;
+        MonsterTimer.Instance?.StopTimer();
+        _basement.Begin(hatch, debugJump);
+    }
+
+    void TeleportPlayerToHatch()
+    {
+        if (playerTransform == null) return;
+        CharacterController cc = playerTransform.GetComponent<CharacterController>();
+        Vector3 stand = new Vector3(-44.8f, 0.3f, 122.6f);
+        if (Physics.Raycast(stand + Vector3.up * 2f, Vector3.down, out RaycastHit floor, 4f, Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
+            stand.y = floor.point.y;
+        float feet = cc != null ? cc.height * 0.5f - cc.center.y : 1f;
+        if (cc != null) cc.enabled = false;
+        playerTransform.position = stand + Vector3.up * (feet + 0.05f);
+        playerTransform.rotation = Quaternion.LookRotation(Vector3.back);
+        if (cc != null) cc.enabled = true;
     }
 
     public bool TryBoardBasement(BasementHatch hatch)

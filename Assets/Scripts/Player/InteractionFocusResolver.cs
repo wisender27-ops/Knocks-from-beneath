@@ -28,6 +28,8 @@ namespace KnocksFromBeneath
             if (actor == null || hit.collider == null) return false;
             Transform t = hit.collider.transform;
             QuestManager quests = QuestManager.Instance;
+            BasementCellLock cellLock = t.GetComponentInParent<BasementCellLock>();
+            if (cellLock != null) return cellLock.CanInteract && Set(cellLock.transform, "Вскрыть замок", false, false, hit, out focus);
             BasementHatchLock hatchLock = t.GetComponentInParent<BasementHatchLock>();
             BasementHatch hatch = hatchLock != null ? hatchLock.GetComponentInParent<BasementHatch>() : t.GetComponentInParent<BasementHatch>();
             if (hatchLock != null && hatchLock.IsLocked && quests != null && quests.IsQuestActive(hatchLock.RequiredQuestTag))
@@ -36,6 +38,8 @@ namespace KnocksFromBeneath
             if (hatch != null)
             {
                 if (hatch.IsBoarded || hatch.IsLockedResponsePlaying) return false;
+                if (intro != null && intro.CanChooseDescent(hatch))
+                    return Set(hatch.transform, "Люк подвала", false, false, hit, out focus);
                 if (intro != null && intro.CanBoardBasement(hatch))
                     return Set(hatch.transform, "Заколотить люк", false, false, hit, out focus);
                 return Set(hatch.transform, hatch.IsLocked ? "Проверить замок" : hatch.IsOpen ? "Закрыть люк" : "Открыть люк",

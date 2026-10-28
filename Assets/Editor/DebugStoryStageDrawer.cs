@@ -48,7 +48,9 @@ public sealed class DebugStoryStageDrawer : PropertyDrawer
         new Entry(DebugStoryStage.StartBranchEndings, "Ночь 2/09 — Перед прятками (старый этап)", "Старый этап StartBranchEndings теперь ведёт к молотку перед прятками. Для развилки после пряток выберите «Выходы из дома»."),
         new Entry(DebugStoryStage.StartHidingSpots, "Ночь 2/10 — Молоток и прятки (M7)", "Игрок у молотка в спальне. Взять молоток, затем спрятаться под кроватью."),
         new Entry(DebugStoryStage.StartNightTwoExits, "Ночь 2/11 — Выходы из дома", "После пряток: люк, дорога и задний двор доступны для проверки концовок."),
-        new Entry(DebugStoryStage.StartFinale, "Ночь 2/12 — Заколотить люк (M3)", "Фонарик, лом и молоток получены; начинается заколачивание люка.")
+        new Entry(DebugStoryStage.StartHatchChoice, "Ночь 2/12 — Выбор у люка (E5)", "Игрок у люка с молотком, условия «Ответа» выполнены дебагом: E на люке открывает выбор «заколотить / спуститься»."),
+        new Entry(DebugStoryStage.StartBasement, "Ночь 2/13 — Подвал (P-03, E5)", "Сразу в подвале: монстр на слух, стук хозяина, камера в конце, лом у игрока. Проверка финала «Ответ»."),
+        new Entry(DebugStoryStage.StartFinale, "Ночь 2/14 — Заколотить люк (M3)", "Фонарик, лом и молоток получены; начинается заколачивание люка.")
     };
 
     private static readonly string[] Labels = BuildLabels();

@@ -155,6 +155,9 @@ public class PlayerInteraction : MonoBehaviour
             var tape = hitObj.GetComponentInParent<TapePlaybackInteractable>();
             if (tape != null && tape.CanInteract) { tape.Interact(); return; }
 
+            var cellLock = hitObj.GetComponentInParent<BasementCellLock>();
+            if (cellLock != null && cellLock.CanInteract) { cellLock.Interact(); return; }
+
             BasementHatchLock hatchLock = hit.transform.GetComponentInParent<BasementHatchLock>();
             if (hatchLock != null && hatchLock.IsLocked && QuestManager.Instance != null &&
                 QuestManager.Instance.IsQuestActive(hatchLock.RequiredQuestTag))
@@ -168,6 +171,11 @@ public class PlayerInteraction : MonoBehaviour
             {
                 IntroSequence intro = hatch.GetComponentInParent<IntroSequence>();
                 if (intro == null) intro = FindFirstObjectByType<IntroSequence>();
+                if (intro != null && intro.CanChooseDescent(hatch))
+                {
+                    intro.OpenHatchChoice(hatch);
+                    return;
+                }
                 if (intro != null && intro.CanBoardBasement(hatch))
                 {
                     intro.TryBoardBasement(hatch);
