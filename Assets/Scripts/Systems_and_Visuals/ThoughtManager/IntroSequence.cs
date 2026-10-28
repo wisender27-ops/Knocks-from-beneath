@@ -38,7 +38,9 @@ public enum DebugStoryStage
     // C-03: утро дня 2, камера на штативе, сразу открыть окно плёнки.
     PlayNightRecording,
     // B-02: ночь 2 после пряток — мысль-выбор, открыты люк (E1/E2), задние двери (E3) и дорога (E4). Игрок в спальне.
-    StartNightTwoExits
+    StartNightTwoExits,
+    // C-01: вечер дня 1, всё сделано, остался квест видеокамеры: монолог героя → камера и штатив → «Лечь спать».
+    StartCameraQuest
 }
 
 public class IntroSequence : MonoBehaviour
@@ -240,7 +242,12 @@ public class IntroSequence : MonoBehaviour
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
             TeleportPlayerToBed, StartCoroutine, ShowImportantThoughts,
-            onNightFinished: () => { PrepareMorningTape(); SaveChapter(StoryChapter.DayTwo); _decoration.SetupDecorationQuest(); },
+            onNightFinished: () =>
+            {
+                PrepareMorningTape();
+                SaveChapter(StoryChapter.DayTwo);
+                ShowMorningTapeThought(_decoration.SetupDecorationQuest);
+            },
             nightScare: firstNightScare.Play,
             neighborVisit: neighborVisit != null ? neighborVisit.Play : (System.Func<IEnumerator>)null,
             didMeetNeighbor: () => neighborVisit != null && neighborVisit.HasVisited);
@@ -428,7 +435,8 @@ public class IntroSequence : MonoBehaviour
         Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
 
         if (startStage == DebugStoryStage.StartPieQuest || startStage == DebugStoryStage.StartPieMicrowaveQuest ||
-            startStage == DebugStoryStage.StartPieEatQuest || startStage == DebugStoryStage.StartGoToBed)
+            startStage == DebugStoryStage.StartPieEatQuest || startStage == DebugStoryStage.StartGoToBed ||
+            startStage == DebugStoryStage.StartCameraQuest)
             _cameraPlacement?.RevealForDebug();
 
         if (startStage != DebugStoryStage.None && startStage != DebugStoryStage.StartTrashQuest &&
@@ -483,6 +491,11 @@ public class IntroSequence : MonoBehaviour
                 _pieQuest.SetupEatQuest();
                 break;
             case DebugStoryStage.StartGoToBed:
+                SetupGoToBedQuest();
+                break;
+            case DebugStoryStage.StartCameraQuest:
+                // Монолог про камеру при каждом дебаг-старте: лор читается заново.
+                _cameraLoreShown = false;
                 SetupGoToBedQuest();
                 break;
             case DebugStoryStage.StartNightOne:
@@ -727,22 +740,55 @@ public class IntroSequence : MonoBehaviour
     {
         if (_cameraPlacement != null && _cameraPlacement.Available && !_cameraPlacement.IsPlaced)
         {
-            CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place");
+            SetupCameraQuest();
             return;
         }
         // nightStartTrigger.SetActive(true) убрано — кровать всегда видна
         CreateQuest("Лечь спать", 1, OnGoToBedFinished, "go-to-bed");
     }
 
+    // C-01: перед сном герой сам объясняет, зачем ему видеокамера, и ставит её. Объяснение — один раз за игру.
+    private bool _cameraLoreShown;
+
+    void SetupCameraQuest()
+    {
+        if (_cameraLoreShown)
+        {
+            CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place");
+            return;
+        }
+        _cameraLoreShown = true;
+        ShowImportantThoughts(new string[] {
+            "Камера и штатив. Лежали в одной из коробок.",
+            "В старом доме я месяцами не мог понять, приснилось мне что-то или было на самом деле. Потом купил её.",
+            "Утром ночь забываешь, а плёнка не врёт. Поставлю так, чтобы вся комната была в кадре."
+        }, () => CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place"));
+    }
+
     void OnCameraPlaced()
     {
-        if (IsQuestActive("camera-place")) QuestManager.Instance?.AddProgress(1);
+        if (!IsQuestActive("camera-place")) return;
+        QuestManager.Instance?.AddProgress(1);
+        ShowThoughts(new string[] { "Красный огонёк горит. Пусть пишет до утра." }, null);
     }
 
     void OnCameraRemoved()
     {
-        if (IsQuestActive("go-to-bed"))
-            CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place");
+        if (!IsQuestActive("go-to-bed")) return;
+        CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place");
+        ShowThoughts(new string[] { "Так она ничего не снимет. Надо поставить обратно." }, null);
+    }
+
+    // Утро дня 2: герой вспоминает про запись, прежде чем начнётся уборка.
+    void ShowMorningTapeThought(System.Action next)
+    {
+        if (_recordedView != null && !StoryFlags.SawRecording)
+            ShowImportantThoughts(new string[] {
+                "Камера отработала всю ночь.",
+                "Надо посмотреть запись. Лучше сразу, пока не передумал."
+            }, next);
+        else
+            next?.Invoke();
     }
 
     public void OnBedTriggerReached()

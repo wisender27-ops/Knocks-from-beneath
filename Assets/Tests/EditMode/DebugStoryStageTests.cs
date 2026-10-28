@@ -35,5 +35,6 @@ public sealed class DebugStoryStageTests
         Assert.That((int)DebugStoryStage.StartBreakFloor, Is.EqualTo(9));
         Assert.That((int)DebugStoryStage.PlayNightRecording, Is.EqualTo(25));
         Assert.That((int)DebugStoryStage.StartNightTwoExits, Is.EqualTo(26));
+        Assert.That((int)DebugStoryStage.StartCameraQuest, Is.EqualTo(27));
     }
 }
