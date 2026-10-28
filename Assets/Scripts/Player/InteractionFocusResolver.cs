@@ -58,6 +58,8 @@ namespace KnocksFromBeneath
             if (item != null)
                 return item.IsAvailable && actor.inventory != null && quests != null && quests.IsItemRequired(item.itemType) &&
                     Set(item.transform, "Взять", false, false, hit, out focus);
+            var tape = t.GetComponentInParent<TapePlaybackInteractable>();
+            if (tape != null) return tape.CanInteract && Set(tape.transform, "Посмотреть ночную запись", false, false, hit, out focus);
             GameObject physical = PhysicalItem(hit.collider);
             if (physical != null)
                 return actor.pickup != null && actor.pickup.holdPoint != null &&

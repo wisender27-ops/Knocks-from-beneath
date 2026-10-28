@@ -152,6 +152,9 @@ public class PlayerInteraction : MonoBehaviour
             CaptureInteraction(hit);
             GameObject hitObj = hit.transform.gameObject;
 
+            var tape = hitObj.GetComponentInParent<TapePlaybackInteractable>();
+            if (tape != null && tape.CanInteract) { tape.Interact(); return; }
+
             BasementHatchLock hatchLock = hit.transform.GetComponentInParent<BasementHatchLock>();
             if (hatchLock != null && hatchLock.IsLocked && QuestManager.Instance != null &&
                 QuestManager.Instance.IsQuestActive(hatchLock.RequiredQuestTag))

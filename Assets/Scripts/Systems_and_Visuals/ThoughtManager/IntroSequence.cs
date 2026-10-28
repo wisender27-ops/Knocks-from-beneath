@@ -144,6 +144,8 @@ public class IntroSequence : MonoBehaviour
     // C-02: на ночной записи двери открываются от закрытого положения — снимаем его до того, как их тронут.
     private TapeDoor[] _tapeDoors;
     private NightTapeViewer _nightTape;
+    private Transform _recordedView;
+    public bool CanPlayNightTape => _recordedView != null;
     private bool _hasReactedToPowerOutage;
     private AudioSource _powerOutageAudio;
     // K-02: хозяин в подвале отвечает на стук с первой ночи (до неё о нём никто не знает).
@@ -236,7 +238,7 @@ public class IntroSequence : MonoBehaviour
         _nightOne = new NightOneController(
             fadeScreen, skySwitcher, knockController,
             TeleportPlayerToBed, StartCoroutine, ShowImportantThoughts,
-            onNightFinished: () => { SaveChapter(StoryChapter.DayTwo); _decoration.SetupDecorationQuest(); },
+            onNightFinished: () => { PrepareMorningTape(); SaveChapter(StoryChapter.DayTwo); _decoration.SetupDecorationQuest(); },
             nightScare: firstNightScare.Play,
             neighborVisit: neighborVisit != null ? neighborVisit.Play : (System.Func<IEnumerator>)null,
             didMeetNeighbor: () => neighborVisit != null && neighborVisit.HasVisited);
@@ -466,11 +468,13 @@ public class IntroSequence : MonoBehaviour
                 _nightOne.Run();
                 break;
             case DebugStoryStage.StartDay2Decoration:
+                PrepareMorningTape();
                 _decoration.SetupDecorationQuest();
                 break;
             case DebugStoryStage.PlayNightRecording:
                 StoryFlags.SetCameraPlacementSlot(1);
                 _cameraPlacement?.RestoreFromCheckpoint();
+                PrepareMorningTape();
                 _decoration.SetupDecorationQuest();
                 StartCoroutine(PlayNightRecordingWhenFree());
                 break;
@@ -945,10 +949,38 @@ public class IntroSequence : MonoBehaviour
     // C-02: ночная запись с точки штатива во весь экран. Без установленной камеры записи нет.
     public bool PlayNightRecording()
     {
-        Transform view = _cameraPlacement != null ? _cameraPlacement.RecordingView : null;
+        Transform view = _recordedView;
         if (view == null) return false;
         if (_nightTape == null) _nightTape = gameObject.AddComponent<NightTapeViewer>();
-        return _nightTape.Open(view, _tapeDoors, null);
+        bool alreadySeen = StoryFlags.SawRecording;
+        return _nightTape.Open(view, _tapeDoors, () =>
+        {
+            if (!alreadySeen && _nightTape.EvidenceCaptured)
+                ShowThoughts(new[] { "Оно смотрело прямо в камеру.", "Потом пошло наверх. Пока я спал…" }, null);
+        });
+    }
+
+    private void PrepareMorningTape()
+    {
+        if (_recordedView != null || _cameraPlacement == null || _cameraPlacement.RecordingView == null) return;
+        _recordedView = new GameObject("Recorded tripod view").transform;
+        _recordedView.SetParent(transform, false);
+        _recordedView.SetPositionAndRotation(_cameraPlacement.RecordingView.position, _cameraPlacement.RecordingView.rotation);
+        GameObject tv = GameObject.Find("TV_03");
+        if (tv == null) return;
+        if (tv.GetComponent<Collider>() == null)
+        {
+            var renderer = tv.GetComponent<Renderer>();
+            if (renderer != null)
+            {
+                var collider = tv.AddComponent<BoxCollider>();
+                collider.center = renderer.localBounds.center;
+                collider.size = renderer.localBounds.size;
+            }
+        }
+        var playback = tv.GetComponent<TapePlaybackInteractable>();
+        if (playback == null) playback = tv.AddComponent<TapePlaybackInteractable>();
+        playback.Initialize(this);
     }
 
     // Окно не откроется, пока камера занята (пробуждение, мысли, пауза) — пробуем, пока не освободится.
