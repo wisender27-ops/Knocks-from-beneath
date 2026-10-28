@@ -99,7 +99,10 @@ public class PickupController : MonoBehaviour
         !RetroInventoryScreen.IsAnyOpen && !QuestJournalScreen.IsAnyOpen &&
         !NarrativeReadingPanel.IsModal && !FadeTransitionPresentation.IsActive;
 
-    public bool IsRotatingHeldObject => CanManipulateHeldObject &&
+    // true возвращает вращение, сброс и соответствующие подсказки в HUD.
+    public static bool HeldRotationEnabled => false;
+
+    public bool IsRotatingHeldObject => HeldRotationEnabled && CanManipulateHeldObject &&
         (Input.GetKey(KeyCode.R) || Input.GetMouseButton(1));
     public float HoldDistanceOffset => _targetZoomOffset;
     public bool IsCarryObstructed => _carryPoseBlocked;
@@ -111,13 +114,13 @@ public class PickupController : MonoBehaviour
             RotateHeldObject(new Vector2(Input.GetAxisRaw("Mouse X"), Input.GetAxisRaw("Mouse Y")));
         float scroll = Input.mouseScrollDelta.y;
         if (Mathf.Abs(scroll) > .001f) AdjustHoldDistance(scroll);
-        if (Input.GetMouseButtonDown(2)) ResetHeldRotation();
+        if (HeldRotationEnabled && Input.GetMouseButtonDown(2)) ResetHeldRotation();
         _zoomOffset = Mathf.Lerp(_zoomOffset, _targetZoomOffset, 1f - Mathf.Exp(-14f * Time.deltaTime));
     }
 
     public void RotateHeldObject(Vector2 mouseDelta)
     {
-        if (!CanManipulateHeldObject) return;
+        if (!HeldRotationEnabled || !CanManipulateHeldObject) return;
         Quaternion delta = Quaternion.AngleAxis(-mouseDelta.x * rotationSensitivity, Vector3.up) *
             Quaternion.AngleAxis(mouseDelta.y * rotationSensitivity, Vector3.right);
         _heldRotationOffset = delta * _heldRotationOffset;
@@ -133,7 +136,7 @@ public class PickupController : MonoBehaviour
 
     public void ResetHeldRotation()
     {
-        if (CanManipulateHeldObject) _heldRotationOffset = _pickupRotationOffset;
+        if (HeldRotationEnabled && CanManipulateHeldObject) _heldRotationOffset = _pickupRotationOffset;
     }
 
     // Квест на расстановку коробок мог запуститься ПОЗЖЕ, чем игрок взял коробку

@@ -11,6 +11,49 @@ public class QuestCollector : MonoBehaviour
     [SerializeField] private GameObject[] itemsToReveal;
 
     private bool _revealed;
+    private bool _disposalInProgress;
+    private Collider _disposalCollider;
+    public Collider DisposalCollider => _disposalCollider != null ? _disposalCollider :
+        (_disposalCollider = GetComponent<Collider>());
+    private readonly System.Collections.Generic.HashSet<int> _consumed = new System.Collections.Generic.HashSet<int>();
+
+    public bool CanAcceptTrash(GameObject candidate)
+    {
+        return !_disposalInProgress && isActiveAndEnabled && acceptedType == CollectableItem.ItemType.Trash &&
+            candidate != null && candidate.TryGetComponent<CollectableItem>(out var item) &&
+            item.currentItemType == acceptedType && !_consumed.Contains(candidate.GetInstanceID()) &&
+            QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("trash-delivery");
+    }
+
+    public bool TryDisposeTrash(PlayerInteraction actor)
+    {
+        GameObject held = actor != null ? actor.GetHeldObject() : null;
+        if (!CanAcceptTrash(held) || DisposalCollider == null) return false;
+        QuestManager quests = QuestManager.Instance;
+        QuestManager.QuestData quest = quests.GetActiveQuest();
+        int itemId = held.GetInstanceID();
+        _consumed.Add(itemId);
+        _disposalInProgress = true;
+        bool started = TrashDisposalAnimation.TryBegin(this, actor, itemsToReveal, () =>
+        {
+            if (this == null) return;
+            _disposalInProgress = false;
+            RevealItems();
+            if (quests != null && quests.GetActiveQuest() == quest)
+                quests.AddProgress(1);
+        }, () =>
+        {
+            if (this == null) return;
+            _disposalInProgress = false;
+            _consumed.Remove(itemId);
+        });
+        if (!started)
+        {
+            _disposalInProgress = false;
+            _consumed.Remove(itemId);
+        }
+        return started;
+    }
 
     // Зоны в сцене иногда выключены при старте (см. PlacementZone) — Awake() выключенного
     // GameObject не вызывается, пока его не включат, поэтому скрытие не может полагаться
@@ -81,6 +124,7 @@ public class QuestCollector : MonoBehaviour
 
             if (isCorrectQuest)
             {
+                if (!_consumed.Add(item.gameObject.GetInstanceID())) return;
                 QuestManager.Instance.AddProgress(1);
                 Destroy(other.gameObject);
                 RevealItems();

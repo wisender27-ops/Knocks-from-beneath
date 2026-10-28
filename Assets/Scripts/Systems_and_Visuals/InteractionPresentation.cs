@@ -230,9 +230,9 @@ namespace KnocksFromBeneath
                 if (drink) Control("F", hint.Substring(4));
                 if (manipulate)
                 {
-                    Control("R / ПКМ", "ВРАЩАТЬ");
+                    if (PickupController.HeldRotationEnabled) Control("R / ПКМ", "ВРАЩАТЬ");
                     Control("КОЛЕСО", "БЛИЖЕ / ДАЛЬШЕ");
-                    Control("СКМ", "СБРОС ВРАЩЕНИЯ");
+                    if (PickupController.HeldRotationEnabled) Control("СКМ", "СБРОС ВРАЩЕНИЯ");
                 }
                 Control("ЛКМ", "БРОСИТЬ");
                 if (!specific && !drink && !string.IsNullOrEmpty(hint)) context.text = hint;
@@ -337,13 +337,13 @@ namespace KnocksFromBeneath
                 keyLabels[i].rectTransform.pivot = new Vector2(0, .5f);
                 keyLabels[i].rectTransform.anchorMin = keyLabels[i].rectTransform.anchorMax = new Vector2(0, .5f);
                 keyLabels[i].alignment = TextAlignmentOptions.Center;
-                actionLabels[i] = Text("Action", chips[i], font, 18f, Ivory);
+                actionLabels[i] = Text("Action", chips[i], UiStyle.Font(), 18f, Ivory);
                 actionLabels[i].rectTransform.pivot = new Vector2(0, .5f);
                 actionLabels[i].rectTransform.anchorMin = actionLabels[i].rectTransform.anchorMax = new Vector2(0, .5f);
                 actionLabels[i].alignment = TextAlignmentOptions.MidlineLeft;
                 chips[i].gameObject.SetActive(false);
             }
-            context = Text("Context", controls, font, 17f, UiStyle.Ash);
+            context = Text("Context", controls, UiStyle.Font(), 17f, UiStyle.Ash);
             context.rectTransform.anchorMin = context.rectTransform.anchorMax = Vector2.one * .5f;
             context.rectTransform.anchoredPosition = new Vector2(0, 46);
             context.rectTransform.sizeDelta = new Vector2(1000, 30);

@@ -24,6 +24,43 @@ public class PlayerInteraction : MonoBehaviour
     private MicrowaveInteractable _actionMicrowave;
     private float _eatStartedAt, _eatDuration;
     private IntroSequence _interactionIntro;
+    private QuestCollector[] _trashCollectors;
+    private readonly RaycastHit[] _trashSightHits = new RaycastHit[32];
+
+    public bool TryGetTrashDisposalTarget(out QuestCollector target)
+    {
+        target = null;
+        GameObject held = GetHeldObject();
+        if (held == null || playerCamera == null || !held.TryGetComponent<CollectableItem>(out var item) ||
+            item.currentItemType != CollectableItem.ItemType.Trash) return false;
+        if (_trashCollectors == null)
+            _trashCollectors = FindObjectsByType<QuestCollector>(FindObjectsInactive.Include, FindObjectsSortMode.None);
+        Vector3 origin = playerCamera.transform.position;
+        foreach (var collector in _trashCollectors)
+        {
+            if (collector == null || !collector.CanAcceptTrash(held)) continue;
+            Collider zone = collector.DisposalCollider;
+            if (zone == null || !zone.enabled) continue;
+            Vector3 delta = zone.bounds.center - origin;
+            if ((zone.ClosestPoint(origin) - origin).sqrMagnitude > interactionDistance * interactionDistance ||
+                Vector3.Dot(playerCamera.transform.forward, delta.normalized) < .5f) continue;
+            int count = Physics.RaycastNonAlloc(origin, delta.normalized, _trashSightHits, delta.magnitude,
+                PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
+            bool blocked = count == _trashSightHits.Length;
+            for (int i = 0; i < count && !blocked; i++)
+            {
+                var hit = _trashSightHits[i];
+                if (hit.transform.IsChildOf(transform) || hit.transform.IsChildOf(held.transform)) continue;
+                // Стенки самой мусорки закрывают центр зоны, но не взаимодействие с ней.
+                if (!zone.bounds.Contains(hit.point) && Vector3.Distance(hit.point, zone.ClosestPoint(hit.point)) > .15f)
+                    blocked = true;
+            }
+            if (blocked) continue;
+            target = collector;
+            return true;
+        }
+        return false;
+    }
     public bool HasActiveAction => _isEatingPie ||
         (_actionFloor != null && _actionFloor.State == FloorLogic.BreakState.Playing) ||
         (_actionLock != null && _actionLock.IsPlaying) ||
@@ -104,6 +141,8 @@ public class PlayerInteraction : MonoBehaviour
             }
             else
             {
+                if (TryGetTrashDisposalTarget(out var trashTarget) && trashTarget.TryDisposeTrash(this))
+                    return;
                 if (TryStartEatHeldPie(held))
                     return;
 

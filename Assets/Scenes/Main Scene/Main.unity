@@ -67126,7 +67126,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IntroSequence
   useDebugSkip: 1
-  startStage: 4
+  startStage: 16
+  debugFrontDoorLocked: 0
+  debugCameraPlaced: 1
   openingCutscene: {fileID: 49200818}
   playerTransform: {fileID: 7074124332312789236}
   playerInventory: {fileID: 6977330415233415940}

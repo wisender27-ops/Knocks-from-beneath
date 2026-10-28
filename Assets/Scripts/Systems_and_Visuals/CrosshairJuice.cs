@@ -131,6 +131,14 @@ public class CrosshairJuice : MonoBehaviour
             _targetColor = new Color(defaultColor.r, defaultColor.g, defaultColor.b, 0);
             _targetHint = "";
 
+            if (interaction.TryGetTrashDisposalTarget(out var trashTarget))
+            {
+                _targetHint = "E — ВЫКИНУТЬ МУСОР";
+                CurrentFocus = new InteractionFocus { Target = trashTarget.transform,
+                    Point = trashTarget.transform.position, Prompt = "ВЫКИНУТЬ МУСОР" };
+                return;
+            }
+
             if (CameraPlacementController.Instance != null &&
                 CameraPlacementController.Instance.TryGetHeldHint(interaction.pickup, out string cameraHint))
             {
