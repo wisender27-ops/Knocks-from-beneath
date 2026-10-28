@@ -47178,6 +47178,10 @@ MonoBehaviour:
   - {fileID: 8300000, guid: 7e4476e9944d52e41a012b3774d5840d, type: 3}
   minDelay: 2
   maxDelay: 5
+  minSeriesKnocks: 2
+  maxSeriesKnocks: 4
+  minRest: 20
+  maxRest: 40
 --- !u!1 &967495414
 GameObject:
   m_ObjectHideFlags: 0
@@ -67121,16 +67125,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 652671a0c3fc0094dba975608c615e58, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::IntroSequence
-  useDebugSkip: 0
-  startStage: 0
+  useDebugSkip: 1
+  startStage: 4
   openingCutscene: {fileID: 49200818}
   playerTransform: {fileID: 7074124332312789236}
   playerInventory: {fileID: 6977330415233415940}
   skySwitcher: {fileID: 1354149399}
   fadeScreen: {fileID: 1032283654}
   nightTrigger: {fileID: 1239044495}
-  nightSpawnPosition: {x: -43.6446, y: 4.1584897, z: 107.86489}
-  nightSpawnRotation: {x: 0, y: 90, z: 0}
   nightTwoBedSpawnPosition: {x: -43, y: 4.16, z: 118.6}
   nightTwoSpawnRotation: {x: 0, y: 140, z: 0}
   trashZone: {fileID: 8033556}

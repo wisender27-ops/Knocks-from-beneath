@@ -12,7 +12,10 @@ tool_timeout_sec = 120
 
 # Existing user-global duplicate connections are left intact for other projects.
 [mcp_servers.unity_mcp]
+command = "unity"
+args = ["mcp", "--project-path", "C:/claude/knocks-from-beneath/Knocks-from-beneath"]
 enabled = false
 
 [mcp_servers.unityMCP]
+url = "http://127.0.0.1:8080/mcp"
 enabled = false
