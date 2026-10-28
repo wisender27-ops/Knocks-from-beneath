@@ -96,7 +96,22 @@ public class TrashManager : MonoBehaviour
         }
     }
 
-    IEnumerator SpawnBagRoutine()
+    public void PrepareDeliveryForDebug()
+    {
+        _totalPiles = PileCount;
+        _collectedCount = _totalPiles;
+        if (trashPiles != null)
+            foreach (GameObject pile in trashPiles)
+                if (pile != null) pile.SetActive(false);
+
+        if (_bagSpawnStarted) return;
+        _bagSpawnStarted = true;
+        StartCoroutine(SpawnBagRoutine(false));
+    }
+
+    IEnumerator SpawnBagRoutine() => SpawnBagRoutine(true);
+
+    IEnumerator SpawnBagRoutine(bool notify)
     {
         // Спавним мешок у ног игрока с 'поп'-анимацией.
         //
@@ -134,6 +149,8 @@ public class TrashManager : MonoBehaviour
                 SpawnBagAtFeet(player);
             }
         }
+
+        if (!notify) yield break;
 
         // Ждём 3 секунды перед мыслями игрока
         yield return new WaitForSeconds(3f);

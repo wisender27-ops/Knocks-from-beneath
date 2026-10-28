@@ -8,8 +8,7 @@ public enum DebugStoryStage
 {
     None,
     StartBoxQuest,
-    // День 2 (T-14..T-17) — стадии стоят до StartNight намеренно: ApplyDebugSkip
-    // включает ночь только начиная со StartKitchenNoise, а день 2 идёт при свете.
+    // Значения сериализованы в сценах. Новые этапы добавлять только в конец.
     StartDay2Decoration,
     StartDay2Dinner,
     StartDay2Evening,
@@ -21,8 +20,7 @@ public enum DebugStoryStage
     StartLookInHole,
     StartHammerQuest,
     StartFinale,
-    // Развилка ночи 2 (T-19/T-20) — сразу после выхода монстра из дыры,
-    // все три пути открыты.
+    // Совместимость старых сцен: подготовка квеста молотка перед прятками.
     StartBranchEndings,
     StartPieMicrowaveQuest,
     StartTrashQuest,
@@ -37,7 +35,7 @@ public enum DebugStoryStage
     StartBreakerPanel,
     // M-07: ночь 2, игрок у стола с молотком в своей спальне — взял молоток, и начинаются прятки под кроватью.
     StartHidingSpots,
-    // C-02: утро дня 2, камера стоит на штативе — сразу показывается ночная запись (до телевизора C-03).
+    // C-03: утро дня 2, камера на штативе, сразу открыть окно плёнки.
     PlayNightRecording,
     // B-02: ночь 2 после пряток — мысль-выбор, открыты люк (E1/E2), задние двери (E3) и дорога (E4). Игрок в спальне.
     StartNightTwoExits
@@ -52,6 +50,10 @@ public class IntroSequence : MonoBehaviour
     [Header("Настройки дебага")]
     public bool useDebugSkip = false;
     public DebugStoryStage startStage = DebugStoryStage.None;
+    [Tooltip("Только для дебаг-старта: засов перед второй ночью. Выключен — сцена со стаканом воды; включён — выбивание двери.")]
+    public bool debugFrontDoorLocked;
+    [Tooltip("Только для дебаг-старта после дня 1: камера уже установлена, утром доступна ночная запись.")]
+    public bool debugCameraPlaced = true;
 
     [Header("Начало игры")]
     [Tooltip("Чёрный экран с предысторией и катсцена приезда к дому. Без неё игра стартует сразу в доме.")]
@@ -311,6 +313,7 @@ public class IntroSequence : MonoBehaviour
         else if (useDebugSkip && startStage != DebugStoryStage.None)
         {
             ChapterCheckpoints.DisableSaves(); // проверки с прыжка не открывают главы игроку
+            PrepareDebugState(startStage);
             ApplyDebugSkip(startStage);
         }
         else
@@ -404,6 +407,22 @@ public class IntroSequence : MonoBehaviour
     // Отладка
     // =====================================================================
 
+    private void PrepareDebugState(DebugStoryStage stage)
+    {
+        if (stage == DebugStoryStage.StartNightOne || IsDayTwoDebugStage(stage) || IsNightDebugStage(stage))
+        {
+            StoryFlags.SetCameraPlacementSlot(debugCameraPlaced || stage == DebugStoryStage.PlayNightRecording ? 1 : 0);
+            _cameraPlacement?.RestoreFromCheckpoint();
+        }
+        if (IsNightDebugStage(stage) || stage == DebugStoryStage.StartDay2Evening)
+        {
+            StoryFlags.FrontDoorLocked = debugFrontDoorLocked;
+            _eveningRound.ApplyRestoredLock();
+            FindFirstObjectByType<FrontDoorLockInteractable>()?.SnapToState();
+        }
+        if (IsDayTwoDebugStage(stage)) PrepareMorningTape();
+    }
+
     void ApplyDebugSkip(DebugStoryStage startStage)
     {
         Debug.LogWarning($"[DEBUG] Начальная стадия: {startStage}");
@@ -413,13 +432,14 @@ public class IntroSequence : MonoBehaviour
             _cameraPlacement?.RevealForDebug();
 
         if (startStage != DebugStoryStage.None && startStage != DebugStoryStage.StartTrashQuest &&
-            startStage != DebugStoryStage.StartTrashDeliveryQuest && startStage != DebugStoryStage.StartBoxQuest && roomZones != null)
+            startStage != DebugStoryStage.StartTrashDeliveryQuest)
         {
             if (TrashManager.Instance != null && TrashManager.Instance.trashPiles != null)
                 foreach (GameObject pile in TrashManager.Instance.trashPiles)
                     if (pile != null) pile.SetActive(false);
-            foreach (GameObject zone in roomZones)
-                if (zone != null) zone.GetComponent<PlacementZone>()?.RevealItemsForDebug();
+            if (startStage != DebugStoryStage.StartBoxQuest && roomZones != null)
+                foreach (GameObject zone in roomZones)
+                    if (zone != null) zone.GetComponent<PlacementZone>()?.RevealItemsForDebug();
         }
 
         if (IsNightDebugStage(startStage))
@@ -436,9 +456,9 @@ public class IntroSequence : MonoBehaviour
             GameEvents.OnNightTwoAwake?.Invoke();
         }
 
-        if (IsDayTwoDebugStage(startStage)) _knockerAwake = true; // ночь 1 уже была
+        if (IsDayTwoDebugStage(startStage) || IsNightDebugStage(startStage)) _knockerAwake = true;
         if (IsPastKitchenDebugStage(startStage) || startStage == DebugStoryStage.StartBreakerPanel ||
-            startStage == DebugStoryStage.StartKitchenNoise)
+            startStage == DebugStoryStage.StartKitchenNoise || startStage == DebugStoryStage.StartFlashlightQuest)
             _phoneFlashlight?.DrainBattery();
         if (IsPastKitchenDebugStage(startStage)) _cornerPeek?.Retire(); // пугалка кухни уже позади
         switch (startStage)
@@ -447,6 +467,7 @@ public class IntroSequence : MonoBehaviour
                 _moveInChores.SetupTrashQuest();
                 break;
             case DebugStoryStage.StartTrashDeliveryQuest:
+                TrashManager.Instance?.PrepareDeliveryForDebug();
                 _moveInChores.StartTrashDeliveryQuest();
                 break;
             case DebugStoryStage.StartBoxQuest:
@@ -510,11 +531,13 @@ public class IntroSequence : MonoBehaviour
                 // Раньше эта стадия ломала пол на кухне (FloorLogic.SetCompletedForDebug).
                 // Кухонной дыры в сюжете больше нет — стадия теперь прыгает к замку люка.
                 GrantDebugItem("Flashlight");
+                GrantDebugItem("Crowbar");
                 SetupPryLockQuest();
                 break;
             case DebugStoryStage.StartLookInHole:
                 GrantDebugItem("Flashlight");
                 GrantDebugItem("Crowbar");
+                FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
                 SetupLookInHoleQuest();
                 break;
             case DebugStoryStage.StartHammerQuest:
@@ -528,6 +551,7 @@ public class IntroSequence : MonoBehaviour
                 GrantDebugItem("Crowbar");
                 GrantDebugItem("Hammer");
                 FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
+                MonsterTimer.Instance?.StartTimer();
                 SetupBoardBasementQuest();
                 break;
             case DebugStoryStage.StartBreakerPanel:
