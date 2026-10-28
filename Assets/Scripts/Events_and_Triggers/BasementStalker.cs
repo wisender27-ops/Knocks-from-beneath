@@ -9,7 +9,7 @@ namespace KnocksFromBeneath
     // где слышал игрока (через проёмы, не сквозь стены), ничего не нашёл — ищет и возвращается на обход.
     public sealed class BasementStalkerBrain
     {
-        public enum Mode { Patrol, Investigate, Search }
+        public enum Mode { Patrol, Investigate, Search, RoomSearch }
 
         public const float PatrolSpeed = 1.1f;
         public const float HuntSpeed = 2.3f;
@@ -29,9 +29,15 @@ namespace KnocksFromBeneath
         {
             WalkHearSeconds = 1.4f, RunHearSeconds = 0.4f, ForgetSeconds = 3f
         };
-        private int waypoint;
-        private float pause, searchLeft;
+        public const float RoomSearchPause = 2.2f;
 
+        private int waypoint, routeIndex;
+        private float pause, searchLeft;
+        private Vector2[] route, routeFacing;
+        private bool routeArrived;
+
+        // Обход комнаты после шума (удар по замку) закончен: монстр прошёл все точки и ушёл на свой обход.
+        public bool SearchCompleted { get; private set; }
         public Vector2 Position { get; private set; }
         public Vector2 Heading { get; private set; } = Vector2.up;
         public Mode CurrentMode { get; private set; }
@@ -47,6 +53,9 @@ namespace KnocksFromBeneath
             CurrentMode = Mode.Patrol;
             waypoint = NearestWaypoint(position);
             pause = searchLeft = 0f;
+            route = routeFacing = null;
+            routeArrived = false;
+            SearchCompleted = false;
             CaughtPlayer = false;
             Moving = false;
         }
@@ -57,6 +66,18 @@ namespace KnocksFromBeneath
             tracker.Hear(point);
             CurrentMode = Mode.Investigate;
             Target = point;
+        }
+
+        // Шум в комнате: монстр идёт на звук, а дойдя, обходит точки маршрута (facing — куда смотреть на точке)
+        // и уходит. Игрок, который прячется и молчит, переживает обход.
+        public void AlertAndSearch(Vector2 point, Vector2[] searchRoute, Vector2[] searchFacing)
+        {
+            Alert(point);
+            route = searchRoute;
+            routeFacing = searchFacing;
+            routeIndex = 0;
+            routeArrived = false;
+            SearchCompleted = false;
         }
 
         public void Step(Vector2 player, KnockNoise noise, bool playerInSight, float dt)
@@ -86,11 +107,16 @@ namespace KnocksFromBeneath
                 case Mode.Investigate:
                     if (Vector2.Distance(Position, Target) <= Arrive)
                     {
-                        CurrentMode = Mode.Search;
+                        CurrentMode = route != null ? Mode.RoomSearch : Mode.Search;
                         searchLeft = SearchSeconds;
+                        pause = 0f;
+                        routeArrived = false;
                         Moving = false;
                     }
                     else MoveToward(Target, HuntSpeed, dt);
+                    break;
+                case Mode.RoomSearch:
+                    RoomSearch(dt);
                     break;
                 case Mode.Search:
                     Moving = false;
@@ -105,6 +131,44 @@ namespace KnocksFromBeneath
                     Patrol(dt);
                     break;
             }
+        }
+
+        private void RoomSearch(float dt)
+        {
+            if (route == null || routeIndex >= route.Length) { FinishRoomSearch(); return; }
+            if (pause > 0f)
+            {
+                pause -= dt;
+                Moving = false;
+                if (pause <= 0f && routeArrived)
+                {
+                    routeArrived = false;
+                    routeIndex++;
+                    if (routeIndex >= route.Length) FinishRoomSearch();
+                }
+                return;
+            }
+            Vector2 goal = route[routeIndex];
+            if (Vector2.Distance(Position, goal) <= Arrive)
+            {
+                routeArrived = true;
+                pause = RoomSearchPause;
+                Moving = false;
+                if (routeFacing != null && routeIndex < routeFacing.Length && routeFacing[routeIndex].sqrMagnitude > 0.01f)
+                    Heading = routeFacing[routeIndex].normalized;
+                return;
+            }
+            MoveToward(goal, PatrolSpeed, dt);
+        }
+
+        private void FinishRoomSearch()
+        {
+            route = routeFacing = null;
+            routeArrived = false;
+            SearchCompleted = true;
+            CurrentMode = Mode.Patrol;
+            waypoint = NearestWaypoint(Position);
+            Moving = false;
         }
 
         private void Patrol(float dt)
@@ -207,6 +271,10 @@ namespace KnocksFromBeneath
 
         public event Action Caught;
         public BasementStalkerBrain Brain => brain;
+        // Игрок сидит в нише и прячется: вблизи монстр его не видит (слух работает как раньше).
+        public Func<bool> PlayerHidden { get; set; }
+        public CornerStalkerRig Rig => rig;
+        public Transform HeadTransform => rig != null ? rig.Head : null;
         public bool Active => running;
 
         public void Initialize(Transform playerTransform, GameObject monster)
@@ -245,6 +313,10 @@ namespace KnocksFromBeneath
         }
 
         public void Alert(Vector3 worldPoint) => brain.Alert(new Vector2(worldPoint.x, worldPoint.z));
+
+        // Шум у замка: идти на звук, затем обойти блок D с остановками у ниш.
+        public void AlertAndSearch(Vector3 worldPoint) => brain.AlertAndSearch(new Vector2(worldPoint.x, worldPoint.z),
+            BasementLayout.SearchRoute, BasementLayout.SearchFacing);
 
         private void Update()
         {
@@ -314,6 +386,7 @@ namespace KnocksFromBeneath
         // Вблизи монстр видит игрока, если между ними нет стены: только в пределах своего поля зрения вперёд.
         private bool InSight(Vector3 position)
         {
+            if (PlayerHidden != null && PlayerHidden()) return false;
             Vector3 eye = transform.position + Vector3.up * 1.6f;
             Vector3 to = position + Vector3.up * 1.2f - eye;
             float distance = to.magnitude;

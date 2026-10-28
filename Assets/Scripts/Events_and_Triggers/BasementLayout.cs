@@ -81,10 +81,45 @@ namespace KnocksFromBeneath
             .Open(BasementSide.West, EntranceFrom, EntranceTo).Open(BasementSide.South, PassageFrom, PassageTo);
         public static readonly BasementRoom CorridorC = new BasementRoom("C", PassageFrom, PassageTo, 103f, 110f)
             .OpenSide(BasementSide.North).OpenSide(BasementSide.South);
-        public static readonly BasementRoom CellBlockD = new BasementRoom("D", -32f, -23f, 96f, 103f)
-            .Open(BasementSide.North, PassageFrom, PassageTo);
+        // Ниши у южной стены блока D — укрытия (B-05): присел внутри и молчи, монстр тебя не увидит.
+        public static readonly Rect NookARect = Rect.MinMaxRect(-27.8f, 94.4f, -26.2f, 96.2f);
+        public static readonly Rect NookBRect = Rect.MinMaxRect(-24.6f, 94.4f, -23.0f, 96.2f);
 
+        public static readonly BasementRoom CellBlockD = new BasementRoom("D", -32f, -23f, 96f, 103f)
+            .Open(BasementSide.North, PassageFrom, PassageTo)
+            .Open(BasementSide.South, NookARect.xMin, NookARect.xMax)
+            .Open(BasementSide.South, NookBRect.xMin, NookBRect.xMax);
+        public static readonly BasementRoom NookA = new BasementRoom("E", NookARect.xMin, NookARect.xMax, 94.4f, 96f)
+            .OpenSide(BasementSide.North);
+        public static readonly BasementRoom NookB = new BasementRoom("F", NookBRect.xMin, NookBRect.xMax, 94.4f, 96f)
+            .OpenSide(BasementSide.North);
+
+        // Цепочка комнат A–B–C–D: по ней строится маршрут монстра.
         public static readonly BasementRoom[] Rooms = { CorridorA, HallB, CorridorC, CellBlockD };
+        // Всё, что нужно построить: цепочка и ниши.
+        public static readonly BasementRoom[] AllRooms = { CorridorA, HallB, CorridorC, CellBlockD, NookA, NookB };
+
+        // Игрок в нише: при присиде монстр не видит его (и всё равно слышит голос и шаги).
+        public static bool IsInNook(Vector2 point) => NookARect.Contains(point) || NookBRect.Contains(point);
+
+        // Обход блока D после удара по замку: у замка, у каждой ниши (лицом к ней), по центру и к выходу.
+        public static readonly Vector2[] SearchRoute =
+        {
+            new Vector2(-29.4f, 100.8f), new Vector2(-27.0f, 97.9f), new Vector2(-23.9f, 97.9f),
+            new Vector2(-25.8f, 100.9f), new Vector2(-28.15f, 102.4f)
+        };
+        public static readonly Vector2[] SearchFacing =
+        {
+            new Vector2(-1f, -0.4f), Vector2.down, Vector2.down, Vector2.zero, Vector2.zero
+        };
+
+        // Труба, по которой стучит хозяин: из камеры под потолком в дом. Точки (x, z), высота — под потолком.
+        public const float PipeY = CeilingY - 0.3f;
+        public static readonly Vector2[] PipeRoute =
+        {
+            new Vector2(-30.6f, 98.4f), new Vector2(-30.6f, 102.6f), new Vector2(-28.15f, 102.6f),
+            new Vector2(-28.15f, 116.2f), new Vector2(-37.4f, 116.2f)
+        };
 
         // Камера хозяина: северная сторона — решётка с замком, остальные — стены.
         public static readonly Rect CellArea = Rect.MinMaxRect(-32f, 96f, -29.4f, 99f);
@@ -108,10 +143,73 @@ namespace KnocksFromBeneath
             public bool Cylinder;
         }
 
+        public enum ClutterKind { Crate, Barrel, Planks, Rubble, Mattress, Shelf, Bucket, Blanket }
+
+        public struct Clutter
+        {
+            public ClutterKind Kind;
+            public Vector2 Position;   // центр на полу
+            public Vector3 Size;       // габариты по осям мира до поворота
+            public float Yaw;
+            public bool Blocks;        // мешает ходьбе (учитывается проверкой проходов)
+        }
+
+        private static Clutter C(ClutterKind kind, float x, float z, float sx, float sy, float sz, float yaw = 0f, bool blocks = true) =>
+            new Clutter { Kind = kind, Position = new Vector2(x, z), Size = new Vector3(sx, sy, sz), Yaw = yaw, Blocks = blocks };
+
+        // Подвальный хлам. Проходы, точки обхода монстра и подходы к замку/нишам свободны (см. тесты).
+        public static readonly Clutter[] Junk =
+        {
+            // Зал B
+            C(ClutterKind.Shelf, -24.35f, 116.65f, 0.5f, 2.0f, 2.3f),
+            C(ClutterKind.Barrel, -31.5f, 110.8f, 0.6f, 0.9f, 0.6f), C(ClutterKind.Barrel, -30.85f, 110.55f, 0.6f, 0.9f, 0.6f),
+            C(ClutterKind.Barrel, -31.6f, 111.55f, 0.6f, 0.9f, 0.6f, 20f),
+            C(ClutterKind.Planks, -24.6f, 114.0f, 1.2f, 0.4f, 1.2f, 12f),
+            C(ClutterKind.Rubble, -31.4f, 118.6f, 0.9f, 0.5f, 0.9f, 30f),
+            C(ClutterKind.Mattress, -28.3f, 121.4f, 1.8f, 0.25f, 0.8f, -8f),
+            // Коридор C
+            C(ClutterKind.Bucket, -28.65f, 105.2f, 0.35f, 0.35f, 0.35f),
+            // Блок D
+            C(ClutterKind.Shelf, -30.6f, 102.7f, 2.4f, 1.9f, 0.5f),
+            C(ClutterKind.Barrel, -23.6f, 102.3f, 0.6f, 0.9f, 0.6f), C(ClutterKind.Barrel, -23.55f, 101.55f, 0.6f, 0.9f, 0.6f, 40f),
+            C(ClutterKind.Crate, -23.7f, 100.2f, 0.9f, 0.9f, 0.9f, 8f),
+            // Ящики у ниш прикрывают их с одной стороны
+            C(ClutterKind.Crate, -28.4f, 96.8f, 0.8f, 1.1f, 0.8f, 6f), C(ClutterKind.Crate, -25.4f, 96.7f, 0.9f, 1.2f, 0.8f, -4f),
+            // В нишах и в камере
+            C(ClutterKind.Crate, -27.55f, 94.9f, 0.4f, 0.5f, 0.4f, 0f, false), C(ClutterKind.Barrel, -23.3f, 94.8f, 0.5f, 0.8f, 0.5f, 0f, false),
+            C(ClutterKind.Blanket, -31.2f, 97.0f, 1.2f, 0.07f, 0.8f, 14f, false), C(ClutterKind.Bucket, -29.9f, 96.5f, 0.35f, 0.35f, 0.35f, 0f, false)
+        };
+
+        // Точки, которые хлам не должен перекрывать: обход монстра, проёмы, подход к замку, устья ниш.
+        public static IEnumerable<Vector2> KeepClear()
+        {
+            foreach (Vector2 point in Patrol) yield return point;
+            foreach (Vector2 point in SearchRoute) yield return point;
+            yield return new Vector2(-32f, 0.5f * (EntranceFrom + EntranceTo));
+            yield return new Vector2(0.5f * (PassageFrom + PassageTo), 110f);
+            yield return new Vector2(0.5f * (PassageFrom + PassageTo), 103f);
+            yield return new Vector2(CellApproach.x, CellApproach.z);
+            yield return new Vector2(NookARect.center.x, 95.4f);
+            yield return new Vector2(NookBRect.center.x, 95.4f);
+            yield return new Vector2(NookARect.center.x, 97.3f);
+            yield return new Vector2(NookBRect.center.x, 97.3f);
+        }
+
+        public static bool BlockedByJunk(Vector2 point, float radius)
+        {
+            foreach (Clutter item in Junk)
+            {
+                if (!item.Blocks) continue;
+                float halfX = item.Size.x * 0.5f + radius, halfZ = item.Size.z * 0.5f + radius;
+                if (Mathf.Abs(point.x - item.Position.x) <= halfX && Mathf.Abs(point.y - item.Position.y) <= halfZ) return true;
+            }
+            return false;
+        }
+
         // Колонны и ящики зала B: укрытия и препятствия.
         public static readonly Prop[] HallProps =
         {
-            new Prop { Center = new Vector3(-28.2f, FloorY + 1.425f, 114.4f), Size = new Vector3(0.6f, 2.85f, 0.6f) },
+            new Prop { Center = new Vector3(-27.0f, FloorY + 1.425f, 114.4f), Size = new Vector3(0.6f, 2.85f, 0.6f) },
             new Prop { Center = new Vector3(-27.8f, FloorY + 1.425f, 118.4f), Size = new Vector3(0.6f, 2.85f, 0.6f) },
             new Prop { Center = new Vector3(-24.9f, FloorY + 0.5f, 110.9f), Size = new Vector3(1.2f, 1.0f, 1.2f) },
             new Prop { Center = new Vector3(-31.1f, FloorY + 0.4f, 121.4f), Size = new Vector3(1.4f, 0.8f, 1.0f) },

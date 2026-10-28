@@ -29,7 +29,7 @@ namespace KnocksFromBeneath
             Transform t = hit.collider.transform;
             QuestManager quests = QuestManager.Instance;
             BasementCellLock cellLock = t.GetComponentInParent<BasementCellLock>();
-            if (cellLock != null) return cellLock.CanInteract && Set(cellLock.transform, "Вскрыть замок", false, false, hit, out focus);
+            if (cellLock != null) return cellLock.CanInteract && Set(cellLock.transform, cellLock.Label, false, false, hit, out focus);
             BasementHatchLock hatchLock = t.GetComponentInParent<BasementHatchLock>();
             BasementHatch hatch = hatchLock != null ? hatchLock.GetComponentInParent<BasementHatch>() : t.GetComponentInParent<BasementHatch>();
             if (hatchLock != null && hatchLock.IsLocked && quests != null && quests.IsQuestActive(hatchLock.RequiredQuestTag))

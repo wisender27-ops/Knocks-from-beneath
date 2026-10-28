@@ -8,14 +8,17 @@ namespace KnocksFromBeneath
     {
         private Func<bool> canInteract;
         private Action interact;
+        private Func<string> label;
 
-        public void Initialize(Func<bool> can, Action action)
+        public void Initialize(Func<bool> can, Action action, Func<string> prompt = null)
         {
             canInteract = can;
             interact = action;
+            label = prompt;
         }
 
         public bool CanInteract => canInteract != null && canInteract();
+        public string Label => label != null ? label() : "Вскрыть замок";
 
         public void Interact()
         {
