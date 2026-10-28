@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System;
 using NUnit.Framework;
 using KnocksFromBeneath;
 
@@ -30,7 +31,7 @@ public class BranchEndingControllerTests
 
     [TestCase(false)]
     [TestCase(true)]
-    public void Activate_EnablesHammerAndKeepsExitsClosed(bool doorLocked)
+    public void Activate_EnablesHammerAndOpensExits(bool doorLocked)
     {
         var controller = CreateController();
         GameState.frontDoorLocked = doorLocked;
@@ -39,22 +40,50 @@ public class BranchEndingControllerTests
 
         Assert.That(_hammer, Is.True);
         Assert.That(_hide, Is.False);
-        Assert.That(_exitsOpen, Is.False);
-        Assert.That(controller.ExitsOpen, Is.False);
+        Assert.That(_exitsOpen, Is.True);
+        Assert.That(controller.ExitsOpen, Is.True);
         Assert.That(controller.DeadlineExpired, Is.False);
     }
 
     [Test]
-    public void Exits_BeforeOpenExits_DoNothing()
+    public void Exits_BeforeActivate_DoNothing()
     {
         var controller = CreateController();
-        controller.Activate();
-
         controller.HandleBackyardReached();
         controller.HandleRoadReached();
 
         Assert.That(_endings, Is.Empty);
         Assert.That(_cameraLocks, Is.Zero);
+        Assert.That(controller.TryResolve(), Is.True);
+    }
+
+    [Test]
+    public void Road_ClaimsBranchButEndsOnlyWhenChaseCompletes()
+    {
+        Action<EndingId> finish = null;
+        var controller = new BranchEndingController(null, null, null, null,
+            ending => _endings.Add(ending), (exit, callback) => finish = callback);
+        _endings = new List<EndingId>();
+        controller.Activate();
+        controller.HandleRoadReached();
+        Assert.That(_endings, Is.Empty);
+        Assert.That(controller.TryResolve(), Is.False);
+        Assert.That(finish, Is.Not.Null);
+        finish(EndingId.Hidden);
+        Assert.That(_endings, Is.EqualTo(new[] { EndingId.Hidden }));
+    }
+
+    [Test]
+    public void MissingExitAsset_DoesNotClaimOrEndBranch()
+    {
+        var endings = new List<EndingId>();
+        bool opened = false;
+        var controller = new BranchEndingController(null, value => opened = value, null, null,
+            endings.Add, (exit, callback) => Assert.Fail("Scene must not start"), () => false);
+        controller.Activate();
+        controller.HandleRoadReached();
+        Assert.That(opened, Is.True);
+        Assert.That(endings, Is.Empty);
         Assert.That(controller.TryResolve(), Is.True);
     }
 

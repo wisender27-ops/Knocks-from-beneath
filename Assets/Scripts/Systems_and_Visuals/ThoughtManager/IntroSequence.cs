@@ -219,11 +219,14 @@ public class IntroSequence : MonoBehaviour
 
         _exits = gameObject.AddComponent<NightTwoExits>();
         _branchEnding = new BranchEndingController(
-            SetupHammerQuest, _exits.SetOpen, _hideEnding.SetZonesActive, LockPlayerCamera, EndGame);
+            SetupHammerQuest, _exits.SetOpen, _hideEnding.SetZonesActive, LockPlayerCamera, EndGame,
+            (exit, finished) => { _hidingScene.CancelForEscape(); _exits.BeginExit(exit, finished); },
+            _exits.CanBeginExit);
         BasementHatch hatch = holeEventController != null && holeEventController.basementHatch != null
             ? holeEventController.basementHatch : FindFirstObjectByType<BasementHatch>();
         _exits.Initialize(playerTransform, hatch != null ? hatch.transform.position : Vector3.zero,
             _branchEnding.HandleBackyardReached, _branchEnding.HandleRoadReached);
+        _exits.SetHatch(hatch);
         _glassOfWater = gameObject.AddComponent<GlassOfWaterScene>();
         _glassOfWater.Initialize(this, playerTransform, frontDoor, _exits, ShowThoughts,
             (title, amount, callback, tag) => CreateQuest(title, amount, callback, tag),
@@ -1370,6 +1373,7 @@ public class IntroSequence : MonoBehaviour
     // переждал — ReturnToHatchAfterHiding, нашло или застало снаружи — E3 (HideEndingController).
     public void OnHammerPickedUp()
     {
+        if (_branchEnding.IsResolved) return;
         MonsterTimer.Instance?.PauseTimer();
         _hideEnding.ActivateZones();
         _hidingScene.BeginScene();
@@ -1389,6 +1393,7 @@ public class IntroSequence : MonoBehaviour
             "Заколотить люк… или бежать отсюда?"
         }, () =>
         {
+            if (_branchEnding.IsResolved) return;
             SetupBoardBasementQuest();
             _branchEnding.OpenExits();
         });

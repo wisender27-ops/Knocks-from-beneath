@@ -150,6 +150,18 @@ namespace KnocksFromBeneath
             stopped = true;
         }
 
+        public void CancelForEscape()
+        {
+            if (!sceneRunning && Active != this) return;
+            stopped = true;
+            StopAllCoroutines();
+            Finish(Active == this);
+            RestoreLights();
+            if (monster != null) Destroy(monster);
+            monster = null;
+            sceneRunning = false;
+        }
+
         // ---------------------------------------------------------------- сцена
 
         // IntroSequence: молоток взят — монстр выходит из люка и идёт наверх.

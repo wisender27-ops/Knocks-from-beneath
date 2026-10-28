@@ -34,6 +34,9 @@ namespace KnocksFromBeneath
         private AnimationClip looping;
         private float fade = 1f, fadeTime = 0.25f;
         private bool grounded;
+        private bool chaseFrozen;
+        private Quaternion frozenHeadLocal;
+        private float speedBeforeFreeze;
         private const float AnkleHeight = 0.09f, KneeHeight = 0.06f;
 
         public Vector3 LookTarget { get; set; }
@@ -81,6 +84,43 @@ namespace KnocksFromBeneath
 
         public void Run(float speed) => Loop(runClip, speed, 0.12f);
 
+        public void SetChaseFrozen(bool frozen)
+        {
+            if (chaseFrozen == frozen || animator == null) return;
+            chaseFrozen = frozen;
+            if (frozen)
+            {
+                speedBeforeFreeze = animator.speed;
+                animator.speed = 0f;
+                if (head != null) frozenHeadLocal = head.localRotation;
+                if (runGraph.IsValid()) runGraph.Stop();
+            }
+            else
+            {
+                animator.speed = speedBeforeFreeze;
+                if (head != null) head.localRotation = frozenHeadLocal;
+                if (runGraph.IsValid()) runGraph.Play();
+            }
+        }
+
+        public bool PlayAmbush(bool fromBehind)
+        {
+            var clip = Resources.Load<AnimationClip>(fromBehind
+                ? "Animations/Monster/AmbushBehind" : "Animations/Monster/AmbushFront");
+            if (clip == null || animator == null)
+            {
+                Debug.LogError("[B-03] Missing ambush animation or humanoid animator.");
+                return false;
+            }
+            Loop(clip, 1f, 0f);
+            return true;
+        }
+
+        public void SetAmbushSpeed(float speed)
+        {
+            if (runGraph.IsValid() && current.IsValid()) current.SetSpeed(speed);
+        }
+
         // Шаг со скоростью metersPerSecond: клип ускоряется/замедляется под реальный ход, ступни не скользят.
         public void Walk(float metersPerSecond)
         {
@@ -104,6 +144,7 @@ namespace KnocksFromBeneath
         // Снять шаг/бег: дальше снова работает контроллер (Idle/Lunge).
         public void StopMoving()
         {
+            SetChaseFrozen(false);
             if (runGraph.IsValid()) runGraph.Destroy();
             looping = null;
             grounded = false;
@@ -160,6 +201,7 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
+            if (chaseFrozen) return;
             if (fade < 1f && runGraph.IsValid())
             {
                 fade = Mathf.Min(1f, fade + Time.deltaTime / fadeTime);
@@ -171,6 +213,13 @@ namespace KnocksFromBeneath
         // голова — остаток. Угол считается от того, куда морда смотрит сейчас (анимация может уводить голову в сторону).
         private void LateUpdate()
         {
+            if (chaseFrozen)
+            {
+                if (Time.timeScale <= 0f || PauseMenuController.InputBlocked || head == null) return;
+                head.localRotation = frozenHeadLocal;
+                AimHead(null, null, head, faceLocal, LookTarget, 1f, new Vector3(0f, 0f, 1f), maxYaw, 0f);
+                return;
+            }
             if (grounded && animator != null) GroundFeet(animator, transform.position.y);
             AimHead(chest, neck, head, faceLocal, LookTarget, LookWeight, grounded ? PeekLookShares : lookShares, maxYaw, HeadRoll);
         }

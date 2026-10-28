@@ -13,8 +13,11 @@ public sealed class BranchEndingController
     private readonly Action<bool> _setHidePathsActive;
     private readonly Action<bool> _lockCamera;
     private readonly Action<EndingId> _endGame;
+    private readonly Action<EndingId, Action<EndingId>> _beginExit;
+    private readonly Func<bool> _canBeginExit;
 
     private bool _resolved;
+    public bool IsResolved => _resolved;
     public bool DeadlineExpired { get; private set; }
     public bool ExitsOpen { get; private set; }
 
@@ -23,20 +26,24 @@ public sealed class BranchEndingController
         Action<bool> setExitsOpen,
         Action<bool> setHidePathsActive,
         Action<bool> lockCamera,
-        Action<EndingId> endGame)
+        Action<EndingId> endGame,
+        Action<EndingId, Action<EndingId>> beginExit = null,
+        Func<bool> canBeginExit = null)
     {
         _activateHammerPath = activateHammerPath;
         _setExitsOpen = setExitsOpen;
         _setHidePathsActive = setHidePathsActive;
         _lockCamera = lockCamera;
         _endGame = endGame;
+        _beginExit = beginExit;
+        _canBeginExit = canBeginExit;
     }
 
     public void Activate()
     {
         _resolved = false;
         DeadlineExpired = false;
-        SetExits(false);
+        SetExits(true);
 
         _activateHammerPath?.Invoke();
         _setHidePathsActive?.Invoke(false);
@@ -75,7 +82,21 @@ public sealed class BranchEndingController
 
     void EndThroughExit(EndingId ending)
     {
-        if (!ExitsOpen || !TryResolve()) return;
+        if (!ExitsOpen) return;
+        if (_canBeginExit != null && !_canBeginExit())
+        {
+            _setExitsOpen?.Invoke(true);
+            return;
+        }
+        if (!TryResolve()) return;
+        if (_beginExit != null)
+            _beginExit(ending, FinishExit);
+        else
+            FinishExit(ending);
+    }
+
+    void FinishExit(EndingId ending)
+    {
         _lockCamera?.Invoke(true);
         _endGame?.Invoke(ending);
     }
