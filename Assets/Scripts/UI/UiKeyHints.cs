@@ -28,7 +28,8 @@ namespace KnocksFromBeneath
             var fitter = rect.gameObject.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
             var hints = rect.gameObject.AddComponent<UiKeyHints>();
-            hints.font = UiStyle.Font(font);
+            // Все подсказки клавиш — одним шрифтом и капсом, что бы ни передал экран.
+            hints.font = UiStyle.Font();
             hints.keySize = 15f * scale;
             hints.labelSize = 17f * scale;
             hints.height = 30f * scale;
@@ -52,9 +53,9 @@ namespace KnocksFromBeneath
                 chips[i].gameObject.SetActive(active);
                 if (!active) continue;
                 string key = pairs[i * 2];
-                keys[i].text = key;
+                keys[i].text = key?.ToUpperInvariant();
                 keys[i].transform.parent.gameObject.SetActive(!string.IsNullOrEmpty(key));
-                labels[i].text = pairs[i * 2 + 1];
+                labels[i].text = pairs[i * 2 + 1]?.ToUpperInvariant();
             }
         }
 

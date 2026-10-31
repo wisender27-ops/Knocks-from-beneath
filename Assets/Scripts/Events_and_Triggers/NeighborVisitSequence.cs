@@ -15,6 +15,10 @@ namespace KnocksFromBeneath
         public AudioClip knockClip;
         [Min(0.5f)] public float conversationDistance = 3f;
         [Min(0.1f)] public float walkingSpeed = 1.1f;
+        // Квест «Вернуться в кровать» появляется, пока сосед ещё идёт: столько секунд до конца его пути.
+        private const float BedQuestLeadSeconds = 5f;
+        // true — сосед попрощался, из дома не выйти; false — герой лёг или сцена прервана.
+        [System.NonSerialized] public System.Action<bool> stayIndoors;
         public string walkingBoolParameter = "IsWalking";
 
         // N-01: пока на крыльце темно, за окном гостиной стоит чёрный силуэт «как у монстра» —
@@ -124,21 +128,18 @@ namespace KnocksFromBeneath
                 // K-05: игрок стучал в пол, пока шёл к двери, и снизу ответили — сосед это слышал.
                 if (StoryFlags.KnockAnswered)
                 {
-                    yield return Say("СОСЕД", "И ещё. Пока я стоял у двери — это ты по полу стучал?");
+                    yield return Say("СОСЕД", "И ещё. Пока я стоял у двери, это ты по полу стучал?");
                     yield return Say("СОСЕД", "Тук-тук... и снизу будто кто-то отвечает.");
                     yield return Say("Я", "...Трубы, наверное. Старый дом.");
                 }
                 yield return Say("СОСЕД", "Ладно, не буду мешать. Спокойной ночи.");
                 if (!running) yield break;
                 ReleasePlayerView();
+                stayIndoors?.Invoke(true);
                 yield return Leave();
                 if (!running) yield break;
                 HasVisited = true;
-                RestoreDoor();
-                waitingForBed = true;
-                bedReached = false;
-                GameEvents.OnBedTriggerReached += OnBedReached;
-                QuestManager.Instance?.CreateQuest("Вернуться в кровать", 1, questTag: "neighbor-return-bed");
+                AskToReturnToBed();
                 while (running && !bedReached) yield return null;
                 if (!running) yield break;
                 QuestManager.Instance?.RecordQuestCompletion("neighbor-return-bed");
@@ -149,7 +150,7 @@ namespace KnocksFromBeneath
             }
         }
 
-        private bool Playable() => Time.timeScale > 0f && !RetroInventoryScreen.IsAnyOpen && !QuestJournalScreen.IsAnyOpen;
+        private bool Playable() => !NarrativeReadingPanel.WorldHalted && !RetroInventoryScreen.IsAnyOpen && !QuestJournalScreen.IsAnyOpen;
 
         private bool CanTalk()
         {
@@ -392,6 +393,14 @@ namespace KnocksFromBeneath
         private IEnumerator Leave()
         {
             if (departurePath == null) yield break;
+            float pathLeft = 0f;
+            Vector3 pathPoint = neighbor != null ? neighbor.transform.position : visitPoint.position;
+            foreach (Transform waypoint in departurePath)
+            {
+                if (waypoint == null) continue;
+                pathLeft += Vector3.Distance(pathPoint, waypoint.position);
+                pathPoint = waypoint.position;
+            }
             SetWalking(true);
             foreach (Transform waypoint in departurePath)
             {
@@ -404,6 +413,8 @@ namespace KnocksFromBeneath
                         if (direction.sqrMagnitude > 0.001f)
                             neighbor.transform.rotation = Quaternion.RotateTowards(neighbor.transform.rotation, Quaternion.LookRotation(direction), 180f * Time.deltaTime);
                         neighbor.transform.position = Vector3.MoveTowards(neighbor.transform.position, waypoint.position, walkingSpeed * Time.deltaTime);
+                        pathLeft -= walkingSpeed * Time.deltaTime;
+                        if (pathLeft <= BedQuestLeadSeconds * walkingSpeed) AskToReturnToBed();
                     }
                     yield return null;
                 }
@@ -423,6 +434,15 @@ namespace KnocksFromBeneath
                     animator.SetBool(hash, walking);
                     return;
                 }
+        }
+
+        private void AskToReturnToBed()
+        {
+            if (waitingForBed) return;
+            waitingForBed = true;
+            bedReached = false;
+            GameEvents.OnBedTriggerReached += OnBedReached;
+            QuestManager.Instance?.CreateQuest("Вернуться в кровать", 1, questTag: "neighbor-return-bed");
         }
 
         private void OnBedReached()
@@ -449,6 +469,7 @@ namespace KnocksFromBeneath
             knockSoon = false;
             knockIK = null;
             steppingBack = false;
+            stayIndoors?.Invoke(false);
             RestoreDoor();
             if (porchStateCaptured && porchLightSwitch != null)
             {

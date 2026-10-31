@@ -54,6 +54,24 @@ public class RoomDecorationControllerTests
     }
 
     [Test]
+    public void IsAtKitchen_OnlyNearKitchenOnFirstFloor()
+    {
+        var kitchen = new Vector3(-46.3f, 1.8f, 106.6f);
+        Assert.That(RoomDecorationController.IsAtKitchen(new Vector3(-44f, 1.6f, 107f), kitchen), Is.True);
+        Assert.That(RoomDecorationController.IsAtKitchen(new Vector3(-44f, 4.9f, 107f), kitchen), Is.False, "спальня над кухней");
+        Assert.That(RoomDecorationController.IsAtKitchen(new Vector3(-44f, 1.6f, 116f), kitchen), Is.False, "гостиная");
+    }
+
+    [Test]
+    public void IsIndoors_SeparatesHouseFromPorchAndYard()
+    {
+        Assert.That(NightTwoExits.IsIndoors(new Vector3(-39.5f, 1.6f, 115f)), Is.True, "прихожая");
+        Assert.That(NightTwoExits.IsIndoors(new Vector3(-44f, 1.6f, 118f)), Is.True, "лестничное крыло");
+        Assert.That(NightTwoExits.IsIndoors(new Vector3(-39.25f, 1.6f, 118f)), Is.False, "крыльцо");
+        Assert.That(NightTwoExits.IsIndoors(new Vector3(-43f, 1.6f, 103f)), Is.False, "задний двор");
+    }
+
+    [Test]
     public void SetupDecorationQuest_ActivatesZonesWithAmountMatchingZoneCount()
     {
         var controller = CreateController();

@@ -112,7 +112,7 @@ namespace KnocksFromBeneath
             bool secondDropped = planks.Length < 2;
             while (!Logic.Finished)
             {
-                if (Time.timeScale == 0f || PauseMenuController.InputBlocked)
+                if (NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked)
                 {
                     windup = -1f;
                     requestedPower = null;
@@ -501,7 +501,7 @@ namespace KnocksFromBeneath
             keys = UiKeyHints.Create(ui.transform, "Keys", font);
             keys.RectTransform.anchorMin = keys.RectTransform.anchorMax = keys.RectTransform.pivot = new Vector2(0.5f, 0f);
             keys.RectTransform.anchoredPosition = new Vector2(0f, 70f);
-            keys.Set("МЫШЬ", "ЦЕЛИТЬСЯ", "ЛКМ", "ДЕРЖАТЬ — ЗАМАХ, ОТПУСТИТЬ — УДАР");
+            keys.Set("МЫШЬ", "ЦЕЛИТЬСЯ", "ЛКМ", "ДЕРЖАТЬ ДЛЯ ЗАМАХА, ОТПУСТИТЬ ДЛЯ УДАРА");
         }
 
         private void Finish()

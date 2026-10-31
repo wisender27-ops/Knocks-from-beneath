@@ -18,6 +18,8 @@ public class MicrowaveInteractable : MonoBehaviour
     public AudioClip heatLoopSfx;
     public AudioClip heatDoneSfx;
 
+    private const float VolumeScale = .9f;
+
     private bool _isHeating = false;
     private float _heatStarted;
     public bool IsHeating => _isHeating;
@@ -29,6 +31,8 @@ public class MicrowaveInteractable : MonoBehaviour
     {
         if (microwaveLight != null)
             microwaveLight.enabled = false;
+        if (microwaveAudioSource != null)
+            microwaveAudioSource.volume *= VolumeScale;
     }
 
     public void Interact(bool hitDoor = false)

@@ -36,7 +36,7 @@ namespace KnocksFromBeneath
 
             var body = UiStyle.Text("Body", panel, font, 22f, UiStyle.Ivory, TextAlignmentOptions.Center);
             Stretch(body.rectTransform, 30f, -30f, 60f, -64f);
-            body.text = "Заколотить — и оно больше не вылезет.\nИли спуститься и узнать, кто стучал.";
+            body.text = "Заколотить, и оно больше не вылезет.\nИли спуститься и узнать, кто стучал.";
 
             keys = KeyHints(font, -110f);
         }

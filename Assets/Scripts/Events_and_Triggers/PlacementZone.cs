@@ -207,6 +207,8 @@ public class PlacementZone : MonoBehaviour
         // Инициализируем массив "занятости" по количеству слотов
         isSlotOccupied = new bool[slots != null ? slots.Count : 0];
         HideItems();
+        // Зоны коробок: цель показывает превью в руках и квестовая метка, белое свечение ZoneGlow лишнее.
+        if (RequiresBoxItemType()) QuestItemMarker.SuppressLegacyParticles(transform);
     }
 
     void HideItems()

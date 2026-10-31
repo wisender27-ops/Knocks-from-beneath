@@ -44,7 +44,13 @@ public enum DebugStoryStage
     // P-03 / B-05: ночь 2, сразу в подвал (спуск по лестнице, монстр на слух, камера хозяина). Фонарик и лом выданы.
     StartBasement,
     // B-05: ночь 2 у люка с молотком, условия E5 выполнены — у люка появляется выбор «заколотить / спуститься».
-    StartHatchChoice
+    StartHatchChoice,
+    // День 2: кухня убрана, стук снизу — первый спуск в подвал (без монстра). За ломом игрок идёт сам.
+    StartDayBasement,
+    // Ночь 2: сразу в тоннели за вентиляцией. Фонарик и лом выданы, камера стоит в подвале.
+    StartBasementTunnels,
+    // C-01: коробки разнесены, камера и штатив ещё внизу — отнести их в спальню.
+    StartCameraStoreQuest
 }
 
 public class IntroSequence : MonoBehaviour
@@ -149,11 +155,14 @@ public class IntroSequence : MonoBehaviour
     private HideEndingController _hideEnding;
     private HidingBreathGame _hidingScene;
     private CameraPlacementController _cameraPlacement;
+    private WakeUpSequence _wakeUp;
     // C-02: на ночной записи двери открываются от закрытого положения — снимаем его до того, как их тронут.
     private TapeDoor[] _tapeDoors;
     private NightTapeViewer _nightTape;
     private Transform _recordedView;
-    public bool CanPlayNightTape => _recordedView != null;
+    // Запись смотрят после первого спуска: стук не объяснился, и герой вспоминает про камеру.
+    private bool _tapeUnlocked;
+    public bool CanPlayNightTape => _recordedView != null && _tapeUnlocked;
     private bool _hasReactedToPowerOutage;
     private AudioSource _powerOutageAudio;
     // K-02: хозяин в подвале отвечает на стук с первой ночи (до неё о нём никто не знает).
@@ -165,6 +174,10 @@ public class IntroSequence : MonoBehaviour
     private bool _breakerPending;
     private BasementChapter _basement;
     private HatchDescentWindow _hatchChoice;
+    private BasementDayVisit _dayVisit;
+    private KnockResponder _responder;
+    // Цепочка «люк → лом → замок» идёт днём 2, перед первым спуском.
+    private bool _dayHatchChain;
 
     // =====================================================================
     // Процедуры и инициализация
@@ -173,8 +186,12 @@ public class IntroSequence : MonoBehaviour
     void Awake()
     {
         FadeTransitionPresentation.Ensure(fadeScreen);
+        _wakeUp = gameObject.AddComponent<WakeUpSequence>();
+        _wakeUp.Initialize(playerTransform != null ? playerTransform.GetComponent<PlayerController>() : null);
         _cameraPlacement = gameObject.AddComponent<CameraPlacementController>();
         _cameraPlacement.Initialize(roomZones, OnCameraPlaced, OnCameraRemoved);
+        _cameraPlacement.GearFound += OnCameraGearFound;
+        _cameraPlacement.GearStored += OnCameraGearStored;
         _tapeDoors = NightRecording.CaptureDoors(frontDoor);
         var horrorDirector = gameObject.AddComponent<HorrorMomentDirector>();
         horrorDirector.Initialize(playerInventory);
@@ -184,6 +201,9 @@ public class IntroSequence : MonoBehaviour
         _basement.Initialize(playerTransform, playerInventory, (title, amount, done, tag) => CreateQuest(title, amount, done, tag),
             ShowImportantThoughts, ShowThoughts, EndGame, () => { if (knockController != null) knockController.SetActive(false); });
         _hatchChoice = gameObject.AddComponent<HatchDescentWindow>();
+        _dayVisit = gameObject.AddComponent<BasementDayVisit>();
+        _dayVisit.Initialize(playerTransform, (title, amount, done, tag) => CreateQuest(title, amount, done, tag),
+            ShowThoughts, ShowImportantThoughts, () => StartCoroutine(KnocksBelowPlayer(3)), SetupWatchTapeQuest);
         var firstNightScare = gameObject.AddComponent<NightOneScare>();
         firstNightScare.Initialize(playerInventory);
         var floorKnock = gameObject.AddComponent<PlayerFloorKnock>(); // K-02: Q — стук в пол
@@ -205,7 +225,7 @@ public class IntroSequence : MonoBehaviour
         _moveInChores = new MoveInChoresController(
             trashZone, roomZones,
             CreateQuest, ShowThoughts,
-            onChoresFinished: _pieQuest.SetupTakePieQuest,
+            onChoresFinished: SetupCameraStoreQuest,
             boxDelivery: boxDeliveryTruck);
 
         _eveningRound = new EveningRoundController(
@@ -219,7 +239,9 @@ public class IntroSequence : MonoBehaviour
 
         _decoration = new RoomDecorationController(
             decorationZones, CreateQuest, ShowThoughts,
-            onDecorationFinished: _dinner.SetupIngredientQuest);
+            onDecorationFinished: StartDayBasement,
+            startCoroutine: StartCoroutine,
+            player: playerTransform);
 
         // M-07: укрытие ночи 2 — под кроватью героя, в спальне с молотком (старые зоны hidingSpots не используются).
         _hidingScene = gameObject.AddComponent<HidingBreathGame>();
@@ -243,6 +265,8 @@ public class IntroSequence : MonoBehaviour
         _exits.Initialize(playerTransform, hatch != null ? hatch.transform.position : Vector3.zero,
             _branchEnding.HandleBackyardReached, _branchEnding.HandleRoadReached);
         _exits.SetHatch(hatch);
+        if (neighborVisit != null)
+            neighborVisit.stayIndoors = stay => { if (_exits != null) _exits.SetStayIndoors(neighborVisit.frontDoor, stay); };
         _glassOfWater = gameObject.AddComponent<GlassOfWaterScene>();
         _glassOfWater.Initialize(this, playerTransform, frontDoor, _exits, ShowThoughts,
             (title, amount, callback, tag) => CreateQuest(title, amount, callback, tag),
@@ -256,16 +280,17 @@ public class IntroSequence : MonoBehaviour
             {
                 PrepareMorningTape();
                 SaveChapter(StoryChapter.DayTwo);
-                ShowMorningTapeThought(_decoration.SetupDecorationQuest);
+                ShowMorningTapeThought(_decoration.SetupKitchenQuest);
             },
             nightScare: firstNightScare.Play,
             neighborVisit: neighborVisit != null ? neighborVisit.Play : (System.Func<IEnumerator>)null,
-            didMeetNeighbor: () => neighborVisit != null && neighborVisit.HasVisited);
+            didMeetNeighbor: () => neighborVisit != null && neighborVisit.HasVisited,
+            wakeUp: () => WakeUp());
 
         SetupBedsideLamp();
         SetupPowerOutageAudio();
         SetupKnockDirector();
-        var responder = gameObject.AddComponent<KnockResponder>();
+        var responder = _responder = gameObject.AddComponent<KnockResponder>();
         responder.Initialize(floorKnock, knockController != null ? knockController.GetComponent<KnockDirector>() : null,
             knockSound != null ? knockSound.ShortestClip : null, () => _knockerAwake);
         responder.Replied += (kind, count) =>
@@ -275,7 +300,7 @@ public class IntroSequence : MonoBehaviour
             if (lines != null) ShowThoughts(lines, null);
         };
         gameObject.AddComponent<KnockCallGame>().Initialize(floorKnock, responder, KnockCallLevel, lines => ShowThoughts(lines, null));
-        gameObject.AddComponent<DayKnocks>().Initialize(responder, floorKnock, () => _knockerAwake &&
+        gameObject.AddComponent<DayKnocks>().Initialize(responder, floorKnock, () => _knockerAwake && !_dayVisit.Running &&
             skySwitcher != null && skySwitcher.isDayTime && (knockController == null || !knockController.activeInHierarchy));
         _cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
         _cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
@@ -385,6 +410,7 @@ public class IntroSequence : MonoBehaviour
         _cameraPlacement?.RestoreFromCheckpoint();
         _eveningRound.ApplyRestoredLock();
         FindFirstObjectByType<FrontDoorLockInteractable>()?.SnapToState();
+        if (StoryFlags.HatchForced) FindFirstObjectByType<BasementHatch>()?.RestoreForcedLock();
         DebugStoryStage stage = ChapterCheckpoints.Info(chapter).Stage;
         if (stage == DebugStoryStage.None)
         {
@@ -394,7 +420,11 @@ public class IntroSequence : MonoBehaviour
         SaveChapter(chapter);
         ApplyDebugSkip(stage);
         // Второй день начинается с пробуждения в кровати, как после первой ночи.
-        if (chapter == StoryChapter.DayTwo) TeleportPlayerToBed();
+        if (chapter == StoryChapter.DayTwo)
+        {
+            TeleportPlayerToBed();
+            StartCoroutine(WakeUp());
+        }
     }
 
     void SaveChapter(StoryChapter chapter) => ChapterCheckpoints.Save(chapter, playerInventory);
@@ -475,7 +505,8 @@ public class IntroSequence : MonoBehaviour
         if (startStage == DebugStoryStage.StartPieQuest || startStage == DebugStoryStage.StartPieMicrowaveQuest ||
             startStage == DebugStoryStage.StartPieEatQuest || startStage == DebugStoryStage.StartGoToBed ||
             startStage == DebugStoryStage.StartCameraQuest)
-            _cameraPlacement?.RevealForDebug();
+            _cameraPlacement?.RevealForDebug(true);
+        if (startStage == DebugStoryStage.StartCameraStoreQuest) _cameraPlacement?.RevealForDebug(false);
 
         if (startStage != DebugStoryStage.None && startStage != DebugStoryStage.StartTrashQuest &&
             startStage != DebugStoryStage.StartTrashDeliveryQuest)
@@ -519,6 +550,9 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartBoxQuest:
                 _moveInChores.SetupBoxQuest();
                 break;
+            case DebugStoryStage.StartCameraStoreQuest:
+                SetupCameraStoreQuest();
+                break;
             case DebugStoryStage.StartPieQuest:
                 _pieQuest.SetupTakePieQuest();
                 break;
@@ -541,12 +575,19 @@ public class IntroSequence : MonoBehaviour
                 break;
             case DebugStoryStage.StartDay2Decoration:
                 PrepareMorningTape();
-                _decoration.SetupDecorationQuest();
+                _decoration.SetupKitchenQuest();
+                break;
+            case DebugStoryStage.StartDayBasement:
+                StoryFlags.SetCameraPlacementSlot(1);
+                _cameraPlacement?.RestoreFromCheckpoint();
+                PrepareMorningTape();
+                StartDayBasement();
                 break;
             case DebugStoryStage.PlayNightRecording:
                 StoryFlags.SetCameraPlacementSlot(1);
                 _cameraPlacement?.RestoreFromCheckpoint();
                 PrepareMorningTape();
+                _tapeUnlocked = true;
                 _decoration.SetupDecorationQuest();
                 StartCoroutine(PlayNightRecordingWhenFree());
                 break;
@@ -642,6 +683,7 @@ public class IntroSequence : MonoBehaviour
                 // Условия E5 выполнены дебагом; игрок у люка, как после пряток.
                 StoryFlags.AddKnockTrust(AnswerEnding.TrustNeeded);
                 StoryFlags.MarkRecordingSeen();
+                PlaceDebugBasementCamera();
                 GrantDebugItem("Flashlight");
                 GrantDebugItem("Crowbar");
                 GrantDebugItem("Hammer");
@@ -653,12 +695,15 @@ public class IntroSequence : MonoBehaviour
                 TeleportPlayerToHatch();
                 break;
             case DebugStoryStage.StartBasement:
+            case DebugStoryStage.StartBasementTunnels:
+                PlaceDebugBasementCamera();
                 GrantDebugItem("Flashlight");
                 GrantDebugItem("Crowbar");
                 playerInventory?.Equip("Flashlight");
+                if (playerInventory != null && playerInventory.EquippedItemId != "Flashlight") playerInventory.ActivateItem("Flashlight");
                 if (playerInventory != null && playerInventory.flashlightLightSource != null)
                     playerInventory.flashlightLightSource.enabled = true;
-                BeginDescent(FindFirstObjectByType<BasementHatch>(), true);
+                BeginDescent(FindFirstObjectByType<BasementHatch>(), true, startStage == DebugStoryStage.StartBasementTunnels);
                 break;
         }
     }
@@ -676,6 +721,7 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartHidingSpots:
             case DebugStoryStage.StartNightTwoExits:
             case DebugStoryStage.StartBasement:
+            case DebugStoryStage.StartBasementTunnels:
             case DebugStoryStage.StartHatchChoice:
                 return true;
             default:
@@ -700,11 +746,18 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartHidingSpots:
             case DebugStoryStage.StartNightTwoExits:
             case DebugStoryStage.StartBasement:
+            case DebugStoryStage.StartBasementTunnels:
             case DebugStoryStage.StartHatchChoice:
                 return true;
             default:
                 return false;
         }
+    }
+
+    void PlaceDebugBasementCamera()
+    {
+        StoryFlags.SetCameraPlacementSlot(DepthsLayout.CameraSlotNumber);
+        _cameraPlacement?.RestoreFromCheckpoint();
     }
 
     void GrantDebugItem(string itemId)
@@ -811,26 +864,79 @@ public class IntroSequence : MonoBehaviour
         CreateQuest("Лечь спать", 1, OnGoToBedFinished, "go-to-bed");
     }
 
-    // C-01: перед сном герой сам объясняет, зачем ему видеокамера, и ставит её. Объяснение — один раз за игру.
+    // C-01: камера нашлась в коробке — герой просто убирает её в спальню: снимать пока нечего.
+    void OnCameraGearFound()
+    {
+        ShowThoughts(new string[] {
+            "Видеокамера и штатив. Лежали в коробке, сверху.",
+            "Разнесу коробки и отнесу их наверх, в спальню."
+        }, null);
+    }
+
+    void SetupCameraStoreQuest()
+    {
+        if (_cameraPlacement == null || !_cameraPlacement.NeedsStoring)
+        {
+            _pieQuest.SetupTakePieQuest();
+            return;
+        }
+        CreateQuest("Отнести камеру и штатив в спальню", CameraPlacementController.StoreItemCount, OnCameraStored,
+            CameraPlacementController.StoreQuestTag);
+    }
+
+    void OnCameraGearStored()
+    {
+        if (IsQuestActive(CameraPlacementController.StoreQuestTag)) QuestManager.Instance?.AddProgress(1);
+    }
+
+    void OnCameraStored()
+    {
+        ShowThoughts(new string[] { "Пусть лежит. Снимать тут нечего.", "В холодильнике ещё пирог остался." },
+            _pieQuest.SetupTakePieQuest);
+    }
+
+    // C-01: вечером дома кажется, что кто-то есть, — и герой сам решает включить камеру. Сцена — один раз за игру.
     private bool _cameraLoreShown;
 
     void SetupCameraQuest()
     {
+        _cameraPlacement?.ReleaseFromStorage();
         if (_cameraLoreShown)
         {
-            CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place");
+            CreateCameraPlaceQuest();
             return;
         }
         _cameraLoreShown = true;
+        StartCoroutine(CameraParanoiaRoutine());
+    }
+
+    void CreateCameraPlaceQuest() => CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place");
+
+    IEnumerator CameraParanoiaRoutine()
+    {
+        yield return new WaitForSeconds(1.2f);
+        AudioClip creak = Resources.Load<AudioClip>("Audio/Horror/FloorCreak");
+        if (creak != null)
+        {
+            // Скрип сверху лестницы: дом пуст, а над головой будто шагнули.
+            AudioSource source = HorrorMomentDirector.CreateSource(transform, "Camera paranoia creak", 18f);
+            source.transform.position = new Vector3(-41.9f, 4.25f, 113.08f);
+            source.PlayOneShot(creak, 0.9f);
+            Destroy(source.gameObject, creak.length + 0.5f);
+        }
+        yield return new WaitForSeconds(1.8f);
         ShowImportantThoughts(new string[] {
-            "Камера и штатив. Лежали в одной из коробок.",
-            "В старом доме я месяцами не мог понять, приснилось мне что-то или было на самом деле. Потом купил её.",
-            "Утром ночь забываешь, а плёнка не врёт. Поставлю так, чтобы вся комната была в кадре."
-        }, () => CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place"));
+            "...Кто здесь?",
+            "Никого. Дом пустой. Я один.",
+            "Опять начинается. Как в старом доме: кажется, что кто-то ходит, стоит мне отвернуться.",
+            "Там я месяцами не мог понять, приснилось мне или было на самом деле. Потом купил камеру.",
+            "Утром ночь забываешь, а плёнка не врёт. Заберу её из спальни и поставлю внизу, чтобы весь первый этаж был в кадре."
+        }, CreateCameraPlaceQuest);
     }
 
     void OnCameraPlaced()
     {
+        if (IsQuestActive("basement-camera") && StoryFlags.BasementCameraSet) QuestManager.Instance?.AddProgress(1);
         if (!IsQuestActive("camera-place")) return;
         QuestManager.Instance?.AddProgress(1);
         ShowThoughts(new string[] { "Красный огонёк горит. Пусть пишет до утра." }, null);
@@ -843,16 +949,77 @@ public class IntroSequence : MonoBehaviour
         ShowThoughts(new string[] { "Так она ничего не снимет. Надо поставить обратно." }, null);
     }
 
-    // Утро дня 2: герой вспоминает про запись, прежде чем начнётся уборка.
-    void ShowMorningTapeThought(System.Action next)
+    // Утро дня 2: про запись герой вспомнит сам, когда стук останется без объяснения (SetupWatchTapeQuest).
+    void ShowMorningTapeThought(System.Action next) => next?.Invoke();
+
+    // =====================================================================
+    // День 2: первый спуск в подвал, запись, камера внизу
+    // =====================================================================
+
+    // Кухня убрана — и стук прямо под ногами, средь бела дня. Дальше обычная цепочка «люк → лом → замок», только днём.
+    void StartDayBasement()
     {
-        if (_recordedView != null && !StoryFlags.SawRecording)
-            ShowImportantThoughts(new string[] {
-                "Камера отработала всю ночь.",
-                "Надо посмотреть запись. Лучше сразу, пока не передумал."
-            }, next);
-        else
-            next?.Invoke();
+        if (BasementDepths.Get() == null)
+        {
+            _dinner.SetupIngredientQuest();
+            return;
+        }
+        _dayHatchChain = true;
+        FindFirstObjectByType<BasementHatch>()?.MuteLockedResponse();
+        StartCoroutine(DayKnockRoutine());
+    }
+
+    IEnumerator DayKnockRoutine()
+    {
+        yield return new WaitForSeconds(1.5f);
+        yield return KnocksBelowPlayer(3);
+        yield return new WaitForSeconds(1f);
+        ShowImportantThoughts(new string[] {
+            "Опять. Днём. Прямо у меня под ногами.",
+            "Вещи сами на пол не падают, и трубы так не стучат.",
+            "Вход в подвал снаружи. Надо сходить и посмотреть."
+        }, SetupHatchQuest);
+    }
+
+    IEnumerator KnocksBelowPlayer(int count)
+    {
+        for (int i = 0; i < count && _responder != null && playerTransform != null; i++)
+        {
+            Vector3 p = playerTransform.position;
+            _responder.PlayUnderFloor(new Vector3(p.x, FirstFloorY, p.z), 0.95f, 0.75f);
+            yield return new WaitForSeconds(i == count - 2 ? 1f : 0.36f);
+        }
+    }
+
+    void SetupWatchTapeQuest()
+    {
+        if (_recordedView == null)
+        {
+            _dinner.SetupIngredientQuest();
+            return;
+        }
+        _tapeUnlocked = true;
+        EnsureTapeTarget();
+        ShowImportantThoughts(new string[] {
+            "Камера всю ночь писала дом.",
+            "Подключу её к телевизору в гостиной и посмотрю запись."
+        }, () => CreateQuest("Посмотреть запись на телевизоре в гостиной", 1, SetupBasementCameraQuest, "watch-tape"));
+    }
+
+    void SetupBasementCameraQuest()
+    {
+        ShowImportantThoughts(new string[] {
+            "Оно вошло с улицы. А люк прямо перед дверью.",
+            "Значит, оно приходит из подвала. Только в подвале негде даже спрятаться.",
+            "Камера не врёт. Поставлю её вниз и оставлю на ночь."
+        }, () => CreateQuest("Поставить камеру в подвале", 1, OnBasementCameraPlaced, "basement-camera"));
+    }
+
+    void OnBasementCameraPlaced()
+    {
+        _cameraPlacement?.FixInPlace();
+        ShowThoughts(new string[] { "Решётка в кадре, красный огонёк горит.", "Теперь поесть. Иначе я сегодня с ума сойду." },
+            _dinner.SetupIngredientQuest);
     }
 
     public void OnBedTriggerReached()
@@ -903,6 +1070,8 @@ public class IntroSequence : MonoBehaviour
         if (skySwitcher != null) skySwitcher.isDayTime = false;
         RenderSettings.fog = false;
         TeleportPlayerToBed();
+        FindFirstObjectByType<BasementHatch>()?.CloseForNailing(); // днём игрок мог оставить люк открытым
+        _phoneFlashlight?.Hide();
 
         if (knockController != null) knockController.SetActive(false);
 
@@ -912,7 +1081,7 @@ public class IntroSequence : MonoBehaviour
         {
             // Экран ещё чёрный, а затемнение глушит звук — грохот должен быть слышен до самого пробуждения.
             GameAudio.HearThroughFade(4f);
-            yield return new WaitForSeconds(1f);
+            yield return new WaitForSeconds(SleepSeconds);
             BreakInFrontDoor();
             yield return new WaitForSeconds(1f);
         }
@@ -921,22 +1090,17 @@ public class IntroSequence : MonoBehaviour
             // B-07: не заперто — он вошёл тихо, сначала «Стакан воды»; лёг — блэкаут, проснулся уже по-обычному.
             if (_glassOfWater != null)
             {
-                yield return _glassOfWater.Play(fadeScreen);
+                yield return new WaitForSeconds(SleepSeconds);
+                yield return _glassOfWater.Play(fadeScreen, () => WakeUp());
                 if (!_glassOfWater.Survived) yield break; // смерть: карточка E3 и повтор ночи 2
                 TeleportPlayerToBed();
             }
             if (frontDoor != null) frontDoor.OpenDoor();
-            yield return new WaitForSeconds(2f);
+            yield return new WaitForSeconds(SleepSeconds);
         }
         if (nightTrigger != null) nightTrigger.SetActive(true);
 
-        while (elapsed > 0)
-        {
-            elapsed -= Time.deltaTime;
-            if (fadeScreen != null)
-                fadeScreen.alpha = elapsed / 1.5f;
-            yield return null;
-        }
+        yield return WakeUp(brokenIn);
 
         GameEvents.OnNightTwoAwake?.Invoke();
 
@@ -955,6 +1119,15 @@ public class IntroSequence : MonoBehaviour
         }, () => {
             if (_checkingLight) CreateQuest("Проверить выключатель света", 1, questTag: "night-two-light");
         });
+    }
+
+    const float SleepSeconds = 3f; // сон — чёрный экран между «лёг» и «открыл глаза»
+
+    IEnumerator WakeUp(bool startled = false)
+    {
+        _phoneFlashlight?.Hide();
+        if (_wakeUp == null) yield break;
+        yield return _wakeUp.Play(fadeScreen, startled);
     }
 
     // Выбитая снаружи входная дверь падает в прихожую, вдоль коридора — мимо неё потом пробегает монстр.
@@ -1078,7 +1251,8 @@ public class IntroSequence : MonoBehaviour
     static bool IsDayTwoDebugStage(DebugStoryStage stage) =>
         stage == DebugStoryStage.StartDay2Decoration || stage == DebugStoryStage.StartDay2Dinner ||
         stage == DebugStoryStage.StartDay2Evening || stage == DebugStoryStage.StartDinnerCook ||
-        stage == DebugStoryStage.StartDinnerEat || stage == DebugStoryStage.PlayNightRecording;
+        stage == DebugStoryStage.StartDinnerEat || stage == DebugStoryStage.PlayNightRecording ||
+        stage == DebugStoryStage.StartDayBasement;
 
     // C-02: ночная запись с точки штатива во весь экран. Без установленной камеры записи нет.
     public bool PlayNightRecording()
@@ -1089,7 +1263,13 @@ public class IntroSequence : MonoBehaviour
         bool alreadySeen = StoryFlags.SawRecording;
         return _nightTape.Open(view, _tapeDoors, () =>
         {
-            if (!alreadySeen && _nightTape.EvidenceCaptured)
+            if (!_nightTape.EvidenceCaptured)
+            {
+                if (IsQuestActive("watch-tape")) ShowThoughts(new[] { "Там что-то было. Надо пересмотреть и остановить кадр." }, null);
+                return;
+            }
+            if (IsQuestActive("watch-tape")) QuestManager.Instance?.AddProgress(1);
+            else if (!alreadySeen)
                 ShowThoughts(new[] { "Оно смотрело прямо в камеру.", "Потом пошло наверх. Пока я спал…" }, null);
         });
     }
@@ -1100,22 +1280,35 @@ public class IntroSequence : MonoBehaviour
         _recordedView = new GameObject("Recorded tripod view").transform;
         _recordedView.SetParent(transform, false);
         _recordedView.SetPositionAndRotation(_cameraPlacement.RecordingView.position, _cameraPlacement.RecordingView.rotation);
+        EnsureTapeTarget();
+    }
+
+    // Зовётся и при старте квеста: при загрузке чекпоинта телевизор ещё не найти.
+    private void EnsureTapeTarget()
+    {
+        if (_tapeTarget != null) return;
         GameObject tv = GameObject.Find("TV_03");
         if (tv == null) return;
-        if (tv.GetComponent<Collider>() == null)
-        {
-            var renderer = tv.GetComponent<Renderer>();
-            if (renderer != null)
-            {
-                var collider = tv.AddComponent<BoxCollider>();
-                collider.center = renderer.localBounds.center;
-                collider.size = renderer.localBounds.size;
-            }
-        }
-        var playback = tv.GetComponent<TapePlaybackInteractable>();
-        if (playback == null) playback = tv.AddComponent<TapePlaybackInteractable>();
-        playback.Initialize(this);
+        var renderer = tv.GetComponent<Renderer>();
+        if (renderer == null) return;
+        // Общий коллайдер тумбы стоит перед экраном и закрывает телевизор от луча взаимодействия,
+        // поэтому цель записи — тонкая панель на его передней грани. Экран смотрит в комнату, на +X.
+        Bounds screen = renderer.bounds;
+        Vector3 inRoom = screen.center + Vector3.right * TvFrontProbe;
+        Vector3 front = Physics.Raycast(inRoom, Vector3.left, out RaycastHit hit, TvFrontProbe,
+            PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore) ? hit.point : screen.center;
+        var target = _tapeTarget = new GameObject("TV Tape Target");
+        target.transform.SetParent(transform, true);
+        target.transform.position = front + Vector3.right * TvTargetDepth * .5f;
+        var box = target.AddComponent<BoxCollider>();
+        box.size = new Vector3(TvTargetDepth, screen.size.y, screen.size.z);
+        target.AddComponent<TapePlaybackInteractable>().Initialize(this);
+        QuestItemMarker.Ensure(target).ConfigureTags(new[] { "watch-tape" });
     }
+
+    private GameObject _tapeTarget;
+    private const float TvFrontProbe = 2f;
+    private const float TvTargetDepth = .04f;
 
     // Окно не откроется, пока камера занята (пробуждение, мысли, пауза) — пробуем, пока не освободится.
     IEnumerator PlayNightRecordingWhenFree()
@@ -1394,6 +1587,12 @@ public class IntroSequence : MonoBehaviour
     // ради квеста, который засчитывался в другом конце карты.
     void SetupHatchQuest()
     {
+        // Замок сорван ещё днём: ночью к люку незачем идти с ломом.
+        if (StoryFlags.HatchForced)
+        {
+            SetupLookInHoleQuest();
+            return;
+        }
         // Пугалка из-за угла ещё ждёт игрока по пути к входной двери (после щитка M-04 он приходит на
         // кухню из гаража, и реплики про люк кончаются раньше, чем он доходит до прихожей). Во время этого
         // квеста она ничего не откатывает: ContinueAfterCornerScare оставляет «open-basement» как есть.
@@ -1405,7 +1604,7 @@ public class IntroSequence : MonoBehaviour
     {
         // Сюжет ушёл от дома: пугалка из-за угла больше не нужна. Иначе она могла сработать позже
         // (например, на репликах про молоток), оборвать их и откатить историю.
-        _cornerPeek?.Retire();
+        if (!_dayHatchChain) _cornerPeek?.Retire();
         ShowThoughts(new string[] {
             "Ещё и замок.",
             "Ключа нет. Придётся найти лом."
@@ -1423,7 +1622,7 @@ public class IntroSequence : MonoBehaviour
     {
         ShowThoughts(new string[] {
             "Этим замок можно сорвать.",
-            "Ночью вскрывать собственный подвал. Отличный переезд."
+            _dayHatchChain ? "Вскрывать собственный подвал. Отличный переезд." : "Ночью вскрывать собственный подвал. Отличный переезд."
         }, SetupPryLockQuest);
     }
 
@@ -1435,6 +1634,13 @@ public class IntroSequence : MonoBehaviour
 
     public void OnHatchLockPried()
     {
+        if (_dayHatchChain)
+        {
+            _dayHatchChain = false;
+            StoryFlags.SetHatchForced(true);
+            ShowThoughts(new string[] { "Готово. Теперь посмотрим, что там." }, _dayVisit.Begin);
+            return;
+        }
         ShowThoughts(new string[] {
             "Теперь можно открыть люк.",
             "Сперва посветить на лестницу. Вслепую туда не полезу."
@@ -1466,6 +1672,7 @@ public class IntroSequence : MonoBehaviour
     // игрок теперь получает именно тогда, когда видит развилку и может действовать.
     public void OnHoleEventFinished()
     {
+        _cornerPeek?.Retire();
         ShowImportantThoughts(new string[] {
             "Оно исчезло.",
             "Нет. Я не стану опять от него бежать.",
@@ -1555,8 +1762,8 @@ public class IntroSequence : MonoBehaviour
     void ReturnToHatchAfterHiding()
     {
         // B-05: если стучащему можно верить (любые два из трёх условий), появляется третий путь — спуститься.
-        string[] lines = AnswerEnding.IsAvailable()
-            ? new[] { "Ушло вниз.", "Заколотить люк… или бежать отсюда?", "А тот, кто стучал мне все эти дни? Он всё ещё там, внизу." }
+        string[] lines = CanDescendForAnswer
+            ? new[] { "Ушло вниз.", "Заколотить люк… или бежать отсюда?", "А камера в подвале всё ещё пишет. И тот, кто стучал мне все эти дни, всё ещё там." }
             : new[] { "Ушло вниз.", "Заколотить люк… или бежать отсюда?" };
         ShowThoughts(lines, () =>
         {
@@ -1582,7 +1789,10 @@ public class IntroSequence : MonoBehaviour
 
     // B-05: у люка с молотком, пока квест «Заколотить люк» активен и условия E5 выполнены, E открывает выбор.
     public bool CanChooseDescent(BasementHatch hatch) =>
-        CanBoardBasement(hatch) && !_basement.IsActive && AnswerEnding.IsAvailable();
+        CanBoardBasement(hatch) && !_basement.IsActive && CanDescendForAnswer;
+
+    // E5: условия «Ответа» и камера, которая всю ночь писала внизу.
+    bool CanDescendForAnswer => AnswerEnding.IsAvailable() && StoryFlags.BasementCameraSet;
 
     public bool OpenHatchChoice(BasementHatch hatch)
     {
@@ -1591,11 +1801,11 @@ public class IntroSequence : MonoBehaviour
     }
 
     // Спуск занимает общую защёлку концовок ночи 2: люк больше не заколотить, выходы закрыты.
-    void BeginDescent(BasementHatch hatch, bool debugJump)
+    void BeginDescent(BasementHatch hatch, bool debugJump, bool debugTunnels = false)
     {
         if (!_branchEnding.TryResolve() && !debugJump) return;
         MonsterTimer.Instance?.StopTimer();
-        _basement.Begin(hatch, debugJump);
+        _basement.Begin(hatch, debugJump, debugTunnels);
     }
 
     void TeleportPlayerToHatch()

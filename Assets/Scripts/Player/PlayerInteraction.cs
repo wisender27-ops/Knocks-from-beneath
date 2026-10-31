@@ -197,7 +197,9 @@ public class PlayerInteraction : MonoBehaviour
             var cellLock = hitObj.GetComponentInParent<BasementCellLock>();
             if (cellLock != null && cellLock.CanInteract) { cellLock.Interact(); return; }
 
+            BasementHatch hatch = hit.transform.GetComponentInParent<BasementHatch>();
             BasementHatchLock hatchLock = hit.transform.GetComponentInParent<BasementHatchLock>();
+            if (hatchLock == null && hatch != null) hatchLock = hatch.Lock;
             if (hatchLock != null && hatchLock.IsLocked && QuestManager.Instance != null &&
                 QuestManager.Instance.IsQuestActive(hatchLock.RequiredQuestTag))
             {
@@ -205,7 +207,6 @@ public class PlayerInteraction : MonoBehaviour
                 return;
             }
 
-            BasementHatch hatch = hit.transform.GetComponentInParent<BasementHatch>();
             if (hatch != null)
             {
                 IntroSequence intro = hatch.GetComponentInParent<IntroSequence>();

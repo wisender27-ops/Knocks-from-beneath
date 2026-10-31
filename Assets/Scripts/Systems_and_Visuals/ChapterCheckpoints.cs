@@ -39,6 +39,7 @@ public static class ChapterCheckpoints
         public bool neighborNoteRead;
         public bool frontDoorLocked;
         public int cameraPlacementSlot;
+        public bool hatchForced;
         public string[] clues = Array.Empty<string>();
         public string[] items = Array.Empty<string>();
         public int[] quantities = Array.Empty<int>();
@@ -116,6 +117,7 @@ public static class ChapterCheckpoints
             neighborNoteRead = StoryFlags.NeighborNoteRead,
             frontDoorLocked = StoryFlags.FrontDoorLocked,
             cameraPlacementSlot = StoryFlags.CameraPlacementSlot,
+            hatchForced = StoryFlags.HatchForced,
             clues = new List<string>(StoryFlags.Clues).ToArray(),
         };
         if (inventory != null)
@@ -182,6 +184,7 @@ public static class ChapterCheckpoints
         StoryFlags.Restore(snapshot.knockTrust, snapshot.sawRecording, snapshot.neighborNoteRead,
             snapshot.frontDoorLocked, snapshot.clues, snapshot.knockAnswered);
         StoryFlags.SetCameraPlacementSlot(snapshot.cameraPlacementSlot);
+        StoryFlags.SetHatchForced(snapshot.hatchForced);
         if (inventory == null || snapshot.items == null) return;
         for (int i = 0; i < snapshot.items.Length; i++)
         {

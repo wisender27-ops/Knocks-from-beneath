@@ -148,7 +148,7 @@ namespace KnocksFromBeneath
 
             while (!Board.Finished)
             {
-                if (Time.timeScale == 0f || PauseMenuController.InputBlocked)
+                if (NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked)
                 {
                     requestedFlip = null;
                     yield return null;

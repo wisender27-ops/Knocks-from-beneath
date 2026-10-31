@@ -15,21 +15,21 @@ namespace KnocksFromBeneath
         public const float HuntSpeed = 2.3f;
         public const float CatchDistance = 1.35f;
         public const float CloseSightDistance = 2.2f;
-        public const float WalkHearRange = 9f;
-        public const float RunHearRange = 15f;
+        public const float WalkHearRange = 6f;
+        public const float RunHearRange = 10f;
         public const float SearchSeconds = 4f;
         public const float CornerPause = 1.2f;
         private const float Arrive = 0.45f;
 
-        private static readonly Vector2 DoorAB = new Vector2(-32f, 0.5f * (BasementLayout.EntranceFrom + BasementLayout.EntranceTo));
-        private static readonly Vector2 DoorBC = new Vector2(0.5f * (BasementLayout.PassageFrom + BasementLayout.PassageTo), 110f);
-        private static readonly Vector2 DoorCD = new Vector2(DoorBC.x, 103f);
+        private static readonly Vector2 DoorAB = new Vector2(BasementLayout.HallB.XMin, 0.5f * (BasementLayout.EntranceFrom + BasementLayout.EntranceTo));
+        private static readonly Vector2 DoorBC = new Vector2(BasementLayout.HallB.XMin, 0.5f * (BasementLayout.PassageFrom + BasementLayout.PassageTo));
+        private static readonly Vector2 DoorCD = new Vector2(BasementLayout.CellBlockD.XMax, DoorBC.y);
 
         private readonly KnockTracker tracker = new KnockTracker
         {
             WalkHearSeconds = 1.4f, RunHearSeconds = 0.4f, ForgetSeconds = 3f
         };
-        public const float RoomSearchPause = 2.2f;
+        public const float RoomSearchPause = 3.5f;
 
         private int waypoint, routeIndex;
         private float pause, searchLeft;
@@ -38,6 +38,7 @@ namespace KnocksFromBeneath
 
         // Обход комнаты после шума (удар по замку) закончен: монстр прошёл все точки и ушёл на свой обход.
         public bool SearchCompleted { get; private set; }
+        public bool AtSearchPoint(int index) => CurrentMode == Mode.RoomSearch && routeIndex == index && routeArrived;
         public Vector2 Position { get; private set; }
         public Vector2 Heading { get; private set; } = Vector2.up;
         public Mode CurrentMode { get; private set; }
@@ -80,7 +81,7 @@ namespace KnocksFromBeneath
             SearchCompleted = false;
         }
 
-        public void Step(Vector2 player, KnockNoise noise, bool playerInSight, float dt)
+        public void Step(Vector2 player, KnockNoise noise, bool playerInSight, float dt, bool playerHidden = false)
         {
             if (dt <= 0f || CaughtPlayer) return;
             float distance = Vector2.Distance(Position, player);
@@ -95,7 +96,7 @@ namespace KnocksFromBeneath
                 Target = tracker.KnownTarget;
                 searchLeft = SearchSeconds;
             }
-            if (distance <= CatchDistance && (CurrentMode != Mode.Patrol || distance <= CatchDistance * 0.6f))
+            if (!playerHidden && distance <= CatchDistance && (CurrentMode != Mode.Patrol || distance <= CatchDistance * 0.6f))
             {
                 CaughtPlayer = true;
                 Moving = false;
@@ -216,6 +217,7 @@ namespace KnocksFromBeneath
         // 0 = коридор A, 1 = зал B, 2 = коридор C, 3 = блок D. Вне комнат — ближайшая по центру.
         public static int RoomIndex(Vector2 point)
         {
+            if (BasementLayout.ExistingRoom.Contains(point)) return 0;
             for (int i = 0; i < BasementLayout.Rooms.Length; i++)
                 if (BasementLayout.Rooms[i].Contains(point)) return i;
             int best = 1;
@@ -243,10 +245,10 @@ namespace KnocksFromBeneath
 
         // Выход за проём в следующую комнату, чтобы маршрут не упирался в саму точку проёма.
         private static Vector2 DoorBeyond(int edge) => edge == 0 ? DoorAB + Vector2.right * 0.8f
-            : edge == 1 ? DoorBC + Vector2.down * 0.8f : DoorCD + Vector2.down * 0.8f;
+            : edge == 1 ? DoorBC + Vector2.left * 0.8f : DoorCD + Vector2.left * 0.8f;
 
         private static Vector2 DoorBefore(int edge) => edge == 0 ? DoorAB + Vector2.left * 0.8f
-            : edge == 1 ? DoorBC + Vector2.up * 0.8f : DoorCD + Vector2.up * 0.8f;
+            : edge == 1 ? DoorBC + Vector2.right * 0.8f : DoorCD + Vector2.right * 0.8f;
     }
 
     // Исполнитель в сцене: двигает модель монстра по мозгу, слушает шаги игрока, шагает звуком, сообщает о поимке.
@@ -264,6 +266,7 @@ namespace KnocksFromBeneath
         private PlayerController movement;
         private CornerStalkerRig rig;
         private AudioSource steps;
+        private AudioLowPassFilter stepFilter;
         private AudioClip[] stepClips;
         private Vector3 lastPlayer;
         private float strideLeft;
@@ -283,6 +286,7 @@ namespace KnocksFromBeneath
             movement = player != null ? player.GetComponent<PlayerController>() : null;
             rig = monster.GetComponent<CornerStalkerRig>();
             steps = AudioRouting.Create(monster.transform, "Basement monster steps", AudioBus.Horror, 1f, 24f);
+            stepFilter = steps.gameObject.AddComponent<AudioLowPassFilter>();
             steps.minDistance = 2.5f;
             steps.volume = 0.85f;
             steps.pitch = 0.78f;
@@ -314,16 +318,21 @@ namespace KnocksFromBeneath
 
         public void Alert(Vector3 worldPoint) => brain.Alert(new Vector2(worldPoint.x, worldPoint.z));
 
+        public void Distract(Vector3 worldPoint) => brain.AlertAndSearch(new Vector2(worldPoint.x, worldPoint.z),
+            new[] { new Vector2(worldPoint.x, worldPoint.z) }, new[] { Vector2.up });
+
         // Шум у замка: идти на звук, затем обойти блок D с остановками у ниш.
         public void AlertAndSearch(Vector3 worldPoint) => brain.AlertAndSearch(new Vector2(worldPoint.x, worldPoint.z),
             BasementLayout.SearchRoute, BasementLayout.SearchFacing);
 
         private void Update()
         {
-            if (!running || player == null || Time.timeScale <= 0f || PauseMenuController.InputBlocked) return;
+            if (!running || player == null || NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked) return;
             float dt = Time.deltaTime;
             Vector3 position = player.position;
-            brain.Step(new Vector2(position.x, position.z), ClassifyNoise(position, dt), InSight(position), dt);
+            bool hidden = PlayerHidden != null && PlayerHidden();
+            if (stepFilter != null) stepFilter.cutoffFrequency = hidden ? 1800f : 22000f;
+            brain.Step(new Vector2(position.x, position.z), ClassifyNoise(position, dt), InSight(position), dt, hidden);
 
             Vector2 at = brain.Position;
             transform.position = new Vector3(at.x, BasementLayout.FloorY, at.y);

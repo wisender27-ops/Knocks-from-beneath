@@ -164,7 +164,7 @@ public sealed class HideEndingController
         }
         _showThoughts(new string[] {
             "Ушло. Обратно вниз.",
-            "Пока его нет — заколотить люк."
+            "Пока его нет, надо заколотить люк."
         }, null);
     }
 

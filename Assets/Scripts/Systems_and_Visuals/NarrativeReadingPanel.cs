@@ -19,6 +19,8 @@ namespace KnocksFromBeneath
     public sealed class NarrativeReadingPanel : MonoBehaviour
     {
         public static bool IsModal { get; private set; }
+        // Обязательная реплика не останавливает время (дождь и сцена идут дальше), но игрок и угрозы ждут, как на паузе.
+        public static bool WorldHalted => IsModal || Time.timeScale <= 0f;
         private const string ScaleKey = "Narrative.TextScale";
         private const string AutoKey = "Narrative.AutoAdvance";
         private const float BodySize = 26f, BodyWidth = 880f, MaxLines = 3f;
@@ -208,6 +210,7 @@ namespace KnocksFromBeneath
 
         public void StopPresentation()
         {
+            if (historyOpen) Time.timeScale = previousTimeScale;
             historyOpen = false;
             if (historyPanel != null) historyPanel.gameObject.SetActive(false);
             EndSequence();
@@ -395,6 +398,9 @@ namespace KnocksFromBeneath
             if (canvas == null || historyOpen || ExternalScreenOpen) return;
             historyOpen = true;
             AcquireInput();
+            // История — полноэкранное меню, на время чтения игра стоит.
+            previousTimeScale = Time.timeScale;
+            Time.timeScale = 0f;
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             historyPanel.gameObject.SetActive(true);
@@ -413,6 +419,7 @@ namespace KnocksFromBeneath
         {
             if (!historyOpen) return;
             historyOpen = false;
+            Time.timeScale = previousTimeScale;
             historyPanel.gameObject.SetActive(false);
             if (important)
             {
@@ -436,14 +443,12 @@ namespace KnocksFromBeneath
             doorInput = player != null ? player.GetComponentInChildren<PlayerDoorOpen>() : null;
             previousDoorInputEnabled = doorInput != null && doorInput.enabled;
             if (doorInput != null) doorInput.enabled = false;
-            previousTimeScale = Time.timeScale;
             previousCameraLock = player != null && player.isCameraLocked;
             previousInteractionEnabled = interaction != null && interaction.enabled;
             previousCursorLock = Cursor.lockState;
             previousCursorVisible = Cursor.visible;
             ownsInput = true;
             IsModal = true;
-            Time.timeScale = 0f;
             if (player != null) { player.StopMotion(); player.isCameraLocked = true; }
             if (interaction != null) interaction.enabled = false;
         }
@@ -453,7 +458,6 @@ namespace KnocksFromBeneath
             if (!ownsInput) return;
             ownsInput = false;
             IsModal = false;
-            Time.timeScale = previousTimeScale;
             if (player != null) player.isCameraLocked = previousCameraLock;
             if (interaction != null) interaction.enabled = previousInteractionEnabled;
             if (doorInput != null) doorInput.enabled = previousDoorInputEnabled;

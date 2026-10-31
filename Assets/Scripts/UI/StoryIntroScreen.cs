@@ -59,7 +59,7 @@ namespace KnocksFromBeneath
             prompt.rectTransform.pivot = new Vector2(1f, 0f);
             prompt.rectTransform.anchoredPosition = new Vector2(-56f, 44f);
             prompt.rectTransform.sizeDelta = new Vector2(600f, 40f);
-            prompt.text = "ПРОБЕЛ / ЛКМ — ДАЛЕЕ";
+            prompt.text = "ПРОБЕЛ / ЛКМ ДАЛЕЕ";
             prompt.alpha = 0f;
 
             ticks = gameObject.AddComponent<AudioSource>();
@@ -139,7 +139,7 @@ namespace KnocksFromBeneath
             if (index <= 0 || index > body.textInfo.characterCount) return .03f;
             char previous = body.textInfo.characterInfo[index - 1].character;
             if (previous == '.' || previous == '?' || previous == '!' || previous == '…') return .38f;
-            if (previous == ',' || previous == '—' || previous == ':') return .16f;
+            if (previous == ',' || previous == ':') return .16f;
             return .034f;
         }
 
@@ -170,6 +170,14 @@ namespace KnocksFromBeneath
                 yield return null;
             }
             body.alpha = to;
+        }
+
+        // Пропуск катсцены: текст гаснет сразу, с какого бы места его ни прервали.
+        public IEnumerator ClearText(float duration)
+        {
+            prompt.alpha = 0f;
+            yield return FadeText(body.alpha, 0f, duration);
+            body.text = "";
         }
 
         // Убирает чёрный фон, открывая сцену под ним.

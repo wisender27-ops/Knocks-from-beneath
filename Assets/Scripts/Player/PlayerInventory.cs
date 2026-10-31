@@ -52,6 +52,8 @@ namespace KnocksFromBeneath
         public IReadOnlyList<InventoryEntry> Entries => entries;
         public string EquippedItemId => equippedItemId;
         public void SetPhoneFlashlight(PhoneFlashlight phone) => phoneFlashlight = phone;
+        public bool IsDeadPhone(InventoryEntry entry) =>
+            entry.Definition.Id == "Phone" && phoneFlashlight != null && phoneFlashlight.IsDead;
 
         public bool HasItem(string id)
         {
@@ -77,7 +79,7 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
-            if (PauseMenuController.InputBlocked || RetroInventoryScreen.IsAnyOpen || Time.timeScale == 0f) return;
+            if (PauseMenuController.InputBlocked || RetroInventoryScreen.IsAnyOpen || NarrativeReadingPanel.WorldHalted) return;
 
             if (Time.time - lastSwitchTime >= switchCooldown)
             {

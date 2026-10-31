@@ -105,8 +105,8 @@ public class CrosshairJuice : MonoBehaviour
             if (interaction.pickup == null || !interaction.pickup.CanPlaceInZone(zone)) continue;
 
             _targetHint = questTag == "room-decoration"
-                ? $"E — поставить {pickable.displayName} на место"
-                : "E — установить коробку";
+                ? $"E поставить {pickable.displayName} на место"
+                : "E установить коробку";
             return true;
         }
 
@@ -133,7 +133,7 @@ public class CrosshairJuice : MonoBehaviour
 
             if (interaction.TryGetTrashDisposalTarget(out var trashTarget))
             {
-                _targetHint = "E — ВЫКИНУТЬ МУСОР";
+                _targetHint = "E ВЫКИНУТЬ МУСОР";
                 CurrentFocus = new InteractionFocus { Target = trashTarget.transform,
                     Point = trashTarget.transform.position, Prompt = "ВЫКИНУТЬ МУСОР" };
                 return;
@@ -173,7 +173,7 @@ public class CrosshairJuice : MonoBehaviour
             // Подсказка на поедание пирога в любом месте, когда он уже согрет и квест активен
             if (heldPie.isHeated && intro.CanEatPie())
             {
-                _targetHint = "E — съесть";
+                _targetHint = "E съесть";
                 return;
             }
 
@@ -190,11 +190,11 @@ public class CrosshairJuice : MonoBehaviour
 
             if (!microwave.microwaveDoor.isOpen)
             {
-                _targetHint = "E — открыть дверцу";
+                _targetHint = "E открыть дверцу";
                 return;
             }
 
-            _targetHint = "E — поставить";
+            _targetHint = "E поставить";
             return;
         }
 

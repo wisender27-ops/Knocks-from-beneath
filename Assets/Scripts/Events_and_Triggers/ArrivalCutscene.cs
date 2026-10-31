@@ -23,8 +23,8 @@ namespace KnocksFromBeneath
         public string[] storyPages =
         {
             "Из старого дома мне пришлось уехать.\nБыстро. Почти без вещей.",
-            "Что там случилось — не важно.\nВажно, что возвращаться туда я не собираюсь.",
-            "Новый дом нашёлся почти сразу.\nСемья продавала его срочно — и почти даром.",
+            "Что там случилось, не важно.\nВажно, что возвращаться туда я не собираюсь.",
+            "Новый дом нашёлся почти сразу.\nСемья продавала его срочно и почти даром.",
             "Цена смутила.\nСлишком дёшево для двух этажей, гаража и участка.",
             "Но кто в моём положении отказался бы\nот такого дома за такие деньги?",
             "Я подписал бумаги, не задавая лишних вопросов.",
@@ -64,6 +64,9 @@ namespace KnocksFromBeneath
         private float cameraFov;
         private AudioSource engine, effects;
         private StoryIntroScreen screen;
+        private CutsceneSkipPrompt skipPrompt;
+        private Action finished;
+        private bool skipping;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
         private static void ResetPlaying() => IsPlaying = false;
@@ -88,13 +91,15 @@ namespace KnocksFromBeneath
                 onFinished?.Invoke();
                 return;
             }
-            StartCoroutine(Run(onFinished));
+            finished = onFinished;
+            StartCoroutine(Run());
         }
 
-        private IEnumerator Run(Action onFinished)
+        private IEnumerator Run()
         {
             CaptureControl();
             screen = StoryIntroScreen.Create(font);
+            skipPrompt = CutsceneSkipPrompt.Create(Skip);
             try
             {
                 yield return screen.Show(storyPages);
@@ -145,17 +150,71 @@ namespace KnocksFromBeneath
                 PlayEffect(trunkCloseClip, .9f);
                 yield return new WaitForSeconds(.6f);
 
-                // Камера переезжает в глаза героя — дальше первое лицо.
+                // Камера переезжает в глаза героя — дальше первое лицо, пропускать уже нечего.
+                RemoveSkipPrompt();
                 yield return GlideToFirstPerson(2.6f);
                 RestoreControl();
                 StartCoroutine(DriveAway());
             }
             finally
             {
-                RestoreControl();
-                if (screen != null) Destroy(screen.gameObject);
+                // При пропуске экран ещё нужен: развязку доводит SkipToGame.
+                if (!skipping)
+                {
+                    RestoreControl();
+                    if (screen != null) Destroy(screen.gameObject);
+                }
             }
-            onFinished?.Invoke();
+            finished?.Invoke();
+        }
+
+        // Игрок удержал пробел: сцена обрывается в любом месте, под затемнением всё приводится
+        // к тому же состоянию, что и после полного просмотра.
+        private void Skip()
+        {
+            if (skipping) return;
+            skipping = true;
+            RemoveSkipPrompt();
+            StopAllCoroutines();
+            StartCoroutine(SkipToGame());
+        }
+
+        private IEnumerator SkipToGame()
+        {
+            StartCoroutine(screen.ClearText(.3f));
+            yield return screen.FadeIn(.4f);
+            // Экран гаснет в реальном времени; управление возвращаем только вне паузы, иначе она вернёт старую блокировку камеры.
+            while (PauseMenuController.IsPaused) yield return null;
+            if (effects != null) effects.Stop();
+            ParkTaxi();
+            PlaceHeroOnSidewalk();
+            RestoreControl();
+            StartCoroutine(DriveAway());
+            yield return screen.FadeOut(.8f);
+            while (PauseMenuController.IsPaused) yield return null;
+            Destroy(screen.gameObject);
+            finished?.Invoke();
+        }
+
+        private void ParkTaxi()
+        {
+            taxi.gameObject.SetActive(true);
+            List<Vector3> arrival = Points(arrivalPath, null);
+            if (arrival.Count > 1)
+            {
+                List<Vector3> samples = SamplePath(arrival);
+                Vector3 end = samples[samples.Count - 1];
+                taxi.SetPositionAndRotation(end, Quaternion.LookRotation(Flat(end - samples[samples.Count - 2]), Vector3.up));
+            }
+            engine.pitch = .8f;
+            engine.volume = .45f;
+            if (!engine.isPlaying) engine.Play();
+        }
+
+        private void RemoveSkipPrompt()
+        {
+            if (skipPrompt != null) Destroy(skipPrompt.gameObject);
+            skipPrompt = null;
         }
 
         // snap — выставить ракурс сразу, без плавного довода.
@@ -280,6 +339,7 @@ namespace KnocksFromBeneath
 
         private void RestoreControl()
         {
+            RemoveSkipPrompt();
             if (!captured) return;
             captured = false;
             ProtagonistBody.ShowToViewCamera = false;

@@ -67,7 +67,7 @@ public class MonsterTimer : MonoBehaviour
         float remaining = timerDuration;
         while (remaining > 0)
         {
-            if (!_paused) remaining -= Time.deltaTime;
+            if (!_paused && !NarrativeReadingPanel.IsModal) remaining -= Time.deltaTime;
             yield return null;
         }
         _isRunning = false;

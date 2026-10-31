@@ -76,7 +76,7 @@ namespace KnocksFromBeneath
         private void Update()
         {
             if (!_nightTwo || _played || _camera == null || _inventory == null || !_inventory.hasFlashlight) return;
-            if (Time.timeScale == 0f || RetroInventoryScreen.IsAnyOpen) return;
+            if (NarrativeReadingPanel.WorldHalted || RetroInventoryScreen.IsAnyOpen) return;
             if ((_player != null && (!_player.enabled || _player.isCameraLocked)) || PlayerInteraction.IsLockSequencePlaying) return;
             if (_intro != null && _intro.HoldsCornerScare) return; // M-04: сначала щиток
             Vector3 eye = _camera.transform.position;

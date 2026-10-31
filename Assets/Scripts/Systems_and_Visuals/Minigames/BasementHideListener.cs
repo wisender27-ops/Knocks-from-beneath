@@ -51,7 +51,7 @@ namespace KnocksFromBeneath
         // Шаг игры. monsterDistance — до монстра (ближе — слышнее), moving — игрок сейчас идёт.
         public void Tick(float dt, float monsterDistance, bool moving)
         {
-            if (!Active || dt <= 0f || Time.timeScale <= 0f || PauseMenuController.InputBlocked) return;
+            if (!Active || dt <= 0f || NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked) return;
             SampleMicrophone();
             if (UsesMicrophone) voice.Advance(dt, micLevel, monsterDistance);
             else breath.Advance(dt, Input.GetKey(KeyCode.Space) || Input.GetMouseButton(1), monsterDistance, moving);
@@ -109,7 +109,7 @@ namespace KnocksFromBeneath
             micLevel = VoiceNoiseGate.SilenceDb;
             BuildUi();
             ThoughtManager.Instance?.TryShowInteractionThoughts("basement-mic-lost",
-                new[] { "Микрофон не слышно. Задерживай дыхание — Пробел." }, 0f);
+                new[] { "Микрофон не слышно. Задерживай дыхание Пробелом." }, 0f);
         }
 
         // ---------------------------------------------------------------- экран

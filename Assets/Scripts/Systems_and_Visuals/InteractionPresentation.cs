@@ -225,9 +225,9 @@ namespace KnocksFromBeneath
             else if (held != null)
             {
                 bool specific = hint.StartsWith("E ") || hint.StartsWith("Нажмите E");
-                bool drink = hint.StartsWith("F — "); // B-07: стакан воды — своя клавиша
+                bool drink = hint.StartsWith("F "); // B-07: стакан воды — своя клавиша
                 Control("E", specific ? CleanHint(hint) : "ОПУСТИТЬ");
-                if (drink) Control("F", hint.Substring(4));
+                if (drink) Control("F", hint.Substring(2));
                 if (manipulate)
                 {
                     if (PickupController.HeldRotationEnabled) Control("R / ПКМ", "ВРАЩАТЬ");
@@ -235,8 +235,8 @@ namespace KnocksFromBeneath
                     if (PickupController.HeldRotationEnabled) Control("СКМ", "СБРОС ВРАЩЕНИЯ");
                 }
                 Control("ЛКМ", "БРОСИТЬ");
-                if (!specific && !drink && !string.IsNullOrEmpty(hint)) context.text = hint;
-                if (pickup.IsCarryObstructed) context.text = "Нет места для предмета — отойдите от препятствия";
+                if (!specific && !drink && !string.IsNullOrEmpty(hint)) context.text = hint.ToUpperInvariant();
+                if (pickup.IsCarryObstructed) context.text = "НЕТ МЕСТА ДЛЯ ПРЕДМЕТА, ОТОЙДИТЕ ОТ ПРЕПЯТСТВИЯ";
             }
             else if (focus.IsValid)
             {
@@ -259,7 +259,7 @@ namespace KnocksFromBeneath
 
         private static string CleanHint(string hint)
         {
-            if (hint.StartsWith("E — ")) return hint.Substring(4);
+            if (hint.StartsWith("E ")) return hint.Substring(2);
             if (hint.StartsWith("Нажмите E, чтобы ")) return hint.Substring(16);
             return hint;
         }
@@ -268,6 +268,7 @@ namespace KnocksFromBeneath
         {
             if (controlCount >= chips.Length) return;
             int i = controlCount++;
+            label = (label ?? "").ToUpperInvariant();
             keyLabels[i].text = key;
             actionLabels[i].text = label;
             float keyWidth = string.IsNullOrEmpty(key) ? 0f : Mathf.Max(32f, keyLabels[i].GetPreferredValues(key).x + 18f);
@@ -333,7 +334,7 @@ namespace KnocksFromBeneath
                 var key = Rect("Key", chips[i], new Vector2(0, .5f), new Vector2(34, 32));
                 key.pivot = new Vector2(0, .5f);
                 key.gameObject.AddComponent<Image>().color = Ivory;
-                keyLabels[i] = Text("KeyLabel", key, font, 15f, UiStyle.KeyInk);
+                keyLabels[i] = Text("KeyLabel", key, UiStyle.Font(), 15f, UiStyle.KeyInk);
                 keyLabels[i].rectTransform.pivot = new Vector2(0, .5f);
                 keyLabels[i].rectTransform.anchorMin = keyLabels[i].rectTransform.anchorMax = new Vector2(0, .5f);
                 keyLabels[i].alignment = TextAlignmentOptions.Center;

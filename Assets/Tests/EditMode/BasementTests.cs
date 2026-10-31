@@ -65,11 +65,39 @@ public sealed class BasementTests
     [Test]
     public void Layout_NooksAreHidingPlacesInsideTheCellBlock()
     {
-        Assert.That(BasementLayout.IsInNook(new Vector2(-27.0f, 95.2f)), Is.True);
-        Assert.That(BasementLayout.IsInNook(new Vector2(-23.8f, 95.2f)), Is.True);
-        Assert.That(BasementLayout.IsInNook(new Vector2(-25.4f, 95.2f)), Is.False);
-        Assert.That(BasementLayout.IsInNook(new Vector2(-27.0f, 99f)), Is.False);
-        Assert.That(BasementLayout.AllRooms.Length, Is.EqualTo(BasementLayout.Rooms.Length + 2));
+        Assert.That(BasementLayout.IsInNook(new Vector2(BasementLayout.HideSpot.x, BasementLayout.HideSpot.z)), Is.True);
+        Assert.That(BasementLayout.IsInNook(new Vector2(-39.6f, 106.9f)), Is.True);
+        Assert.That(BasementLayout.IsInNook(new Vector2(-40.7f, 106.9f)), Is.False);
+        Assert.That(BasementLayout.IsInNook(new Vector2(BasementLayout.HideExit.x, BasementLayout.HideExit.z)), Is.False);
+        Assert.That(BasementLayout.AllRooms.Length, Is.EqualTo(BasementLayout.Rooms.Length + 3));
+    }
+
+    [Test]
+    public void Layout_StaysUnderTheHouse()
+    {
+        Rect house = BasementLayout.HouseFootprint;
+        float limit = BasementLayout.FootprintMargin;
+        foreach (BasementRoom room in BasementLayout.AllRooms)
+        {
+            Assert.That(room.XMin, Is.GreaterThanOrEqualTo(house.xMin - limit), room.Name);
+            Assert.That(room.XMax, Is.LessThanOrEqualTo(house.xMax + limit), room.Name);
+            Assert.That(room.ZMin, Is.GreaterThanOrEqualTo(house.yMin - limit), room.Name);
+            Assert.That(room.ZMax, Is.LessThanOrEqualTo(house.yMax + limit), room.Name);
+        }
+    }
+
+    [Test]
+    public void Layout_RoomsAvoidTheSoilFacesOfTheExcavation()
+    {
+        // Грани выемки (меш grass_soil, MeshCollider нельзя отключить: по нему ходят на улице): x −46.3 и −38.3 при z ≤ 109.9.
+        foreach (BasementRoom room in BasementLayout.AllRooms)
+        {
+            if (room.ZMin > 109.95f) continue;
+            Assert.That(room.XMin, Is.GreaterThan(-46.1f), room.Name);
+            Assert.That(room.ZMin, Is.GreaterThan(105.6f), room.Name);
+            if (room != BasementLayout.HallB) Assert.That(room.XMax, Is.LessThan(-38.5f), room.Name);
+        }
+        Assert.That(BasementLayout.PassageFrom, Is.GreaterThan(110f));
     }
 
     [Test]
@@ -85,9 +113,9 @@ public sealed class BasementTests
     public void Stalker_SearchesTheRoomAfterNoiseAndLeaves()
     {
         var brain = new BasementStalkerBrain();
-        brain.Reset(new Vector2(-28.15f, 106f));
-        var hidden = new Vector2(-27.0f, 95.2f);
-        brain.AlertAndSearch(new Vector2(-29.4f, 100.8f), BasementLayout.SearchRoute, BasementLayout.SearchFacing);
+        brain.Reset(new Vector2(-37.85f, 111.2f));
+        var hidden = new Vector2(BasementLayout.HideSpot.x, BasementLayout.HideSpot.z);
+        brain.AlertAndSearch(BasementLayout.SearchRoute[0], BasementLayout.SearchRoute, BasementLayout.SearchFacing);
         bool visitedRoom = false;
         for (int i = 0; i < 1200 && !brain.SearchCompleted; i++)
         {
@@ -101,12 +129,25 @@ public sealed class BasementTests
     }
 
     [Test]
+    public void Stalker_DoesNotCatchHiddenPlayerAtCloseRangeButCatchesWhenExposed()
+    {
+        var brain = new BasementStalkerBrain();
+        Vector2 player = new Vector2(-41.8f, 109f);
+        brain.Reset(player + Vector2.up);
+        brain.Alert(player);
+        brain.Step(player, KnockNoise.Quiet, false, 0.1f, true);
+        Assert.That(brain.CaughtPlayer, Is.False);
+        brain.Step(player, KnockNoise.Quiet, false, 0.1f, false);
+        Assert.That(brain.CaughtPlayer, Is.True);
+    }
+
+    [Test]
     public void Stalker_CatchesPlayerWhoMakesNoiseDuringSearch()
     {
         var brain = new BasementStalkerBrain();
-        brain.Reset(new Vector2(-28.15f, 106f));
-        var player = new Vector2(-27.0f, 95.2f);
-        brain.AlertAndSearch(new Vector2(-29.4f, 100.8f), BasementLayout.SearchRoute, BasementLayout.SearchFacing);
+        brain.Reset(new Vector2(-37.85f, 111.2f));
+        var player = new Vector2(BasementLayout.HideSpot.x, BasementLayout.HideSpot.z);
+        brain.AlertAndSearch(BasementLayout.SearchRoute[0], BasementLayout.SearchRoute, BasementLayout.SearchFacing);
         for (int i = 0; i < 600 && !brain.CaughtPlayer; i++)
             brain.Step(player, KnockNoise.Run, false, 0.05f);
         Assert.That(brain.CaughtPlayer, Is.True);
@@ -115,11 +156,21 @@ public sealed class BasementTests
     [Test]
     public void Stalker_PassesDoorwaysInsteadOfWalls()
     {
-        Vector2 hall = new Vector2(-30.3f, 120.2f), cell = new Vector2(-28f, 100f);
-        Vector2 first = BasementStalkerBrain.NextPoint(hall, cell);
-        Assert.That(first.y, Is.EqualTo(110f).Within(0.01f)); // сначала проём зала B в коридор C
-        Assert.That(BasementStalkerBrain.NextPoint(new Vector2(-28f, 109f), cell).y, Is.EqualTo(103f).Within(0.01f));
-        Assert.That(BasementStalkerBrain.NextPoint(hall, new Vector2(-30f, 114f)), Is.EqualTo(new Vector2(-30f, 114f)));
+        Vector2 hall = BasementLayout.Patrol[2], cell = new Vector2(-42f, 109f);
+        float door = 0.5f * (BasementLayout.PassageFrom + BasementLayout.PassageTo);
+        Assert.That(BasementStalkerBrain.NextPoint(hall, cell), Is.EqualTo(new Vector2(BasementLayout.HallB.XMin, door))); // сначала проём зала B в переход C
+        Assert.That(BasementStalkerBrain.NextPoint(new Vector2(-37.8f, door), cell), Is.EqualTo(new Vector2(BasementLayout.CellBlockD.XMax, door)));
+        Vector2 inHall = new Vector2(-34.9f, 112f);
+        Assert.That(BasementStalkerBrain.NextPoint(hall, inHall), Is.EqualTo(inHall));
+    }
+
+    [Test]
+    public void Stalker_ReachesTheExistingRoomThroughTheEntrance()
+    {
+        // Точка у южной стены существующей комнаты ближе к блоку D, но путь к ней — через проход A.
+        Vector2 stairsRoom = new Vector2(-44f, 113f);
+        Vector2 first = BasementStalkerBrain.NextPoint(BasementLayout.Patrol[2], stairsRoom);
+        Assert.That(first, Is.EqualTo(new Vector2(BasementLayout.HallB.XMin, 0.5f * (BasementLayout.EntranceFrom + BasementLayout.EntranceTo))));
     }
 
     [Test]
@@ -127,10 +178,10 @@ public sealed class BasementTests
     {
         var brain = new BasementStalkerBrain();
         brain.Reset(BasementLayout.Patrol[0]);
-        var player = new Vector2(-28f, 116.4f); // центр зала, подальше от обхода
+        var player = new Vector2(-36.4f, 112.4f); // полоса у западной стены, подальше от обхода
         for (int i = 0; i < 100; i++) brain.Step(player, KnockNoise.Quiet, false, 0.1f);
         Assert.That(brain.CurrentMode, Is.EqualTo(BasementStalkerBrain.Mode.Patrol));
-        for (int i = 0; i < 12; i++) brain.Step(player, KnockNoise.Run, false, 0.1f);
+        for (int i = 0; i < 12 && brain.CurrentMode == BasementStalkerBrain.Mode.Patrol; i++) brain.Step(player, KnockNoise.Run, false, 0.1f);
         Assert.That(brain.CurrentMode, Is.EqualTo(BasementStalkerBrain.Mode.Investigate));
     }
 
@@ -148,8 +199,8 @@ public sealed class BasementTests
     public void Stalker_CatchesPlayerStandingNearAfterNoticing()
     {
         var brain = new BasementStalkerBrain();
-        brain.Reset(new Vector2(-28f, 116f));
-        var player = new Vector2(-28f, 118f);
+        brain.Reset(new Vector2(-34.9f, 112f));
+        var player = new Vector2(-34.9f, 114f);
         for (int i = 0; i < 40 && !brain.CaughtPlayer; i++) brain.Step(player, KnockNoise.Run, false, 0.1f);
         Assert.That(brain.CaughtPlayer, Is.True);
     }
@@ -158,8 +209,8 @@ public sealed class BasementTests
     public void Stalker_SeesCloseUncrouchedPlayerOnlyWhenInSight()
     {
         var brain = new BasementStalkerBrain();
-        brain.Reset(new Vector2(-28f, 116f));
-        var player = new Vector2(-28f, 117.8f);
+        brain.Reset(new Vector2(-34.9f, 112f));
+        var player = new Vector2(-34.9f, 113.8f);
         brain.Step(player, KnockNoise.Quiet, false, 0.1f);
         Assert.That(brain.CurrentMode, Is.EqualTo(BasementStalkerBrain.Mode.Patrol));
         brain.Step(player, KnockNoise.Quiet, true, 0.1f);
@@ -170,9 +221,9 @@ public sealed class BasementTests
     public void Stalker_ReturnsToPatrolAfterSearching()
     {
         var brain = new BasementStalkerBrain();
-        brain.Reset(new Vector2(-30f, 116f));
-        brain.Alert(new Vector2(-30f, 114f));
-        var far = new Vector2(-24.5f, 111f);
+        brain.Reset(new Vector2(-35.5f, 116f));
+        brain.Alert(new Vector2(-35.5f, 114f));
+        var far = new Vector2(-36.4f, 106.9f);
         for (int i = 0; i < 500; i++) brain.Step(far, KnockNoise.Quiet, false, 0.1f);
         Assert.That(brain.CurrentMode, Is.EqualTo(BasementStalkerBrain.Mode.Patrol));
     }

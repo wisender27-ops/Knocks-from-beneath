@@ -108,8 +108,7 @@ public sealed class MoveInChoresController
         }
         _showThoughts(new string[] {
             "Ну всё, спина сказала спасибо.",
-            "Теперь поесть — и в кровать.",
-            "В холодильнике ещё пирог остался."
+            "Теперь наверх, разобрать своё. Потом поесть и в кровать."
         }, _onChoresFinished);
     }
 

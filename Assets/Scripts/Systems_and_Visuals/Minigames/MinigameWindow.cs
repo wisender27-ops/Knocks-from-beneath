@@ -28,12 +28,12 @@ namespace KnocksFromBeneath
         protected virtual bool CanOpen => true;
 
         // Пауза и тайм-аут кадра после неё не пропускают ввод в мини-игру.
-        protected static bool InputAllowed => Time.timeScale != 0f && !PauseMenuController.InputBlocked;
+        protected static bool InputAllowed => !NarrativeReadingPanel.WorldHalted && !PauseMenuController.InputBlocked;
         protected static bool CancelPressed => Input.GetKeyDown(KeyCode.Escape);
 
         protected bool TryOpen()
         {
-            if (FadeTransitionPresentation.IsActive || IsOpen || IsAnyOpen || !CanOpen || Time.timeScale == 0f ||
+            if (FadeTransitionPresentation.IsActive || IsOpen || IsAnyOpen || !CanOpen || NarrativeReadingPanel.WorldHalted ||
                 QuestJournalScreen.IsAnyOpen || RetroInventoryScreen.IsAnyOpen)
                 return false;
             player = FindFirstObjectByType<PlayerController>();

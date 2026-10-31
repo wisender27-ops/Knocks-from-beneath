@@ -128,7 +128,9 @@ namespace KnocksFromBeneath
                 switch (collectable.currentItemType)
                 {
                     case CollectableItem.ItemType.Trash: return quests.IsQuestActive("trash-delivery");
-                    case CollectableItem.ItemType.Box: return quests.IsQuestActive("box-delivery") || quests.IsQuestActive("box-collect");
+                    // Установленная коробка теряет тег Pickable (PlacementZone) и больше не квестовый предмет.
+                    case CollectableItem.ItemType.Box: return gameObject.CompareTag("Pickable") &&
+                        (quests.IsQuestActive("box-delivery") || quests.IsQuestActive("box-collect"));
                     case CollectableItem.ItemType.Grocery: return quests.IsQuestActive("dinner-ingredients");
                 }
             }
@@ -194,7 +196,7 @@ namespace KnocksFromBeneath
 
         internal static void DrawAll()
         {
-            if (Event.current.type != EventType.Repaint || Time.timeScale == 0f || FadeTransitionPresentation.IsActive || ArrivalCutscene.IsPlaying ||
+            if (Event.current.type != EventType.Repaint || NarrativeReadingPanel.WorldHalted || FadeTransitionPresentation.IsActive || ArrivalCutscene.IsPlaying ||
                 RetroInventoryScreen.IsAnyOpen || QuestJournalScreen.IsAnyOpen || MinigameWindow.IsAnyOpen || !NarrativeDisplayQueue.CanShowInteractionHint) return;
             Color previousColor = GUI.color;
             Matrix4x4 previousMatrix = GUI.matrix;

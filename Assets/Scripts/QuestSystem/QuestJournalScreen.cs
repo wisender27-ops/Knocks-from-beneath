@@ -82,7 +82,7 @@ namespace KnocksFromBeneath
             }
             else if (IsOpen && Input.GetKeyDown(KeyCode.Escape)) Close();
 
-            bool showHint = !InteractionPresentation.HasControlHints && !IsOpen && !closing && Time.timeScale > 0f &&
+            bool showHint = !InteractionPresentation.HasControlHints && !IsOpen && !closing && !NarrativeReadingPanel.WorldHalted &&
                 !RetroInventoryScreen.IsAnyOpen &&
                 (playerController == null || !playerController.isCameraLocked) &&
                 (playerInteraction == null || !playerInteraction.IsEatingPie);
@@ -113,7 +113,7 @@ namespace KnocksFromBeneath
 
         public void Open()
         {
-            if (DeathTapeEffect.IsActive || FadeTransitionPresentation.IsActive || manager == null || IsOpen || closing || IsAnyOpen || Time.timeScale == 0f ||
+            if (DeathTapeEffect.IsActive || FadeTransitionPresentation.IsActive || manager == null || IsOpen || closing || IsAnyOpen || NarrativeReadingPanel.WorldHalted ||
                 RetroInventoryScreen.IsAnyOpen ||
                 (playerController != null && playerController.isCameraLocked) ||
                 (playerInteraction != null && playerInteraction.IsEatingPie)) return;

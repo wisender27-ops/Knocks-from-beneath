@@ -288,7 +288,7 @@ namespace KnocksFromBeneath
             UpdateUi(dt);
         }
 
-        private static bool Paused => Time.timeScale == 0f || PauseMenuController.InputBlocked;
+        private static bool Paused => NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked;
         public float Suspicion => UsesMicrophone ? Voice.Suspicion : Breath != null ? Breath.Suspicion : 0f;
         private float Pulse => UsesMicrophone ? Voice.Pulse : Breath != null ? Breath.Pulse : 0f;
         private bool Detected => UsesMicrophone ? Voice.Found : Breath != null && Breath.Found;
@@ -344,7 +344,7 @@ namespace KnocksFromBeneath
             if (!hidden) return;
             BuildUi(); // шкала микрофона → полоска воздуха и «Пробел»
             ThoughtManager.Instance?.TryShowInteractionThoughts("hide-mic-lost",
-                new[] { "Микрофон не слышно. Задерживай дыхание — Пробел." }, 0f);
+                new[] { "Микрофон не слышно. Задерживай дыхание Пробелом." }, 0f);
         }
 
         // ---------------------------------------------------------------- подсказка у кровати
@@ -940,7 +940,7 @@ namespace KnocksFromBeneath
             var keys = UiKeyHints.Create(promptUi.transform, "Keys", Font());
             keys.RectTransform.anchorMin = keys.RectTransform.anchorMax = keys.RectTransform.pivot = new Vector2(0.5f, 0f);
             keys.RectTransform.anchoredPosition = new Vector2(0f, 110f);
-            keys.Set("E", "ЗАЛЕЗТИ ПОД КРОВАТЬ");
+            keys.Set("E", "ЗАЛЕЗЬ ПОД КРОВАТЬ");
             promptUi.SetActive(false);
         }
 

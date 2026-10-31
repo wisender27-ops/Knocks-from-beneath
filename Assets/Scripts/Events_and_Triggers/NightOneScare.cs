@@ -32,7 +32,7 @@ namespace KnocksFromBeneath
             while (!director.TryBegin(this, true))
             {
                 if (!isActiveAndEnabled || director == null) yield break;
-                if (Time.timeScale > 0f && !RetroInventoryScreen.IsAnyOpen && !QuestJournalScreen.IsAnyOpen)
+                if (!NarrativeReadingPanel.WorldHalted && !RetroInventoryScreen.IsAnyOpen && !QuestJournalScreen.IsAnyOpen)
                     acquireWait += Time.deltaTime;
                 if (acquireWait >= 12f) yield break;
                 yield return null;

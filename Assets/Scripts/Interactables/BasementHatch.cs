@@ -14,6 +14,7 @@ namespace KnocksFromBeneath
         [Tooltip("Замок на створках. Пока он не вскрыт ломом, створки не открываются — " +
                  "E даёт отказ. Не задан — люк открывается свободно (обратная совместимость).")]
         [SerializeField] private BasementHatchLock lock_;
+        public BasementHatchLock Lock => lock_;
 
         private float angle;
         private float jolt;
@@ -211,6 +212,15 @@ namespace KnocksFromBeneath
             if (leftLeaf == null || rightLeaf == null) return;
             isOpen = false;
             enabled = true;
+        }
+
+        // День 2: без ударов изнутри на замке. Стук снизу в этой сцене только далёкий.
+        public void MuteLockedResponse() => lockedResponseUsed = true;
+
+        // Чекпойнт главы: замок сорван ещё днём, створки закрыты.
+        public void RestoreForcedLock()
+        {
+            if (lock_ != null) lock_.DebugForceBroken();
         }
 
         // Отладочный пропуск: снять замок и открыть створки, минуя удар ломом.

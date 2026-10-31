@@ -215,7 +215,7 @@ namespace KnocksFromBeneath
         {
             if (chaseFrozen)
             {
-                if (Time.timeScale <= 0f || PauseMenuController.InputBlocked || head == null) return;
+                if (NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked || head == null) return;
                 head.localRotation = frozenHeadLocal;
                 AimHead(null, null, head, faceLocal, LookTarget, 1f, new Vector3(0f, 0f, 1f), maxYaw, 0f);
                 return;

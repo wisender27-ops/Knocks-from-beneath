@@ -160,7 +160,7 @@ namespace KnocksFromBeneath
             if (feedbackTime > 0f)
             {
                 feedbackTime -= Time.deltaTime;
-                if (feedbackTime <= 0f) SetFeedback(EvidenceCaptured ? "Кадр сохранён. Esc — вернуться в комнату." : "", 0f);
+                if (feedbackTime <= 0f) SetFeedback(EvidenceCaptured ? "Кадр сохранён. Esc вернёт в комнату." : "", 0f);
             }
             if (motor != null)
             {
@@ -177,7 +177,7 @@ namespace KnocksFromBeneath
             {
                 EvidenceCaptured = true;
                 savedFrameTime = transport.Time;
-                SetFeedback("Кадр сохранён — " + NightTape.Stamp(transport.Time), 4f);
+                SetFeedback("Кадр сохранён " + NightTape.Stamp(transport.Time), 4f);
                 GameAudio.PlayUi(stopClip, 0.7f);
             }
             else SetFeedback(transport.IsStopped ? "На этом кадре ничего необычного." : "Сначала остановите плёнку.", 4f);

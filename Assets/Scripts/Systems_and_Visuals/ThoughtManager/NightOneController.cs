@@ -19,11 +19,13 @@ public sealed class NightOneController
     private readonly Func<IEnumerator> _nightScare;
     private readonly Func<IEnumerator> _neighborVisit;
     private readonly Func<bool> _didMeetNeighbor;
+    private readonly Func<IEnumerator> _wakeUp;
 
     private bool _fogBeforeNight;
     private bool _isRunning;
 
     private const float FadeDuration = 1.5f;
+    private const float SleepSeconds = 3f; // сон — чёрный экран, иначе герой «просыпается», не успев заснуть
     private const float KnockWindowSeconds = 6f; // окно активности RandomKnock — при его min/maxDelay (2-5с) даёт максимум пару стуков
 
     public NightOneController(
@@ -36,8 +38,10 @@ public sealed class NightOneController
         Action onNightFinished,
         Func<IEnumerator> nightScare = null,
         Func<IEnumerator> neighborVisit = null,
-        Func<bool> didMeetNeighbor = null)
+        Func<bool> didMeetNeighbor = null,
+        Func<IEnumerator> wakeUp = null)
     {
+        _wakeUp = wakeUp;
         _fadeScreen = fadeScreen;
         _skySwitcher = skySwitcher;
         _knockController = knockController;
@@ -70,7 +74,8 @@ public sealed class NightOneController
         _teleportToBed?.Invoke();
 
         if (_knockController != null) _knockController.SetActive(false);
-        yield return Fade(1f, 0f);
+        yield return new WaitForSeconds(SleepSeconds);
+        yield return WakeUp();
 
         if (_nightScare != null)
             yield return _nightScare();
@@ -84,7 +89,7 @@ public sealed class NightOneController
         if (_neighborVisit != null) yield return _neighborVisit();
 
         bool metNeighbor = _didMeetNeighbor != null && _didMeetNeighbor();
-        _showThoughts(metNeighbor ? new[] { "Он видел кого-то внизу. Но я всё это время был в кровати.", "Нет. Сам сказал — показалось. Надо спать." } : new string[] {
+        _showThoughts(metNeighbor ? new[] { "Он видел кого-то внизу. Но я всё это время был в кровати.", "Нет. Сам сказал, что показалось. Надо спать." } : new string[] {
             "Опять этот стук...",
             "Нет. Не накручивай себя.",
             "Затихло же. Надо спать."
@@ -100,14 +105,14 @@ public sealed class NightOneController
     {
         yield return Fade(0f, 1f);
         _teleportToBed?.Invoke();
-        yield return new WaitForSeconds(2f);
+        yield return new WaitForSeconds(SleepSeconds);
 
         // SkyboxSwitcher применяет состояние в Update — оставляем кадр под чёрным экраном.
         if (_skySwitcher != null) _skySwitcher.isDayTime = true;
         RenderSettings.fog = _fogBeforeNight;
         GameEvents.OnDayStarted?.Invoke();
         yield return null;
-        yield return Fade(1f, 0f);
+        yield return WakeUp();
 
         _showThoughts(new string[] {
             "Ну вот, дожил до утра.",
@@ -118,6 +123,8 @@ public sealed class NightOneController
             _onNightFinished?.Invoke();
         });
     }
+
+    IEnumerator WakeUp() => _wakeUp != null ? _wakeUp() : Fade(1f, 0f);
 
     IEnumerator Fade(float from, float to)
     {

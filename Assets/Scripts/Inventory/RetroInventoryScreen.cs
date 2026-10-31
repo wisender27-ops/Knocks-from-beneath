@@ -132,7 +132,7 @@ namespace KnocksFromBeneath
 
         private void Open()
         {
-            if (DeathTapeEffect.IsActive || FadeTransitionPresentation.IsActive || inventory == null || isOpen || IsAnyOpen || Time.timeScale == 0f ||
+            if (DeathTapeEffect.IsActive || FadeTransitionPresentation.IsActive || inventory == null || isOpen || IsAnyOpen || NarrativeReadingPanel.WorldHalted ||
                 (playerInteraction != null && playerInteraction.IsEatingPie) ||
                 (playerController != null && playerController.isCameraLocked)) return;
             isOpen = true;
@@ -347,9 +347,16 @@ namespace KnocksFromBeneath
             nameText.text = entry.Definition.MaxStack > 1
                 ? entry.Definition.DisplayName + "  ×" + entry.Quantity
                 : entry.Definition.DisplayName;
-            descriptionText.text = entry.Definition.Description;
+            bool deadPhone = inventory.IsDeadPhone(entry);
+            descriptionText.text = deadPhone ? PhoneFlashlight.DeadDescription : entry.Definition.Description;
             string useAction = entry.Definition.IsEquippable ? (equipped ? "УБРАТЬ" : "ВЗЯТЬ") : "ИСПОЛЬЗОВАТЬ";
-            if (isInspecting)
+            if (deadPhone)
+            {
+                if (isInspecting) actionHints.Set("МЫШЬ", "ВРАЩАТЬ", "КОЛЕСО", "МАСШТАБ", "R", "СБРОС", "C", "НАЗАД");
+                else if (inventory.Entries.Count > 1) actionHints.Set("A D", "ВЫБОР", "C", "ОСМОТР", "TAB", "ЗАКРЫТЬ");
+                else actionHints.Set("C", "ОСМОТР", "TAB", "ЗАКРЫТЬ");
+            }
+            else if (isInspecting)
                 actionHints.Set("МЫШЬ", "ВРАЩАТЬ", "КОЛЕСО", "МАСШТАБ", "R", "СБРОС", "ПРОБЕЛ", useAction, "C", "НАЗАД");
             else if (inventory.Entries.Count > 1)
                 actionHints.Set("A D", "ВЫБОР", "C", "ОСМОТР", "ПРОБЕЛ", useAction, "TAB", "ЗАКРЫТЬ");

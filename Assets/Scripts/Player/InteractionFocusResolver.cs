@@ -32,6 +32,8 @@ namespace KnocksFromBeneath
             if (cellLock != null) return cellLock.CanInteract && Set(cellLock.transform, cellLock.Label, false, false, hit, out focus);
             BasementHatchLock hatchLock = t.GetComponentInParent<BasementHatchLock>();
             BasementHatch hatch = hatchLock != null ? hatchLock.GetComponentInParent<BasementHatch>() : t.GetComponentInParent<BasementHatch>();
+            // Луч попадает то в сам замок, то в створку рядом: с квестом на взлом это одна цель.
+            if (hatchLock == null && hatch != null) hatchLock = hatch.Lock;
             if (hatchLock != null && hatchLock.IsLocked && quests != null && quests.IsQuestActive(hatchLock.RequiredQuestTag))
                 return Set(hatchLock.transform, hatchLock.CanStartBreak(actor) ? "Вскрыть замок" : "Подойдите ближе",
                     !hatchLock.CanStartBreak(actor), false, hit, out focus);

@@ -96,18 +96,20 @@ namespace KnocksFromBeneath
 
         // Экран в начале чёрный (NightRoutine). Возвращается, когда игрок лёг (экран снова чёрный, Survived) или погиб
         // (смерть сама доводит до карточки E3 и повтора ночи 2 — дальше NightRoutine не идёт).
-        public IEnumerator Play(CanvasGroup fade)
+        public IEnumerator Play(CanvasGroup fade, Func<IEnumerator> wakeUp = null)
         {
             IsRunning = true;
             Survived = _voiced = _filling = _filled = _drinking = _drunk = _inBed = _dead = false;
             _camera = Camera.main;
             Setup();
 
-            for (float t = 0f; t < FadeSeconds; t += Time.deltaTime)
-            {
-                if (fade != null) fade.alpha = 1f - t / FadeSeconds;
-                yield return null;
-            }
+            if (wakeUp != null) yield return wakeUp();
+            else
+                for (float t = 0f; t < FadeSeconds; t += Time.deltaTime)
+                {
+                    if (fade != null) fade.alpha = 1f - t / FadeSeconds;
+                    yield return null;
+                }
             if (fade != null) fade.alpha = 0f;
 
             _showThoughts(new[] { "Пить хочется…", "Схожу вниз, на кухню, за водой." }, null);
@@ -273,15 +275,15 @@ namespace KnocksFromBeneath
             }
             if (!_voiced && SeesMonster(eye)) Speak();
             if (IsQuestActive(TakeQuestTag) && IsGlassHeld) QuestManager.Instance.AddProgress(1);
-            if (CanDrink && Input.GetKeyDown(DrinkKey) && Time.timeScale > 0f && !PauseMenuController.InputBlocked &&
+            if (CanDrink && Input.GetKeyDown(DrinkKey) && !NarrativeReadingPanel.WorldHalted && !PauseMenuController.InputBlocked &&
                 !RetroInventoryScreen.IsAnyOpen && !QuestJournalScreen.IsAnyOpen) StartCoroutine(DrinkRoutine());
         }
 
         // Подсказка, пока стакан в руках (CrosshairJuice): у раковины — E, с водой — F.
         public string HeldHint(bool aimingAtSink)
         {
-            if (CanDrink) return "F — выпить воды";
-            if (CanFill) return aimingAtSink ? "E — налить воды" : "Подойдите к раковине";
+            if (CanDrink) return "F выпить воды";
+            if (CanFill) return aimingAtSink ? "E налить воды" : "Подойдите к раковине";
             return null;
         }
 
@@ -316,7 +318,7 @@ namespace KnocksFromBeneath
             }
             thoughts.ShowDialogue("???", new[] { "Не двигайся." }, () =>
             {
-                if (!_dead) _showThoughts(new[] { "Оно… говорит.", "Не подходить к нему. Взять воды — и обратно в кровать." }, null);
+                if (!_dead) _showThoughts(new[] { "Оно… говорит.", "Не подходить к нему. Взять воды и обратно в кровать." }, null);
             }, PlayVoice);
         }
 

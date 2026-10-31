@@ -25,6 +25,7 @@ public sealed class DebugStoryStageDrawer : PropertyDrawer
         new Entry(DebugStoryStage.StartTrashQuest, "День 1/01 — Убрать мусор", "Начало уборки дома."),
         new Entry(DebugStoryStage.StartTrashDeliveryQuest, "День 1/02 — Вынести мусор", "Мусор собран; осталось вынести его."),
         new Entry(DebugStoryStage.StartBoxQuest, "День 1/03 — Разнести коробки", "Коробки у фургона; расстановка вещей и видеокамера."),
+        new Entry(DebugStoryStage.StartCameraStoreQuest, "День 1/03б — Отнести камеру в спальню", "Коробки разнесены; камеру положить на комод, штатив поставить рядом."),
         new Entry(DebugStoryStage.StartPieQuest, "День 1/04 — Взять пирог", "Коробки разобраны. Начинается квест пирога."),
         new Entry(DebugStoryStage.StartPieMicrowaveQuest, "День 1/05 — Разогреть пирог", "Переход к микроволновке."),
         new Entry(DebugStoryStage.StartPieEatQuest, "День 1/06 — Съесть пирог", "Переход к ужину первого дня."),
@@ -49,6 +50,8 @@ public sealed class DebugStoryStageDrawer : PropertyDrawer
         new Entry(DebugStoryStage.StartHidingSpots, "Ночь 2/10 — Молоток и прятки (M7)", "Игрок у молотка в спальне. Взять молоток, затем спрятаться под кроватью."),
         new Entry(DebugStoryStage.StartNightTwoExits, "Ночь 2/11 — Выходы из дома", "После пряток: люк, дорога и задний двор доступны для проверки концовок."),
         new Entry(DebugStoryStage.StartHatchChoice, "Ночь 2/12 — Выбор у люка (E5)", "Игрок у люка с молотком, условия «Ответа» выполнены дебагом: E на люке открывает выбор «заколотить / спуститься»."),
+        new Entry(DebugStoryStage.StartDayBasement, "День 2 — Первый спуск в подвал", "Кухня убрана, стук снизу: люк → лом → замок → подвал без монстра → запись → камера внизу."),
+        new Entry(DebugStoryStage.StartBasementTunnels, "Ночь 2/13 — Тоннели", "Сразу под люком: путь на стук по тоннелям до лестницы за замурованную стену."),
         new Entry(DebugStoryStage.StartBasement, "Ночь 2/13 — Подвал (P-03, E5)", "Сразу в подвале: монстр на слух, стук хозяина, камера в конце, лом у игрока. Проверка финала «Ответ»."),
         new Entry(DebugStoryStage.StartFinale, "Ночь 2/14 — Заколотить люк (M3)", "Фонарик, лом и молоток получены; начинается заколачивание люка.")
     };

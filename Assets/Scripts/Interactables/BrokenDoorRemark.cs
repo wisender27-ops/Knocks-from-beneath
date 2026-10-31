@@ -15,7 +15,7 @@ namespace KnocksFromBeneath
         private static readonly string[] Lines =
         {
             "Дверь выбита… вместе с петлями.",
-            "Засов выдержал. Петли — нет."
+            "Засов выдержал. Петли не выдержали."
         };
 
         private Collider _leaf;

@@ -14,17 +14,27 @@ namespace KnocksFromBeneath
         public readonly Transform Transform;
         public readonly Quaternion Closed;
         public readonly float Swing; // как Door.angleRotation этой двери
-        public readonly bool Draft;  // false — входная дверь, true — жалюзийная (сквозняк)
+        private readonly System.Func<float, float> open;
 
-        public TapeDoor(Transform transform, float swing, bool draft)
+        public TapeDoor(Transform transform, float swing, System.Func<float, float> open)
         {
             Transform = transform;
             Closed = transform.localRotation;
             Swing = swing;
-            Draft = draft;
+            this.open = open;
         }
 
-        public float Angle(float time) => Swing * (Draft ? NightTape.DraftOpen(time) : NightTape.DoorOpen(time));
+        public float Angle(float time) => Swing * open(time);
+    }
+
+    // Что и как снимает плёнка. Пустые Lights/Hidden означают ночь 1: свет дома и скрытие видеокамеры на штативе.
+    public sealed class TapeSetup
+    {
+        public TapeTimeline Timeline;
+        public TapeDoor[] Doors;
+        public System.Func<Transform, Light[]> Lights;
+        public System.Func<float, float> OutsideLevel;
+        public Renderer[] Hidden;
     }
 
     // C-02: ночная запись — живая сцена в движке. Своя камера стоит в объективе видеокамеры на штативе и рисует
@@ -41,6 +51,8 @@ namespace KnocksFromBeneath
 
         private Camera tapeCamera;
         private Transform view;
+        private TapeSetup setup;
+        private TapeTimeline timeline;
         private TextMeshProUGUI stamp;
         private int stampClock = -1;
 
@@ -74,15 +86,15 @@ namespace KnocksFromBeneath
         public RenderTexture Texture { get; private set; }
         public float Time { get; private set; }
         public bool Playing { get; set; }
-        public bool Finished => Time >= NightTape.Duration;
-        public float SignalLoss => NightTape.SignalLoss(Time);
-        public float Tracking => NightTape.Tracking(Time);
+        public bool Finished => Time >= timeline.Duration;
+        public float SignalLoss => timeline.SignalLoss(Time);
+        public float Tracking => timeline.Tracking(Time);
 
         // Вызывать при загрузке сцены (IntroSequence.Awake): двери ещё в закрытом положении.
         public static TapeDoor[] CaptureDoors(Door frontDoor)
         {
             var list = new System.Collections.Generic.List<TapeDoor>(2);
-            if (frontDoor != null) list.Add(new TapeDoor(frontDoor.transform, FrontDoorSwing, false));
+            if (frontDoor != null) list.Add(new TapeDoor(frontDoor.transform, FrontDoorSwing, NightTape.DoorOpen));
             Door draft = null;
             float best = 0.36f; // 60 см
             foreach (Door door in FindObjectsByType<Door>(FindObjectsInactive.Exclude))
@@ -92,30 +104,39 @@ namespace KnocksFromBeneath
                 if (r != null) d = Mathf.Min(d, (r.bounds.center - NightTape.DraftDoorPoint).sqrMagnitude);
                 if (d < best) { best = d; draft = door; }
             }
-            if (draft != null && draft != frontDoor) list.Add(new TapeDoor(draft.transform, DraftDoorSwing, true));
+            if (draft != null && draft != frontDoor) list.Add(new TapeDoor(draft.transform, DraftDoorSwing, NightTape.DraftOpen));
             return list.ToArray();
         }
 
         // view — точка объектива (CameraPlacementController.RecordingView).
-        public static NightRecording Create(Transform view, TapeDoor[] doors)
+        public static NightRecording Create(Transform view, TapeDoor[] doors) => Create(view, new TapeSetup
+        {
+            Timeline = NightTape.Timeline,
+            Doors = doors,
+            OutsideLevel = time => 0.3f * NightTape.DoorOpen(time) / NightTape.DoorOpenAmount
+        });
+
+        public static NightRecording Create(Transform view, TapeSetup setup)
         {
             if (view == null) return null;
-            var root = new GameObject("Night Recording (C-02)");
+            var root = new GameObject("Tape Recording");
             var recording = root.AddComponent<NightRecording>();
-            recording.Build(view, doors);
+            recording.Build(view, setup);
             return recording;
         }
 
         public void Seek(float time)
         {
-            Time = NightTape.Clamp(time);
+            Time = timeline.Clamp(time);
             Pose();
         }
 
-        private void Build(Transform recordingView, TapeDoor[] tapeDoors)
+        private void Build(Transform recordingView, TapeSetup tapeSetup)
         {
             view = recordingView;
-            doors = tapeDoors ?? new TapeDoor[0];
+            setup = tapeSetup;
+            timeline = setup.Timeline;
+            doors = setup.Doors ?? new TapeDoor[0];
             doorSaved = new Quaternion[doors.Length];
             nightProbe = new SphericalHarmonicsL2();
             nightProbe.AddAmbientLight(NightAmbient);
@@ -230,6 +251,7 @@ namespace KnocksFromBeneath
         {
             var lights = new GameObject("Tape Night Lights");
             lights.transform.SetParent(transform, false);
+            if (setup.Lights != null) { tapeLights = setup.Lights(lights.transform); return; }
             // Луна — копия ночного направленного света сцены (SkyboxSwitcher.lightNight).
             Light moon = NewLight(lights.transform, "Moon", LightType.Directional);
             SkyboxSwitcher sky = FindFirstObjectByType<SkyboxSwitcher>();
@@ -274,7 +296,7 @@ namespace KnocksFromBeneath
             tapeLights = new[] { moon, street, window, lamp };
         }
 
-        private static Light NewLight(Transform parent, string name, LightType type)
+        public static Light NewLight(Transform parent, string name, LightType type)
         {
             var obj = new GameObject(name);
             obj.transform.SetParent(parent, false);
@@ -327,7 +349,8 @@ namespace KnocksFromBeneath
             var hidden = new System.Collections.Generic.List<Renderer>();
             PlayerController player = FindFirstObjectByType<PlayerController>();
             if (player != null) hidden.AddRange(player.GetComponentsInChildren<Renderer>(true));
-            if (view != null) hidden.AddRange(view.root.GetComponentsInChildren<Renderer>(true));
+            if (setup.Hidden != null) hidden.AddRange(setup.Hidden);
+            else if (view != null) hidden.AddRange(view.root.GetComponentsInChildren<Renderer>(true));
             hiddenOnTape = hidden.ToArray();
             hiddenStates = new bool[hiddenOnTape.Length];
         }
@@ -375,7 +398,7 @@ namespace KnocksFromBeneath
         {
             if (!Playing) { SetLoops(false); return; }
             float previous = Time;
-            Time = NightTape.Clamp(Time + UnityEngine.Time.deltaTime);
+            Time = timeline.Clamp(Time + UnityEngine.Time.deltaTime);
             // Звуки — только при обычном ходе плёнки; прыжок перемотки их не повторяет.
             if (Time > previous && Time - previous < 0.25f) FireEvents(previous, Time);
             SetLoops(!Finished);
@@ -395,15 +418,15 @@ namespace KnocksFromBeneath
 
         private void Pose()
         {
-            int clock = NightTape.ClockSeconds(Time);
+            int clock = timeline.ClockSeconds(Time);
             if (stamp != null && clock != stampClock)
             {
                 stampClock = clock;
-                stamp.text = NightTape.Stamp(Time);
+                stamp.text = timeline.Stamp(Time);
             }
-            if (outside != null) outside.volume = 0.3f * NightTape.DoorOpen(Time) / NightTape.DoorOpenAmount;
+            if (outside != null) outside.volume = setup.OutsideLevel != null ? setup.OutsideLevel(Time) : 0f;
             if (figure == null) return;
-            TapeFigurePose pose = NightTape.Figure(Time);
+            TapeFigurePose pose = timeline.Figure(Time);
             figureVisible = pose.Visible;
             if (!pose.Visible) return;
             figure.transform.SetPositionAndRotation(pose.Position, Quaternion.Euler(0f, pose.Yaw, 0f));
@@ -420,7 +443,7 @@ namespace KnocksFromBeneath
         private void FireEvents(float from, float to)
         {
             Vector3 mic = view != null ? view.position : transform.position;
-            foreach (TapeEvent e in NightTape.SoundEvents)
+            foreach (TapeEvent e in timeline.SoundEvents)
             {
                 if (e.Time <= from) continue;
                 if (e.Time > to) break;
@@ -440,6 +463,8 @@ namespace KnocksFromBeneath
             {
                 case TapeSound.Knock: return knockClip;
                 case TapeSound.Glitch: return glitchClip;
+                case TapeSound.Slam: return Resources.Load<AudioClip>("Audio/Horror/impactPunch_heavy_000");
+                case TapeSound.Bars: return Resources.Load<AudioClip>("Audio/Horror/impactPlank_medium_000");
             }
             if (lib == null) return null;
             switch (sound)

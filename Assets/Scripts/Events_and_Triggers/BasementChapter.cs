@@ -6,20 +6,20 @@ using UnityEngine.UI;
 
 namespace KnocksFromBeneath
 {
-    // P-03 «Подвал как глава» + B-05 финал E5 «Ответ». Спуск через люк: за восточной стеной существующей комнаты
-    // подвала строится продолжение (BasementLayout), по залу ходит монстр и слушает шаги, из камеры в дальнем блоке
-    // стучит хозяин — по трубе, которая идёт наверх, в дом. Игрок идёт на стук, не выдавая себя, бьёт ломом по замку,
-    // прячется в нише от монстра, который пришёл на грохот (микрофон, как под кроватью), и сбивает замок — выбор
-    // «не заколачивать, а ответить». Геометрия создаётся в рантайме: сцена не меняется.
+    // P-03 «Подвал как глава» + B-05 финал E5 «Ответ». Ночь 2: игрок спускается в подвал, смотрит запись с камеры,
+    // которую поставил днём (монстр выбирается из вентиляции), и ползёт по этой квадратной трубе. За ней тоннели
+    // (BasementDepths, план в DepthsLayout), они выводят за замурованную стену, в отрезанную половину подвала (BasementLevel, план в BasementLayout).
+    // Там по залу ходит монстр и слушает шаги, из камеры в дальнем блоке стучит хозяин — по трубе, которая идёт наверх,
+    // в дом. Игрок идёт на стук, не выдавая себя, бьёт ломом по замку, прячется от монстра, который пришёл на грохот
+    // (микрофон, как под кроватью), и сбивает замок — выбор «не заколачивать, а ответить». Здесь только логика.
     public sealed class BasementChapter : MonoBehaviour
     {
-        public enum Stage { Idle, Descending, Explore, Striking, Caught, Finale, Done }
+        public enum Stage { Idle, Descending, Explore, Striking, Caught, Finale, Done, Room, Tunnels, Duct }
 
         private const string FindQuest = "basement-find", ReachQuest = "basement-reach", StrikeQuest = "basement-unlock",
-            HideQuest = "basement-hide", BreakQuest = "basement-break";
-        private const int InteractableLayer = 6;
-        private static readonly Vector3 HideRespawn = new Vector3(-28.15f, BasementLayout.FloorY, 101.3f);
-        private static readonly Vector3 HideRespawnLook = new Vector3(-28.15f, 0f, 97f);
+            HideQuest = "basement-hide", BreakQuest = "basement-break",
+            TapeQuest = "basement-tape", VentQuest = "basement-vent", DuctQuest = "basement-duct", TunnelQuest = "basement-tunnels";
+        private const float CellDoorSwing = 100f;
 
         private Transform player;
         private PlayerInventory inventory;
@@ -29,21 +29,33 @@ namespace KnocksFromBeneath
         private Action<EndingId> endGame;
         private Action silenceAbove;
 
-        private GameObject extension;
+        private BasementLevel level;
+        private BasementDepths depths;
+        private TapeDoor tapeGrille;
+        private int tunnelPoint;
         private GameObject monster;
         private BasementStalker stalker;
         private BasementHideListener hideListener;
         private BasementCellLock cellLock;
         private Transform cellDoor;
+        private TapeDoor tapeCellDoor;
         private GameObject cellDoorCollider, lockVisual;
         private AudioSource knockSource, effects;
         private Coroutine knocking;
         private CanvasGroup fade;
-        private Material wallMaterial, floorMaterial, ceilingMaterial, metalMaterial, woodMaterial, rugMaterial, pipeMaterial,
-            skinMaterial, shadowMaterial;
-        private Transform reference;
         private int catches;
         private bool reachedCell, hallSeen, struck, hideActive, hideFailed, breakReady;
+        private bool inHideSpot, distracted, savedCameraLock, savedBodyEnabled, savedFlashlight;
+        private int hideEnteredFrame;
+        private float hideYaw, hidePitch, inspectionTime;
+        private Camera hideCamera;
+        private CharacterController hideBody;
+        private Vector3 savedEyePosition;
+        private Quaternion savedCameraRotation;
+        private Behaviour[] hideInputs;
+        private bool[] hideInputStates;
+        private AudioSource distractionSource;
+        private BasementOwner owner;
 
         public Stage CurrentStage { get; private set; }
         public bool IsActive => CurrentStage != Stage.Idle && CurrentStage != Stage.Done;
@@ -62,15 +74,15 @@ namespace KnocksFromBeneath
             silenceAbove = silenceAboveCallback;
         }
 
-        // Спуск: затемнение, подвал достраивается, игрок у подножия лестницы.
-        public void Begin(BasementHatch hatch, bool debugJump = false)
+        // Спуск: затемнение, подвал оживает, игрок у подножия лестницы.
+        public void Begin(BasementHatch hatch, bool debugJump = false, bool debugTunnels = false)
         {
             if (CurrentStage != Stage.Idle || player == null) return;
             CurrentStage = Stage.Descending;
-            StartCoroutine(BeginRoutine(hatch, debugJump));
+            StartCoroutine(BeginRoutine(hatch, debugJump, debugTunnels));
         }
 
-        private IEnumerator BeginRoutine(BasementHatch hatch, bool debugJump)
+        private IEnumerator BeginRoutine(BasementHatch hatch, bool debugJump, bool debugTunnels)
         {
             LockCamera(true);
             EnsureFade();
@@ -78,20 +90,147 @@ namespace KnocksFromBeneath
             silenceAbove?.Invoke();
             hatch?.OpenForCinematic();
             EnsureBuilt();
-            SpawnMonster();
-            PlaceAt(BasementLayout.PlayerStart, BasementLayout.PlayerStartLook);
             if (debugJump && inventory != null) inventory.hasCrowbar = true;
+            catches = 0;
+            reachedCell = hallSeen = struck = hideActive = hideFailed = breakReady = false;
+            if (debugTunnels)
+            {
+                yield return EnterTunnels();
+                yield break;
+            }
+            PlaceAt(BasementLayout.PlayerStart, BasementLayout.PlayerStartLook);
             yield return new WaitForSeconds(debugJump ? 0.05f : 0.7f);
             yield return Fade(0f, 1.4f);
             LockCamera(false);
+            CurrentStage = Stage.Room;
+            sayQuick?.Invoke(new[] { "Решётка распахнута. Её выбили изнутри.", "Камера всё ещё пишет." }, null);
+            createQuest?.Invoke("Посмотреть запись с камеры", 1, OnTapeQuestDone, TapeQuest);
+        }
+
+        private bool CanWatchTape() => CurrentStage == Stage.Room && QuestActive(TapeQuest);
+
+        private void WatchTape()
+        {
+            if (CanWatchTape()) StartCoroutine(WatchTapeRoutine());
+        }
+
+        // Плёнка идёт прямо в подвале: монстр выбирается из той самой трубы, у которой стоит игрок.
+        private IEnumerator WatchTapeRoutine()
+        {
+            CurrentStage = Stage.Descending;
+            LockCamera(true);
+            yield return PlayVentTape();
+            LockCamera(false);
+            CurrentStage = Stage.Room;
+            if (QuestActive(TapeQuest)) QuestManager.Instance.AddProgress(1);
+        }
+
+        private IEnumerator PlayVentTape()
+        {
+            if (depths.tapeView == null) yield break;
+            CameraPlacementController gear = CameraPlacementController.Instance;
+            NightRecording recording = NightRecording.Create(depths.tapeView, new TapeSetup
+            {
+                Timeline = VentTape.Timeline,
+                Doors = new[] { tapeGrille },
+                Lights = VentTape.BuildLights,
+                Hidden = gear != null ? gear.GearRenderers() : new Renderer[0]
+            });
+            yield return TapeReel.Play(recording, transform);
+            Destroy(recording.gameObject);
+        }
+
+        private void OnTapeQuestDone()
+        {
+            depths.tapeCamera.gameObject.SetActive(false);
+            createQuest?.Invoke("Залезть в вентиляцию", 1, null, VentQuest);
+            sayQuick?.Invoke(new[] { "Оно живёт не в подвале, а за этой решёткой.", "Труба шире плеч. Пролезу. И стучат оттуда." }, null);
+        }
+
+        private void OpenVent()
+        {
+            depths.OpenGrille();
+            depths.vent.Initialize(() => CurrentStage == Stage.Room && QuestActive(VentQuest),
+                () => StartCoroutine(EnterDuct()), () => "Залезть в трубу");
+            depths.ductExit.Initialize(() => CurrentStage == Stage.Duct && QuestActive(DuctQuest),
+                () => StartCoroutine(EnterTunnels()), () => "Спуститься вниз");
+        }
+
+        // Труба: только на корточках, высота не даёт встать (PlayerController сам держит присед под потолком).
+        private IEnumerator EnterDuct()
+        {
+            CurrentStage = Stage.Descending;
+            LockCamera(true);
+            yield return Fade(1f, 0.8f);
+            PlayEffect("Audio/Horror/impactPlank_medium_000", 0.5f, 0.7f);
+            depths.SetDuctActive(true);
+            var body = player.GetComponent<CharacterController>();
+            if (body != null) body.height = controller != null ? controller.crouchingHeight : 1f;
+            PlaceAt(DepthsLayout.DuctStart + Vector3.up * 0.05f, new Vector3(DepthsLayout.DuctPath[1].x, 0f, DepthsLayout.DuctPath[1].y));
+            controller?.CrouchDown();
+            if (inventory != null && inventory.hasFlashlight && inventory.flashlightLightSource != null)
+                inventory.flashlightLightSource.enabled = true;
+            if (QuestActive(VentQuest)) QuestManager.Instance.AddProgress(1);
+            knockSource.transform.position = DepthsLayout.DuctEnd;
+            yield return new WaitForSeconds(0.5f);
+            yield return Fade(0f, 1f);
+            LockCamera(false);
+            CurrentStage = Stage.Duct;
+            sayQuick?.Invoke(new[] { "Вентиляция шириной с человека. Зачем такая дому?", "Жесть гудит под коленями. Стук впереди." }, null);
+            createQuest?.Invoke("Ползти по трубе", 1, null, DuctQuest);
+            if (knocking == null) knocking = StartCoroutine(KnockRoutine());
+        }
+
+        private IEnumerator EnterTunnels()
+        {
+            CurrentStage = Stage.Descending;
+            LockCamera(true);
+            yield return Fade(1f, 0.8f);
+            depths.SetDuctActive(false);
+            depths.SetTunnelsActive(true);
+            PlaceAt(DepthsLayout.DropPoint + Vector3.up * 0.1f, new Vector3(DepthsLayout.Route[0].x, 0f, DepthsLayout.Route[0].y));
+            if (inventory != null && inventory.hasFlashlight && inventory.flashlightLightSource != null)
+                inventory.flashlightLightSource.enabled = true;
+            if (QuestActive(DuctQuest)) QuestManager.Instance.AddProgress(1);
+            yield return new WaitForSeconds(0.6f);
+            yield return Fade(0f, 1.2f);
+            LockCamera(false);
+            tunnelPoint = 0;
+            CurrentStage = Stage.Tunnels;
+            sayQuick?.Invoke(new[] { "Этого нет ни на одном плане.", "Труба идёт вдоль стены. По ней стучат. Там, дальше." }, null);
+            createQuest?.Invoke("Идти на стук", 1, null, TunnelQuest);
+            if (knocking == null) knocking = StartCoroutine(KnockRoutine());
+        }
+
+        private bool CanClimbOut() => CurrentStage == Stage.Tunnels && QuestActive(TunnelQuest);
+
+        private void ClimbOut()
+        {
+            if (CanClimbOut()) StartCoroutine(EnterWing());
+        }
+
+        // Тоннели кончились: лестница выводит за замурованную стену, в ту половину подвала, которой «не было».
+        private IEnumerator EnterWing()
+        {
+            CurrentStage = Stage.Descending;
+            LockCamera(true);
+            yield return Fade(1f, 0.8f);
+            depths.SetTunnelsActive(false);
+            SpawnMonster();
+            PlaceAt(DepthsLayout.WingStart, DepthsLayout.WingStartLook);
+            knockSource.transform.position = PipeInCell();
+            if (QuestActive(TunnelQuest)) QuestManager.Instance.AddProgress(1);
+            yield return new WaitForSeconds(0.7f);
+            yield return Fade(0f, 1.4f);
+            LockCamera(false);
             CurrentStage = Stage.Explore;
-            catches = 0;
-            reachedCell = hallSeen = struck = hideActive = hideFailed = breakReady = false;
-            sayQuick?.Invoke(new[] { "Темно. И тихо. Только где-то глубже стучат.", "Он ходит здесь. Присесть и идти медленно — тогда он не услышит." }, null);
+            sayQuick?.Invoke(new[] { "За этой стеной подвал, из которого я ушёл. Вот вторая половина.", "Он ходит здесь. Присесть и идти медленно, тогда он не услышит." }, null);
             createQuest?.Invoke("Найти того, кто стучал", 1, () => createQuest("Добраться до камеры", 1, OnReached, ReachQuest), FindQuest);
             stalker.Begin();
-            knocking = StartCoroutine(KnockRoutine());
         }
+
+        private static Vector3 PipeInCell() =>
+            new Vector3(BasementLayout.PipeRoute[0].x, BasementLayout.FloorY + 1.3f, BasementLayout.PipeRoute[0].y);
 
         // Цепочка заданий: дойти → ударить по замку → спрятаться → сбить замок.
         private void OnReached()
@@ -112,17 +251,20 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
-            if (player == null || (CurrentStage != Stage.Explore && CurrentStage != Stage.Striking)) return;
-            Vector3 p = player.position;
+            if (player == null) return;
+            if (CurrentStage == Stage.Tunnels) { TickTunnels(); return; }
             if (CurrentStage != Stage.Explore) return;
-            if (!hallSeen && p.x > -31.4f && p.y < -2f)
+            Vector3 p = player.position;
+            var at = new Vector2(p.x, p.z);
+            bool inHall = BasementLayout.HallB.Contains(at, 0.6f) && p.y < -2f;
+            if (!hallSeen && inHall)
             {
                 hallSeen = true;
-                sayQuick?.Invoke(new[] { "Над головой труба. Тянется в сторону дома.", "Если по ней стучать, звук уйдёт во все комнаты." }, null);
+                sayQuick?.Invoke(new[] { "Над головой труба. Уходит наверх, в дом.", "Если по ней стучать, звук уйдёт во все комнаты." }, null);
             }
-            if (QuestActive(FindQuest) && p.x > -31.4f && p.y < -2f) QuestManager.Instance.AddProgress(1);
-            else if (QuestActive(ReachQuest) &&
-                Vector2.Distance(new Vector2(p.x, p.z), new Vector2(BasementLayout.CellApproach.x, BasementLayout.CellApproach.z)) < 3.2f)
+            if (QuestActive(FindQuest) && inHall) QuestManager.Instance.AddProgress(1);
+            else if (QuestActive(ReachQuest) && BasementLayout.CellBlockD.Contains(at) &&
+                Vector2.Distance(at, new Vector2(BasementLayout.CellApproach.x, BasementLayout.CellApproach.z)) < 3.2f)
             {
                 reachedCell = true;
                 QuestManager.Instance.AddProgress(1);
@@ -135,6 +277,20 @@ namespace KnocksFromBeneath
             TickHide();
         }
 
+        // Реплики по дороге и стук, который всё время идёт на шаг впереди игрока.
+        private void TickTunnels()
+        {
+            if (tunnelPoint >= DepthsLayout.Route.Length) return;
+            Vector2 at = new Vector2(player.position.x, player.position.z);
+            if ((at - DepthsLayout.Route[tunnelPoint]).sqrMagnitude > 9f) return;
+            tunnelPoint++;
+            if (tunnelPoint == 2) sayQuick?.Invoke(new[] { "Я уже не под домом. Где-то под улицей." }, null);
+            else if (tunnelPoint == 3) sayQuick?.Invoke(new[] { "Насосы. Кто-то всё это строил, а потом залил бетоном и забыл." }, null);
+            else if (tunnelPoint == 6) sayQuick?.Invoke(new[] { "Поворачивает назад, к дому." }, null);
+            Vector2 next = DepthsLayout.Route[Mathf.Min(tunnelPoint, DepthsLayout.Route.Length - 1)];
+            knockSource.transform.position = new Vector3(next.x, DepthsLayout.CeilingY - 0.3f, next.y);
+        }
+
         private static bool QuestActive(string tag) => QuestManager.Instance != null && QuestManager.Instance.IsQuestActive(tag);
 
         // -------------------------------------------------------------------------------------------------
@@ -142,29 +298,125 @@ namespace KnocksFromBeneath
         // -------------------------------------------------------------------------------------------------
 
         private bool PlayerHidden() =>
-            hideActive && controller != null && controller.IsCrouching && BasementLayout.IsInNook(new Vector2(player.position.x, player.position.z));
+            hideActive && inHideSpot && !hideFailed;
 
         private void TickHide()
         {
-            if (!hideActive || stalker == null || player == null) return;
+            if (!hideActive || stalker == null || player == null || NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked) return;
+            if (inHideSpot)
+            {
+                float sensitivity = SettingsStore.GetMouseSensitivity();
+                hideYaw = Mathf.Clamp(hideYaw + Input.GetAxis("Mouse X") * sensitivity, -35f, 35f);
+                hidePitch = Mathf.Clamp(hidePitch - Input.GetAxis("Mouse Y") * sensitivity * (SettingsStore.GetInvertY() ? -1f : 1f), -15f, 15f);
+                player.rotation = Quaternion.Euler(0f, hideYaw, 0f);
+                if (hideCamera != null) hideCamera.transform.localRotation = Quaternion.Euler(hidePitch, 0f, 0f);
+                if (Time.frameCount != hideEnteredFrame && (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.LeftControl)))
+                    ExitHideSpot();
+            }
             Vector2 at = new Vector2(player.position.x, player.position.z);
             float distance = Vector2.Distance(stalker.Brain.Position, at);
-            bool moving = controller != null && !controller.IsCrouching && PlayerMoved();
+            bool moving = !inHideSpot && controller != null && !controller.IsCrouching && PlayerMoved();
             hideListener.Tick(Time.deltaTime, distance, moving);
             if (hideListener.Found && !hideFailed)
             {
-                // Голос или шумное дыхание услышали: монстр идёт прямо на игрока.
                 hideFailed = true;
+                sayQuick?.Invoke(new[] { "Услышал…" }, null);
                 stalker.Alert(player.position);
+            }
+            if (!hideFailed && !distracted && inHideSpot && stalker.Brain.AtSearchPoint(1))
+            {
+                inspectionTime += Time.deltaTime;
+                if (inspectionTime >= 3f)
+                {
+                    distracted = true;
+                    if (distractionSource != null)
+                    {
+                        AudioClip clip = Resources.Load<AudioClip>("Audio/Horror/impactPunch_heavy_000");
+                        if (clip != null) distractionSource.PlayOneShot(clip);
+                    }
+                    stalker.Distract(BasementLayout.DistractionPoint);
+                }
             }
             if (CurrentStage == Stage.Explore && stalker.Brain.SearchCompleted)
             {
+                if (!distracted || !inHideSpot || hideFailed)
+                {
+                    stalker.AlertAndSearch(player.position);
+                    return;
+                }
                 hideActive = false;
                 hideListener.End();
-                sayQuick?.Invoke(new[] { "Ушёл. Теперь замок — пока не вернулся." }, null);
+                ExitHideSpot();
+                sayQuick?.Invoke(new[] { "Ушёл. Что-то упало далеко. Пока он не вернулся, к замку." }, null);
                 if (QuestActive(HideQuest)) QuestManager.Instance.AddProgress(1);
                 if (knocking == null) knocking = StartCoroutine(KnockRoutine());
             }
+        }
+
+        private bool CanEnterHideSpot() => hideActive && !inHideSpot && !hideFailed && CurrentStage == Stage.Explore;
+
+        private void EnterHideSpot()
+        {
+            if (!CanEnterHideSpot() || controller == null) return;
+            inHideSpot = true;
+            hideEnteredFrame = Time.frameCount;
+            hideCamera = player.GetComponentInChildren<Camera>();
+            hideBody = player.GetComponent<CharacterController>();
+            savedCameraLock = controller.isCameraLocked;
+            savedBodyEnabled = hideBody != null && hideBody.enabled;
+            if (hideCamera != null)
+            {
+                savedCameraRotation = hideCamera.transform.localRotation;
+                if (hideCamera.transform.parent != null)
+                {
+                    savedEyePosition = hideCamera.transform.parent.localPosition;
+                    Vector3 eye = savedEyePosition;
+                    eye.y = 0.45f;
+                    hideCamera.transform.parent.localPosition = eye;
+                }
+                hideCamera.transform.localRotation = Quaternion.identity;
+            }
+            hideInputs = new Behaviour[] { inventory, player.GetComponent<PlayerInteraction>(), player.GetComponentInChildren<PlayerDoorOpen>(),
+                player.GetComponentInChildren<HeadBobbing>(), player.GetComponent<PlayerFloorKnock>() };
+            hideInputStates = new bool[hideInputs.Length];
+            for (int i = 0; i < hideInputs.Length; i++)
+            {
+                hideInputStates[i] = hideInputs[i] != null && hideInputs[i].enabled;
+                if (hideInputs[i] != null) hideInputs[i].enabled = false;
+            }
+            savedFlashlight = inventory != null && inventory.flashlightLightSource != null && inventory.flashlightLightSource.enabled;
+            if (savedFlashlight) inventory.flashlightLightSource.enabled = false;
+            controller.StopMotion();
+            controller.isCameraLocked = true;
+            if (hideBody != null) hideBody.enabled = false;
+            player.SetPositionAndRotation(BasementLayout.HideSpot, Quaternion.identity);
+            hideYaw = hidePitch = 0f;
+            Physics.SyncTransforms();
+            sayQuick?.Invoke(new[] { "Он рядом. Только не…" }, null);
+        }
+
+        private void ExitHideSpot()
+        {
+            if (!inHideSpot) return;
+            inHideSpot = false;
+            if (hideActive && !hideFailed && stalker != null)
+            {
+                distracted = false;
+                inspectionTime = 0f;
+                stalker.AlertAndSearch(player.position);
+            }
+            if (hideCamera != null)
+            {
+                hideCamera.transform.localRotation = savedCameraRotation;
+                if (hideCamera.transform.parent != null) hideCamera.transform.parent.localPosition = savedEyePosition;
+            }
+            if (hideInputs != null)
+                for (int i = 0; i < hideInputs.Length; i++) if (hideInputs[i] != null) hideInputs[i].enabled = hideInputStates[i];
+            hideInputs = null;
+            player.position = BasementLayout.HideExit;
+            if (hideBody != null) hideBody.enabled = savedBodyEnabled;
+            if (controller != null) controller.isCameraLocked = savedCameraLock;
+            if (savedFlashlight && inventory != null && inventory.flashlightLightSource != null) inventory.flashlightLightSource.enabled = true;
         }
 
         private Vector3 lastPlayerPosition;
@@ -180,6 +432,8 @@ namespace KnocksFromBeneath
         private void BeginHide()
         {
             hideFailed = false;
+            distracted = false;
+            inspectionTime = 0f;
             hideActive = true;
             hideListener.Begin();
             stalker.PlayerHidden = PlayerHidden;
@@ -201,6 +455,7 @@ namespace KnocksFromBeneath
         {
             bool wasHiding = hideActive;
             hideActive = false;
+            ExitHideSpot();
             hideListener?.End();
             LockCamera(true);
             controller?.StopMotion();
@@ -211,24 +466,24 @@ namespace KnocksFromBeneath
             yield return Fade(1f, 0.01f);
             if (wasHiding)
             {
-                PlaceAt(HideRespawn, HideRespawnLook);
+                PlaceAt(BasementLayout.HideRespawn, BasementLayout.HideRespawnLook);
                 stalker.ResetPatrol(2);
             }
             else
             {
-                PlaceAt(BasementLayout.PlayerStart, BasementLayout.PlayerStartLook);
+                PlaceAt(DepthsLayout.WingStart, DepthsLayout.WingStartLook);
                 stalker.ResetPatrol(catches % 2 == 0 ? 0 : 2);
             }
             yield return new WaitForSeconds(0.9f);
             if (!wasHiding && catches == 2)
-                sayQuick?.Invoke(new[] { "Он слышит шаги. Ctrl — присесть. Красться, а не бежать." }, null);
+                sayQuick?.Invoke(new[] { "Он слышит шаги. Присесть на Ctrl. Красться, а не бежать." }, null);
             yield return Fade(0f, 1f);
             LockCamera(false);
             CurrentStage = Stage.Explore;
             stalker.Begin();
             if (wasHiding)
             {
-                sayQuick?.Invoke(new[] { "Он вернётся к замку. В нишу, присесть и молчать." }, null);
+                sayQuick?.Invoke(new[] { "Он вернётся к замку. За ящики у стены. Молчать." }, null);
                 yield return new WaitForSeconds(6f);
                 if (CurrentStage == Stage.Explore && struck) BeginHide();
             }
@@ -299,7 +554,7 @@ namespace KnocksFromBeneath
             CurrentStage = Stage.Explore;
             if (knocking != null) { StopCoroutine(knocking); knocking = null; }
             if (QuestActive(StrikeQuest)) QuestManager.Instance.AddProgress(1);
-            sayQuick?.Invoke(new[] { "Грохнуло на весь подвал!", "Он идёт. Две ниши у стены. Присесть, не шуметь, молчать." }, null);
+            sayQuick?.Invoke(new[] { "Грохнуло на весь подвал!", "Он идёт. Спрятаться. За ящики у стены." }, null);
             BeginHide();
         }
 
@@ -320,16 +575,18 @@ namespace KnocksFromBeneath
             PlayEffect("Audio/Horror/impactWood_heavy_000", 1f, 1.6f);
             if (cellDoorCollider != null) cellDoorCollider.SetActive(false);
             yield return SwingDoor();
+            if (owner != null) owner.RevealFace();
             if (QuestActive(BreakQuest)) QuestManager.Instance.AddProgress(1);
 
             bool spoken = false;
             say?.Invoke(new[]
             {
-                "— …Ты ответил.",
-                "— Я слышал. Каждую ночь. По трубе.",
-                "— Я уже не верил. Двадцать лет только стук и тот, кто ходит наверху.",
-                "— Он идёт. Слышишь? На звук.",
-                "— Не бегай. Стучи, как стучал. Он идёт на ответ."
+                "…Ты ответил.",
+                "Я слышал. Каждую ночь. По трубе.",
+                "Я уже не верил. Двадцать лет только стук и тот, кто ходит наверху.",
+                "Он идёт. Слышишь? На звук.",
+                "Не бегай. Стучи, как стучал. Он идёт на ответ.",
+                "Камера на стене моя. Пусть пишет. Хоть раз он попадёт на плёнку там, где надо."
             }, () => spoken = true);
             while (!spoken) yield return null;
 
@@ -340,20 +597,34 @@ namespace KnocksFromBeneath
             }
             PlayEffect("Audio/CornerJumpscare", 1f, 0.6f);
             yield return Fade(1f, 1.2f);
-            for (int i = 0; i < 3; i++)
-            {
-                PlayEffect("Audio/Horror/impactWood_heavy_000", 0.8f, i == 2 ? 1.1f : 1.25f);
-                yield return new WaitForSeconds(i == 1 ? 1.4f : 0.45f);
-            }
-            yield return new WaitForSeconds(2.2f);
+            yield return PlaySecondTape();
+            yield return new WaitForSeconds(1.2f);
             CurrentStage = Stage.Done;
             endGame?.Invoke(EndingId.Answer);
+        }
+
+        // C-04: плёнка камеры хозяина. Живой монстр и хозяин из сцены на ней не видны: там свой сценарий BasementTape.
+        private IEnumerator PlaySecondTape()
+        {
+            if (level.tapeView == null) { Debug.LogError("[C-04] У BasementLevel нет камеры хозяина."); yield break; }
+            var hidden = new System.Collections.Generic.List<Renderer>(level.tapeView.parent.GetComponentsInChildren<Renderer>(true));
+            if (monster != null) hidden.AddRange(monster.GetComponentsInChildren<Renderer>(true));
+            if (owner != null) hidden.AddRange(owner.GetComponentsInChildren<Renderer>(true));
+            NightRecording recording = NightRecording.Create(level.tapeView, new TapeSetup
+            {
+                Timeline = BasementTape.Timeline,
+                Doors = new[] { tapeCellDoor },
+                Lights = BasementTape.BuildLights,
+                Hidden = hidden.ToArray()
+            });
+            yield return TapeReel.Play(recording, transform);
+            Destroy(recording.gameObject);
         }
 
         private IEnumerator SwingDoor()
         {
             if (cellDoor == null) yield break;
-            Quaternion from = cellDoor.localRotation, to = from * Quaternion.Euler(0f, 100f, 0f);
+            Quaternion from = cellDoor.localRotation, to = from * Quaternion.Euler(0f, CellDoorSwing, 0f);
             for (float t = 0f; t < 1f; t += Time.deltaTime / 1.1f)
             {
                 cellDoor.localRotation = Quaternion.Slerp(from, to, Mathf.SmoothStep(0f, 1f, t));
@@ -387,8 +658,8 @@ namespace KnocksFromBeneath
             yield return new WaitForSeconds(2f);
             while (CurrentStage != Stage.Finale && CurrentStage != Stage.Done)
             {
-                if (CurrentStage == Stage.Explore && stalker != null &&
-                    stalker.Brain.CurrentMode != BasementStalkerBrain.Mode.Investigate && Time.timeScale > 0f)
+                if ((CurrentStage == Stage.Tunnels || CurrentStage == Stage.Duct || (CurrentStage == Stage.Explore && stalker != null &&
+                    stalker.Brain.CurrentMode != BasementStalkerBrain.Mode.Investigate)) && !NarrativeReadingPanel.WorldHalted)
                 {
                     knockSource.PlayOneShot(clip, 0.9f);
                     yield return wait;
@@ -412,9 +683,13 @@ namespace KnocksFromBeneath
         private void PlaceAt(Vector3 feet, Vector3 look)
         {
             var body = player.GetComponent<CharacterController>();
-            if (body != null) body.enabled = false;
-            float pivotToFeet = body != null ? body.center.y - body.height * 0.5f : 0f;
-            player.position = new Vector3(feet.x, feet.y - pivotToFeet + 0.02f, feet.z);
+            if (body != null)
+            {
+                body.enabled = false;
+                // Как держит PlayerController: при дебаг-прыжке он ещё не обновил капсулу, и она стояла бы под полом.
+                body.center = new Vector3(0f, body.height * 0.5f, 0f);
+            }
+            player.position = new Vector3(feet.x, feet.y + 0.02f, feet.z);
             Vector3 flat = look - feet;
             flat.y = 0f;
             if (flat.sqrMagnitude > 0.01f) player.rotation = Quaternion.LookRotation(flat);
@@ -462,6 +737,7 @@ namespace KnocksFromBeneath
 
         private void OnDestroy()
         {
+            ExitHideSpot();
             if (stalker != null) stalker.Caught -= OnCaught;
         }
 
@@ -471,404 +747,37 @@ namespace KnocksFromBeneath
 
         private void EnsureBuilt()
         {
-            if (extension != null) return;
-            extension = new GameObject("Basement Extension (P-03)");
-            extension.transform.SetParent(transform, false);
-            CollectMaterials();
+            if (level != null) return;
+            level = FindFirstObjectByType<BasementLevel>(FindObjectsInactive.Include);
+            if (level == null) { Debug.LogError("[P-03] BasementLevel не найден в сцене."); return; }
+            cellDoor = level.cellDoor;
+            tapeCellDoor = new TapeDoor(cellDoor, CellDoorSwing, BasementTape.DoorOpen); // закрытое положение — до взлома
+            cellDoorCollider = level.cellDoorCollider;
+            lockVisual = level.lockVisual;
+            cellLock = level.cellLock;
+            owner = level.owner;
+            cellLock.Initialize(CanUseLock, UseLock, LockLabel);
+            level.hideSpot.Initialize(CanEnterHideSpot, EnterHideSpot, () => "Спрятаться за ящиками");
+            // Лампа без теней просвечивала бы сквозь перекрытие в дом: горит только во время главы.
+            level.cellLamp.enabled = true;
 
-            effects = AudioRouting.Create(extension.transform, "Basement effects", AudioBus.Horror, 0f, 30f);
+            Transform root = level.transform;
+            effects = AudioRouting.Create(root, "Basement effects", AudioBus.Horror, 0f, 30f);
             // Хозяин стучит по трубе у решётки: звук идёт оттуда, где труба поднимается от камеры.
-            knockSource = AudioRouting.Create(extension.transform, "Walter knocks (pipe)", AudioBus.Horror, 1f, 45f);
-            knockSource.transform.position = new Vector3(BasementLayout.PipeRoute[0].x, BasementLayout.FloorY + 1.3f, BasementLayout.PipeRoute[0].y);
+            knockSource = AudioRouting.Create(root, "Walter knocks (pipe)", AudioBus.Horror, 1f, 45f);
+            knockSource.transform.position = PipeInCell();
             knockSource.minDistance = 3f;
             knockSource.volume = 1f;
-            hideListener = extension.AddComponent<BasementHideListener>();
+            hideListener = level.gameObject.AddComponent<BasementHideListener>();
+            distractionSource = AudioRouting.Create(root, "Basement distant distraction", AudioBus.Horror, 1f, 30f);
+            distractionSource.transform.position = BasementLayout.DistractionPoint;
 
-            OpenExistingWall();
-            foreach (BasementRoom room in BasementLayout.AllRooms) BuildRoom(room);
-            BuildProps();
-            BuildJunk();
-            BuildClonedProps();
-            BuildPipe();
-            BuildCell();
-            BuildLights();
-        }
-
-        private void CollectMaterials()
-        {
-            foreach (Transform t in FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
-                if (t.name.StartsWith("Basement_Reference", StringComparison.Ordinal)) { reference = t; break; }
-            wallMaterial = MaterialOf(reference, "LeftWall");
-            floorMaterial = MaterialOf(reference, "Floor") ?? wallMaterial;
-            ceilingMaterial = MaterialOf(reference, "CeilingBoards") ?? wallMaterial;
-            metalMaterial = FindMaterial("DarkMetal") ?? wallMaterial;
-            woodMaterial = FindMaterial("OldTimber") ?? ceilingMaterial;
-            rugMaterial = FindMaterial("OldRug") ?? wallMaterial;
-            pipeMaterial = FindMaterial("AgedPipe") ?? metalMaterial;
-            skinMaterial = Tinted(wallMaterial, new Color(0.62f, 0.55f, 0.5f));
-            shadowMaterial = Tinted(wallMaterial, new Color(0.03f, 0.03f, 0.035f));
-        }
-
-        private static Material MaterialOf(Transform root, string childName)
-        {
-            if (root == null) return null;
-            foreach (Renderer r in root.GetComponentsInChildren<Renderer>(true))
-                if (r.name == childName && r.sharedMaterial != null) return r.sharedMaterial;
-            return null;
-        }
-
-        private static Material FindMaterial(string name)
-        {
-            foreach (Material m in Resources.FindObjectsOfTypeAll<Material>())
-                if (m != null && m.name == name) return m;
-            return null;
-        }
-
-        private static Material Tinted(Material source, Color color)
-        {
-            if (source == null) return null;
-            var copy = new Material(source) { name = source.name + " (P-03)" };
-            copy.color = color;
-            return copy;
-        }
-
-        private GameObject Box(string name, Transform parent, Vector3 center, Vector3 size, Material material, bool collider = true)
-        {
-            var box = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            box.name = name;
-            box.transform.SetParent(parent != null ? parent : extension.transform, false);
-            box.transform.position = center;
-            box.transform.localScale = size;
-            var renderer = box.GetComponent<Renderer>();
-            if (material != null) renderer.sharedMaterial = material;
-            if (!collider) Destroy(box.GetComponent<Collider>());
-            return box;
-        }
-
-        private GameObject Cylinder(string name, Transform parent, Vector3 center, Vector3 size, Material material, bool collider)
-        {
-            var obj = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
-            obj.name = name;
-            obj.transform.SetParent(parent, false);
-            obj.transform.position = center;
-            obj.transform.localScale = size;   // у цилиндра Unity высота — 2 × scale.y
-            if (material != null) obj.GetComponent<Renderer>().sharedMaterial = material;
-            if (!collider) Destroy(obj.GetComponent<Collider>());
-            return obj;
-        }
-
-        // Восточную стену существующей комнаты заменяем на стену с проёмом в коридор A.
-        private void OpenExistingWall()
-        {
-            if (reference == null) { Debug.LogWarning("[P-03] Basement_Reference не найден: проём в стене не сделан."); return; }
-            foreach (Transform t in reference.GetComponentsInChildren<Transform>(true))
-                if (t.name == "LeftWall" || t.name == "LeftWall_Masonry") t.gameObject.SetActive(false);
-
-            float h = BasementLayout.CeilingY - BasementLayout.FloorY - 0.05f;
-            float x = BasementLayout.ExistingWallX, thick = 0.25f;
-            float zMin = BasementLayout.ExistingRoomZMin, zMax = BasementLayout.ExistingRoomZMax;
-            float gapFrom = BasementLayout.EntranceFrom, gapTo = BasementLayout.EntranceTo;
-            float baseY = BasementLayout.FloorY;
-            Box("Wall south of entrance", extension.transform, new Vector3(x, baseY + h * 0.5f, (zMin + gapFrom) * 0.5f),
-                new Vector3(thick, h, gapFrom - zMin), wallMaterial);
-            Box("Wall north of entrance", extension.transform, new Vector3(x, baseY + h * 0.5f, (gapTo + zMax) * 0.5f),
-                new Vector3(thick, h, zMax - gapTo), wallMaterial);
-            float lintel = h - BasementLayout.DoorHeight;
-            Box("Entrance lintel", extension.transform, new Vector3(x, baseY + BasementLayout.DoorHeight + lintel * 0.5f, (gapFrom + gapTo) * 0.5f),
-                new Vector3(thick, lintel, gapTo - gapFrom), wallMaterial);
-        }
-
-        private void BuildRoom(BasementRoom room)
-        {
-            float t = BasementLayout.WallThickness;
-            float x0 = room.XMin - (room.IsFullyOpen(BasementSide.West) ? 0f : t), x1 = room.XMax + (room.IsFullyOpen(BasementSide.East) ? 0f : t);
-            float z0 = room.ZMin - (room.IsFullyOpen(BasementSide.South) ? 0f : t), z1 = room.ZMax + (room.IsFullyOpen(BasementSide.North) ? 0f : t);
-            var parent = new GameObject("Room " + room.Name).transform;
-            parent.SetParent(extension.transform, false);
-            Vector3 center = new Vector3((x0 + x1) * 0.5f, 0f, (z0 + z1) * 0.5f);
-            Box("Floor", parent, new Vector3(center.x, BasementLayout.FloorY - 0.15f, center.z), new Vector3(x1 - x0, 0.3f, z1 - z0), floorMaterial);
-            Box("Ceiling", parent, new Vector3(center.x, BasementLayout.CeilingY + 0.15f, center.z), new Vector3(x1 - x0, 0.3f, z1 - z0), ceilingMaterial);
-            foreach (BasementBox wall in BasementLayout.Walls(room))
-                Box("Wall", parent, wall.Center, wall.Size, wallMaterial);
-        }
-
-        private void BuildProps()
-        {
-            var parent = new GameObject("Hall props").transform;
-            parent.SetParent(extension.transform, false);
-            foreach (BasementLayout.Prop prop in BasementLayout.HallProps)
-            {
-                GameObject obj = prop.Cylinder
-                    ? Cylinder("Boiler", parent, prop.Center, new Vector3(prop.Size.x, prop.Size.y * 0.5f, prop.Size.z), metalMaterial, true)
-                    : Box("Pillar or crate", parent, prop.Center, prop.Size, wallMaterial);
-                if (!prop.Cylinder && prop.Size.y < 2f) obj.GetComponent<Renderer>().sharedMaterial = woodMaterial;
-            }
-        }
-
-        // -------------------------------------------------------------------------------------------------
-        // Хлам: ящики, бочки, доски, щебень, матрас, стеллажи, вёдра
-        // -------------------------------------------------------------------------------------------------
-
-        private void BuildJunk()
-        {
-            var parent = new GameObject("Junk").transform;
-            parent.SetParent(extension.transform, false);
-            int seed = 0;
-            foreach (BasementLayout.Clutter item in BasementLayout.Junk)
-            {
-                var root = new GameObject("Junk " + item.Kind).transform;
-                root.SetParent(parent, false);
-                root.position = new Vector3(item.Position.x, BasementLayout.FloorY, item.Position.y);
-                root.rotation = Quaternion.Euler(0f, item.Yaw, 0f);
-                var random = new System.Random(seed++ * 7919 + 13);
-                switch (item.Kind)
-                {
-                    case BasementLayout.ClutterKind.Crate: BuildCrate(root, item.Size); break;
-                    case BasementLayout.ClutterKind.Barrel: BuildBarrel(root, item.Size); break;
-                    case BasementLayout.ClutterKind.Planks: BuildPlanks(root, item.Size, random); break;
-                    case BasementLayout.ClutterKind.Rubble: BuildRubble(root, item.Size, random); break;
-                    case BasementLayout.ClutterKind.Mattress:
-                    case BasementLayout.ClutterKind.Blanket: BuildMat(root, item.Size, item.Kind == BasementLayout.ClutterKind.Blanket); break;
-                    case BasementLayout.ClutterKind.Shelf: BuildShelf(root, item.Size, random); break;
-                    default: BuildBucket(root, item.Size); break;
-                }
-                if (item.Blocks)
-                {
-                    var blocker = root.gameObject.AddComponent<BoxCollider>();
-                    blocker.center = new Vector3(0f, item.Size.y * 0.5f, 0f);
-                    blocker.size = item.Size;
-                }
-            }
-        }
-
-        private void BuildCrate(Transform root, Vector3 size)
-        {
-            var box = Box("Crate", root, root.position + Vector3.up * size.y * 0.5f, size, woodMaterial, false);
-            box.transform.rotation = root.rotation;
-            // Рейки по рёбрам — чтобы не был просто кубом.
-            var strap = Box("Strap", root, root.position + Vector3.up * size.y * 0.5f, new Vector3(size.x * 1.03f, size.y * 0.12f, size.z * 1.03f), metalMaterial, false);
-            strap.transform.rotation = root.rotation;
-        }
-
-        private void BuildBarrel(Transform root, Vector3 size)
-        {
-            Cylinder("Barrel", root, root.position + Vector3.up * size.y * 0.5f, new Vector3(size.x, size.y * 0.5f, size.z), metalMaterial, false);
-            foreach (float k in new[] { 0.18f, 0.82f })
-                Cylinder("Hoop", root, root.position + Vector3.up * size.y * k, new Vector3(size.x * 1.06f, size.y * 0.025f, size.z * 1.06f), pipeMaterial, false);
-        }
-
-        private void BuildPlanks(Transform root, Vector3 size, System.Random random)
-        {
-            int count = 4;
-            for (int i = 0; i < count; i++)
-            {
-                float yaw = (float)(random.NextDouble() * 24 - 12);
-                var plank = Box("Plank", root, root.position + Vector3.up * (0.05f + i * (size.y / count)), new Vector3(size.x, size.y / count * 0.9f, size.z * 0.55f), woodMaterial, false);
-                plank.transform.rotation = root.rotation * Quaternion.Euler(0f, yaw, 0f);
-                plank.transform.position += root.right * (float)(random.NextDouble() * 0.12 - 0.06);
-            }
-        }
-
-        private void BuildRubble(Transform root, Vector3 size, System.Random random)
-        {
-            for (int i = 0; i < 6; i++)
-            {
-                float s = 0.18f + (float)random.NextDouble() * 0.25f;
-                Vector3 offset = new Vector3((float)(random.NextDouble() - 0.5) * size.x * 0.8f, s * 0.35f * (i % 3 + 1) * 0.5f, (float)(random.NextDouble() - 0.5) * size.z * 0.8f);
-                var chunk = Box("Chunk", root, root.position + root.rotation * offset, new Vector3(s, s * 0.7f, s * 0.9f), wallMaterial, false);
-                chunk.transform.rotation = Quaternion.Euler((float)random.NextDouble() * 40f, (float)random.NextDouble() * 360f, (float)random.NextDouble() * 40f);
-            }
-        }
-
-        private void BuildMat(Transform root, Vector3 size, bool blanket)
-        {
-            var mat = Box(blanket ? "Blanket" : "Mattress", root, root.position + Vector3.up * size.y * 0.5f, size, rugMaterial, false);
-            mat.transform.rotation = root.rotation;
-        }
-
-        private void BuildBucket(Transform root, Vector3 size)
-        {
-            Cylinder("Bucket", root, root.position + Vector3.up * size.y * 0.5f, new Vector3(size.x, size.y * 0.5f, size.z), metalMaterial, false);
-        }
-
-        private void BuildShelf(Transform root, Vector3 size, System.Random random)
-        {
-            // Длинная сторона — вдоль стены; доски и коробки на них.
-            bool alongX = size.x >= size.z;
-            float length = alongX ? size.x : size.z, depth = alongX ? size.z : size.x;
-            Vector3 along = alongX ? Vector3.right : Vector3.forward, across = alongX ? Vector3.forward : Vector3.right;
-            Vector3 baseCenter = root.position;
-            foreach (float k in new[] { -0.5f, 0.5f })
-                foreach (float d in new[] { -0.5f, 0.5f })
-                    Box("Post", root, baseCenter + along * (length * 0.5f - 0.05f) * k * 2f + across * (depth * 0.5f - 0.04f) * d * 2f + Vector3.up * size.y * 0.5f,
-                        new Vector3(0.07f, size.y, 0.07f), woodMaterial, false);
-            for (int level = 0; level < 3; level++)
-            {
-                float y = 0.08f + level * (size.y - 0.15f) / 2f;
-                Box("Board", root, baseCenter + Vector3.up * y, alongX ? new Vector3(length, 0.05f, depth) : new Vector3(depth, 0.05f, length), woodMaterial, false);
-                int items = 3 + random.Next(0, 3);
-                for (int i = 0; i < items; i++)
-                {
-                    float u = ((float)i / items - 0.5f) * length * 0.85f + (float)random.NextDouble() * 0.1f;
-                    float h = 0.12f + (float)random.NextDouble() * 0.2f;
-                    Material material = random.Next(0, 3) == 0 ? metalMaterial : woodMaterial;
-                    Box("Item", root, baseCenter + along * u + Vector3.up * (y + 0.025f + h * 0.5f), new Vector3(0.18f, h, 0.2f), material, false);
-                }
-            }
-        }
-
-        // Клоны мебели существующей комнаты подвала: коробки и складной стул. Ставятся на пол по нижней границе.
-        private void BuildClonedProps()
-        {
-            if (reference == null) return;
-            var parent = new GameObject("Cloned props").transform;
-            parent.SetParent(extension.transform, false);
-            PlaceClone(parent, "StoredBox_0", -26.4f, 121.5f, 25f);
-            PlaceClone(parent, "StoredBox_2", -23.8f, 112.0f, -15f);
-            PlaceClone(parent, "FoldingChair", -26.0f, 116.6f, 200f);
-        }
-
-        private void PlaceClone(Transform parent, string templateName, float x, float z, float yaw)
-        {
-            Transform template = null;
-            foreach (Transform t in reference.GetComponentsInChildren<Transform>(true))
-                if (t.name == templateName) { template = t; break; }
-            if (template == null) return;
-            GameObject copy = Instantiate(template.gameObject, parent);
-            copy.name = templateName + " (clone)";
-            copy.SetActive(true);
-            copy.transform.rotation = Quaternion.Euler(0f, yaw, 0f);
-            copy.transform.position = new Vector3(x, template.position.y, z);
-            var renderers = copy.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0) return;
-            Bounds bounds = renderers[0].bounds;
-            foreach (Renderer r in renderers) bounds.Encapsulate(r.bounds);
-            copy.transform.position += Vector3.up * (BasementLayout.FloorY - bounds.min.y);
-        }
-
-        // Труба хозяина: от решётки камеры под потолком через блок, коридор C, зал и коридор A — вверх, в дом.
-        private void BuildPipe()
-        {
-            var parent = new GameObject("Walter's pipe").transform;
-            parent.SetParent(extension.transform, false);
-            float y = BasementLayout.PipeY;
-            Vector2[] route = BasementLayout.PipeRoute;
-            Vector3 start = new Vector3(route[0].x, BasementLayout.FloorY, route[0].y);
-            Vector3 top = new Vector3(route[0].x, y, route[0].y);
-            PipeSegment(parent, start, top);
-            Vector3 previous = top;
-            for (int i = 1; i < route.Length; i++)
-            {
-                Vector3 next = new Vector3(route[i].x, y, route[i].y);
-                PipeSegment(parent, previous, next);
-                var elbow = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-                elbow.name = "Elbow";
-                elbow.transform.SetParent(parent, false);
-                elbow.transform.position = previous;
-                elbow.transform.localScale = Vector3.one * 0.19f;
-                elbow.GetComponent<Renderer>().sharedMaterial = pipeMaterial;
-                Destroy(elbow.GetComponent<Collider>());
-                previous = next;
-            }
-            // Конец уходит вверх через перекрытие — к стоякам первого этажа.
-            PipeSegment(parent, previous, new Vector3(previous.x, BasementLayout.CeilingY + 0.5f, previous.z));
-        }
-
-        private void PipeSegment(Transform parent, Vector3 a, Vector3 b)
-        {
-            Vector3 delta = b - a;
-            float length = delta.magnitude;
-            if (length < 0.01f) return;
-            var pipe = Cylinder("Pipe", parent, (a + b) * 0.5f, new Vector3(0.14f, length * 0.5f, 0.14f), pipeMaterial, false);
-            pipe.transform.rotation = Quaternion.FromToRotation(Vector3.up, delta);
-        }
-
-        // Камера: боковая и задняя стены уже даёт блок D; здесь — восточная стена ниши, решётка, замок, хозяин за ней.
-        private void BuildCell()
-        {
-            float floor = BasementLayout.FloorY, height = BasementLayout.CeilingY - floor;
-            Rect cell = BasementLayout.CellArea;
-            Box("Cell east wall", extension.transform, new Vector3(cell.xMax + 0.15f, floor + height * 0.5f, (cell.yMin + cell.yMax) * 0.5f),
-                new Vector3(0.3f, height, cell.height), wallMaterial);
-
-            var door = new GameObject("Cell door");
-            door.transform.SetParent(extension.transform, false);
-            door.transform.position = new Vector3(cell.xMax, floor, cell.yMax);
-            cellDoor = door.transform;
-            float width = cell.width;
-            for (int i = 0; i < 17; i++)
-            {
-                float x = -0.08f - i * ((width - 0.16f) / 16f);
-                var bar = Box("Bar", door.transform, Vector3.zero, new Vector3(0.05f, 2.3f, 0.05f), metalMaterial, false);
-                bar.transform.localPosition = new Vector3(x, 1.15f, 0f);
-            }
-            foreach (float y in new[] { 0.15f, 1.15f, 2.25f })
-            {
-                var rail = Box("Rail", door.transform, Vector3.zero, new Vector3(width, 0.06f, 0.06f), metalMaterial, false);
-                rail.transform.localPosition = new Vector3(-width * 0.5f, y, 0f);
-            }
-            cellDoorCollider = Box("Cell door collider", door.transform, Vector3.zero, new Vector3(width, 2.4f, 0.12f), null);
-            cellDoorCollider.transform.localPosition = new Vector3(-width * 0.5f, 1.2f, 0f);
-            Destroy(cellDoorCollider.GetComponent<Renderer>());
-            Destroy(cellDoorCollider.GetComponent<MeshFilter>());
-
-            lockVisual = Box("Cell lock", door.transform, Vector3.zero, new Vector3(0.16f, 0.22f, 0.1f), metalMaterial);
-            lockVisual.transform.position = BasementLayout.CellLock;
-            Destroy(lockVisual.GetComponent<Collider>());
-            var lockTrigger = new GameObject("Cell lock interaction", typeof(BoxCollider), typeof(BasementCellLock));
-            lockTrigger.transform.SetParent(lockVisual.transform, false);
-            lockTrigger.transform.position = BasementLayout.CellLock + new Vector3(0f, 0f, 0.1f);
-            lockTrigger.layer = InteractableLayer;
-            lockTrigger.GetComponent<BoxCollider>().size = new Vector3(0.9f, 0.9f, 0.5f);
-            cellLock = lockTrigger.GetComponent<BasementCellLock>();
-            cellLock.Initialize(CanUseLock, UseLock, LockLabel);
-
-            BuildOwner();
-        }
-
-        // Хозяин виден не целиком: рука на прутьях и тёмная фигура у стены. Модели нет — это решение автора.
-        private void BuildOwner()
-        {
-            var owner = new GameObject("Walter Hale (cell)").transform;
-            owner.SetParent(extension.transform, false);
-            Vector3 hand = new Vector3(-30.55f, BasementLayout.FloorY + 1.2f, 98.78f);
-            var forearm = Box("Forearm", owner, hand + new Vector3(0f, -0.04f, -0.42f), new Vector3(0.075f, 0.07f, 0.85f), skinMaterial, false);
-            forearm.transform.rotation = Quaternion.Euler(8f, 0f, 0f);
-            Box("Palm", owner, hand, new Vector3(0.11f, 0.035f, 0.12f), skinMaterial, false);
-            for (int i = 0; i < 4; i++)
-                Box("Finger", owner, hand + new Vector3(-0.04f + i * 0.027f, -0.02f, 0.1f), new Vector3(0.021f, 0.021f, 0.1f), skinMaterial, false);
-            var thumb = Box("Thumb", owner, hand + new Vector3(0.07f, -0.01f, 0.03f), new Vector3(0.025f, 0.025f, 0.08f), skinMaterial, false);
-            thumb.transform.rotation = Quaternion.Euler(0f, -35f, 0f);
-
-            Vector3 at = BasementLayout.OwnerPosition;
-            var body = GameObject.CreatePrimitive(PrimitiveType.Capsule);
-            body.name = "Silhouette body";
-            body.transform.SetParent(owner, false);
-            body.transform.position = at + new Vector3(0f, 0.55f, 0f);
-            body.transform.localScale = new Vector3(0.55f, 0.55f, 0.55f);
-            body.transform.rotation = Quaternion.Euler(0f, 0f, 78f);
-            body.GetComponent<Renderer>().sharedMaterial = shadowMaterial;
-            Destroy(body.GetComponent<Collider>());
-            var head = GameObject.CreatePrimitive(PrimitiveType.Sphere);
-            head.name = "Silhouette head";
-            head.transform.SetParent(owner, false);
-            head.transform.position = at + new Vector3(0.45f, 0.75f, 0.35f);
-            head.transform.localScale = new Vector3(0.22f, 0.25f, 0.22f);
-            head.GetComponent<Renderer>().sharedMaterial = shadowMaterial;
-            Destroy(head.GetComponent<Collider>());
-        }
-
-        private void BuildLights()
-        {
-            // Единственный свет — тусклая красная лампа у камеры: ориентир в конце пути. Остальное — фонарь игрока.
-            var lamp = new GameObject("Cell lamp").AddComponent<Light>();
-            lamp.transform.SetParent(extension.transform, false);
-            lamp.transform.position = new Vector3(-27.5f, BasementLayout.CeilingY - 0.4f, 100.5f);
-            lamp.type = LightType.Point;
-            lamp.color = new Color(1f, 0.25f, 0.15f);
-            lamp.intensity = 0.8f;
-            lamp.range = 5.5f;
-            lamp.shadows = LightShadows.None;
+            depths = BasementDepths.Get();
+            tapeGrille = new TapeDoor(depths.grillePivot, BasementDepths.GrilleSwing, VentTape.GrilleOpen); // на месте — до записи
+            OpenVent();
+            depths.tapeCamera.gameObject.SetActive(true);
+            depths.tapeCamera.Initialize(CanWatchTape, WatchTape, () => "Посмотреть запись");
+            depths.ladder.Initialize(CanClimbOut, ClimbOut, () => "Подняться по лестнице");
         }
 
         private void SpawnMonster()
@@ -877,7 +786,7 @@ namespace KnocksFromBeneath
             var prefab = Resources.Load<GameObject>("Scares/CornerPeekMonster");
             if (prefab == null) { Debug.LogError("[P-03] Нет префаба Scares/CornerPeekMonster."); return; }
             Vector2 start = BasementLayout.Patrol[0];
-            monster = Instantiate(prefab, new Vector3(start.x, BasementLayout.FloorY, start.y), Quaternion.identity, extension.transform);
+            monster = Instantiate(prefab, new Vector3(start.x, BasementLayout.FloorY, start.y), Quaternion.identity, level.transform);
             monster.SetActive(true);
             foreach (Collider c in monster.GetComponentsInChildren<Collider>(true)) c.enabled = false;
             foreach (Rigidbody body in monster.GetComponentsInChildren<Rigidbody>(true)) body.isKinematic = true;

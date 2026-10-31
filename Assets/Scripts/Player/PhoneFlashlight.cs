@@ -1,3 +1,4 @@
+using TMPro;
 using UnityEngine;
 
 namespace KnocksFromBeneath
@@ -6,6 +7,7 @@ namespace KnocksFromBeneath
     public sealed class PhoneFlashlight : MonoBehaviour
     {
         public const string ModelResource = "Props/PhoneFlashlight";
+        public const string DeadDescription = "Мой телефон. Батарея села — экран больше не включается.";
         private static readonly string[] Introduction = { "Темно... Можно включить фонарик на телефоне." };
         private readonly PhoneFlashlightState state = new PhoneFlashlightState();
         private PlayerInventory inventory;
@@ -16,10 +18,14 @@ namespace KnocksFromBeneath
         private Light beam;
         private NeighborVisitSequence neighborVisit;
         private GlassOfWaterScene waterScene;
-        private bool sceneBlackout;
         private float flickerRemaining;
-        private bool introductionShown;
+        private bool introductionShown, usedOnce;
         private float hintReadyAt;
+        // Первая подсказка крупная и пульсирует по центру, пока игрок не включит фонарик сам.
+        private UiKeyHints firstHint;
+        private CanvasGroup firstHintGroup;
+        private const float BlackoutFlicker = 0.7f;
+        private const float RefusedFlicker = 0.35f;
 
         public void Initialize(PlayerInventory playerInventory)
         {
@@ -47,6 +53,7 @@ namespace KnocksFromBeneath
             GameEvents.OnNightStarted -= BeginNight;
             GameEvents.OnDayStarted -= BeginDay;
             Hide();
+            if (firstHint != null) firstHint.gameObject.SetActive(false);
         }
 
         private void OnDestroy()
@@ -65,7 +72,6 @@ namespace KnocksFromBeneath
         private void BeginDay()
         {
             flickerRemaining = 0f;
-            sceneBlackout = false;
             state.BeginDay();
             ApplyVisibility();
         }
@@ -91,27 +97,24 @@ namespace KnocksFromBeneath
             !NarrativeReadingPanel.IsModal && !FadeTransitionPresentation.IsActive &&
             !PlayerInteraction.IsLockSequencePlaying;
 
-        public bool CanShowControlHint => isActiveAndEnabled && GameplayAvailable && playerCamera != null &&
+        public bool IsDead => !state.Available;
+
+        public bool CanShowControlHint => isActiveAndEnabled && !IsDead && GameplayAvailable && playerCamera != null &&
             (pickup == null || pickup.GetHeldObject() == null);
 
         private void Update()
         {
-            bool neighborThreat = neighborVisit != null && neighborVisit.IsPlaying && neighborVisit.IsSilhouetteVisible;
+            // Одно правило на обе сцены: пока оно рядом, телефон мигает, гаснет и не включается.
+            bool neighborThreat = neighborVisit != null && neighborVisit.IsPlaying && neighborVisit.IsSilhouetteVisible &&
+                player != null && neighborVisit.frontDoor != null &&
+                IsNearNeighborDoor(player.transform.position, neighborVisit.frontDoor.transform.position);
             bool waterThreat = waterScene != null && waterScene.MonsterInView;
-            bool threat = neighborThreat || waterThreat;
-            if (!threat)
+            bool wasBlackout = state.Blackout;
+            if (state.UpdateThreat(neighborThreat || waterThreat))
             {
-                if (sceneBlackout && flickerRemaining > 0f) Hide();
-                sceneBlackout = false;
+                if (state.IsOn) flickerRemaining = BlackoutFlicker;
             }
-            else if (!sceneBlackout && player != null &&
-                ((neighborThreat &&
-                  neighborVisit.frontDoor != null && IsNearNeighborDoor(player.transform.position, neighborVisit.frontDoor.transform.position)) ||
-                 waterThreat))
-            {
-                sceneBlackout = true;
-                if (state.IsOn) flickerRemaining = 0.7f;
-            }
+            else if (wasBlackout && !state.Blackout && flickerRemaining > 0f) Hide();
 
             if (flickerRemaining > 0f)
             {
@@ -121,7 +124,8 @@ namespace KnocksFromBeneath
             }
             bool handsBusy = pickup != null && pickup.GetHeldObject() != null;
             if (handsBusy && state.IsOn) Hide();
-            bool available = GameplayAvailable && !handsBusy && playerCamera != null;
+            bool available = !IsDead && GameplayAvailable && !handsBusy && playerCamera != null;
+            UpdateFirstHint(available);
             if (!available) return;
 
             if (state.IsNight && !introductionShown && Time.time >= hintReadyAt && ThoughtManager.Instance != null &&
@@ -129,6 +133,33 @@ namespace KnocksFromBeneath
                 introductionShown = true;
 
             if (Input.GetKeyDown(KeyCode.F)) TryUse();
+        }
+
+        private void UpdateFirstHint(bool available)
+        {
+            bool show = available && introductionShown && !usedOnce && state.IsNight;
+            if (firstHint == null)
+            {
+                if (!show) return;
+                BuildFirstHint();
+            }
+            if (firstHint.gameObject.activeSelf != show) firstHint.gameObject.SetActive(show);
+            if (!show) return;
+            float pulse = .5f + .5f * Mathf.Sin(Time.unscaledTime * 4.5f);
+            firstHintGroup.alpha = Mathf.Lerp(.7f, 1f, pulse);
+            firstHint.transform.localScale = Vector3.one * Mathf.Lerp(1f, 1.07f, pulse);
+        }
+
+        private void BuildFirstHint()
+        {
+            Canvas canvas = UiStyle.OverlayCanvas(transform, "PhoneFlashlightHintCanvas", 400, new Vector2(1280f, 720f), false);
+            TMP_FontAsset font = UiStyle.Font();
+            firstHint = UiKeyHints.Create(canvas.transform, "PhoneFlashlightHint", font, 1.7f, UiStyle.Amber);
+            firstHint.RectTransform.anchorMin = firstHint.RectTransform.anchorMax = firstHint.RectTransform.pivot = new Vector2(.5f, .5f);
+            firstHint.RectTransform.anchoredPosition = new Vector2(0f, -120f);
+            firstHint.Set("F", "ВКЛЮЧИТЬ ФОНАРИК НА ТЕЛЕФОНЕ");
+            firstHintGroup = firstHint.gameObject.AddComponent<CanvasGroup>();
+            firstHint.gameObject.SetActive(false);
         }
 
         public static bool IsNearNeighborDoor(Vector3 position, Vector3 door)
@@ -139,14 +170,21 @@ namespace KnocksFromBeneath
 
         public bool TryUse()
         {
-            if (!isActiveAndEnabled) return false;
+            if (!isActiveAndEnabled || IsDead) return false;
             if (state.IsOn) { Hide(); return true; }
             if (playerCamera == null ||
                 (pickup != null && pickup.GetHeldObject() != null)) return false;
             if (!EnsureVisual()) return false;
+            usedOnce = true;
             inventory?.Unequip();
             state.Toggle();
             ApplyVisibility();
+            // Рядом с ним телефон только вспыхивает и снова гаснет.
+            if (state.Blackout)
+            {
+                flickerRemaining = RefusedFlicker;
+                return false;
+            }
             return state.IsOn;
         }
 
@@ -191,12 +229,22 @@ namespace KnocksFromBeneath
     {
         public bool IsNight { get; private set; }
         public bool IsOn { get; private set; }
-        public bool Available => true;
+        // Сюжетная разрядка необратима: дальше телефон только предмет в инвентаре.
+        public bool Available { get; private set; } = true;
+        public bool Blackout { get; private set; }
+
+        // true — угроза только что появилась: включённый свет должен мигнуть и погаснуть.
+        public bool UpdateThreat(bool threat)
+        {
+            bool began = threat && !Blackout;
+            Blackout = threat;
+            return began;
+        }
 
         public void BeginNight() { IsNight = true; }
         public void BeginDay() { IsNight = false; }
-        public void Drain() { IsOn = false; }
+        public void Drain() { IsOn = false; Available = false; }
         public void Hide() { IsOn = false; }
-        public void Toggle() { IsOn = !IsOn; }
+        public void Toggle() { if (Available) IsOn = !IsOn; }
     }
 }

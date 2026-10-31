@@ -43,6 +43,12 @@ public class PickupController : MonoBehaviour
     private float _zoomOffset, _targetZoomOffset, _carryRadius;
     private Vector3 _carryHalfExtents;
     private bool _carryPoseBlocked;
+    // Штатив выше героя и длиннее шага: полным размером он цеплял ступени и косяки, а на площадке
+    // лестницы упирался в стену за метр до поворота. Для препятствий он — короткий блок перед грудью.
+    private const float TripodCarryHalfHeight = .3f;
+    private const float TripodCarryHalfDepth = .25f;
+    private const float TripodCarryDistance = .58f;
+    private bool _compactCarry;
     private CharacterController _playerCapsule;
     private readonly Collider[] _carryOverlaps = new Collider[24];
     private Quaternion _pickupRotationOffset;
@@ -592,7 +598,8 @@ public class PickupController : MonoBehaviour
         {
             // Включаем частицы обратно когда отпускаем объект
             ParticleSystem ps = _heldObj.GetComponentInChildren<ParticleSystem>();
-            if (ps != null) ps.Play();
+            CollectableItem collectable = _heldObj.GetComponent<CollectableItem>();
+            if (ps != null && (collectable == null || collectable.currentItemType != CollectableItem.ItemType.Box)) ps.Play();
         }
 
         _zoomOffset = _targetZoomOffset = 0f;
@@ -659,8 +666,7 @@ public class PickupController : MonoBehaviour
 
     private bool CarryPoseClear(Vector3 center, Quaternion rotation)
     {
-        Vector3 extents = new Vector3(Mathf.Max(.01f, _carryHalfExtents.x - .015f),
-            Mathf.Max(.01f, _carryHalfExtents.y - .015f), Mathf.Max(.01f, _carryHalfExtents.z - .015f));
+        GetCarryProbe(ref rotation, out Vector3 extents);
         int count = Physics.OverlapBoxNonAlloc(center, extents, _carryOverlaps, rotation,
             PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
         if (count == _carryOverlaps.Length) return false;
@@ -694,9 +700,10 @@ public class PickupController : MonoBehaviour
             float length = path.magnitude;
             if (length > .0001f)
             {
-                Vector3 extents = Vector3.Max(_carryHalfExtents - Vector3.one * .015f, Vector3.one * .01f);
+                Quaternion probeRotation = targetRotation;
+                GetCarryProbe(ref probeRotation, out Vector3 extents);
                 int count = Physics.BoxCastNonAlloc(origin, extents, path / length, _carryObstacles,
-                    targetRotation, length, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
+                    probeRotation, length, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
                 float nearest = length;
                 for (int i = 0; i < count; i++)
                 {
@@ -712,9 +719,30 @@ public class PickupController : MonoBehaviour
         return center - targetRotation * Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
     }
 
+    // Коробка, которой предмет проверяется на препятствия. У штатива она меньше самого предмета
+    // и повёрнута по взгляду; сквозь стену он не пройдёт — блок упирается в неё раньше игрока.
+    private void GetCarryProbe(ref Quaternion rotation, out Vector3 extents)
+    {
+        if (!_compactCarry)
+            extents = _carryHalfExtents;
+        else
+        {
+            Vector3 viewForward = Vector3.ProjectOnPlane(playerCamera.transform.forward, Vector3.up);
+            if (viewForward.sqrMagnitude < .0001f) viewForward = transform.forward;
+            Quaternion frame = Quaternion.LookRotation(viewForward.normalized, Vector3.up);
+            float bodyHalfWidth = _playerCapsule != null ? _playerCapsule.radius : .3f;
+            extents = new Vector3(Mathf.Min(ExtentAlong(rotation, frame * Vector3.right), bodyHalfWidth),
+                Mathf.Min(ExtentAlong(rotation, Vector3.up), TripodCarryHalfHeight),
+                Mathf.Min(ExtentAlong(rotation, frame * Vector3.forward), TripodCarryHalfDepth));
+            rotation = frame;
+        }
+        extents = Vector3.Max(extents - Vector3.one * .015f, Vector3.one * .01f);
+    }
+
     private Vector3 TwoHandedCarryCenter(Quaternion rotation)
     {
-        float depth = Mathf.Max(.30f + _carryDepth + _zoomOffset, CarryDepth(rotation) + .18f);
+        float depth = _compactCarry ? TripodCarryDistance + _zoomOffset
+            : Mathf.Max(.30f + _carryDepth + _zoomOffset, CarryDepth(rotation) + .18f);
         return playerCamera.transform.TransformPoint(new Vector3(0f, -.16f, depth));
     }
 
@@ -743,6 +771,8 @@ public class PickupController : MonoBehaviour
             Mathf.Min(ExtentAlong(rotation, frame * Vector3.right), bodyHalfWidth),
             ExtentAlong(rotation, Vector3.up),
             ExtentAlong(rotation, frame * Vector3.forward));
+        if (_compactCarry)
+            extents = new Vector3(extents.x, Mathf.Min(extents.y, TripodCarryHalfHeight), Mathf.Min(extents.z, TripodCarryHalfDepth));
         extents = Vector3.Max(extents - Vector3.one * .015f, Vector3.one * .01f);
 
         // Пробу запускаем чуть позади предмета: если он уже прижат к стене, луч всё
@@ -795,6 +825,7 @@ public class PickupController : MonoBehaviour
     {
         _heldObjectUsesTwoHandGrip = false;
         _carryCenterLocal = Vector3.zero;
+        _compactCarry = CameraPlacementController.Instance != null && CameraPlacementController.Instance.IsTripod(item);
         Transform frame = playerCamera != null ? playerCamera.transform : holdPoint;
         bool viewPose = _heldPieView != null && item.transform.parent == frame;
         Vector3 forward = viewPose ? frame.forward : Vector3.ProjectOnPlane(frame.forward, Vector3.up).normalized;

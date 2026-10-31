@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
@@ -15,18 +16,64 @@ public sealed class RoomDecorationController
     private readonly Action<string, int, UnityAction, string> _createQuest;
     private readonly Action<string[], Action> _showThoughts;
     private readonly Action _onDecorationFinished;
+    private readonly Func<IEnumerator, Coroutine> _startCoroutine;
+    private readonly Transform _player;
+
+    private const string KitchenQuestTag = "go-kitchen";
+    private const float KitchenReach = 3.8f;
+    private const float FirstFloorMaxY = 3f;
 
     public RoomDecorationController(
         GameObject[] decorationZones,
         Action<string, int, UnityAction, string> createQuest,
         Action<string[], Action> showThoughts,
-        Action onDecorationFinished)
+        Action onDecorationFinished,
+        Func<IEnumerator, Coroutine> startCoroutine = null,
+        Transform player = null)
     {
         _decorationZones = decorationZones;
         _createQuest = createQuest;
         _showThoughts = showThoughts;
         _onDecorationFinished = onDecorationFinished;
+        _startCoroutine = startCoroutine;
+        _player = player;
     }
+
+    // Утро: сперва герой спускается на кухню и видит погром, и только тогда появляется уборка.
+    public void SetupKitchenQuest()
+    {
+        if (!TryGetKitchenPoint(out Vector3 kitchen) || _player == null || _startCoroutine == null)
+        {
+            SetupDecorationQuest();
+            return;
+        }
+        _createQuest("Пойти на кухню", 1, OnKitchenReached, KitchenQuestTag);
+        _startCoroutine(WaitForKitchen(kitchen));
+    }
+
+    IEnumerator WaitForKitchen(Vector3 kitchen)
+    {
+        var interval = new WaitForSeconds(.2f);
+        while (_player != null && !IsAtKitchen(_player.position, kitchen)) yield return interval;
+        QuestManager quests = QuestManager.Instance;
+        if (quests != null && quests.IsQuestActive(KitchenQuestTag)) quests.AddProgress(1);
+    }
+
+    public static bool IsAtKitchen(Vector3 player, Vector3 kitchen) =>
+        player.y < FirstFloorMaxY && Vector3.ProjectOnPlane(player - kitchen, Vector3.up).sqrMagnitude <= KitchenReach * KitchenReach;
+
+    bool TryGetKitchenPoint(out Vector3 kitchen)
+    {
+        kitchen = Vector3.zero;
+        int count = 0;
+        if (_decorationZones != null)
+            foreach (GameObject zone in _decorationZones)
+                if (zone != null) { kitchen += zone.transform.position; count++; }
+        if (count > 0) kitchen /= count;
+        return count > 0;
+    }
+
+    void OnKitchenReached() => _showThoughts(new[] { "Что здесь произошло?" }, SetupDecorationQuest);
 
     public void SetupDecorationQuest()
     {
@@ -51,8 +98,7 @@ public sealed class RoomDecorationController
     {
         SetZonesActive(false);
         _showThoughts(new string[] {
-            "Вчера всё стояло нормально. Само оно на пол не упало.",
-            "Ладно. Сначала поем, потом разберусь."
+            "Вчера всё стояло нормально. Само оно на пол не упало."
         }, _onDecorationFinished);
     }
 

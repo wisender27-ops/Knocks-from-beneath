@@ -18,11 +18,19 @@ namespace KnocksFromBeneath
         private static readonly SlotPose[] DefaultSlots =
         {
             new SlotPose(new Vector3(-45.0f, 0.78f, 113.0f), 70f),
-            new SlotPose(new Vector3(-40.5f, 0.78f, 115.5f), -130f)
+            new SlotPose(new Vector3(-40.5f, 0.78f, 115.5f), -130f),
+            new SlotPose(DepthsLayout.CameraSlot, DepthsLayout.CameraSlotYaw) // день 2: в подвале, на решётку вентиляции
         };
         // The tripod mesh is a triangle of legs, so its bounds centre is off the camera mount axis.
         // Measured in the prefab pose: the mount axis relative to the bounds centre.
         private static readonly Vector3 HeadOffset = new Vector3(0.13f, 0f, 0.01f);
+        // Спальня героя: камера лежит на комоде перед телевизором, штатив стоит у торца комода.
+        public const string StoreQuestTag = "camera-store";
+        public const int StoreItemCount = 2;
+        private static readonly SlotPose CameraRest = new SlotPose(new Vector3(-44.4f, 5.13f, 116.75f), 90f);
+        private static readonly SlotPose TripodRest = new SlotPose(new Vector3(-44.2f, 4.1f, 115.6f), 40f);
+        private const float StoreReach = 2.6f;
+        private const float StoreAimDot = 0.55f;
         private const float SlotReach = 3.5f;
         private const float SlotAimDot = 0.6f;
         private const float SlotAimHeight = 0.7f;
@@ -43,9 +51,17 @@ namespace KnocksFromBeneath
         private PickupController heldBy;
         private Transform recordingView;
         private Action onPlaced, onRemoved;
+        private bool cameraStored, tripodStored;
+        private GameObject storeGhost;
+        private Material storeGhostMaterial;
+
+        public event Action GearFound, GearStored;
 
         public static CameraPlacementController Instance { get; private set; }
         public bool Available => cameraPrefab != null && tripodPrefab != null;
+        public bool NeedsStoring => cameraObject != null && tripod != null && !cameraMounted && !(cameraStored && tripodStored);
+        private static bool StoreActive => QuestManager.Instance != null && QuestManager.Instance.IsQuestActive(StoreQuestTag);
+        private static bool MountActive => QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("camera-place");
         public bool IsPlaced => cameraObject != null && cameraMounted && tripodSlot >= 0 && StoryFlags.CameraPlacementSlot > 0;
         public int SelectedSlot => StoryFlags.CameraPlacementSlot;
         public Transform RecordingView => IsPlaced ? recordingView : null;
@@ -88,6 +104,7 @@ namespace KnocksFromBeneath
                     if (ghost != null) Destroy(ghost);
             if (ghostMaterial != null) Destroy(ghostMaterial);
             if (ghostTargetMaterial != null) Destroy(ghostTargetMaterial);
+            HideStoreGhost();
             if (Instance == this) Instance = null;
         }
 
@@ -119,13 +136,22 @@ namespace KnocksFromBeneath
                 tripodBody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
 
             if (heldBy == null) return;
-            if (tripod == null || heldBy.GetHeldObject() != tripod)
+            GameObject held = heldBy.GetHeldObject();
+            if (held == null || (held != tripod && held != cameraObject))
             {
                 heldBy = null;
                 HideGhosts();
+                HideStoreGhost();
                 return;
             }
-            ShowGhosts(FindSlot(heldBy));
+            if (StoreActive)
+            {
+                HideGhosts();
+                ShowStoreGhost(held);
+                return;
+            }
+            HideStoreGhost();
+            if (held == tripod) ShowGhosts(FindSlot(heldBy));
         }
 
         private void OnBoxPlaced(GameObject box)
@@ -136,14 +162,118 @@ namespace KnocksFromBeneath
             Bounds b = ObjectBounds(box);
             CreateCamera(new Vector3(b.center.x, b.max.y + 0.02f, b.center.z));
             CreateTripod(0);
+            GearFound?.Invoke();
         }
 
         // Used by debug jumps after the box delivery, and by old saves without a camera slot.
-        public void RevealForDebug()
+        public void RevealForDebug(bool stored)
         {
             if (cameraObject != null || !Available) return;
             CreateCamera(slots[0].Position + new Vector3(0.7f, 0f, 0f));
             CreateTripod(0);
+            if (!stored) return;
+            RestCamera();
+            RestTripod();
+            ReleaseFromStorage();
+        }
+
+        // Лежат там, куда их положили, пока сам герой не решит их взять.
+        public void ReleaseFromStorage()
+        {
+            if (cameraStored && cameraObject != null && !cameraMounted)
+            {
+                cameraObject.tag = "Pickable";
+                Rigidbody body = cameraObject.GetComponent<Rigidbody>();
+                if (body != null)
+                {
+                    body.isKinematic = false;
+                    body.useGravity = true;
+                }
+            }
+            if (tripodStored && tripod != null) tripod.tag = "Pickable";
+        }
+
+        private void RestCamera()
+        {
+            cameraObject.transform.rotation = Quaternion.Euler(0f, CameraRest.Yaw, 0f);
+            SnapBottom(cameraObject, CameraRest.Position);
+            Rigidbody body = cameraObject.GetComponent<Rigidbody>();
+            if (body != null)
+            {
+                body.isKinematic = true;
+                body.useGravity = false;
+                body.interpolation = RigidbodyInterpolation.None;
+                body.position = cameraObject.transform.position;
+                body.rotation = cameraObject.transform.rotation;
+            }
+            cameraObject.tag = "Untagged";
+            cameraStored = true;
+            Physics.SyncTransforms();
+        }
+
+        private void RestTripod()
+        {
+            tripodBody.isKinematic = true;
+            tripodBody.useGravity = false;
+            tripodBody.interpolation = RigidbodyInterpolation.None;
+            PoseAt(tripod, TripodRest);
+            tripodBody.position = tripod.transform.position;
+            tripodBody.rotation = tripod.transform.rotation;
+            tripod.tag = "Untagged";
+            tripodSlot = -1;
+            tripodStored = true;
+            Physics.SyncTransforms();
+        }
+
+        private bool TryStore(PickupController pickup, GameObject held)
+        {
+            if (!NearStore(pickup, held) || !pickup.ReleaseForCameraPlacement(held)) return false;
+            if (held == tripod) RestTripod();
+            else RestCamera();
+            HideStoreGhost();
+            heldBy = null;
+            GearStored?.Invoke();
+            return true;
+        }
+
+        private bool NearStore(PickupController pickup, GameObject held)
+        {
+            Camera view = pickup.playerCamera;
+            if (view == null) return false;
+            Vector3 aim = held == tripod ? TripodRest.Position + Vector3.up * SlotAimHeight : CameraRest.Position + Vector3.up * 0.1f;
+            Vector3 delta = aim - view.transform.position;
+            return delta.sqrMagnitude <= StoreReach * StoreReach &&
+                Vector3.Dot(view.transform.forward, delta.normalized) >= StoreAimDot &&
+                HasClearView(pickup, view.transform.position, delta);
+        }
+
+        private void ShowStoreGhost(GameObject held)
+        {
+            if (storeGhost != null) return;
+            Shader shader = Shader.Find("Sprites/Default");
+            if (shader == null) return;
+            storeGhostMaterial = new Material(shader) { color = GhostTargetColor };
+            storeGhost = StripToGhost(Instantiate(held == tripod ? tripodPrefab : cameraPrefab), "Camera gear store place");
+            foreach (MeshRenderer renderer in storeGhost.GetComponentsInChildren<MeshRenderer>(true))
+            {
+                var materials = new Material[renderer.sharedMaterials.Length];
+                for (int m = 0; m < materials.Length; m++) materials[m] = storeGhostMaterial;
+                renderer.sharedMaterials = materials;
+            }
+            if (held == tripod) PoseAt(storeGhost, TripodRest);
+            else
+            {
+                storeGhost.transform.rotation = Quaternion.Euler(0f, CameraRest.Yaw, 0f);
+                SnapBottom(storeGhost, CameraRest.Position);
+            }
+        }
+
+        private void HideStoreGhost()
+        {
+            if (storeGhost != null) Destroy(storeGhost);
+            if (storeGhostMaterial != null) Destroy(storeGhostMaterial);
+            storeGhost = null;
+            storeGhostMaterial = null;
         }
 
         public void RestoreFromCheckpoint()
@@ -180,7 +310,7 @@ namespace KnocksFromBeneath
             if (cameraObject.GetComponentInChildren<Collider>() == null) AddBoundsCollider(cameraObject);
             SnapBottom(cameraObject, bottom);
             QuestItemMarker.Ensure(cameraObject).ConfigureCondition(() =>
-                !cameraMounted && QuestManager.Instance != null && QuestManager.Instance.IsQuestActive("camera-place"));
+                !cameraMounted && (MountActive || (StoreActive && !cameraStored)));
         }
 
         private void CreateTripod(int slot)
@@ -198,16 +328,29 @@ namespace KnocksFromBeneath
             if (tripod.GetComponentInChildren<Collider>() == null) AddBoundsCollider(tripod);
             PlaceTripodAt(slot);
             QuestItemMarker.Ensure(tripod).ConfigureCondition(() =>
-                cameraMounted && tripodSlot < 0 && QuestManager.Instance != null &&
-                QuestManager.Instance.IsQuestActive("camera-place"));
+                QuestManager.Instance != null &&
+                ((StoreActive && !tripodStored) || (tripodSlot < 0 && MountActive) ||
+                 (cameraMounted && !StoryFlags.BasementCameraSet && QuestManager.Instance.IsQuestActive("basement-camera"))));
         }
 
-        // Stands the tripod (or a ghost of it) so that its mount axis is on the slot point.
-        private void PoseAtSlot(GameObject stand, int slot)
+        // Камера осталась писать в подвале: больше её не забрать.
+        public void FixInPlace()
         {
-            stand.transform.rotation = Quaternion.Euler(0f, slots[slot].Yaw, 0f) * tripodPrefab.transform.rotation;
+            if (tripod != null) tripod.tag = "Untagged";
+            if (cameraObject != null) cameraObject.tag = "Untagged";
+        }
+
+        public Renderer[] GearRenderers() =>
+            tripod != null ? tripod.GetComponentsInChildren<Renderer>(true) : Array.Empty<Renderer>();
+
+        // Stands the tripod (or a ghost of it) so that its mount axis is on the slot point.
+        private void PoseAtSlot(GameObject stand, int slot) => PoseAt(stand, slots[slot]);
+
+        private void PoseAt(GameObject stand, SlotPose pose)
+        {
+            stand.transform.rotation = Quaternion.Euler(0f, pose.Yaw, 0f) * tripodPrefab.transform.rotation;
             Vector3 head = stand.transform.TransformPoint(headLocal);
-            Vector3 target = slots[slot].Position;
+            Vector3 target = pose.Position;
             stand.transform.position += new Vector3(target.x - head.x, target.y - ObjectBounds(stand).min.y, target.z - head.z);
         }
 
@@ -239,6 +382,7 @@ namespace KnocksFromBeneath
                 heldBy = pickup;
                 NotifyRemoved();
             }
+            else if (item == cameraObject) heldBy = pickup;
         }
 
         private void NotifyRemoved()
@@ -253,13 +397,20 @@ namespace KnocksFromBeneath
             hint = null;
             if (pickup == null) return false;
             GameObject held = pickup.GetHeldObject();
-            if (tripod != null && held == tripod)
+            if (StoreActive && held != null && IsGear(held))
             {
-                hint = FindSlot(pickup) >= 0 ? "E — поставить штатив здесь" : "Поднесите штатив к отмеченному месту";
+                hint = held == tripod
+                    ? NearStore(pickup, held) ? "E поставить штатив у комода" : "Отнесите штатив в спальню, к комоду"
+                    : NearStore(pickup, held) ? "E положить камеру на комод" : "Отнесите камеру в спальню, на комод";
                 return true;
             }
-            if (cameraObject == null || held != cameraObject) return false;
-            hint = FindTarget(pickup) ? "E — установить камеру на штатив" : "Поднесите камеру к штативу";
+            if (tripod != null && held == tripod)
+            {
+                hint = FindSlot(pickup) >= 0 ? "E поставить штатив здесь" : "Поднесите штатив к отмеченному месту";
+                return true;
+            }
+            if (cameraObject == null || held != cameraObject || !MountActive) return false;
+            hint = FindTarget(pickup) ? "E установить камеру на штатив" : "Поднесите камеру к штативу";
             return true;
         }
 
@@ -267,8 +418,9 @@ namespace KnocksFromBeneath
         {
             if (pickup == null) return false;
             GameObject held = pickup.GetHeldObject();
+            if (StoreActive && held != null && IsGear(held)) return TryStore(pickup, held);
             if (tripod != null && held == tripod) return TryPlaceTripod(pickup);
-            if (cameraObject == null || held != cameraObject || !FindTarget(pickup) ||
+            if (cameraObject == null || held != cameraObject || !MountActive || !FindTarget(pickup) ||
                 !pickup.ReleaseForCameraPlacement(cameraObject)) return false;
             MountCamera();
             if (tripodSlot >= 0)
@@ -377,8 +529,14 @@ namespace KnocksFromBeneath
 
         private GameObject CreateGhost(int slot)
         {
-            GameObject ghost = Instantiate(tripodPrefab);
-            ghost.name = "Tripod slot " + (slot + 1);
+            GameObject ghost = StripToGhost(Instantiate(tripodPrefab), "Tripod slot " + (slot + 1));
+            PoseAtSlot(ghost, slot);
+            return ghost;
+        }
+
+        private static GameObject StripToGhost(GameObject ghost, string name)
+        {
+            ghost.name = name;
             ghost.SetActive(true);
             foreach (Collider collider in ghost.GetComponentsInChildren<Collider>(true)) Destroy(collider);
             foreach (MonoBehaviour behaviour in ghost.GetComponentsInChildren<MonoBehaviour>(true)) Destroy(behaviour);
@@ -387,7 +545,6 @@ namespace KnocksFromBeneath
                 renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 renderer.receiveShadows = false;
             }
-            PoseAtSlot(ghost, slot);
             return ghost;
         }
 

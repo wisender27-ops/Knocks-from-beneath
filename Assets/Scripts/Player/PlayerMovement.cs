@@ -60,6 +60,13 @@ public class PlayerController : MonoBehaviour
     public void StandUp() => crouchToggled = false;
     public void CrouchDown() => crouchToggled = true;
 
+    // Катсцена двигала камеру сама: взгляд продолжается от горизонта, а не от старого наклона.
+    public void ResetLook()
+    {
+        yRotation = 0f;
+        if (cam != null) cam.transform.localRotation = Quaternion.identity;
+    }
+
     public void StopMotion()
     {
         horizontalVelocity = Vector3.zero;

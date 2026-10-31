@@ -20,14 +20,20 @@ namespace KnocksFromBeneath
         private const float RoadZ = 128.5f;
         public const float RoadDistance = 10f;
         private const float ThoughtCooldown = 5f;
+        // Дом без крыльца и площадки у люка: у входной двери (z 116.79) он кончается раньше, чем в крыле западнее.
+        private const float HouseWestX = -47f, HouseEastX = -33f, HouseSouthZ = 104.7f, HouseNorthZ = 119f;
+        private const float PorchWestX = -40.4f, PorchZ = 116.4f;
 
         private static readonly string[] DarkOutside = { "Я не хочу выходить из дома, пока там темно." };
+        private static readonly string[] WantToSleep = { "Я сейчас никуда не пойду, я хочу спать." };
 
         private Transform _player;
         private Vector3 _hatch;
         private Action _onBackyard, _onRoad;
         private Door[] _backDoors = Array.Empty<Door>();
         private bool _locked, _watching;
+        private Door _frontDoor;
+        private bool _stayIndoors, _stayIndoorsPending;
         private bool _enteredBackyard;
         private Vector3 _backyardEntry;
         private GameObject _escapeMonster;
@@ -62,6 +68,38 @@ namespace KnocksFromBeneath
 
         public void SetHatch(BasementHatch hatch) => _basementHatch = hatch;
 
+        // Ночь 1, сосед попрощался: все три двери наружу не открываются, пока герой не ляжет. Игрока, оставшегося
+        // на улице, не запираем снаружи — двери закроются, когда он вернётся в дом.
+        public void SetStayIndoors(Door frontDoor, bool stay)
+        {
+            if (_stayIndoors == stay) return;
+            _stayIndoors = stay;
+            if (stay)
+            {
+                _frontDoor = frontDoor;
+                _stayIndoorsPending = true;
+                if (_frontDoor != null) _frontDoor.LockedAttempted += OnLockedAttempt;
+                ApplyStayIndoors();
+                return;
+            }
+            if (_frontDoor != null)
+            {
+                _frontDoor.LockedAttempted -= OnLockedAttempt;
+                if (!_stayIndoorsPending) _frontDoor.SetInteractionLocked(false);
+            }
+            if (!_stayIndoorsPending) SetBackDoorsLocked(false);
+            _stayIndoorsPending = false;
+            _frontDoor = null;
+        }
+
+        private void ApplyStayIndoors()
+        {
+            if (!_stayIndoorsPending || _player == null || !IsIndoors(_player.position)) return;
+            _stayIndoorsPending = false;
+            SetBackDoorsLocked(true);
+            if (_frontDoor != null) _frontDoor.SetInteractionLocked(true);
+        }
+
         private void OnEnable()
         {
             GameEvents.OnNightTwoStarted += LockBackDoors;
@@ -88,6 +126,7 @@ namespace KnocksFromBeneath
         {
             foreach (Door door in _backDoors)
                 if (door != null) door.LockedAttempted -= OnLockedAttempt;
+            if (_frontDoor != null) _frontDoor.LockedAttempted -= OnLockedAttempt;
         }
 
         // Развилка: задние двери открываются, следим, куда ушёл игрок. false — концовка уже выбрана.
@@ -124,12 +163,14 @@ namespace KnocksFromBeneath
 
         private void OnLockedAttempt()
         {
-            if (_locked) ThoughtManager.Instance?.TryShowInteractionThoughts("back-door-dark", DarkOutside, ThoughtCooldown);
+            if (_stayIndoors) ThoughtManager.Instance?.TryShowInteractionThoughts("stay-indoors", WantToSleep, ThoughtCooldown);
+            else if (_locked) ThoughtManager.Instance?.TryShowInteractionThoughts("back-door-dark", DarkOutside, ThoughtCooldown);
         }
 
         private void Update()
         {
-            if (!_watching || _player == null || PauseMenuController.InputBlocked || Time.timeScale <= 0f) return;
+            ApplyStayIndoors();
+            if (!_watching || _player == null || PauseMenuController.InputBlocked || NarrativeReadingPanel.WorldHalted) return;
             Vector3 position = _player.position;
             if (IsInBackyard(position))
             {
@@ -152,6 +193,10 @@ namespace KnocksFromBeneath
             }
             else _enteredBackyard = false;
         }
+
+        public static bool IsIndoors(Vector3 position) =>
+            position.x > HouseWestX && position.x < HouseEastX && position.z > HouseSouthZ &&
+            position.z < (position.x > PorchWestX ? PorchZ : HouseNorthZ);
 
         public static bool IsInBackyard(Vector3 position) =>
             position.y < GroundFloorMaxY && position.z < BackyardZ && position.z > PlotSouthZ &&
@@ -300,7 +345,7 @@ namespace KnocksFromBeneath
             Vector3 roadEntry = _player.position;
             while (monster != null && _player != null)
             {
-                if (PauseMenuController.InputBlocked || Time.timeScale <= 0f)
+                if (PauseMenuController.InputBlocked || NarrativeReadingPanel.WorldHalted)
                 {
                     if (rig != null) rig.SetChaseFrozen(true);
                     sound.Stop();
