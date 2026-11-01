@@ -33,21 +33,65 @@ namespace KnocksFromBeneath
         public int EatingBiteCount => bitePortionMeshes != null && bitePortionMeshes.Length > 0
             ? bitePortionMeshes.Length : Mathf.Max(1, biteCount);
 
+        // U-04: ближний край пирога держим за ближней плоскостью камеры с этим запасом.
+        private const float NearClipClearance = 0.025f;
+        private Camera _viewCamera;
+        private Bounds _meshBounds;
+        private bool _hasMeshBounds;
+
         private void LateUpdate()
         {
-            if (_viewAnchor == null || _isEating) return;
-            float phase = Time.time * 1.7f;
-            transform.localPosition = heldLocalPosition + Vector3.up * (Mathf.Sin(phase) * idleSway);
-            transform.localRotation = Quaternion.Euler(heldLocalEulerAngles) * Quaternion.Euler(0f, 0f, Mathf.Sin(phase * 0.5f) * 1.2f);
+            if (_viewAnchor == null) return;
+            if (!_isEating)
+            {
+                float phase = Time.time * 1.7f;
+                transform.localPosition = heldLocalPosition + Vector3.up * (Mathf.Sin(phase) * idleSway);
+                transform.localRotation = Quaternion.Euler(heldLocalEulerAngles) * Quaternion.Euler(0f, 0f, Mathf.Sin(phase * 0.5f) * 1.2f);
+            }
+            // И в покое, и во время еды (позу ставит корутина PlayerInteraction в Update).
+            KeepInFrontOfNearPlane();
         }
 
         public void AttachToView(Transform anchor)
         {
             _viewAnchor = anchor;
+            _viewCamera = anchor != null ? anchor.GetComponent<Camera>() : null;
+            MeshFilter filter = GetComponent<MeshFilter>();
+            _hasMeshBounds = filter != null && filter.sharedMesh != null;
+            if (_hasMeshBounds) _meshBounds = filter.sharedMesh.bounds;
             _isEating = false;
             transform.SetParent(anchor, false);
             transform.localPosition = heldLocalPosition;
             transform.localRotation = Quaternion.Euler(heldLocalEulerAngles);
+            KeepInFrontOfNearPlane();
+        }
+
+        /// <summary>
+        /// U-04: пирог лежит в руках плашмя, и при позе по умолчанию его ближний край
+        /// (z ≈ 0.03 м) оказывался перед ближней плоскостью камеры (0.1 м) — срезался.
+        /// Отодвигаем пирог вдоль взгляда ровно настолько, чтобы весь он был виден.
+        /// </summary>
+        private void KeepInFrontOfNearPlane()
+        {
+            if (_viewCamera == null || !_hasMeshBounds) return;
+            float offset = NearestViewDepthOffset(_meshBounds, transform.localRotation, transform.localScale);
+            float minZ = _viewCamera.nearClipPlane + NearClipClearance - offset;
+            Vector3 position = transform.localPosition;
+            if (position.z >= minZ) return;
+            position.z = minZ;
+            transform.localPosition = position;
+        }
+
+        /// <summary>Смещение ближайшей к камере точки меша относительно его пивота по оси взгляда.</summary>
+        public static float NearestViewDepthOffset(Bounds meshBounds, Quaternion localRotation, Vector3 localScale)
+        {
+            Vector3 center = localRotation * Vector3.Scale(meshBounds.center, localScale);
+            Vector3 e = Vector3.Scale(meshBounds.extents, localScale);
+            // Проекция повёрнутого бокса на ось z: |R·x|·ex + |R·y|·ey + |R·z|·ez.
+            float depth = Mathf.Abs((localRotation * Vector3.right).z * e.x) +
+                          Mathf.Abs((localRotation * Vector3.up).z * e.y) +
+                          Mathf.Abs((localRotation * Vector3.forward).z * e.z);
+            return center.z - depth;
         }
 
         public void BeginEatingView()
@@ -74,18 +118,21 @@ namespace KnocksFromBeneath
 
 
             Transform chunkTransform = chunk.transform;
-            chunkTransform.SetParent(null, true);
-            Vector3 startPosition = chunkTransform.position;
-            Vector3 startScale = chunkTransform.lossyScale;
+            // U-04: кусок летит ко рту в координатах камеры. Раньше он отцеплялся в мир и летел
+            // к точке, посчитанной в начале укуса, — на ходу отставал и оставался за героем.
+            Transform space = playerCamera != null ? playerCamera.transform : null;
+            chunkTransform.SetParent(space, true);
+            Vector3 startPosition = chunkTransform.localPosition;
+            Vector3 startScale = chunkTransform.localScale;
             Vector3 targetPosition = playerCamera != null
-                ? playerCamera.transform.position + playerCamera.transform.forward * 0.065f + playerCamera.transform.up * -0.045f
+                ? new Vector3(0f, -0.045f, Mathf.Max(0.065f, playerCamera.nearClipPlane + NearClipClearance))
                 : startPosition + Vector3.forward * 0.3f;
             float elapsed = 0f;
             while (elapsed < duration && chunk != null)
             {
                 float t = Mathf.Clamp01(elapsed / duration);
                 float eased = t * t * (3f - 2f * t);
-                chunkTransform.position = Vector3.Lerp(startPosition, targetPosition, eased);
+                chunkTransform.localPosition = Vector3.Lerp(startPosition, targetPosition, eased);
                 chunkTransform.localScale = Vector3.Lerp(startScale, Vector3.zero, eased);
                 chunkTransform.Rotate(140f * Time.deltaTime, 90f * Time.deltaTime, 0f, Space.Self);
                 elapsed += Time.deltaTime;

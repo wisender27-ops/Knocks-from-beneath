@@ -380,7 +380,12 @@ public class PickupController : MonoBehaviour
             _heldObj.layer = heldLayer;
 
         if (_heldPieView != null)
-            _heldObjRb.interpolation = RigidbodyInterpolation.Interpolate;
+        {
+            // U-04: пирог — ребёнок камеры и ставится локально каждый кадр. Интерполяция
+            // кинематического тела перебивала эту позу позой из прошлых физ-шагов: на ходу
+            // пирог дёргался, телепортировался и отставал за героя. Исходная — в RestorePieForWorld.
+            _heldObjRb.interpolation = RigidbodyInterpolation.None;
+        }
         else
         {
             // U-03: раньше предмет догонял точку удержания скоростью в FixedUpdate. На бегу он

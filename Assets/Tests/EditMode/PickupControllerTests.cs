@@ -242,6 +242,59 @@ public class PickupControllerTests
         Assert.That(collider.enabled, Is.True);
     }
 
+    // U-04: пирог у камеры без интерполяции (она перебивала локальную позу), после — исходная.
+    [Test]
+    public void HeatedPie_DisablesInterpolationWhileInViewAndRestoresIt()
+    {
+        var rb = _itemGo.GetComponent<Rigidbody>();
+        rb.interpolation = RigidbodyInterpolation.Extrapolate;
+        _itemGo.AddComponent<PieQuestItem>().isHeated = true;
+        Assert.That(_pickup.TryGrab(_itemGo), Is.True);
+        Assert.That(rb.interpolation, Is.EqualTo(RigidbodyInterpolation.None));
+        _pickup.Release();
+        Assert.That(rb.interpolation, Is.EqualTo(RigidbodyInterpolation.Extrapolate));
+    }
+
+    // U-04: плоский пирог в руках не залезает за ближнюю плоскость камеры.
+    [Test]
+    public void HeatedPie_NearestEdgeStaysBeyondNearClipPlane()
+    {
+        var mesh = new Mesh();
+        mesh.vertices = new[] { new Vector3(-.15f, 0f, -.15f), new Vector3(.15f, .04f, .15f), new Vector3(.15f, 0f, -.15f) };
+        mesh.triangles = new[] { 0, 1, 2 };
+        mesh.RecalculateBounds();
+        _itemGo.AddComponent<MeshFilter>().sharedMesh = mesh;
+        var pie = _itemGo.AddComponent<PieQuestItem>();
+        pie.isHeated = true;
+        pie.heldLocalPosition = new Vector3(0f, -.08f, .1f);
+        pie.heldLocalEulerAngles = Vector3.zero;
+        _pickup.playerCamera.nearClipPlane = .1f;
+        try
+        {
+            Assert.That(_pickup.TryGrab(_itemGo), Is.True);
+            Transform t = _itemGo.transform;
+            float nearest = t.localPosition.z +
+                PieQuestItem.NearestViewDepthOffset(mesh.bounds, t.localRotation, t.localScale);
+            Assert.That(nearest, Is.GreaterThanOrEqualTo(.1f));
+            _pickup.Release();
+        }
+        finally
+        {
+            Object.DestroyImmediate(mesh);
+        }
+    }
+
+    [Test]
+    public void NearestViewDepthOffset_AccountsForRotationAndScale()
+    {
+        var bounds = new Bounds(Vector3.zero, new Vector3(2f, .2f, 2f));
+        // Плашмя: ближний край на половине диаметра.
+        Assert.That(PieQuestItem.NearestViewDepthOffset(bounds, Quaternion.identity, Vector3.one), Is.EqualTo(-1f).Within(1e-4f));
+        // Повёрнут лицом к камере: остаётся полтолщины.
+        Assert.That(PieQuestItem.NearestViewDepthOffset(bounds, Quaternion.Euler(-90f, 0f, 0f), Vector3.one), Is.EqualTo(-.1f).Within(1e-4f));
+        Assert.That(PieQuestItem.NearestViewDepthOffset(bounds, Quaternion.identity, Vector3.one * 2f), Is.EqualTo(-2f).Within(1e-4f));
+    }
+
     [Test]
     public void TryGrab_FailsWithoutRigidbody()
     {
