@@ -61,11 +61,11 @@ public sealed class TapeTransportTests
     {
         var tape = new TapeTransport();
         tape.Synchronize(NightTape.FaceToLens + 0.5f);
-        Assert.That(tape.CaptureEvidence(), Is.False);
+        Assert.That(tape.CaptureEvidence(true), Is.False);
         Assert.That(StoryFlags.SawRecording, Is.False);
         tape.TogglePlay();
-        Assert.That(tape.CaptureEvidence(), Is.True);
-        Assert.That(tape.CaptureEvidence(), Is.True);
+        Assert.That(tape.CaptureEvidence(true), Is.True);
+        Assert.That(tape.CaptureEvidence(true), Is.True);
         Assert.That(StoryFlags.SawRecording, Is.True);
         Assert.That(StoryFlags.CluesFound, Is.EqualTo(1));
         Assert.That(StoryFlags.HasClue(TapeTransport.EvidenceId), Is.True);
@@ -77,8 +77,35 @@ public sealed class TapeTransportTests
         var tape = new TapeTransport();
         tape.TogglePlay();
         tape.Synchronize(5f);
-        Assert.That(tape.CaptureEvidence(), Is.False);
+        Assert.That(tape.CaptureEvidence(true), Is.False);
         Assert.That(StoryFlags.CluesFound, Is.Zero);
         Assert.That(StoryFlags.SawRecording, Is.False);
+    }
+
+    // U-06: кадр засчитывается всё время, пока фигура в кадре, а не только когда она смотрит в объектив.
+    [Test]
+    public void Capture_CountsAnyStoppedFrameWithFigureInView()
+    {
+        var tape = new TapeTransport();
+        tape.TogglePlay();
+        float[] times = { 26f, 29f, NightTape.FaceToLens - 1f, 37f, 60f };
+        foreach (float t in times)
+        {
+            tape.Synchronize(t);
+            Assert.That(NightTape.Figure(t).Look, Is.LessThan(0.9f), "t=" + t);
+            Assert.That(tape.CanCapture(true), Is.True, "t=" + t);
+        }
+        Assert.That(tape.CaptureEvidence(true), Is.True);
+        Assert.That(StoryFlags.HasClue(TapeTransport.EvidenceId), Is.True);
+    }
+
+    [Test]
+    public void Capture_RefusesFigureOutOfView()
+    {
+        var tape = new TapeTransport();
+        tape.TogglePlay();
+        tape.Synchronize(NightTape.FaceToLens + 0.5f);
+        Assert.That(tape.CaptureEvidence(false), Is.False);
+        Assert.That(StoryFlags.CluesFound, Is.Zero);
     }
 }

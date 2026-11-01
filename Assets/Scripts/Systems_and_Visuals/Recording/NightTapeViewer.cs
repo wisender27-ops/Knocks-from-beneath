@@ -173,7 +173,7 @@ namespace KnocksFromBeneath
 
         private void CaptureFrame()
         {
-            if (transport.CaptureEvidence())
+            if (transport.CaptureEvidence(transport.IsStopped && recording.FigureInFrame()))
             {
                 EvidenceCaptured = true;
                 savedFrameTime = transport.Time;

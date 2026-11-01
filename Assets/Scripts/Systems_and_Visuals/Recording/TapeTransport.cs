@@ -31,18 +31,13 @@ namespace KnocksFromBeneath
             if (Time <= 0f && Speed < 0f) Speed = 0f;
         }
 
-        public bool CanCapture
-        {
-            get
-            {
-                TapeFigurePose pose = NightTape.Figure(Time);
-                return IsStopped && pose.Visible && pose.Look >= 0.9f;
-            }
-        }
+        // U-06: засчитывается любой остановленный кадр, где фигура видна камере записи (figureInFrame —
+        // NightRecording.FigureInFrame), а не только миг, когда она смотрит в объектив.
+        public bool CanCapture(bool figureInFrame) => IsStopped && figureInFrame && NightTape.Figure(Time).Visible;
 
-        public bool CaptureEvidence()
+        public bool CaptureEvidence(bool figureInFrame)
         {
-            if (!CanCapture) return false;
+            if (!CanCapture(figureInFrame)) return false;
             StoryFlags.MarkRecordingSeen();
             StoryFlags.RegisterClue(EvidenceId);
             return true;

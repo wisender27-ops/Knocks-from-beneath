@@ -59,8 +59,12 @@ namespace KnocksFromBeneath
 
         private GameObject figure;
         private Renderer[] figureRenderers;
-        private Transform chest, neck, head;
+        private Transform chest, neck, head, hips;
         private Vector3 faceLocal = Vector3.forward;
+        // U-06: видна ли фигура камере — лучи от объектива к голове/груди/тазу; не мешают то, чего нет на плёнке.
+        private const float FrameMargin = 0.02f;
+        private readonly RaycastHit[] sightHits = new RaycastHit[16];
+        private Transform sightPlayer;
         private PlayableGraph graph;
         private AnimationMixerPlayable mixer;
         private AnimationClipPlayable walkPlayable, standPlayable, crawlPlayable, strikePlayable;
@@ -134,6 +138,55 @@ namespace KnocksFromBeneath
         {
             Time = timeline.Clamp(time);
             Pose();
+        }
+
+        // U-06: фигура видна на текущем кадре — голова или хотя бы две точки из «голова, грудь, таз» внутри кадра
+        // и не закрыты стенами/мебелью. Двери плёнки, герой и сама видеокамера со штативом обзор не закрывают:
+        // на плёнке они стоят иначе или не видны. Зовётся по нажатию «Сохранить кадр», не каждый кадр.
+        public bool FigureInFrame()
+        {
+            if (tapeCamera == null || figure == null) return false;
+            TapeFigurePose pose = timeline.Figure(Time);
+            if (!pose.Visible) return false;
+            FollowView();
+            bool headSeen = SeesPoint(BodyPoint(head, pose, 1.6f));
+            int seen = headSeen ? 1 : 0;
+            if (SeesPoint(BodyPoint(chest, pose, 1.3f))) seen++;
+            if (SeesPoint(BodyPoint(hips, pose, 0.95f))) seen++;
+            return headSeen || seen >= 2;
+        }
+
+        private static Vector3 BodyPoint(Transform bone, TapeFigurePose pose, float height) =>
+            bone != null ? bone.position : pose.Position + Vector3.up * height;
+
+        private bool SeesPoint(Vector3 point)
+        {
+            Vector3 viewport = tapeCamera.WorldToViewportPoint(point);
+            if (viewport.z <= tapeCamera.nearClipPlane || viewport.z >= tapeCamera.farClipPlane) return false;
+            if (viewport.x < FrameMargin || viewport.x > 1f - FrameMargin || viewport.y < FrameMargin || viewport.y > 1f - FrameMargin)
+                return false;
+            Vector3 from = tapeCamera.transform.position;
+            Vector3 delta = point - from;
+            float distance = delta.magnitude;
+            if (distance < 0.1f) return true;
+            int mask = tapeCamera.cullingMask & Physics.DefaultRaycastLayers;
+            int count = Physics.RaycastNonAlloc(from, delta / distance, sightHits, distance - 0.05f, mask, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++)
+                if (!IgnoredBySight(sightHits[i].collider)) return false;
+            return true;
+        }
+
+        private bool IgnoredBySight(Collider collider)
+        {
+            Transform hit = collider.transform;
+            if (figure != null && hit.IsChildOf(figure.transform)) return true;
+            if (sightPlayer != null && hit.IsChildOf(sightPlayer)) return true;
+            for (int i = 0; i < doors.Length; i++)
+                if (doors[i].Transform != null && hit.IsChildOf(doors[i].Transform)) return true;
+            CameraPlacementController gear = CameraPlacementController.Instance;
+            if (gear == null) return false;
+            GameObject owner = collider.attachedRigidbody != null ? collider.attachedRigidbody.gameObject : collider.gameObject;
+            return gear.IsGear(owner) || gear.IsGear(collider.gameObject);
         }
 
         private void Build(Transform recordingView, TapeSetup tapeSetup)
@@ -232,6 +285,7 @@ namespace KnocksFromBeneath
             if (chest == null) chest = animator.GetBoneTransform(HumanBodyBones.Chest);
             neck = animator.GetBoneTransform(HumanBodyBones.Neck);
             head = animator.GetBoneTransform(HumanBodyBones.Head);
+            hips = animator.GetBoneTransform(HumanBodyBones.Hips);
             if (head != null) faceLocal = Quaternion.Inverse(head.rotation) * figure.transform.forward;
 
             float natural = walk.averageSpeed.magnitude;
@@ -369,6 +423,7 @@ namespace KnocksFromBeneath
             var hidden = new System.Collections.Generic.List<Renderer>();
             PlayerController player = FindFirstObjectByType<PlayerController>();
             if (player != null) hidden.AddRange(player.GetComponentsInChildren<Renderer>(true));
+            sightPlayer = player != null ? player.transform : null;
             if (setup.Hidden != null) hidden.AddRange(setup.Hidden);
             else if (view != null) hidden.AddRange(view.root.GetComponentsInChildren<Renderer>(true));
             hiddenOnTape = hidden.ToArray();
