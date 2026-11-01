@@ -7,18 +7,19 @@ using UnityEngine.UI;
 namespace KnocksFromBeneath
 {
     // P-03 «Подвал как глава» + B-05 финал E5 «Ответ». Ночь 2: игрок спускается в подвал, смотрит запись с камеры,
-    // которую поставил днём (монстр выбирается из вентиляции), и ползёт по этой квадратной трубе. За ней тоннели
-    // (BasementDepths, план в DepthsLayout), они выводят за замурованную стену, в отрезанную половину подвала (BasementLevel, план в BasementLayout).
+    // которую поставил днём (монстр выбирается из вентиляции), и ползёт по этой короткой квадратной трубе (BasementDepths, план в DepthsLayout).
+    // Она выводит за забетонированную стену, в отрезанную половину подвала (BasementLevel, план в BasementLayout).
     // Там по залу ходит монстр и слушает шаги, из камеры в дальнем блоке стучит хозяин — по трубе, которая идёт наверх,
     // в дом. Игрок идёт на стук, не выдавая себя, бьёт ломом по замку, прячется от монстра, который пришёл на грохот
     // (микрофон, как под кроватью), и сбивает замок — выбор «не заколачивать, а ответить». Здесь только логика.
     public sealed class BasementChapter : MonoBehaviour
     {
+        // Значения не менять: Tunnels больше не используется, но Duct идёт после него.
         public enum Stage { Idle, Descending, Explore, Striking, Caught, Finale, Done, Room, Tunnels, Duct }
 
         private const string FindQuest = "basement-find", ReachQuest = "basement-reach", StrikeQuest = "basement-unlock",
             HideQuest = "basement-hide", BreakQuest = "basement-break",
-            TapeQuest = "basement-tape", VentQuest = "basement-vent", DuctQuest = "basement-duct", TunnelQuest = "basement-tunnels";
+            VentQuest = "basement-vent", DuctQuest = "basement-duct";
         private const float CellDoorSwing = 100f;
 
         private Transform player;
@@ -32,7 +33,6 @@ namespace KnocksFromBeneath
         private BasementLevel level;
         private BasementDepths depths;
         private TapeDoor tapeGrille;
-        private int tunnelPoint;
         private GameObject monster;
         private BasementStalker stalker;
         private BasementHideListener hideListener;
@@ -44,7 +44,7 @@ namespace KnocksFromBeneath
         private Coroutine knocking;
         private CanvasGroup fade;
         private int catches;
-        private bool reachedCell, hallSeen, struck, hideActive, hideFailed, breakReady;
+        private bool reachedCell, hallSeen, struck, hideActive, hideFailed, breakReady, tapeSeen;
         private bool inHideSpot, distracted, savedCameraLock, savedBodyEnabled, savedFlashlight;
         private int hideEnteredFrame;
         private float hideYaw, hidePitch, inspectionTime;
@@ -75,14 +75,14 @@ namespace KnocksFromBeneath
         }
 
         // Спуск: затемнение, подвал оживает, игрок у подножия лестницы.
-        public void Begin(BasementHatch hatch, bool debugJump = false, bool debugTunnels = false)
+        public void Begin(BasementHatch hatch, bool debugJump = false, bool debugWing = false)
         {
             if (CurrentStage != Stage.Idle || player == null) return;
             CurrentStage = Stage.Descending;
-            StartCoroutine(BeginRoutine(hatch, debugJump, debugTunnels));
+            StartCoroutine(BeginRoutine(hatch, debugJump, debugWing));
         }
 
-        private IEnumerator BeginRoutine(BasementHatch hatch, bool debugJump, bool debugTunnels)
+        private IEnumerator BeginRoutine(BasementHatch hatch, bool debugJump, bool debugWing)
         {
             LockCamera(true);
             EnsureFade();
@@ -92,10 +92,14 @@ namespace KnocksFromBeneath
             EnsureBuilt();
             if (debugJump && inventory != null) inventory.hasCrowbar = true;
             catches = 0;
-            reachedCell = hallSeen = struck = hideActive = hideFailed = breakReady = false;
-            if (debugTunnels)
+            reachedCell = hallSeen = struck = hideActive = hideFailed = breakReady = tapeSeen = false;
+            if (debugWing)
             {
-                yield return EnterTunnels();
+                PlaceAt(DepthsLayout.DuctOutlet, DepthsLayout.WingStart);
+                yield return new WaitForSeconds(0.6f);
+                yield return Fade(0f, 1.2f);
+                LockCamera(false);
+                EnterWing();
                 yield break;
             }
             PlaceAt(BasementLayout.PlayerStart, BasementLayout.PlayerStartLook);
@@ -103,18 +107,19 @@ namespace KnocksFromBeneath
             yield return Fade(0f, 1.4f);
             LockCamera(false);
             CurrentStage = Stage.Room;
-            sayQuick?.Invoke(new[] { "Решётка распахнута. Её выбили изнутри.", "Камера всё ещё пишет." }, null);
-            createQuest?.Invoke("Посмотреть запись с камеры", 1, OnTapeQuestDone, TapeQuest);
+            sayQuick?.Invoke(new[] { "Решётка выбита изнутри. Штатив сбит, камера на полу.", "Можно посмотреть, что она успела записать. Или присесть и лезть в трубу." }, null);
+            createQuest?.Invoke("Залезть в вентиляцию", 1, null, VentQuest);
         }
 
-        private bool CanWatchTape() => CurrentStage == Stage.Room && QuestActive(TapeQuest);
+        // Запись необязательна: решётка открыта, в трубу можно лезть сразу. Смотреть её можно, пока игрок в подвале.
+        private bool CanWatchTape() => CurrentStage == Stage.Room;
 
         private void WatchTape()
         {
             if (CanWatchTape()) StartCoroutine(WatchTapeRoutine());
         }
 
-        // Плёнка идёт прямо в подвале: монстр выбирается из той самой трубы, у которой стоит игрок.
+        // Плёнка идёт прямо в подвале: монстр выбирается из той самой трубы, у которой лежит камера.
         private IEnumerator WatchTapeRoutine()
         {
             CurrentStage = Stage.Descending;
@@ -122,7 +127,9 @@ namespace KnocksFromBeneath
             yield return PlayVentTape();
             LockCamera(false);
             CurrentStage = Stage.Room;
-            if (QuestActive(TapeQuest)) QuestManager.Instance.AddProgress(1);
+            if (tapeSeen) yield break;
+            tapeSeen = true;
+            sayQuick?.Invoke(new[] { "Он вылез отсюда. Увидел объектив — и ударил.", "Он знал, что его снимают. И он идёт за тем, кто поставил камеру." }, null);
         }
 
         private IEnumerator PlayVentTape()
@@ -134,95 +141,49 @@ namespace KnocksFromBeneath
                 Timeline = VentTape.Timeline,
                 Doors = new[] { tapeGrille },
                 Lights = VentTape.BuildLights,
+                ViewShift = VentTape.ViewShift,
                 Hidden = gear != null ? gear.GearRenderers() : new Renderer[0]
             });
             yield return TapeReel.Play(recording, transform);
             Destroy(recording.gameObject);
         }
 
-        private void OnTapeQuestDone()
-        {
-            depths.tapeCamera.gameObject.SetActive(false);
-            createQuest?.Invoke("Залезть в вентиляцию", 1, null, VentQuest);
-            sayQuick?.Invoke(new[] { "Оно живёт не в подвале, а за этой решёткой.", "Труба шире плеч. Пролезу. И стучат оттуда." }, null);
-        }
-
         private void OpenVent()
         {
             depths.OpenGrille();
-            depths.vent.Initialize(() => CurrentStage == Stage.Room && QuestActive(VentQuest),
-                () => StartCoroutine(EnterDuct()), () => "Залезть в трубу");
-            depths.ductExit.Initialize(() => CurrentStage == Stage.Duct && QuestActive(DuctQuest),
-                () => StartCoroutine(EnterTunnels()), () => "Спуститься вниз");
+            depths.vent.gameObject.SetActive(false); // решётка выбита: проём свободен, игрок сам лезет в него присев
         }
 
-        // Труба: только на корточках, высота не даёт встать (PlayerController сам держит присед под потолком).
-        private IEnumerator EnterDuct()
+        // Труба: только на корточках, PlayerController сам держит присед под низкой крышей. Из неё можно вернуться в подвал.
+        private void EnterDuct()
         {
-            CurrentStage = Stage.Descending;
-            LockCamera(true);
-            yield return Fade(1f, 0.8f);
-            PlayEffect("Audio/Horror/impactPlank_medium_000", 0.5f, 0.7f);
-            depths.SetDuctActive(true);
-            var body = player.GetComponent<CharacterController>();
-            if (body != null) body.height = controller != null ? controller.crouchingHeight : 1f;
-            PlaceAt(DepthsLayout.DuctStart + Vector3.up * 0.05f, new Vector3(DepthsLayout.DuctPath[1].x, 0f, DepthsLayout.DuctPath[1].y));
-            controller?.CrouchDown();
-            if (inventory != null && inventory.hasFlashlight && inventory.flashlightLightSource != null)
-                inventory.flashlightLightSource.enabled = true;
-            if (QuestActive(VentQuest)) QuestManager.Instance.AddProgress(1);
-            knockSource.transform.position = DepthsLayout.DuctEnd;
-            yield return new WaitForSeconds(0.5f);
-            yield return Fade(0f, 1f);
-            LockCamera(false);
             CurrentStage = Stage.Duct;
-            sayQuick?.Invoke(new[] { "Вентиляция шириной с человека. Зачем такая дому?", "Жесть гудит под коленями. Стук впереди." }, null);
-            createQuest?.Invoke("Ползти по трубе", 1, null, DuctQuest);
-            if (knocking == null) knocking = StartCoroutine(KnockRoutine());
-        }
-
-        private IEnumerator EnterTunnels()
-        {
-            CurrentStage = Stage.Descending;
-            LockCamera(true);
-            yield return Fade(1f, 0.8f);
-            depths.SetDuctActive(false);
-            depths.SetTunnelsActive(true);
-            PlaceAt(DepthsLayout.DropPoint + Vector3.up * 0.1f, new Vector3(DepthsLayout.Route[0].x, 0f, DepthsLayout.Route[0].y));
+            depths.SetDuctActive(true);
+            knockSource.transform.position = DepthsLayout.DuctEnd;
             if (inventory != null && inventory.hasFlashlight && inventory.flashlightLightSource != null)
                 inventory.flashlightLightSource.enabled = true;
-            if (QuestActive(DuctQuest)) QuestManager.Instance.AddProgress(1);
-            yield return new WaitForSeconds(0.6f);
-            yield return Fade(0f, 1.2f);
-            LockCamera(false);
-            tunnelPoint = 0;
-            CurrentStage = Stage.Tunnels;
-            sayQuick?.Invoke(new[] { "Этого нет ни на одном плане.", "Труба идёт вдоль стены. По ней стучат. Там, дальше." }, null);
-            createQuest?.Invoke("Идти на стук", 1, null, TunnelQuest);
+            if (QuestActive(VentQuest))
+            {
+                QuestManager.Instance.AddProgress(1);
+                sayQuick?.Invoke(new[] { "Ну и вонь. Гниль, сырость, будто здесь что-то сдохло.", "Жесть сгнила, прогибается под коленями. Стук впереди." }, null);
+                createQuest?.Invoke("Ползти по трубе", 1, null, DuctQuest);
+            }
             if (knocking == null) knocking = StartCoroutine(KnockRoutine());
         }
 
-        private bool CanClimbOut() => CurrentStage == Stage.Tunnels && QuestActive(TunnelQuest);
-
-        private void ClimbOut()
+        private void LeaveDuct()
         {
-            if (CanClimbOut()) StartCoroutine(EnterWing());
+            CurrentStage = Stage.Room;
+            depths.SetDuctActive(false);
         }
 
-        // Тоннели кончились: лестница выводит за замурованную стену, в ту половину подвала, которой «не было».
-        private IEnumerator EnterWing()
+        // Труба кончилась: герой вылез за забетонированной стеной, в ту половину подвала, которой «не было».
+        private void EnterWing()
         {
-            CurrentStage = Stage.Descending;
-            LockCamera(true);
-            yield return Fade(1f, 0.8f);
-            depths.SetTunnelsActive(false);
+            depths.SetDuctActive(false);
             SpawnMonster();
-            PlaceAt(DepthsLayout.WingStart, DepthsLayout.WingStartLook);
             knockSource.transform.position = PipeInCell();
-            if (QuestActive(TunnelQuest)) QuestManager.Instance.AddProgress(1);
-            yield return new WaitForSeconds(0.7f);
-            yield return Fade(0f, 1.4f);
-            LockCamera(false);
+            if (QuestActive(DuctQuest)) QuestManager.Instance.AddProgress(1);
             CurrentStage = Stage.Explore;
             sayQuick?.Invoke(new[] { "За этой стеной подвал, из которого я ушёл. Вот вторая половина.", "Он ходит здесь. Присесть и идти медленно, тогда он не услышит." }, null);
             createQuest?.Invoke("Найти того, кто стучал", 1, () => createQuest("Добраться до камеры", 1, OnReached, ReachQuest), FindQuest);
@@ -252,10 +213,16 @@ namespace KnocksFromBeneath
         private void Update()
         {
             if (player == null) return;
-            if (CurrentStage == Stage.Tunnels) { TickTunnels(); return; }
-            if (CurrentStage != Stage.Explore) return;
             Vector3 p = player.position;
             var at = new Vector2(p.x, p.z);
+            if (CurrentStage == Stage.Room && p.y < -2f && DepthsLayout.InDuct(at)) { EnterDuct(); return; }
+            if (CurrentStage == Stage.Duct)
+            {
+                if (BasementLayout.HallB.Contains(at)) EnterWing();
+                else if (!DepthsLayout.InDuct(at)) LeaveDuct();
+                return;
+            }
+            if (CurrentStage != Stage.Explore) return;
             bool inHall = BasementLayout.HallB.Contains(at, 0.6f) && p.y < -2f;
             if (!hallSeen && inHall)
             {
@@ -275,20 +242,6 @@ namespace KnocksFromBeneath
         private void LateUpdate()
         {
             TickHide();
-        }
-
-        // Реплики по дороге и стук, который всё время идёт на шаг впереди игрока.
-        private void TickTunnels()
-        {
-            if (tunnelPoint >= DepthsLayout.Route.Length) return;
-            Vector2 at = new Vector2(player.position.x, player.position.z);
-            if ((at - DepthsLayout.Route[tunnelPoint]).sqrMagnitude > 9f) return;
-            tunnelPoint++;
-            if (tunnelPoint == 2) sayQuick?.Invoke(new[] { "Я уже не под домом. Где-то под улицей." }, null);
-            else if (tunnelPoint == 3) sayQuick?.Invoke(new[] { "Насосы. Кто-то всё это строил, а потом залил бетоном и забыл." }, null);
-            else if (tunnelPoint == 6) sayQuick?.Invoke(new[] { "Поворачивает назад, к дому." }, null);
-            Vector2 next = DepthsLayout.Route[Mathf.Min(tunnelPoint, DepthsLayout.Route.Length - 1)];
-            knockSource.transform.position = new Vector3(next.x, DepthsLayout.CeilingY - 0.3f, next.y);
         }
 
         private static bool QuestActive(string tag) => QuestManager.Instance != null && QuestManager.Instance.IsQuestActive(tag);
@@ -658,7 +611,7 @@ namespace KnocksFromBeneath
             yield return new WaitForSeconds(2f);
             while (CurrentStage != Stage.Finale && CurrentStage != Stage.Done)
             {
-                if ((CurrentStage == Stage.Tunnels || CurrentStage == Stage.Duct || (CurrentStage == Stage.Explore && stalker != null &&
+                if ((CurrentStage == Stage.Duct || (CurrentStage == Stage.Explore && stalker != null &&
                     stalker.Brain.CurrentMode != BasementStalkerBrain.Mode.Investigate)) && !NarrativeReadingPanel.WorldHalted)
                 {
                     knockSource.PlayOneShot(clip, 0.9f);
@@ -737,6 +690,7 @@ namespace KnocksFromBeneath
 
         private void OnDestroy()
         {
+            if (controller != null) controller.ForceCrouch = false;
             ExitHideSpot();
             if (stalker != null) stalker.Caught -= OnCaught;
         }
@@ -775,9 +729,13 @@ namespace KnocksFromBeneath
             depths = BasementDepths.Get();
             tapeGrille = new TapeDoor(depths.grillePivot, BasementDepths.GrilleSwing, VentTape.GrilleOpen); // на месте — до записи
             OpenVent();
-            depths.tapeCamera.gameObject.SetActive(true);
-            depths.tapeCamera.Initialize(CanWatchTape, WatchTape, () => "Посмотреть запись");
-            depths.ladder.Initialize(CanClimbOut, ClimbOut, () => "Подняться по лестнице");
+            // Камера лежит на полу, сбитая вместе со штативом, и сама служит «пультом» записи; если снаряжения нет (отладка) — точка.
+            CameraPlacementController gear = CameraPlacementController.Instance;
+            if (gear == null || !gear.KnockOverAsPlayer(DepthsLayout.Vent, BasementLayout.FloorY, CanWatchTape, WatchTape, () => "Посмотреть запись"))
+            {
+                depths.tapeCamera.gameObject.SetActive(true);
+                depths.tapeCamera.Initialize(CanWatchTape, WatchTape, () => "Посмотреть запись");
+            }
         }
 
         private void SpawnMonster()

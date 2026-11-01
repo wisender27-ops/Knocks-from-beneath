@@ -40,6 +40,17 @@ namespace KnocksFromBeneath
         public float Walk;     // 0 — стоит, 1 — идёт (вес клипа шага)
         public float Distance; // пройденный путь, м — фаза шага без скольжения ступней
         public float Look;     // доворот головы в объектив, 0..1
+        public float Crawl;    // 1 — ползёт на четвереньках (вес клипа ползания, перебивает шаг и стойку)
+        public float Strike;   // 1 — бьёт (вес клипа удара поверх остального)
+        public float StrikeTime; // секунд от начала удара
+    }
+
+    // Сдвиг самой камеры от записи: удар по камере и падение (см. VentTape).
+    public readonly struct TapeViewShift
+    {
+        public readonly Vector3 Position; // мировой сдвиг точки объектива
+        public readonly Vector3 Euler;    // поворот поверх взгляда камеры (локальные углы)
+        public TapeViewShift(Vector3 position, Vector3 euler) { Position = position; Euler = euler; }
     }
 
     public readonly struct TapeShot
@@ -54,11 +65,13 @@ namespace KnocksFromBeneath
         public readonly float Time;
         public readonly Vector3 Position;
         public readonly bool Stairs;
-        public TapeKey(float time, float x, float y, float z, bool stairs = false)
+        public readonly bool Crawl; // в этой точке фигура на четвереньках; между ключами вес плавно меняется
+        public TapeKey(float time, float x, float y, float z, bool stairs = false, bool crawl = false)
         {
             Time = time;
             Position = new Vector3(x, y, z);
             Stairs = stairs;
+            Crawl = crawl;
         }
     }
 
@@ -75,8 +88,18 @@ namespace KnocksFromBeneath
         private readonly TapeEvent[] events;
         private readonly float lookIn, lookFull, lookHold, lookOut;
 
+        private float strikeStart = float.PositiveInfinity;
+        private const float StrikeBlend = 0.2f;
+
         public float Duration { get; }
         public IReadOnlyList<TapeEvent> SoundEvents => events;
+
+        // Удар: с этого момента клип удара берёт тело фигуры (и держит позу до конца плёнки).
+        public TapeTimeline WithStrike(float start)
+        {
+            strikeStart = start;
+            return this;
+        }
         public float FirstSighting => walks[0][0].Time;
 
         // scripted — звуки вне путей фигуры; голова в объектив — окно lookIn…lookOut.
@@ -122,6 +145,8 @@ namespace KnocksFromBeneath
                         float k = (next - dist[i - 1]) / span;
                         float time = Mathf.Lerp(keys[i - 1].Time, keys[i].Time, k);
                         Vector3 at = Vector3.Lerp(keys[i - 1].Position, keys[i].Position, k);
+                        // Ползёт — шагов нет, шорох отдельными событиями.
+                        if (keys[i - 1].Crawl && keys[i].Crawl) { next += StepLength; continue; }
                         bool stairs = keys[i].Stairs;
                         list.Add(new TapeEvent(time, stairs ? TapeSound.StepStairs : TapeSound.StepWood, at, stairs ? 0.75f : 0.6f));
                         next += stairs ? StepLength * 0.55f : StepLength;
@@ -194,6 +219,9 @@ namespace KnocksFromBeneath
                 float speed = ahead.magnitude / 0.6f;
                 pose.Walk = Mathf.Clamp01(speed / 0.45f);
                 pose.Look = Window(time, lookIn, lookFull, lookHold, lookOut);
+                pose.Crawl = CrawlWeight(w, time);
+                pose.Strike = Smooth(Mathf.Clamp01((time - strikeStart) / StrikeBlend));
+                pose.StrikeTime = Mathf.Max(0f, time - strikeStart);
                 return pose;
             }
             return pose;
@@ -213,6 +241,19 @@ namespace KnocksFromBeneath
             }
             distance = dist[dist.Length - 1];
             return keys[keys.Length - 1].Position;
+        }
+
+        private float CrawlWeight(int walk, float time)
+        {
+            TapeKey[] keys = walks[walk];
+            if (time <= keys[0].Time) return keys[0].Crawl ? 1f : 0f;
+            for (int i = 1; i < keys.Length; i++)
+            {
+                if (time > keys[i].Time) continue;
+                float from = keys[i - 1].Crawl ? 1f : 0f, to = keys[i].Crawl ? 1f : 0f;
+                return Mathf.Lerp(from, to, Smooth(Mathf.InverseLerp(keys[i - 1].Time, keys[i].Time, time)));
+            }
+            return keys[keys.Length - 1].Crawl ? 1f : 0f;
         }
 
         // Стоя смотрит туда же, куда шёл; в самом начале — туда, куда пойдёт.

@@ -49,7 +49,7 @@ public static class MonsterPeekClipBuilder
     }
 
     // Стойка (база всех ключей) — в мышцах: в ней монстр стоит ровно, чуть сутулясь, руки висят.
-    private static readonly Dictionary<string, float> Stand = new Dictionary<string, float>
+    internal static readonly Dictionary<string, float> Stand = new Dictionary<string, float>
     {
         { "Spine Front-Back", 0.1f }, { "Chest Front-Back", 0.1f }, { "UpperChest Front-Back", 0.1f },
         { "Neck Nod Down-Up", 0.1f },
@@ -202,7 +202,7 @@ public static class MonsterPeekClipBuilder
 
     // Двухзвенный IK руки (плечо — локоть — кисть): локоть сгибается так, чтобы кисть пришла в target,
     // плоскость сгиба — как в текущей позе.
-    private static void Reach(Animator animator, bool left, Vector3 target)
+    internal static void Reach(Animator animator, bool left, Vector3 target)
     {
         Transform upper = animator.GetBoneTransform(left ? HumanBodyBones.LeftUpperArm : HumanBodyBones.RightUpperArm);
         Transform lower = animator.GetBoneTransform(left ? HumanBodyBones.LeftLowerArm : HumanBodyBones.RightLowerArm);

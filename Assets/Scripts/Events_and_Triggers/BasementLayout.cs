@@ -192,13 +192,13 @@ namespace KnocksFromBeneath
             C(ClutterKind.Barrel, -36.4f, 107.7f, 0.6f, 0.9f, 0.6f, 20f),
             C(ClutterKind.Planks, -32.75f, 109.9f, 0.8f, 0.4f, 1.2f, 12f),
             C(ClutterKind.Rubble, -36.4f, 113.4f, 0.7f, 0.5f, 0.9f, 30f),
-            C(ClutterKind.Mattress, -34.7f, 118.0f, 1.8f, 0.25f, 0.8f, -8f),
             // Переход C
             C(ClutterKind.Bucket, -37.9f, 110.75f, 0.35f, 0.35f, 0.35f),
             // Блок D
             C(ClutterKind.Shelf, -43.6f, 111.6f, 2.4f, 1.9f, 0.5f),
             C(ClutterKind.Barrel, -45.25f, 111.4f, 0.6f, 0.9f, 0.6f), C(ClutterKind.Barrel, -45.2f, 110.65f, 0.6f, 0.9f, 0.6f, 40f),
             C(ClutterKind.Crate, -39.3f, 109.85f, 0.9f, 0.9f, 0.9f, 8f),
+            C(ClutterKind.Mattress, -40.8f, 111.5f, 1.8f, 0.25f, 0.8f, -8f),
             // Ящики у ниш прикрывают их с одной стороны
             C(ClutterKind.Crate, -43.0f, 108.0f, 0.6f, 1.0f, 0.6f, 6f), C(ClutterKind.Crate, -40.7f, 107.95f, 0.6f, 1.1f, 0.5f, -4f),
             // В нишах и в камере
@@ -238,7 +238,6 @@ namespace KnocksFromBeneath
             new Prop { Center = new Vector3(-34.0f, FloorY + 1.425f, 110.6f), Size = new Vector3(0.6f, 2.85f, 0.6f) },
             new Prop { Center = new Vector3(-34.0f, FloorY + 1.425f, 114.2f), Size = new Vector3(0.6f, 2.85f, 0.6f) },
             new Prop { Center = new Vector3(-33.0f, FloorY + 0.5f, 107.4f), Size = new Vector3(1.2f, 1.0f, 1.2f) },
-            new Prop { Center = new Vector3(-36.2f, FloorY + 0.4f, 117.9f), Size = new Vector3(1.4f, 0.8f, 1.0f) },
             new Prop { Center = new Vector3(-33.0f, FloorY + 1.4f, 117.6f), Size = new Vector3(1.1f, 1.8f, 1.1f), Cylinder = true }
         };
 

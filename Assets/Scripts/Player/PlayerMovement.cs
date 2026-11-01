@@ -51,6 +51,8 @@ public class PlayerController : MonoBehaviour
     private bool crouchToggled; // присед включается/выключается нажатием Ctrl, а не удержанием
 
     public bool isCameraLocked = false;
+    // Тесное место (вентиляционная труба): присед держится, Shift и Ctrl его не снимают.
+    public bool ForceCrouch { get; set; }
 
     public Vector3 PlanarVelocity => controller != null && controller.enabled
         ? Vector3.ProjectOnPlane(controller.velocity, Vector3.up) : Vector3.zero;
@@ -183,6 +185,7 @@ public class PlayerController : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.LeftControl)) crouchToggled = !crouchToggled;
         // Побежать из приседа — значит встать.
         if (crouchToggled && shiftHeld && isMoving) crouchToggled = false;
+        if (ForceCrouch) crouchToggled = true;
         bool ceilingBlocksStandUp = !crouchToggled && isCrouching && IsCeilingBlocking();
         bool wantsToCrouch = crouchToggled || ceilingBlocksStandUp;
         if (currentStamina <= 0f) isExhausted = true;
@@ -251,10 +254,15 @@ public class PlayerController : MonoBehaviour
     private bool IsCeilingBlocking()
     {
         float checkRadius = controller.radius * 0.6f;
+        // Всё пространство между макушкой в приседе и в полный рост, а не одна сфера у макушки:
+        // низкая крыша трубы (1.15 м) проходит ниже сферы, и герой «вставал» сквозь неё и проваливался под пол.
+        float lowY = transform.position.y + crouchingHeight - checkRadius;
         float headY = transform.position.y + standingHeight - checkRadius;
+        Vector3 lowCheckPos = new Vector3(transform.position.x, lowY, transform.position.z);
         Vector3 headCheckPos = new Vector3(transform.position.x, headY, transform.position.z);
 
-        int overlapCount = Physics.OverlapSphereNonAlloc(
+        int overlapCount = Physics.OverlapCapsuleNonAlloc(
+            lowCheckPos,
             headCheckPos,
             checkRadius,
             ceilingOverlaps,

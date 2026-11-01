@@ -340,6 +340,27 @@ namespace KnocksFromBeneath
             if (cameraObject != null) cameraObject.tag = "Untagged";
         }
 
+        // Ночь 2, подвал: штатив с камерой сбит и лежит на полу (так кончается запись), а сам он становится «пультом»
+        // записи — луч на камеру или штатив даёт подсказку действия, а не «Взять». Возвращает false, если снаряжения нет.
+        public bool KnockOverAsPlayer(Vector3 knockedFrom, float floorY, Func<bool> can, Action play, Func<string> label)
+        {
+            if (tripod == null || tripodBody == null) return false;
+            FixInPlace();
+            Vector3 away = tripod.transform.position - knockedFrom;
+            away.y = 0f;
+            away = away.sqrMagnitude > 0.01f ? away.normalized : Vector3.forward;
+            Vector3 pivot = tripod.transform.position;
+            tripod.transform.RotateAround(pivot, Vector3.Cross(Vector3.up, away), 90f);
+            tripod.transform.position += Vector3.up * (floorY + 0.02f - ObjectBounds(tripod).min.y);
+            tripodBody.position = tripod.transform.position;
+            tripodBody.rotation = tripod.transform.rotation;
+            Physics.SyncTransforms();
+            var player = tripod.GetComponent<BasementCellLock>();
+            if (player == null) player = tripod.AddComponent<BasementCellLock>();
+            player.Initialize(can, play, label);
+            return true;
+        }
+
         public Renderer[] GearRenderers() =>
             tripod != null ? tripod.GetComponentsInChildren<Renderer>(true) : Array.Empty<Renderer>();
 

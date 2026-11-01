@@ -12,3 +12,9 @@ See Assets/PipeWorksPack/READ_ME.txt.
 
 Other meshes and textures reused from the existing House assets.
 Basement geometry assembled in the Unity Editor; no gameplay scripts added.
+
+Duct textures — ambientCG (Metal021, Metal024, Planks023A, 1K-JPG)
+https://ambientcg.com — License: CC0 1.0 (public domain). Used: Assets/Basement/Duct/Textures.
+
+Duct sounds — BigSoundBank, Joseph SARDIN (sounds #1382 Drops metal pan, #3598 Ventilation, #0322 Small metal grinding)
+https://bigsoundbank.com — License: CC0 (public domain). Used: Assets/Basement/Duct/Audio.

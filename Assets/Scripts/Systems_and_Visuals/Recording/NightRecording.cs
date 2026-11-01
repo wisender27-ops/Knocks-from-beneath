@@ -35,6 +35,7 @@ namespace KnocksFromBeneath
         public System.Func<Transform, Light[]> Lights;
         public System.Func<float, float> OutsideLevel;
         public Renderer[] Hidden;
+        public System.Func<float, TapeViewShift> ViewShift; // камеру бьют и роняют: сдвиг объектива по времени плёнки
     }
 
     // C-02: ночная запись — живая сцена в движке. Своя камера стоит в объективе видеокамеры на штативе и рисует
@@ -62,8 +63,12 @@ namespace KnocksFromBeneath
         private Vector3 faceLocal = Vector3.forward;
         private PlayableGraph graph;
         private AnimationMixerPlayable mixer;
-        private AnimationClipPlayable walkPlayable, standPlayable;
-        private float walkSecondsPerMeter;
+        private AnimationClipPlayable walkPlayable, standPlayable, crawlPlayable, strikePlayable;
+        private bool hasCrawl, hasStrike;
+        private float walkSecondsPerMeter, crawlSecondsPerMeter;
+        // Клипы монстра для плёнки подвала (Editor/MonsterTapeClipBuilder): ползание по трубе и удар по камере.
+        private const string CrawlClipPath = "Monster/MonsterCrawl", StrikeClipPath = "Monster/MonsterStrike";
+        public const float CrawlStride = 0.9f; // метров за один цикл ползания (клип)
         private bool figureVisible;
 
         private TapeDoor[] doors;
@@ -236,7 +241,7 @@ namespace KnocksFromBeneath
             graph = PlayableGraph.Create("Night Recording Figure");
             graph.SetTimeUpdateMode(DirectorUpdateMode.Manual);
             var output = AnimationPlayableOutput.Create(graph, "Body", animator);
-            mixer = AnimationMixerPlayable.Create(graph, 2);
+            mixer = AnimationMixerPlayable.Create(graph, 4);
             output.SetSourcePlayable(mixer);
             walkPlayable = AnimationClipPlayable.Create(graph, walk);
             standPlayable = AnimationClipPlayable.Create(graph, stand);
@@ -244,6 +249,21 @@ namespace KnocksFromBeneath
             standPlayable.SetApplyFootIK(true);
             mixer.ConnectInput(0, walkPlayable, 0, 0f);
             mixer.ConnectInput(1, standPlayable, 0, 1f);
+            var crawl = Resources.Load<AnimationClip>(CrawlClipPath);
+            if (crawl != null)
+            {
+                crawlPlayable = AnimationClipPlayable.Create(graph, crawl);
+                mixer.ConnectInput(2, crawlPlayable, 0, 0f);
+                crawlSecondsPerMeter = crawl.length / CrawlStride;
+                hasCrawl = true;
+            }
+            var strike = Resources.Load<AnimationClip>(StrikeClipPath);
+            if (strike != null)
+            {
+                strikePlayable = AnimationClipPlayable.Create(graph, strike);
+                mixer.ConnectInput(3, strikePlayable, 0, 0f);
+                hasStrike = true;
+            }
             graph.Play();
         }
 
@@ -413,7 +433,9 @@ namespace KnocksFromBeneath
         private void FollowView()
         {
             if (view == null || tapeCamera == null) return;
-            tapeCamera.transform.SetPositionAndRotation(view.position, view.rotation);
+            if (setup.ViewShift == null) { tapeCamera.transform.SetPositionAndRotation(view.position, view.rotation); return; }
+            TapeViewShift shift = setup.ViewShift(Time);
+            tapeCamera.transform.SetPositionAndRotation(view.position + shift.Position, view.rotation * Quaternion.Euler(shift.Euler));
         }
 
         private void Pose()
@@ -433,8 +455,21 @@ namespace KnocksFromBeneath
             if (!graph.IsValid()) return;
             walkPlayable.SetTime(pose.Distance * walkSecondsPerMeter);
             standPlayable.SetTime(Time);
-            mixer.SetInputWeight(0, pose.Walk);
-            mixer.SetInputWeight(1, 1f - pose.Walk);
+            // Ползание перебивает шаг и стойку, удар — всё остальное (поверх любой позы, плавно по StrikeBlend).
+            float crawl = hasCrawl ? pose.Crawl : 0f, strike = hasStrike ? pose.Strike : 0f;
+            float rest = 1f - strike;
+            mixer.SetInputWeight(0, pose.Walk * (1f - crawl) * rest);
+            mixer.SetInputWeight(1, (1f - pose.Walk) * (1f - crawl) * rest);
+            if (hasCrawl)
+            {
+                crawlPlayable.SetTime(pose.Distance * crawlSecondsPerMeter);
+                mixer.SetInputWeight(2, crawl * rest);
+            }
+            if (hasStrike)
+            {
+                strikePlayable.SetTime(pose.StrikeTime);
+                mixer.SetInputWeight(3, strike);
+            }
             graph.Evaluate(0f);
             if (tapeCamera != null)
                 CornerStalkerRig.AimHead(chest, neck, head, faceLocal, tapeCamera.transform.position, pose.Look, LookShares, 150f, 0f);
