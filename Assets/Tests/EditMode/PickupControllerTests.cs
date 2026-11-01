@@ -41,8 +41,10 @@ public class PickupControllerTests
         Object.DestroyImmediate(_playerGo);
     }
 
+    // U-03: предмет в руках кинематический (ставится от камеры каждый кадр), без родителя;
+    // отпустил — снова обычная физика.
     [Test]
-    public void LargeObject_IsCarriedWithoutParentingOrKinematics()
+    public void LargeObject_IsCarriedKinematicWithoutParenting()
     {
         _itemGo.AddComponent<BoxCollider>();
         _itemGo.transform.SetPositionAndRotation(new Vector3(2f, 1f, 3f), Quaternion.Euler(20f, 65f, 10f));
@@ -51,7 +53,103 @@ public class PickupControllerTests
         Assert.That(_pickup.TryGrab(_itemGo), Is.True);
         Assert.That(_pickup.IsHeldObjectTwoHanded, Is.True);
         Assert.That(_itemGo.transform.parent, Is.Null);
+        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.True);
+        _pickup.Release();
         Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.False);
+    }
+
+    private void Follow(float deltaTime)
+    {
+        _pickup.GetType().GetMethod("FollowCarryPose",
+            System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic)
+            .Invoke(_pickup, new object[] { deltaTime });
+    }
+
+    private void TurnView(float yaw)
+    {
+        Quaternion rotation = Quaternion.Euler(0f, yaw, 0f);
+        _cameraGo.transform.rotation = rotation;
+        _holdPointGo.transform.rotation = rotation;
+    }
+
+    // Передняя грань мешка (по глубине камеры) должна оставаться за ближней плоскостью.
+    private float FrontFaceDepth(BoxCollider box)
+    {
+        Transform view = _cameraGo.transform;
+        float nearest = float.PositiveInfinity;
+        for (int x = -1; x <= 1; x += 2)
+        for (int y = -1; y <= 1; y += 2)
+        for (int z = -1; z <= 1; z += 2)
+        {
+            Vector3 corner = _itemGo.transform.TransformPoint(box.center + Vector3.Scale(box.size * .5f, new Vector3(x, y, z)));
+            nearest = Mathf.Min(nearest, view.InverseTransformPoint(corner).z);
+        }
+        return nearest;
+    }
+
+    private BoxCollider GrabTrashSizedBag()
+    {
+        var box = _itemGo.AddComponent<BoxCollider>();
+        box.size = new Vector3(.63f, .86f, .69f);
+        _itemGo.GetComponent<Rigidbody>().mass = 3f;
+        _itemGo.transform.position = new Vector3(0f, -1f, 1f);
+        Physics.SyncTransforms();
+        Assert.That(_pickup.TryGrab(_itemGo), Is.True);
+        Assert.That(_pickup.IsHeldObjectTwoHanded, Is.True);
+        return box;
+    }
+
+    // Регресс U-03: при резком развороте мешок догонял цель по прямой — через голову.
+    [Test]
+    public void CarriedBag_FastTurn_StaysInFrontOfCamera()
+    {
+        BoxCollider box = GrabTrashSizedBag();
+        float near = _pickup.playerCamera.nearClipPlane;
+        for (int i = 0; i < 60; i++) Follow(.016f);
+        Assert.That(FrontFaceDepth(box), Is.GreaterThan(near));
+        for (int step = 1; step <= 6; step++)
+        {
+            TurnView(step * 30f); // 180° за 6 кадров
+            Follow(.016f);
+            Assert.That(FrontFaceDepth(box), Is.GreaterThan(near), $"кадр {step}: мешок зашёл за ближнюю плоскость");
+        }
+    }
+
+    // Регресс U-03: на ходу мешок отставал от камеры и влезал в неё.
+    [Test]
+    public void CarriedBag_RunningForward_DoesNotLagIntoCamera()
+    {
+        BoxCollider box = GrabTrashSizedBag();
+        float near = _pickup.playerCamera.nearClipPlane;
+        for (int i = 0; i < 60; i++) Follow(.016f);
+        for (int i = 0; i < 60; i++)
+        {
+            Vector3 step = Vector3.forward * (6f * .016f);
+            _cameraGo.transform.position += step;
+            _holdPointGo.transform.position += step;
+            Follow(.016f);
+            Assert.That(FrontFaceDepth(box), Is.GreaterThan(near), $"кадр {i}: мешок отстал и влез в камеру");
+        }
+    }
+
+    // Регресс U-03: впереди стена — цель подтягивается к игроку, но не в саму камеру.
+    [Test]
+    public void CarriedBag_WallInFront_IsNotPulledThroughCamera()
+    {
+        var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        try
+        {
+            wall.transform.position = new Vector3(0f, 0f, .45f);
+            wall.transform.localScale = new Vector3(4f, 4f, .1f);
+            BoxCollider box = GrabTrashSizedBag();
+            Physics.SyncTransforms();
+            for (int i = 0; i < 60; i++) Follow(.016f);
+            Assert.That(FrontFaceDepth(box), Is.GreaterThan(_pickup.playerCamera.nearClipPlane));
+        }
+        finally
+        {
+            Object.DestroyImmediate(wall);
+        }
     }
 
     [Test]
@@ -121,11 +219,12 @@ public class PickupControllerTests
         var collider = _itemGo.AddComponent<BoxCollider>();
         Assert.That(_pickup.TryGrab(_itemGo), Is.True);
         Assert.That(_itemGo.transform.parent, Is.Null);
-        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.False);
+        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.True);
         // Коллайдеры переносимого предмета выключены, чтобы он не цеплялся за стены.
         Assert.That(collider.enabled, Is.False);
         _pickup.Release();
         Assert.That(collider.enabled, Is.True);
+        Assert.That(_itemGo.GetComponent<Rigidbody>().isKinematic, Is.False);
     }
 
     [Test]

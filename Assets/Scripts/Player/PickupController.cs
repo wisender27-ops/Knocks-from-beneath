@@ -6,6 +6,10 @@ namespace KnocksFromBeneath
 // Физический захват/перенос/бросок предметов игроком. Выделен из PlayerInteraction
 // (T-07): PlayerInteraction остаётся тонким диспетчером рейкаста, вся физика
 // удержания предмета в руках — здесь.
+//
+// U-03: поза предмета ставится в LateUpdate ПОСЛЕ PlayerMovement (10000: поворот, шаг,
+// высота камеры) и ДО ProtagonistBody (10020: руки по IK к предмету).
+[DefaultExecutionOrder(10005)]
 public class PickupController : MonoBehaviour
 {
     [Header("Ссылки")]
@@ -86,6 +90,14 @@ public class PickupController : MonoBehaviour
     private bool[] _kitchenColliderStates;
     private Collider[] _carryColliders;
     private bool[] _carryColliderStates;
+    // Поза предмета в руках в координатах камеры (U-03).
+    private Vector3 _carryViewCenter;
+    private Quaternion _carryViewRotation = Quaternion.identity;
+    private bool _carryViewReady;
+    private Vector3 _carryVelocity, _lastCarryPosition;
+    // Запас между передней гранью предмета и ближней плоскостью камеры.
+    private const float CarryFaceClearance = .08f;
+    private const float MaxReleaseSpeed = 6f;
 
     void Start()
     {
@@ -156,10 +168,13 @@ public class PickupController : MonoBehaviour
     // кадр: как только квест стартует, места появятся сами.
     void FixedUpdate()
     {
-        if (_heldObj != null && _heldObjRb != null && holdPoint != null)
-            MovePhysicsObject();
-
         RefreshQuestPlacementIfNeeded();
+    }
+
+    void LateUpdate()
+    {
+        if (_heldObj != null && _heldObjRb != null && holdPoint != null && _heldPieView == null)
+            FollowCarryPose(Time.deltaTime);
     }
 
     /// <summary>
@@ -318,9 +333,6 @@ public class PickupController : MonoBehaviour
         _heldKitchenItem = _heldItemScript != null && _heldItemScript.placementQuestTag == "room-decoration";
         if (_heldKitchenItem)
         {
-            _heldObjRb.linearVelocity = Vector3.zero;
-            _heldObjRb.angularVelocity = Vector3.zero;
-            _heldObjRb.isKinematic = true;
             _kitchenColliders = obj.GetComponentsInChildren<Collider>(true);
             _kitchenColliderStates = new bool[_kitchenColliders.Length];
             for (int i = 0; i < _kitchenColliders.Length; i++)
@@ -367,7 +379,21 @@ public class PickupController : MonoBehaviour
         if (heldLayer >= 0)
             _heldObj.layer = heldLayer;
 
-        _heldObjRb.interpolation = RigidbodyInterpolation.Interpolate;
+        if (_heldPieView != null)
+            _heldObjRb.interpolation = RigidbodyInterpolation.Interpolate;
+        else
+        {
+            // U-03: раньше предмет догонял точку удержания скоростью в FixedUpdate. На бегу он
+            // отставал на 0.2–0.3 м (а мешок висит в ~0.3 м от камеры), при резком повороте летел
+            // к цели по прямой — через голову. Теперь он кинематический и ставится каждый кадр
+            // от камеры (FollowCarryPose); коллайдеры у него и так выключены на время переноса.
+            _heldObjRb.linearVelocity = Vector3.zero;
+            _heldObjRb.angularVelocity = Vector3.zero;
+            _heldObjRb.isKinematic = true;
+            _heldObjRb.interpolation = RigidbodyInterpolation.None;
+        }
+        _carryViewReady = false;
+        _carryVelocity = Vector3.zero;
         _heldObjRb.useGravity = false;
         _heldObjRb.linearDamping = heldRigidbodyDamping;
         _heldObjRb.angularDamping = heldRigidbodyDamping;
@@ -596,6 +622,7 @@ public class PickupController : MonoBehaviour
         {
             _heldObj.transform.SetParent(null);
             RestoreHeldRigidbody(_heldObjRb, true);
+            ApplyCarryVelocity(_heldObjRb);
         }
         if (_heldObjRb != null && playerCamera != null)
             _heldObjRb.AddForce(playerCamera.transform.forward * dropForwardImpulse, ForceMode.Impulse);
@@ -643,6 +670,8 @@ public class PickupController : MonoBehaviour
         _heldItemScript = null;
         _heldPieView = null;
         _heldRotationOffset = Quaternion.identity;
+        _carryViewReady = false;
+        _carryVelocity = Vector3.zero;
     }
 
     // Вызывается, когда держимый объект уничтожили извне (например, пирог
@@ -657,37 +686,81 @@ public class PickupController : MonoBehaviour
         _heldPieView = null;
         _pieColliders = null;
         _pieColliderStates = null;
+        _carryViewReady = false;
     }
 
-    void MovePhysicsObject()
+    /// <summary>
+    /// U-03: поза предмета в руках, раз в кадр, после движения камеры.
+    ///
+    /// Сглаживание идёт в координатах камеры, а не мира: при повороте предмет едет вместе
+    /// с камерой по дуге, а не срезает угол через голову; при ходьбе не отстаёт. Передняя
+    /// грань предмета не подходит к камере ближе ближней плоскости + запас — даже если
+    /// место перед камерой занято стеной и цель подтянута к игроку.
+    /// </summary>
+    private void FollowCarryPose(float deltaTime)
     {
-        if (_heldPieView != null) return;
+        if (deltaTime <= 0f || _heldObj == null) return;
+        Transform item = _heldObj.transform;
         Quaternion desiredRotation = holdPoint.rotation * _heldRotationOffset;
-        Quaternion rotationStep = Quaternion.Slerp(_heldObjRb.rotation, desiredRotation, Time.fixedDeltaTime * followSpeed);
-        // Раньше при препятствии на пути предмет замораживался в «последней безопасной»
-        // мировой позиции: коллайдеры у него выключены, игрок уходил, а коробка висела
-        // в воздухе/в стене, и руки тянулись к ней по IK. Теперь цель всегда считается
-        // от камеры (GetHeldRootTargetPosition сам подтягивает её ближе к игроку).
-        Vector3 targetPos = GetHeldRootTargetPosition(desiredRotation);
-        Vector3 scaledCenter = Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
-        Vector3 currentCenter = _heldObjRb.position + rotationStep * scaledCenter;
-        float clearDepth = playerCamera != null ? Vector3.Dot(currentCenter - playerCamera.transform.position, playerCamera.transform.forward) : float.PositiveInfinity;
-        // Move the item away before turning a long side toward the camera.
-        if (clearDepth < CarryDepth(rotationStep) + .12f) rotationStep = _heldObjRb.rotation;
-        Vector3 desiredCenter = targetPos + desiredRotation * scaledCenter;
-        targetPos = desiredCenter - rotationStep * scaledCenter;
-        if (!CarryPoseClear(desiredCenter, rotationStep)) rotationStep = _heldObjRb.rotation;
-        if (_heldKitchenItem)
+        Vector3 scaledCenter = Vector3.Scale(_carryCenterLocal, item.lossyScale);
+        // Цель всегда считается от камеры (GetHeldRootTargetPosition сам подтягивает её
+        // ближе к игроку, если впереди препятствие).
+        Vector3 desiredCenter = GetHeldRootTargetPosition(desiredRotation) + desiredRotation * scaledCenter;
+        if (playerCamera == null)
         {
-            float t = Mathf.Clamp01(Time.fixedDeltaTime * followSpeed);
-            _heldObjRb.MovePosition(Vector3.Lerp(_heldObjRb.position, targetPos, t));
-            _heldObjRb.MoveRotation(rotationStep);
+            item.SetPositionAndRotation(desiredCenter - desiredRotation * scaledCenter, desiredRotation);
             return;
         }
-        Vector3 direction = targetPos - _heldObjRb.position;
-        _heldObjRb.linearVelocity = direction * followSpeed;
-        _heldObjRb.MoveRotation(rotationStep);
-        if (direction.magnitude > maxHoldDistance) DropObject();
+
+        Transform view = playerCamera.transform;
+        Quaternion toView = Quaternion.Inverse(view.rotation);
+        Vector3 targetLocal = view.InverseTransformPoint(desiredCenter);
+        Quaternion targetLocalRotation = toView * desiredRotation;
+        if (!_carryViewReady)
+        {
+            _carryViewCenter = view.InverseTransformPoint(item.position + item.rotation * scaledCenter);
+            _carryViewRotation = toView * item.rotation;
+            // Скриптовый захват издалека (пирог из микроволновки и т. п.) — сразу в руки.
+            if ((_carryViewCenter - targetLocal).magnitude > maxHoldDistance)
+            {
+                _carryViewCenter = targetLocal;
+                _carryViewRotation = targetLocalRotation;
+            }
+            _lastCarryPosition = item.position;
+            _carryViewReady = true;
+        }
+
+        float k = 1f - Mathf.Exp(-followSpeed * deltaTime);
+        Vector3 nextLocal = Vector3.Lerp(_carryViewCenter, targetLocal, k);
+        Quaternion nextLocalRotation = Quaternion.Slerp(_carryViewRotation, targetLocalRotation, k);
+        // Длинной стороной к камере не разворачиваем, пока предмет не отошёл от лица,
+        // и не крутим его в стену/мебель.
+        if (nextLocal.z < CarryDepth(view.rotation * nextLocalRotation) + .12f ||
+            !CarryPoseClear(view.TransformPoint(nextLocal), view.rotation * nextLocalRotation))
+            nextLocalRotation = _carryViewRotation;
+
+        Quaternion rotation = view.rotation * nextLocalRotation;
+        // Штатив держится ближе нарочно (лестница, проёмы) — его позу не трогаем.
+        if (!_compactCarry)
+            nextLocal.z = Mathf.Max(nextLocal.z, MinCarryViewDepth(rotation));
+
+        _carryViewCenter = nextLocal;
+        _carryViewRotation = nextLocalRotation;
+        Vector3 root = view.TransformPoint(nextLocal) - rotation * scaledCenter;
+        item.SetPositionAndRotation(root, rotation);
+        _carryVelocity = (root - _lastCarryPosition) / deltaTime;
+        _lastCarryPosition = root;
+    }
+
+    /// <summary>Глубина центра предмета, при которой его передняя грань ещё за ближней плоскостью камеры.</summary>
+    private float MinCarryViewDepth(Quaternion rotation) =>
+        CarryDepth(rotation) + (playerCamera != null ? playerCamera.nearClipPlane : 0f) + CarryFaceClearance;
+
+    // Брошенный/уроненный предмет сохраняет скорость, с которой его несли.
+    private void ApplyCarryVelocity(Rigidbody rb)
+    {
+        if (rb == null || rb.isKinematic) return;
+        rb.linearVelocity = Vector3.ClampMagnitude(_carryVelocity, MaxReleaseSpeed);
     }
 
     private float CarryDepth(Quaternion rotation)
@@ -998,6 +1071,7 @@ public class PickupController : MonoBehaviour
         {
             objToThrow.transform.SetParent(null);
             RestoreHeldRigidbody(rbToThrow, true);
+            ApplyCarryVelocity(rbToThrow);
         }
 
         ClearHeldObject();
