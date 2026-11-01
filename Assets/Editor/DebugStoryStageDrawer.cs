@@ -33,7 +33,7 @@ public sealed class DebugStoryStageDrawer : PropertyDrawer
         new Entry(DebugStoryStage.StartGoToBed, "День 1/08 — Лечь спать", "Вечер первого дня перед первой ночью. Без установленной камеры сначала предложит поставить её."),
         new Entry(DebugStoryStage.StartNightOne, "Ночь 1/01 — Пробуждение и сосед", "Первая ночь: стук, сосед и ответный перестук."),
         new Entry(DebugStoryStage.StartDay2Decoration, "День 2/01 — Убрать вещи на кухне", "Утро второго дня: кухонные вещи и улики."),
-        new Entry(DebugStoryStage.PlayNightRecording, "День 2/02 — Плёнка (M2)", "Открывается ночная запись: перемотка, стоп-кадр и улика. Камера подготавливается для проверки плёнки."),
+        new Entry(DebugStoryStage.PlayNightRecording, "День 2/02 — Плёнка (M2)", "Открывается ночная запись: перемотка, стоп-кадр и улика. Кухня убрана, замок люка сорван, лом у героя; после плёнки — поставить камеру в подвале."),
         new Entry(DebugStoryStage.StartDay2Dinner, "День 2/03 — Принести продукты", "Начало подготовки ужина."),
         new Entry(DebugStoryStage.StartDinnerCook, "День 2/04 — Приготовить ужин", "Продукты подготовлены; мини-игра готовки."),
         new Entry(DebugStoryStage.StartDinnerEat, "День 2/05 — Съесть ужин", "Ужин готов и доступен на столе."),

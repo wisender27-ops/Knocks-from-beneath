@@ -589,8 +589,14 @@ public class IntroSequence : MonoBehaviour
                 StoryFlags.SetCameraPlacementSlot(1);
                 _cameraPlacement?.RestoreFromCheckpoint();
                 PrepareMorningTape();
-                _tapeUnlocked = true;
-                _decoration.SetupDecorationQuest();
+                // U-07: по сюжету запись смотрят после уборки кухни и первого спуска в подвал —
+                // замок люка сорван днём, лом у героя. Раньше здесь включалась уборка кухни,
+                // и после плёнки игра требовала пройти её. Теперь после плёнки — камера в подвал.
+                StoryFlags.SetHatchForced(true);
+                FindFirstObjectByType<BasementHatch>()?.RestoreForcedLock();
+                GrantDebugItem("Crowbar");
+                if (crowbarItem != null) crowbarItem.SetActive(false);
+                CreateWatchTapeQuest();
                 StartCoroutine(PlayNightRecordingWhenFree());
                 break;
             case DebugStoryStage.StartDay2Dinner:
@@ -993,12 +999,17 @@ public class IntroSequence : MonoBehaviour
             _dinner.SetupIngredientQuest();
             return;
         }
-        _tapeUnlocked = true;
-        EnsureTapeTarget();
         ShowImportantThoughts(new string[] {
             "Камера всю ночь писала дом.",
             "Подключу её к телевизору в гостиной и посмотрю запись."
-        }, () => CreateQuest("Посмотреть запись на телевизоре в гостиной", 1, SetupBasementCameraQuest, "watch-tape"));
+        }, CreateWatchTapeQuest);
+    }
+
+    void CreateWatchTapeQuest()
+    {
+        _tapeUnlocked = true;
+        EnsureTapeTarget();
+        CreateQuest("Посмотреть запись на телевизоре в гостиной", 1, SetupBasementCameraQuest, "watch-tape");
     }
 
     void SetupBasementCameraQuest()
