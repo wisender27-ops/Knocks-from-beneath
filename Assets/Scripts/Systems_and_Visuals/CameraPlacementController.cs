@@ -34,6 +34,22 @@ namespace KnocksFromBeneath
         private const float SlotReach = 3.5f;
         private const float SlotAimDot = 0.6f;
         private const float SlotAimHeight = 0.7f;
+        // Camcorder space, measured on the prefab mesh: the lens ring is centred at (-0.007, 0.050) and its
+        // glass ends at z = -0.140. The view sits just in front of it so the body never enters the frame.
+        private static readonly Vector3 LensFront = new Vector3(-0.007f, 0.050f, -0.150f);
+        // Recording tally lights: on the body's front face (z = -0.075) right above the lens barrel, and on the
+        // flat back face (z = 0.140), so the player sees it from behind the tripod as well.
+        private static readonly Vector3[] RecordLightSpots =
+        {
+            new Vector3(0.010f, 0.085f, -0.077f),
+            new Vector3(0.005f, 0.095f, 0.142f)
+        };
+        private const float RecordLightSize = 0.012f;
+        private const float RecordBlinkPeriod = 1.2f;
+        private static readonly Color RecordLightColor = new Color(1f, 0.08f, 0.05f, 1f);
+        // Tripod found with the box: stands on the floor next to it, not on a recording place.
+        private const float BesideGap = 0.55f;
+        private static readonly Vector3 TripodClearance = new Vector3(0.42f, 0.6f, 0.42f);
         private static readonly Color GhostColor = new Color(0.45f, 0.9f, 1f, 0.3f);
         private static readonly Color GhostTargetColor = new Color(0.45f, 0.9f, 1f, 0.7f);
 
@@ -54,6 +70,9 @@ namespace KnocksFromBeneath
         private bool cameraStored, tripodStored;
         private GameObject storeGhost;
         private Material storeGhostMaterial;
+        private GameObject recordLight;
+        private Material recordLightMaterial;
+        private bool knockedOver;
 
         public event Action GearFound, GearStored;
 
@@ -105,6 +124,7 @@ namespace KnocksFromBeneath
             if (ghostMaterial != null) Destroy(ghostMaterial);
             if (ghostTargetMaterial != null) Destroy(ghostTargetMaterial);
             HideStoreGhost();
+            if (recordLightMaterial != null) Destroy(recordLightMaterial);
             if (Instance == this) Instance = null;
         }
 
@@ -134,6 +154,7 @@ namespace KnocksFromBeneath
             if (tripod != null && tripodBody != null && !tripodBody.isKinematic &&
                 tripodBody.constraints == RigidbodyConstraints.None)
                 tripodBody.constraints = RigidbodyConstraints.FreezeRotationX | RigidbodyConstraints.FreezeRotationZ;
+            UpdateRecordLight();
 
             if (heldBy == null) return;
             GameObject held = heldBy.GetHeldObject();
@@ -161,7 +182,7 @@ namespace KnocksFromBeneath
             if (item == null || item.currentItemType != CollectableItem.ItemType.Box) return;
             Bounds b = ObjectBounds(box);
             CreateCamera(new Vector3(b.center.x, b.max.y + 0.02f, b.center.z));
-            CreateTripod(0);
+            CreateTripodBeside(b);
             GearFound?.Invoke();
         }
 
@@ -170,7 +191,8 @@ namespace KnocksFromBeneath
         {
             if (cameraObject != null || !Available) return;
             CreateCamera(slots[0].Position + new Vector3(0.7f, 0f, 0f));
-            CreateTripod(0);
+            if (stored) CreateTripod(0);
+            else CreateTripodBeside(ObjectBounds(cameraObject));
             if (!stored) return;
             RestCamera();
             RestTripod();
@@ -296,8 +318,9 @@ namespace KnocksFromBeneath
             cameraObject.SetActive(true);
             recordingView = new GameObject("Recording View").transform;
             recordingView.SetParent(cameraObject.transform, false);
-            recordingView.localPosition = new Vector3(0.007f, 0.066f, -0.077f);
+            recordingView.localPosition = LensFront;
             recordingView.localRotation = Quaternion.Euler(0f, 180f, 0f);
+            CreateRecordLight();
             cameraObject.tag = "Pickable";
             if (cameraObject.GetComponent<PickableItem>() == null)
                 cameraObject.AddComponent<PickableItem>().displayName = "видеокамеру";
@@ -311,6 +334,80 @@ namespace KnocksFromBeneath
             SnapBottom(cameraObject, bottom);
             QuestItemMarker.Ensure(cameraObject).ConfigureCondition(() =>
                 !cameraMounted && (MountActive || (StoreActive && !cameraStored)));
+        }
+
+        // Маленький красный огонёк «запись»: заглушка-примитив, мигает, только пока камера пишет.
+        private void CreateRecordLight()
+        {
+            Shader shader = Shader.Find("Sprites/Default");
+            if (recordLightMaterial == null && shader != null) recordLightMaterial = new Material(shader) { color = RecordLightColor };
+            recordLight = new GameObject("Record Light");
+            recordLight.SetActive(false);
+            recordLight.transform.SetParent(cameraObject.transform, false);
+            foreach (Vector3 spot in RecordLightSpots)
+            {
+                GameObject dot = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+                dot.name = "Record Light Dot";
+                DestroyImmediate(dot.GetComponent<Collider>());
+                dot.transform.SetParent(recordLight.transform, false);
+                dot.transform.localPosition = spot;
+                dot.transform.localScale = Vector3.one * RecordLightSize;
+                var renderer = dot.GetComponent<MeshRenderer>();
+                renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                renderer.receiveShadows = false;
+                if (recordLightMaterial != null) renderer.sharedMaterial = recordLightMaterial;
+            }
+        }
+
+        private void UpdateRecordLight()
+        {
+            if (recordLight == null) return;
+            bool on = IsPlaced && !knockedOver && Mathf.Repeat(Time.time, RecordBlinkPeriod) < RecordBlinkPeriod * 0.65f;
+            if (recordLight.activeSelf != on) recordLight.SetActive(on);
+        }
+
+        // Штатив лежал в той же коробке: ставим его на пол рядом с ней, а не на место съёмки.
+        private void CreateTripodBeside(Bounds near)
+        {
+            CreateTripod(0);
+            if (TryFindSpotBeside(near, out SlotPose pose)) StandTripod(pose);
+        }
+
+        private bool TryFindSpotBeside(Bounds near, out SlotPose pose)
+        {
+            pose = default;
+            float reach = Mathf.Max(near.extents.x, near.extents.z) + BesideGap;
+            Vector3 from = new Vector3(near.center.x, near.min.y + 0.3f, near.center.z);
+            for (int i = 0; i < 8; i++)
+            {
+                float angle = i * 45f;
+                Vector3 dir = Quaternion.Euler(0f, angle, 0f) * Vector3.forward;
+                // Не за стеной: от коробки до места свободно.
+                if (Physics.Raycast(from, dir, reach + TripodClearance.x, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore))
+                    continue;
+                Vector3 spot = from + dir * reach;
+                if (!Physics.Raycast(spot + Vector3.up * 1f, Vector3.down, out RaycastHit floor, 2f,
+                        PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore) ||
+                    Mathf.Abs(floor.point.y - near.min.y) > 0.2f) continue;
+                Vector3 room = new Vector3(spot.x, floor.point.y + TripodClearance.y + 0.05f, spot.z);
+                if (Physics.CheckBox(room, TripodClearance, Quaternion.identity, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore))
+                    continue;
+                pose = new SlotPose(new Vector3(spot.x, floor.point.y, spot.z), angle + 180f);
+                return true;
+            }
+            return false;
+        }
+
+        private void StandTripod(SlotPose pose)
+        {
+            tripodBody.isKinematic = true;
+            tripodBody.useGravity = false;
+            tripodBody.interpolation = RigidbodyInterpolation.None;
+            PoseAt(tripod, pose);
+            tripodBody.position = tripod.transform.position;
+            tripodBody.rotation = tripod.transform.rotation;
+            tripodSlot = -1;
+            Physics.SyncTransforms();
         }
 
         private void CreateTripod(int slot)
@@ -346,6 +443,7 @@ namespace KnocksFromBeneath
         {
             if (tripod == null || tripodBody == null) return false;
             FixInPlace();
+            knockedOver = true; // запись кончилась — огонёк гаснет
             Vector3 away = tripod.transform.position - knockedFrom;
             away.y = 0f;
             away = away.sqrMagnitude > 0.01f ? away.normalized : Vector3.forward;

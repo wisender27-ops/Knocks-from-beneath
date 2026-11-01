@@ -38,6 +38,9 @@ namespace KnocksFromBeneath
         private Action onSkip;
         private CanvasGroup group;
         private RectTransform fill;
+        private UiKeyHints hints;
+        private Image track;
+        private bool? shownHolding;
         private float clock, brightUntil = AppearDelay + BrightSeconds, shownProgress;
 
         public static CutsceneSkipPrompt Create(Action onSkip)
@@ -74,10 +77,9 @@ namespace KnocksFromBeneath
             var fitter = panel.gameObject.AddComponent<ContentSizeFitter>();
             fitter.horizontalFit = fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
-            UiKeyHints hints = UiKeyHints.Create(panel, "Hint", null);
-            hints.Set("ПРОБЕЛ", "Удерживать, чтобы пропустить");
+            hints = UiKeyHints.Create(panel, "Hint", null, .85f);
 
-            var track = new GameObject("Track", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
+            track = new GameObject("Track", typeof(RectTransform), typeof(Image)).GetComponent<Image>();
             track.transform.SetParent(panel, false);
             track.color = new Color(UiStyle.Ivory.r, UiStyle.Ivory.g, UiStyle.Ivory.b, .25f);
             track.raycastTarget = false;
@@ -91,6 +93,16 @@ namespace KnocksFromBeneath
             fill.anchorMin = Vector2.zero;
             fill.anchorMax = new Vector2(0f, 1f);
             fill.offsetMin = fill.offsetMax = Vector2.zero;
+            ShowHolding(false);
+        }
+
+        // В покое — одна клавиша; пока пробел зажат — пояснение и шкала удержания.
+        private void ShowHolding(bool holding)
+        {
+            if (holding == shownHolding) return;
+            shownHolding = holding;
+            hints.Set("ПРОБЕЛ", holding ? "Удерживать, чтобы пропустить" : "");
+            track.gameObject.SetActive(holding);
         }
 
         private void Update()
@@ -119,6 +131,7 @@ namespace KnocksFromBeneath
 
         private void ShowProgress()
         {
+            ShowHolding(hold.Progress > 0f);
             if (Mathf.Approximately(shownProgress, hold.Progress)) return;
             shownProgress = hold.Progress;
             fill.anchorMax = new Vector2(shownProgress, 1f);

@@ -39,7 +39,7 @@ namespace KnocksFromBeneath
 
         public RectTransform RectTransform => (RectTransform)transform;
 
-        // Пары «клавиша, действие». Пустая клавиша — только текст.
+        // Пары «клавиша, действие». Пустая клавиша — только текст, пустое действие — только клавиша.
         public void Set(params string[] pairs)
         {
             string next = pairs == null ? string.Empty : string.Join("|", pairs);
@@ -56,6 +56,7 @@ namespace KnocksFromBeneath
                 keys[i].text = key?.ToUpperInvariant();
                 keys[i].transform.parent.gameObject.SetActive(!string.IsNullOrEmpty(key));
                 labels[i].text = pairs[i * 2 + 1]?.ToUpperInvariant();
+                labels[i].gameObject.SetActive(!string.IsNullOrEmpty(labels[i].text));
             }
         }
 
