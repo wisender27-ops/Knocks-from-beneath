@@ -304,6 +304,8 @@ public class IntroSequence : MonoBehaviour
             skySwitcher != null && skySwitcher.isDayTime && (knockController == null || !knockController.activeInHierarchy));
         _cornerPeek = gameObject.AddComponent<CornerPeekSequence>();
         _cornerPeek.Initialize(this, playerInventory, knockController, frontDoor);
+        gameObject.AddComponent<DiegeticDeadline>().Initialize(
+            holeEventController != null ? holeEventController.basementHatch : null, playerInventory, _phoneFlashlight, playerTransform);
         SetupBreakerPanel();
         _hintClues = FindObjectsByType<InspectableClue>(FindObjectsSortMode.None);
         gameObject.AddComponent<KnockHints>().Initialize(playerTransform, responder,
@@ -643,7 +645,6 @@ public class IntroSequence : MonoBehaviour
                 GrantDebugItem("Crowbar");
                 GrantDebugItem("Hammer");
                 FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
-                MonsterTimer.Instance?.StartTimer();
                 SetupBoardBasementQuest();
                 break;
             case DebugStoryStage.StartBreakerPanel:
@@ -664,8 +665,6 @@ public class IntroSequence : MonoBehaviour
                 GrantDebugItem("Flashlight");
                 GrantDebugItem("Crowbar");
                 FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
-                if (MonsterTimer.Instance != null)
-                    MonsterTimer.Instance.StartTimer();
                 _branchEnding.Activate();
                 if (startStage == DebugStoryStage.StartHidingSpots) TeleportPlayerToHammer();
                 break;
@@ -675,8 +674,6 @@ public class IntroSequence : MonoBehaviour
                 GrantDebugItem("Hammer");
                 if (hammerItem != null) hammerItem.SetActive(false); // молоток уже взят — второй раз прятки не начнутся
                 FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
-                MonsterTimer.Instance?.StartTimer();
-                MonsterTimer.Instance?.PauseTimer(); // ReturnToHatchAfterHiding продолжит его, как после пряток
                 ReturnToHatchAfterHiding();
                 break;
             case DebugStoryStage.StartHatchChoice:
@@ -689,8 +686,6 @@ public class IntroSequence : MonoBehaviour
                 GrantDebugItem("Hammer");
                 if (hammerItem != null) hammerItem.SetActive(false);
                 FindFirstObjectByType<BasementHatch>()?.DebugUnlock();
-                MonsterTimer.Instance?.StartTimer();
-                MonsterTimer.Instance?.PauseTimer();
                 ReturnToHatchAfterHiding();
                 TeleportPlayerToHatch();
                 break;
@@ -1663,13 +1658,9 @@ public class IntroSequence : MonoBehaviour
     // =====================================================================
 
     // --- 8. Завершить событие в дыры ---
-    // Таймер запускается ПОСЛЕ монолога (в момент, когда реально открывается развилка), а
-    // не до него: раньше StartTimer() вызывался прямо тут и все ~16 сек монолога (4 реплики,
-    // typingSpeed 0.05 / displayDuration 2.5) утекали из отведённых 30 сек до того, как
-    // игрок вообще получал контроль — на решение оставалось ~14 сек, ещё и с тикающей
-    // надписью таймера поверх непропускаемого текста. Монолог сохранён целиком, тревога
-    // тоже никуда не делась (сама сцена достаточно жуткая), а честные 30 секунд на выбор
-    // игрок теперь получает именно тогда, когда видит развилку и может действовать.
+    // Дедлайн здесь не запускается (P-04): он относится только к люку и идёт с квеста
+    // «Заколотить люк» после пряток (SetupBoardBasementQuest). Раньше 30 с тратились и на
+    // поиск молотка, и герой мог выйти из-под кровати с уже истёкшим временем — E2 без предупреждения.
     public void OnHoleEventFinished()
     {
         _cornerPeek?.Retire();
@@ -1678,12 +1669,7 @@ public class IntroSequence : MonoBehaviour
             "Нет. Я не стану опять от него бежать.",
             "Заколочу люк. И всё. Больше не вылезет.",
             "Нужен молоток."
-        }, () =>
-        {
-            if (MonsterTimer.Instance != null)
-                MonsterTimer.Instance.StartTimer();
-            _branchEnding.Activate();
-        });
+        }, () => _branchEnding.Activate());
     }
 
     // --- Старый EscapeDoorTrigger (всегда выключен): тот же исход, что выход на дорогу (E4). ---
@@ -1747,7 +1733,6 @@ public class IntroSequence : MonoBehaviour
     public void OnHammerPickedUp()
     {
         if (_branchEnding.IsResolved) return;
-        MonsterTimer.Instance?.PauseTimer();
         _hideEnding.ActivateZones();
         _hidingScene.BeginScene();
         CreateQuest("Спрятаться под кровать", 1, questTag: "hide-bed");
@@ -1777,7 +1762,7 @@ public class IntroSequence : MonoBehaviour
     {
         if (finaleTrigger != null) finaleTrigger.SetActive(true);
         CreateQuest("Заколотить люк подвала", 1, questTag: "board-basement");
-        MonsterTimer.Instance?.ResumeTimer();
+        MonsterTimer.Instance?.StartTimer();
     }
 
     public bool CanBoardBasement(BasementHatch hatch)

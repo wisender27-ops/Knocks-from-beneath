@@ -23,8 +23,15 @@ public class MonsterTimer : MonoBehaviour
 
     private bool _isRunning = false;
     private bool _paused;
+    private float _remaining;
+
+    public event System.Action Stopped;
 
     public bool IsRunning => _isRunning;
+    public float Remaining => _isRunning ? _remaining : 0f;
+    // Невидимая шкала P-04: 0 — только начался, 1 — вышло время. Подача — DiegeticDeadline.
+    public float Progress => _isRunning && timerDuration > 0f ? Mathf.Clamp01(1f - _remaining / timerDuration) : 0f;
+    public bool IsTicking => _isRunning && !_paused && !NarrativeReadingPanel.IsModal && !MinigameWindow.IsAnyOpen;
 
     void Awake()
     {
@@ -46,6 +53,8 @@ public class MonsterTimer : MonoBehaviour
     {
         if (_isRunning) return;
         _paused = false;
+        _remaining = timerDuration;
+        _isRunning = true;
         StartCoroutine(TimerRoutine());
     }
 
@@ -58,16 +67,15 @@ public class MonsterTimer : MonoBehaviour
         StopAllCoroutines();
         _isRunning = false;
         _paused = false;
+        Stopped?.Invoke();
     }
 
     IEnumerator TimerRoutine()
     {
-        // Чтение обязательной реплики может приостановить отсчёт.
-        _isRunning = true;
-        float remaining = timerDuration;
-        while (remaining > 0)
+        // Чтение обязательной реплики или окно выбора приостанавливают отсчёт.
+        while (_remaining > 0)
         {
-            if (!_paused && !NarrativeReadingPanel.IsModal) remaining -= Time.deltaTime;
+            if (IsTicking) _remaining -= Time.deltaTime;
             yield return null;
         }
         _isRunning = false;

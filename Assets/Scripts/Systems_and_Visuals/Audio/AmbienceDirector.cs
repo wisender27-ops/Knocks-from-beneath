@@ -30,7 +30,7 @@ public sealed class AmbienceDirector : MonoBehaviour
     Transform listener;
     BasementHatch hatch;
     float basementTopY = float.NegativeInfinity;
-    float nextCheck, nextCreak, nextThunder, nextDog, silenceUntil, nextHeartbeat;
+    float nextCheck, nextCreak, nextThunder, nextDog, silenceUntil, hushUntil, nextHeartbeat;
     bool nightTwo, powerOut, inside, wasScare;
     int lastCreak = -1;
     readonly RaycastHit[] hits = new RaycastHit[4];
@@ -73,6 +73,15 @@ public sealed class AmbienceDirector : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
+    // P-04: фон обрывается сразу, а не плавно — последние секунды дедлайна.
+    public void Hush(float seconds)
+    {
+        hushUntil = silenceUntil = Time.time + seconds;
+        drone.source.volume *= .1f;
+        night.source.volume *= .15f;
+        room.source.volume *= .15f;
+    }
+
     void HandleNightTwo() => nightTwo = true;
     void HandleDay() { nightTwo = false; powerOut = false; }
 
@@ -106,12 +115,13 @@ public sealed class AmbienceDirector : MonoBehaviour
         if (Time.time >= nextCheck) { nextCheck = Time.time + CheckInterval; Sense(); }
         bool isDay = sky == null || sky.isDayTime;
         bool silent = Time.time < silenceUntil;
+        bool hushed = Time.time < hushUntil;
 
         // Птицы только на улице: в доме их не слышно (решение автора).
         day.target = isDay && !inside ? 1f : 0f;
         // Ночной уличный фон — тоже только на улице: снапшот «внутри» глушил его недостаточно (решение автора).
-        night.target = !isDay && !inside ? 1f : 0f;
-        room.target = inside && !ListenerInBasement ? (powerOut ? .45f : 1f) : 0f;
+        night.target = !isDay && !inside && !hushed ? 1f : 0f;
+        room.target = inside && !ListenerInBasement && !hushed ? (powerOut ? .45f : 1f) : 0f;
         basement.target = ListenerInBasement ? 1f : 0f;
 
         AudioClip wantDrone = ListenerInBasement ? GameSounds.Library?.droneBasement
@@ -120,7 +130,7 @@ public sealed class AmbienceDirector : MonoBehaviour
 
         Fade(day); Fade(night); Fade(room); Fade(basement); Fade(drone);
         UpdateScareLayers();
-        if (!isDay && !ListenerInBasement) OneShots();
+        if (!isDay && !ListenerInBasement && !hushed) OneShots();
     }
 
     void UpdateDrone(AudioClip want, bool silent)

@@ -98,6 +98,7 @@ namespace KnocksFromBeneath
             !PlayerInteraction.IsLockSequencePlaying;
 
         public bool IsDead => !state.Available;
+        public Light Beam => beam;
 
         public bool CanShowControlHint => isActiveAndEnabled && !IsDead && GameplayAvailable && playerCamera != null &&
             (pickup == null || pickup.GetHeldObject() == null);
