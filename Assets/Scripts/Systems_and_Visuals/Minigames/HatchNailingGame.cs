@@ -15,7 +15,9 @@ namespace KnocksFromBeneath
         private const float NailLength = 0.2f;   // крупный «костыль»: в PSX-разрешении тонкий гвоздь не виден
         private const float NailInset = 0.8f;    // от центра доски к краю, м
         private const float ZoomFactor = 0.6f;
-        private const float AimYaw = 24f, AimPitch = 16f;   // конус прицела вокруг доски, градусы
+        private const float AimYaw = 24f, AimPitch = 16f;   // минимальный конус прицела вокруг доски, градусы
+        private const float AimMargin = 5f;                  // запас сверх самого дальнего гвоздя, градусы
+        private const float AimMaxYaw = 70f, AimMaxPitch = 55f;
         private const float StrikeSeconds = 0.16f;
 
         public static HatchNailingGame Active { get; private set; }
@@ -33,7 +35,7 @@ namespace KnocksFromBeneath
         private Transform[] planks = new Transform[0];
         private Quaternion hammerRest, baseAim;
         private Camera camComponent;
-        private float baseFov, aimYaw, aimPitch, sensitivity, shake, shakeTime, windup = -1f, strikeTime = -1f;
+        private float baseFov, aimYaw, aimPitch, aimYawLimit = AimYaw, aimPitchLimit = AimPitch, sensitivity, shake, shakeTime, windup = -1f, strikeTime = -1f;
         private float flicker, lampIntensity;
         private bool invertY, warned, released; // released — всё забито: прицел убран, взгляд отпущен
         private Vector3 focus;
@@ -56,8 +58,8 @@ namespace KnocksFromBeneath
         {
             if (cam == null) return;
             Vector3 local = (Quaternion.Inverse(baseAim) * Quaternion.LookRotation(world - cam.position)).eulerAngles;
-            aimPitch = Mathf.Clamp(Mathf.DeltaAngle(0f, local.x), -AimPitch, AimPitch);
-            aimYaw = Mathf.Clamp(Mathf.DeltaAngle(0f, local.y), -AimYaw, AimYaw);
+            aimPitch = Mathf.Clamp(Mathf.DeltaAngle(0f, local.x), -aimPitchLimit, aimPitchLimit);
+            aimYaw = Mathf.Clamp(Mathf.DeltaAngle(0f, local.y), -aimYawLimit, aimYawLimit);
         }
 
         public Vector3 NailHead(int nail)
@@ -166,8 +168,8 @@ namespace KnocksFromBeneath
         private void HandleInput(float dt)
         {
             float mouseY = Input.GetAxis("Mouse Y") * sensitivity * (invertY ? -1f : 1f);
-            aimYaw = Mathf.Clamp(aimYaw + Input.GetAxis("Mouse X") * sensitivity, -AimYaw, AimYaw);
-            aimPitch = Mathf.Clamp(aimPitch - mouseY, -AimPitch, AimPitch);
+            aimYaw = Mathf.Clamp(aimYaw + Input.GetAxis("Mouse X") * sensitivity, -aimYawLimit, aimYawLimit);
+            aimPitch = Mathf.Clamp(aimPitch - mouseY, -aimPitchLimit, aimPitchLimit);
 
             bool held = Input.GetMouseButton(0) || Input.GetKey(KeyCode.Space);
             if (strikeTime < 0f && windup < 0f && (Input.GetMouseButtonDown(0) || Input.GetKeyDown(KeyCode.Space)))
@@ -335,6 +337,7 @@ namespace KnocksFromBeneath
             }
             Logic.OpenNails(Mathf.Min(NailBoarding.NailCount, index * 2 + 2));
             UpdateNails();
+            FitAimLimits();
             for (float t = 0f; t < 0.25f; t += Time.deltaTime)
             {
                 UpdateView(Time.deltaTime);
@@ -343,6 +346,26 @@ namespace KnocksFromBeneath
         }
 
         private Quaternion FocusRotation() => Quaternion.LookRotation(focus - cam.position);
+
+        // Конус прицела зависит от того, как близко игрок стоит: у самого люка шляпки двух гвоздей на доске
+        // шире ±24° от центра, и до них было не дотянуться. Охватываем все открытые гвозди с запасом.
+        private void FitAimLimits()
+        {
+            if (cam == null) return;
+            Quaternion inverse = Quaternion.Inverse(FocusRotation());
+            float yaw = AimYaw, pitch = AimPitch;
+            for (int i = 0; i < Logic.Available && i < nails.Length; i++)
+            {
+                if (nails[i] == null || Logic.IsDone(i)) continue;
+                Vector3 toHead = nailTop[i] - cam.position;
+                if (toHead.sqrMagnitude < 0.0001f) continue;
+                Vector3 local = (inverse * Quaternion.LookRotation(toHead)).eulerAngles;
+                yaw = Mathf.Max(yaw, Mathf.Abs(Mathf.DeltaAngle(0f, local.y)) + AimMargin);
+                pitch = Mathf.Max(pitch, Mathf.Abs(Mathf.DeltaAngle(0f, local.x)) + AimMargin);
+            }
+            aimYawLimit = Mathf.Min(yaw, AimMaxYaw);
+            aimPitchLimit = Mathf.Min(pitch, AimMaxPitch);
+        }
 
         // Взгляд = доска + прицел мышью; дрожь рук при долгом замахе и тряска — смещение поверх.
         private void UpdateView(float dt)

@@ -11,7 +11,7 @@ using UnityEngine;
 // Play Mode проверка M-03 («Гвозди» v2: прицел + замах, толчки снизу): NailingPlayProbe.Begin(mode) из
 // Editor-команды, старт — DebugStoryStage.StartFinale. Режимы: "success" — промах по металлу, пауза,
 // толчок выдёргивает недобитый гвоздь, все гвозди → перестук хозяина → E1; "fail" — ничего не делать →
-// доски сорваны → E2; "expired" — дедлайн истёк до люка → без мини-игры, E2; "look" — скриншот прицела.
+// доски сорваны → E2; "expired" — дедлайн истёк до люка → без мини-игры, E2; "look" — скриншот прицела; "close" — как "success", но игрок вплотную к доскам (до шляпок надо дотянуться).
 // Отчёт — .codex/verification/nailing.
 [DefaultExecutionOrder(-100)]
 public sealed class NailingPlayProbe : MonoBehaviour
@@ -32,6 +32,23 @@ public sealed class NailingPlayProbe : MonoBehaviour
     private bool keepPaused, previousAuto;
     private NarrativeReadingPanel panel;
     private Camera view;
+
+    // Старт из Editor-команды до входа в Play Mode: этап прыжка StartFinale выставляется в рантайме до IntroSequence.Start.
+    private const string ArmKey = "kfb.nailing.probe";
+    public static void Arm(string mode) => UnityEditor.SessionState.SetString(ArmKey, mode);
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void Launch()
+    {
+        string armed = UnityEditor.SessionState.GetString(ArmKey, "");
+        if (armed == "") return;
+        UnityEditor.SessionState.EraseString(ArmKey);
+        var sequence = FindFirstObjectByType<IntroSequence>();
+        if (sequence == null) return;
+        sequence.useDebugSkip = true;
+        sequence.startStage = DebugStoryStage.StartFinale;
+        Begin(armed);
+    }
 
     public static void Begin(string mode)
     {
@@ -89,6 +106,13 @@ public sealed class NailingPlayProbe : MonoBehaviour
         Check(GameObject.Find("HatchNailing") != null, "Точка прицела и подсказка на экране");
         Check(timer == null || timer.timerText == null || timer.timerText.text == "", "Текста таймера на экране нет");
         Check(PlankCount() == 1 && Nails().Count == 2, $"Легла одна доска с двумя гвоздями ({PlankCount()}, {Nails().Count})");
+
+        if (mode == "close")
+        {
+            float offAxis = Mathf.Max(Vector3.Angle(view.transform.forward, game.NailHead(0) - view.transform.position),
+                Vector3.Angle(view.transform.forward, game.NailHead(1) - view.transform.position));
+            Check(offAxis > 24f, $"Шляпка дальше прежнего конуса прицела: {offAxis:0.0}° от центра доски");
+        }
 
         if (mode == "look")
         {
@@ -163,6 +187,13 @@ public sealed class NailingPlayProbe : MonoBehaviour
             {
                 yield return Until(() => game.Logic.Available > nail && game.BaseAimSettled, 3f);
                 Check(PlankCount() == 2, "Первая доска забита — легла вторая");
+                if (mode == "close" && game.Logic.Available >= 4)
+                {
+                    yield return Until(() => game.BaseAimSettled, 3f);
+                    float far = Mathf.Max(Vector3.Angle(view.transform.forward, game.NailHead(2) - view.transform.position),
+                        Vector3.Angle(view.transform.forward, game.NailHead(3) - view.transform.position));
+                    Check(far > 24f, $"Вторая доска вплотную: шляпка в {far:0.0}° от центра — за прежним конусом ±24°");
+                }
             }
             yield return Hit(game, nail, 1f);
         }
@@ -232,7 +263,7 @@ public sealed class NailingPlayProbe : MonoBehaviour
 
     private void StandAtHatch()
     {
-        Vector3 spot = hatch.transform.position + new Vector3(0f, 1.5f, 2.4f);
+        Vector3 spot = hatch.transform.position + new Vector3(0f, 1.5f, mode == "close" ? 1.45f : 2.4f);
         if (Physics.Raycast(spot + Vector3.up * 2f, Vector3.down, out RaycastHit ground, 6f,
                 Physics.DefaultRaycastLayers, QueryTriggerInteraction.Ignore))
             spot = ground.point + Vector3.up * 0.1f;

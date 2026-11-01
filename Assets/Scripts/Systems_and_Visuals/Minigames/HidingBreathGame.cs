@@ -940,7 +940,7 @@ namespace KnocksFromBeneath
             var keys = UiKeyHints.Create(promptUi.transform, "Keys", Font());
             keys.RectTransform.anchorMin = keys.RectTransform.anchorMax = keys.RectTransform.pivot = new Vector2(0.5f, 0f);
             keys.RectTransform.anchoredPosition = new Vector2(0f, 110f);
-            keys.Set("E", "ЗАЛЕЗЬ ПОД КРОВАТЬ");
+            keys.Set("E", "ЗАЛЕЗТЬ ПОД КРОВАТЬ");
             promptUi.SetActive(false);
         }
 
