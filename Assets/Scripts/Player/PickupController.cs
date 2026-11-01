@@ -55,6 +55,7 @@ public class PickupController : MonoBehaviour
     private PlayerInteraction _interaction;
     private PlayerController _playerController;
     private readonly RaycastHit[] _carryObstacles = new RaycastHit[16];
+    private readonly RaycastHit[] _placementSightHits = new RaycastHit[16];
 
     private GameObject _heldObj;
     private Rigidbody _heldObjRb;
@@ -441,7 +442,41 @@ public class PickupController : MonoBehaviour
             if (viewport.z <= 0f || viewport.x < 0f || viewport.x > 1f || viewport.y < 0f || viewport.y > 1f)
                 return false;
         }
-        return HasLineOfSight(origin, aimPoint);
+        int heldItemLayer = LayerMask.NameToLayer("HeldItem");
+        int mask = heldItemLayer >= 0 ? ~(1 << heldItemLayer) : ~0;
+        return IsPlacementSpotVisible(origin, aimPoint, PhysicsMasks.WithoutNoRaycast(mask), _placementSightHits);
+    }
+
+    /// <summary>
+    /// Видна ли метка установки из глаз игрока.
+    ///
+    /// U-02: сковорода не вставала на свою метку. Метка лежит на конфорках, а
+    /// BoxCollider плиты — коробка по всему мешу вместе с задней панелью (верх выше
+    /// конфорок на ~9 см). Центр превью оказывался ВНУТРИ этой коробки, луч упирался
+    /// в плиту, и E просто ронял сковороду. Коллайдер, внутри которого лежит сама
+    /// метка, — это опора (плита, кастрюля под крышкой), а не преграда: его не считаем.
+    /// </summary>
+    public static bool IsPlacementSpotVisible(Vector3 from, Vector3 to, int mask, RaycastHit[] buffer)
+    {
+        Vector3 delta = to - from;
+        float dist = delta.magnitude;
+        if (dist <= 0.05f) return true;
+
+        int count = Physics.RaycastNonAlloc(from, delta / dist, buffer, dist - 0.05f, mask, QueryTriggerInteraction.Ignore);
+        for (int i = 0; i < count; i++)
+        {
+            Collider hit = buffer[i].collider;
+            if (hit != null && !ContainsPoint(hit, to)) return false;
+        }
+        return true;
+    }
+
+    // Точная проверка только для выпуклых коллайдеров: у невыпуклого MeshCollider
+    // (стены, комнаты целиком) AABB огромный, и он не должен становиться «прозрачным».
+    static bool ContainsPoint(Collider collider, Vector3 point)
+    {
+        if (collider is MeshCollider mesh && !mesh.convex) return false;
+        return (collider.ClosestPoint(point) - point).sqrMagnitude < 0.000001f;
     }
 
     PlacementZone FindPlacementZoneNearHeldObject()

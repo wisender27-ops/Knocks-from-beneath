@@ -98,6 +98,101 @@ public class RoomDecorationControllerTests
     }
 
     [Test]
+    public void SetupKitchenQuest_ScattersItemsBeforePlayerReachesKitchen()
+    {
+        var controller = CreateController();
+        var zone = _zones[0].AddComponent<PlacementZone>();
+        var slotObject = new GameObject("Slot");
+        slotObject.transform.SetParent(_zones[0].transform, false);
+        var marker = slotObject.AddComponent<FurnitureSlot>();
+        zone.slots = new List<Transform> { slotObject.transform };
+
+        var item = new GameObject("Pan");
+        item.transform.SetParent(_zones[1].transform, false);
+        var pickable = item.AddComponent<PickableItem>();
+        var scattered = new GameObject("Scattered_Pan");
+        scattered.transform.SetParent(_zones[1].transform, false);
+        scattered.transform.position = new Vector3(3f, 0.5f, -2f);
+        pickable.scatteredPose = scattered.transform;
+        marker.ItemForSlot = item;
+
+        try
+        {
+            // Без игрока контроллер сразу уходит в уборку — поэтому проверяем, что разброс
+            // произошёл, а квест «Пойти на кухню» ещё не завершён (только создан).
+            controller.SetupKitchenQuest();
+
+            Assert.That(item.transform.parent, Is.Null);
+            Assert.That(item.transform.position, Is.EqualTo(scattered.transform.position));
+            Assert.That(item.CompareTag("Pickable"), Is.True);
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(item);
+        }
+    }
+
+    [Test]
+    public void ScatterItems_RunsBeforeDecorationQuestAndIsIdempotent()
+    {
+        var controller = CreateController();
+        var zone = _zones[0].AddComponent<PlacementZone>();
+        var slotObject = new GameObject("Slot");
+        slotObject.transform.SetParent(_zones[0].transform, false);
+        var marker = slotObject.AddComponent<FurnitureSlot>();
+        zone.slots = new List<Transform> { slotObject.transform };
+        var item = new GameObject("Mug");
+        var pickable = item.AddComponent<PickableItem>();
+        var scattered = new GameObject("Scattered_Mug");
+        scattered.transform.SetParent(_zones[0].transform, false);
+        scattered.transform.position = new Vector3(1f, 0f, 1f);
+        pickable.scatteredPose = scattered.transform;
+        marker.ItemForSlot = item;
+
+        try
+        {
+            controller.ScatterItems();
+            Assert.That(_recorder.CreatedQuestTags, Is.Empty, "разброс не создаёт квест");
+            Assert.That(item.transform.position, Is.EqualTo(scattered.transform.position));
+
+            // Игрок сдвинул вещь — старт уборки не должен вернуть её на место разброса.
+            item.transform.position = new Vector3(5f, 0f, 5f);
+            controller.SetupDecorationQuest();
+            Assert.That(item.transform.position, Is.EqualTo(new Vector3(5f, 0f, 5f)));
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(item);
+        }
+    }
+
+    [Test]
+    public void PlacementSpot_InsideSupportCollider_IsVisible_ButWallBlocks()
+    {
+        var stove = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        stove.transform.position = Vector3.zero;
+        stove.transform.localScale = new Vector3(0.7f, 1.1f, 0.8f);
+        var wall = GameObject.CreatePrimitive(PrimitiveType.Cube);
+        wall.transform.position = new Vector3(0f, 1f, -1.5f);
+        wall.transform.localScale = new Vector3(3f, 3f, 0.1f);
+        var buffer = new RaycastHit[16];
+        try
+        {
+            Physics.SyncTransforms();
+            Vector3 burner = new Vector3(0f, 0.45f, 0f); // ниже верха коробки плиты (0.55)
+            Assert.That(PickupController.IsPlacementSpotVisible(
+                new Vector3(1.2f, 1.6f, 0f), burner, ~0, buffer), Is.True, "плита под сковородой — опора");
+            Assert.That(PickupController.IsPlacementSpotVisible(
+                new Vector3(0f, 1.2f, -3f), burner, ~0, buffer), Is.False, "стена между игроком и меткой");
+        }
+        finally
+        {
+            UnityEngine.Object.DestroyImmediate(stove);
+            UnityEngine.Object.DestroyImmediate(wall);
+        }
+    }
+
+    [Test]
     public void QuestCompletion_DeactivatesZonesAndChainsToOnDecorationFinished()
     {
         var controller = CreateController();

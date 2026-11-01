@@ -42,6 +42,11 @@ public sealed class RoomDecorationController
     // Утро: сперва герой спускается на кухню и видит погром, и только тогда появляется уборка.
     public void SetupKitchenQuest()
     {
+        // U-02: погром должен уже быть на кухне, когда герой туда спускается. Раньше
+        // вещи переезжали на свои места разброса только в SetupDecorationQuest — то
+        // есть в момент, когда игрок уже стоял на кухне, и он видел, как всё «появилось».
+        // Сейчас герой ещё в спальне на втором этаже — кухни не видно.
+        ScatterItems();
         if (!TryGetKitchenPoint(out Vector3 kitchen) || _player == null || _startCoroutine == null)
         {
             SetupDecorationQuest();
@@ -80,6 +85,13 @@ public sealed class RoomDecorationController
         SetZonesActive(true);
         int amount = _decorationZones != null ? Mathf.Max(1, _decorationZones.Length) : 1;
         _createQuest("Убрать разбросанные вещи на кухне", amount, OnDecorationFinished, "room-decoration");
+        // Повторный вызов — no-op (PrepareForPlacementQuest срабатывает один раз);
+        // нужен для дебаг-стартов, которые идут сюда в обход SetupKitchenQuest.
+        ScatterItems();
+    }
+
+    public void ScatterItems()
+    {
         if (_decorationZones == null) return;
         foreach (GameObject zoneObject in _decorationZones)
         {
