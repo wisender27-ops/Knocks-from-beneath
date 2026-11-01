@@ -47,4 +47,56 @@ namespace KnocksFromBeneath
             return true;
         }
     }
+
+    // Кручение предмета в «Осмотре»: как тянуть его рукой. Влево-вправо — поворот вокруг своей
+    // вертикали, вверх-вниз — наклон к себе/от себя вокруг горизонтали экрана, не дальше MaxPitch.
+    // Крена нет: верх предмета всегда остаётся в вертикальной плоскости экрана. Поворот догоняет
+    // ввод плавно. Камера превью смотрит вдоль +Z, вправо по экрану — +X, вверх — +Y.
+    public sealed class InspectOrbit
+    {
+        public const float MaxPitch = 80f;
+        public const float Sharpness = 16f;   // чем больше, тем быстрее догоняет ввод
+
+        public float TargetYaw { get; private set; }
+        public float TargetPitch { get; private set; }
+        public float Yaw { get; private set; }
+        public float Pitch { get; private set; }
+
+        // dragX/dragY — куда тянут (вправо/вверх положительно), в градусах.
+        public void Drag(float dragX, float dragY)
+        {
+            // Поворот вокруг +Y на положительный угол уводит переднюю грань влево, поэтому знак обратный.
+            TargetYaw -= dragX;
+            TargetPitch = Mathf.Clamp(TargetPitch + dragY, -MaxPitch, MaxPitch);
+            if (TargetYaw > 360f || TargetYaw < -360f)
+            {
+                float wrap = Mathf.Sign(TargetYaw) * 360f;
+                TargetYaw -= wrap;
+                Yaw -= wrap;
+            }
+        }
+
+        public void Step(float deltaTime)
+        {
+            float k = 1f - Mathf.Exp(-Sharpness * Mathf.Max(0f, deltaTime));
+            Yaw = Mathf.Lerp(Yaw, TargetYaw, k);
+            Pitch = Mathf.Lerp(Pitch, TargetPitch, k);
+        }
+
+        // Плавно вернуть в исходный вид коротким путём, без лишних оборотов.
+        public void Reset()
+        {
+            Yaw = Mathf.DeltaAngle(0f, Yaw);
+            TargetYaw = 0f;
+            TargetPitch = 0f;
+        }
+
+        public void Snap()
+        {
+            Yaw = TargetYaw;
+            Pitch = TargetPitch;
+        }
+
+        public Quaternion Rotation => Quaternion.AngleAxis(Pitch, Vector3.right) * Quaternion.AngleAxis(Yaw, Vector3.up);
+    }
 }

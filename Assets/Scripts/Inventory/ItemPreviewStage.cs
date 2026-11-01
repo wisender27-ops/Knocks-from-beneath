@@ -48,6 +48,9 @@ namespace KnocksFromBeneath
             CreateLight(name + "Fill", new Vector3(1f, height + 1f, 1f), new Vector3(48f, 145f, 0f), 0.38f, new Color(0.34f, 0.39f, 0.48f));
         }
 
+        // Исходный ракурс модели в превью: чуть сверху и сбоку.
+        public static readonly Quaternion PresentRotation = Quaternion.Euler(12f, 25f, 0f);
+
         public Vector3 Center => center;
         public bool Visible { set { if (Camera != null) Camera.enabled = value; } }
 
@@ -67,7 +70,7 @@ namespace KnocksFromBeneath
         {
             Model = model;
             model.SetActive(true);
-            model.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(12f, 25f, 0f));
+            model.transform.SetLocalPositionAndRotation(Vector3.zero, PresentRotation);
             SetLayerRecursively(Root.transform, PreviewLayer);
             PrepareMaterials(model, textureOverride);
 
@@ -99,6 +102,11 @@ namespace KnocksFromBeneath
             if (Root == null) return;
             Root.transform.Rotate(Vector3.up, yaw, Space.World);
             Root.transform.Rotate(Vector3.right, pitch, Space.World);
+        }
+
+        public void SetRotation(Quaternion rotation)
+        {
+            if (Root != null) Root.transform.rotation = rotation;
         }
 
         public void SetZoom(float value)

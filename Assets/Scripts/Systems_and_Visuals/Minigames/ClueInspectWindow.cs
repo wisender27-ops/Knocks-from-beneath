@@ -19,6 +19,7 @@ namespace KnocksFromBeneath
         private ItemPreviewStage stage;
         private InspectableClue clue;
         private ClueInspection inspection;
+        private readonly InspectOrbit orbit = new InspectOrbit();
         private Transform detail;
         private TextMeshPro detailLabel;
         private TextMeshProUGUI nameText, statusText;
@@ -62,6 +63,9 @@ namespace KnocksFromBeneath
             openedFrame = Time.frameCount;
             nameText.text = target.DisplayName;
             BuildModel();
+            orbit.Reset();
+            orbit.Snap();
+            stage.SetRotation(orbit.Rotation);
             stage.Visible = true;
             // Курсор не нужен: мышь вращает предмет, как взгляд. Закрытие окна вернёт прежний режим.
             Cursor.lockState = CursorLockMode.Locked;
@@ -102,15 +106,23 @@ namespace KnocksFromBeneath
                 return;
             }
 
-            float yaw = Input.GetAxisRaw("Mouse X") * MouseSpeed;
-            float pitch = -Input.GetAxisRaw("Mouse Y") * MouseSpeed;
-            yaw += ((Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) ? 1f : 0f) -
-                (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) ? 1f : 0f)) * KeySpeed * Time.unscaledDeltaTime;
-            pitch += ((Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow) ? 1f : 0f) -
-                (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow) ? 1f : 0f)) * KeySpeed * Time.unscaledDeltaTime;
-            if (!fresh) stage.Rotate(yaw, pitch);
+            // Мышь и WASD «тянут» предмет: вправо — передняя грань уходит вправо, вверх — вверх.
+            float dt = Time.unscaledDeltaTime;
+            float dragX = Input.GetAxisRaw("Mouse X") * MouseSpeed;
+            float dragY = Input.GetAxisRaw("Mouse Y") * MouseSpeed;
+            dragX += ((Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow) ? 1f : 0f) -
+                (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow) ? 1f : 0f)) * KeySpeed * dt;
+            dragY += ((Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow) ? 1f : 0f) -
+                (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow) ? 1f : 0f)) * KeySpeed * dt;
+            if (!fresh) orbit.Drag(dragX, dragY);
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                orbit.Reset();
+                stage.SetZoom(1f);
+            }
+            orbit.Step(dt);
+            stage.SetRotation(orbit.Rotation);
             stage.SetZoom(Mathf.Clamp(stage.Zoom + Input.mouseScrollDelta.y * 0.12f, MinZoom, MaxZoom));
-            if (Input.GetKeyDown(KeyCode.R)) stage.ResetView();
 
             float facing = ClueInspection.Facing(detail.TransformDirection(Vector3.back), stage.Camera.transform.position - detail.position);
             if (inspection.Step(facing, stage.Zoom, Time.deltaTime))
