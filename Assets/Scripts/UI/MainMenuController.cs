@@ -17,6 +17,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private string gameSceneName = "Main";
     private Canvas runtimeSettingsCanvas;
     private SettingsMenuUI runtimeSettings;
+    private Canvas runtimeGalleryCanvas;
 
     // F-04: «Продолжить», «Выбор главы» и список глав — копии кнопки «Начать игру», чтобы
     // совпадали стиль и вёрстка; сцену меню не трогаем.
@@ -86,6 +87,16 @@ public class MainMenuController : MonoBehaviour
         runtimeSettingsCanvas.gameObject.SetActive(true);
     }
 
+    public void OpenGallery()
+    {
+        if (runtimeGalleryCanvas != null) Destroy(runtimeGalleryCanvas.gameObject);
+        // Корневой канвас: вложенный в канвас меню не получил бы размер экрана, а галерея растягивается на весь экран.
+        runtimeGalleryCanvas = PauseMenuController.CreateCanvas(null, "EndingGalleryCanvas", 200);
+        EndingGallery.Build(runtimeGalleryCanvas.transform, PauseMenuController.FindFont(), ShowMain);
+        if (mainPanel != null) mainPanel.SetActive(false);
+        if (settingsPanel != null) settingsPanel.SetActive(false);
+    }
+
     public void BackFromSettings()
     {
         ShowMain();
@@ -99,6 +110,7 @@ public class MainMenuController : MonoBehaviour
     void ShowMain()
     {
         if (runtimeSettingsCanvas != null) runtimeSettingsCanvas.gameObject.SetActive(false);
+        if (runtimeGalleryCanvas != null) { Destroy(runtimeGalleryCanvas.gameObject); runtimeGalleryCanvas = null; }
         if (mainPanel != null) mainPanel.SetActive(true);
         if (settingsPanel != null) settingsPanel.SetActive(false);
         chaptersOpen = false;
@@ -120,12 +132,14 @@ public class MainMenuController : MonoBehaviour
         }
         GameObject chapters = CloneButton(start, "BtnChapters", "Выбор главы", OpenChapters);
         chapters.transform.SetSiblingIndex(start.GetSiblingIndex() + 1);
+        GameObject gallery = CloneButton(start, "BtnEndings", "Концовки", OpenGallery);
+        gallery.transform.SetSiblingIndex(chapters.transform.GetSiblingIndex() + 1);
 
         foreach (Transform child in mainPanel.transform)
             if (child.name.StartsWith("Btn") && child.GetComponent<Button>() != null) mainButtons.Add(child.gameObject);
 
         // Открытые главы, за ними одна следующая — серая и неактивная, дальше только подсказка.
-        int slot = chapters.transform.GetSiblingIndex() + 1;
+        int slot = gallery.transform.GetSiblingIndex() + 1;
         bool lockedShown = false;
         foreach (ChapterCheckpoints.ChapterInfo info in ChapterCheckpoints.Chapters)
         {
@@ -197,7 +211,8 @@ public class MainMenuController : MonoBehaviour
     void Update()
     {
         if (!Input.GetKeyDown(KeyCode.Escape)) return;
-        if (runtimeSettingsCanvas != null && runtimeSettingsCanvas.gameObject.activeSelf) BackFromSettings();
+        if (runtimeGalleryCanvas != null) ShowMain();
+        else if (runtimeSettingsCanvas != null && runtimeSettingsCanvas.gameObject.activeSelf) BackFromSettings();
         else if (chaptersOpen) ShowMain();
     }
 }

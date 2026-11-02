@@ -45,6 +45,32 @@ public class EndingRegistryTests
     }
 
     [Test]
+    public void Gallery_LockedCardShowsHintOnly_SeenCardShowsTitleAndSummary()
+    {
+        EndingRegistry.EndingInfo info = EndingRegistry.Info(EndingId.Hidden);
+        Assert.That(info.Hint, Is.Not.Empty);
+        Assert.That(info.Summary, Is.Not.Empty);
+
+        Assert.That(EndingGallery.CardTitle(info, false), Is.EqualTo(EndingGallery.LockedTitle));
+        Assert.That(EndingGallery.CardBody(info, false), Is.EqualTo(info.Hint));
+        Assert.That(EndingGallery.CardTitle(info, true), Is.EqualTo("ТЫ ОСТАЛСЯ ЗДЕСЬ"));
+        Assert.That(EndingGallery.CardBody(info, true), Is.EqualTo(info.Summary));
+    }
+
+    [Test]
+    public void Gallery_EveryEndingHasHintAndSummary_CounterFollowsSeen()
+    {
+        foreach (EndingRegistry.EndingInfo info in EndingRegistry.Endings)
+        {
+            Assert.That(info.Hint, Is.Not.Empty, info.Id.ToString());
+            Assert.That(info.Summary, Is.Not.Empty, info.Id.ToString());
+        }
+        Assert.That(EndingGallery.Counter(), Is.EqualTo("ЗАПИСАНО: 0/5"));
+        EndingRegistry.MarkSeen(EndingId.Escaped);
+        Assert.That(EndingGallery.Counter(), Is.EqualTo("ЗАПИСАНО: 1/5"));
+    }
+
+    [Test]
     public void Seen_IsRememberedPerEnding()
     {
         Assert.That(EndingRegistry.SeenCount, Is.EqualTo(0));

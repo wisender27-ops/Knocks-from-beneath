@@ -22,16 +22,32 @@ public static class EndingRegistry
     {
         public readonly EndingId Id;
         public readonly string Title;
-        public EndingInfo(EndingId id, string title) { Id = id; Title = title; }
+        // Hint — намёк на условие без спойлера (закрытая кассета); Summary — итог (открытая).
+        public readonly string Hint;
+        public readonly string Summary;
+        public EndingInfo(EndingId id, string title, string hint = "", string summary = "")
+        {
+            Id = id; Title = title; Hint = hint; Summary = summary;
+        }
     }
 
     public static readonly EndingInfo[] Endings =
     {
-        new EndingInfo(EndingId.Boarded, "Тихо"),
-        new EndingInfo(EndingId.Pushed, "Внизу"),
-        new EndingInfo(EndingId.Hidden, "Ты остался здесь"),
-        new EndingInfo(EndingId.Escaped, "Побег"),
-        new EndingInfo(EndingId.Answer, "Ответ"),
+        new EndingInfo(EndingId.Boarded, "Тихо",
+            "Иногда люк лучше оставить закрытым. Навсегда.",
+            "Дэниел заколотил люк. Снизу кто-то кричал, но стук прекратился."),
+        new EndingInfo(EndingId.Pushed, "Внизу",
+            "Не всё решается у люка. Промедление стоит дорого.",
+            "Гвозди не удержали. Монстр забрал того, кто стоял над люком."),
+        new EndingInfo(EndingId.Hidden, "Ты остался здесь",
+            "Спрятаться — не значит скрыться. Тихий чёрный ход не безопаснее парадного.",
+            "Монстр нашёл Дэниела раньше, чем тот успел уйти."),
+        new EndingInfo(EndingId.Escaped, "Побег",
+            "Дорога ведёт прочь от дома. Не оглядывайся.",
+            "Дэниел уехал. В новой комнате снова послышался стук под полом."),
+        new EndingInfo(EndingId.Answer, "Ответ",
+            "Тому, кто стучит, можно ответить. Не всё надо заколачивать.",
+            "Дэниел спустился и ответил на стук. Теперь стучать приходится ему."),
     };
 
     private const string SeenKey = "kfb.endings.seen";
