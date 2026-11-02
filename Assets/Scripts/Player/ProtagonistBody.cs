@@ -34,9 +34,14 @@ namespace KnocksFromBeneath
         private Vector3 kickTarget, kickStart;
         private float kickTime;
 
+        // Стоя бедро выше замка, и нога не достаёт до него по прямой. Тело видно камере только тенью,
+        // поэтому стоя прощаем запас: недотянувшаяся стопа упирается в предел IK, а замок слетает как обычно.
+        private const float StandingKickSlack = 0.7f;
+
         public bool CanKickLock(Vector3 target) => rightThigh != null && rightShin != null && rightFoot != null &&
             Vector3.Distance(rightThigh.position, target) <
-            (Vector3.Distance(rightThigh.position, rightShin.position) + Vector3.Distance(rightShin.position, rightFoot.position)) * 0.96f;
+            (Vector3.Distance(rightThigh.position, rightShin.position) + Vector3.Distance(rightShin.position, rightFoot.position)) * 0.96f +
+            (player != null && player.IsCrouching ? 0f : StandingKickSlack);
 
         public void BeginLockKick(Vector3 target)
         {

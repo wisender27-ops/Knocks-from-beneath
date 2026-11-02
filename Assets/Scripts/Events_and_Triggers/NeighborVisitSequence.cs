@@ -101,10 +101,19 @@ namespace KnocksFromBeneath
                 if (!running) yield break;
                 QuestManager.Instance?.CreateQuest("Проверить, кто стучит в дверь", 1, questTag: "neighbor-visit");
                 float reminder = 0f;
+                int cornerSide = 0;
+                bool frontDoorTouched = false;
                 while (running && !CanTalk())
                 {
                     if (Playable())
                     {
+                        // Игрок обошёл дом с заднего двора, не трогая главную дверь: сосед выходит ему навстречу.
+                        frontDoorTouched |= frontDoor.isOpen;
+                        if (!frontDoorTouched && (cornerSide = CornerSideOf(player.position)) != 0)
+                        {
+                            yield return CornerEmerge(cornerSide);
+                            break;
+                        }
                         if (!silhouetteActive && !atDoor) StepBackToDoor();
                         // Дойдя от окна до двери, сосед вскоре стучит снова — игрок видит его жест.
                         if (knockSoon) { knockSoon = false; reminder = Mathf.Max(reminder, 12.8f); }
@@ -119,12 +128,22 @@ namespace KnocksFromBeneath
                 }
                 if (!running) yield break;
                 QuestManager.Instance?.RecordQuestCompletion("neighbor-visit");
-                yield return MeetAtDoor();
-                if (!running) yield break;
-                yield return Say("СОСЕД", "Привет. Я из дома напротив. Извини, что так поздно.");
-                yield return Say("СОСЕД", "Увидел, как ты ходишь на первом этаже. Решил зайти познакомиться.");
-                yield return Say("Я", "На первом? Я спал наверху. Только сейчас проснулся.");
-                yield return Say("СОСЕД", "Да? Ну... наверное, показалось. В окне мелькнуло что-то.");
+                if (cornerSide != 0)
+                {
+                    yield return Say("СОСЕД", "Ох... Ты меня напугал. Я уже думал, что-то случилось.");
+                    yield return Say("СОСЕД", "Я из дома напротив. Видел, как ты ходишь по первому этажу, а потом пропал. Стучу, стучу — тишина.");
+                    yield return Say("Я", "Я... вышел подышать. С другой стороны дома.");
+                    yield return Say("СОСЕД", "В такую темень? Ну... главное, что всё в порядке.");
+                }
+                else
+                {
+                    yield return MeetAtDoor();
+                    if (!running) yield break;
+                    yield return Say("СОСЕД", "Привет. Я из дома напротив. Извини, что так поздно.");
+                    yield return Say("СОСЕД", "Увидел, как ты ходишь на первом этаже. Решил зайти познакомиться.");
+                    yield return Say("Я", "На первом? Я спал наверху. Только сейчас проснулся.");
+                    yield return Say("СОСЕД", "Да? Ну... наверное, показалось. В окне мелькнуло что-то.");
+                }
                 // K-05: игрок стучал в пол, пока шёл к двери, и снизу ответили — сосед это слышал.
                 if (StoryFlags.KnockAnswered)
                 {
@@ -140,7 +159,7 @@ namespace KnocksFromBeneath
                 if (!running) yield break;
                 ReleasePlayerView();
                 stayIndoors?.Invoke(true);
-                yield return Leave();
+                yield return Leave(cornerSide != 0 ? CornerDepartureStart : 0);
                 if (!running) yield break;
                 HasVisited = true;
                 AskToReturnToBed();
@@ -386,6 +405,121 @@ namespace KnocksFromBeneath
             if (byHand && !atVisit) knockIK.End();
         }
 
+        // Засада у угла (микропасхалка): игрок вышел через заднюю дверь и идёт вдоль дома к крыльцу.
+        // Стоит ему подойти вплотную к переднему углу, как сосед, потерявший его из виду, мгновенно
+        // выскакивает из-за угла, а камера следит за ним. Координаты — по полу участка: проходы шириной
+        // ~2 м между домом (x −47…−33) и забором; западное крыло дома кончается на z ≈ 119.5, восточное на ≈ 117.
+        private const float WalkwayWestMinX = -50f, WalkwayWestMaxX = -46.8f, WestLaneX = -48f, WestCornerZ = 119.5f;
+        private const float WalkwayEastMinX = -33.2f, WalkwayEastMaxX = -30f, EastLaneX = -32f, EastCornerZ = 117f;
+        private const float HouseFrontSouthZ = 104.7f;
+        private const float CornerTriggerBefore = 1.6f;
+        private const float CornerEmergeSeconds = 0.3f;
+        private const float CornerHideSide = 3f, CornerHideMinZ = 2.5f;
+        // Сосед встаёт в метре от героя, а камера ещё и подаётся к нему: лицом к лицу.
+        private const float CornerStandDistance = 1f, CornerLungeDistance = 0.35f, CornerFovKick = 16f;
+        // С этой точки departurePath ведёт по двору перед домом, минуя крыльцо.
+        private const int CornerDepartureStart = 2;
+
+        // −1 запад, 1 восток, 0 — игрок не у угла.
+        private static int CornerSideOf(Vector3 position)
+        {
+            if (position.y >= 3f || position.z <= HouseFrontSouthZ) return 0;
+            if (position.x > WalkwayWestMinX && position.x < WalkwayWestMaxX && position.z >= WestCornerZ - CornerTriggerBefore) return -1;
+            if (position.x > WalkwayEastMinX && position.x < WalkwayEastMaxX && position.z >= EastCornerZ - CornerTriggerBefore) return 1;
+            return 0;
+        }
+
+        private static Vector3 OnGround(Vector3 point)
+        {
+            if (Physics.Raycast(new Vector3(point.x, 4f, point.z), Vector3.down, out RaycastHit hit, 8f,
+                    PhysicsMasks.AllLayers, QueryTriggerInteraction.Ignore))
+                point.y = hit.point.y;
+            return point;
+        }
+
+        // Сосед вылетает из-за угла за 0.3 с со страшным звуком; игрок теряет управление, камера
+        // успевает за ним, затем он замирает лицом к герою — дальше идёт модальный диалог.
+        private IEnumerator CornerEmerge(int side)
+        {
+            if (neighbor == null) yield break;
+            if (silhouetteActive) EndSilhouette();
+            if (knockIK != null) knockIK.StopNow();
+            steppingBack = false;
+            atDoor = atVisit = true;
+
+            float cornerZ = side < 0 ? WestCornerZ : EastCornerZ;
+            Vector3 stand = OnGround(new Vector3(player.position.x, 0f, player.position.z + CornerStandDistance));
+            Vector3 hidden = OnGround(new Vector3(player.position.x - side * CornerHideSide, 0f, Mathf.Max(stand.z + 1.5f, cornerZ + CornerHideMinZ)));
+            neighbor.transform.SetPositionAndRotation(hidden, Quaternion.LookRotation(Vector3.ProjectOnPlane(stand - hidden, Vector3.up)));
+
+            viewController = player.GetComponent<PlayerController>();
+            if (viewController != null)
+            {
+                viewWasLocked = viewController.isCameraLocked;
+                viewController.StopMotion();
+                viewController.isCameraLocked = true;
+            }
+            Camera view = viewController != null ? viewController.GetComponentInChildren<Camera>() : Camera.main;
+            CharacterController body3d = player.GetComponent<CharacterController>();
+            float baseFov = view != null ? view.fieldOfView : 0f, lunged = 0f;
+            SetWalking(true);
+            AudioSource sting = AudioRouting.Create(neighbor.transform, "Neighbor corner scare", AudioBus.Horror, 0f);
+            sting.clip = Resources.Load<AudioClip>("Audio/NeighborCornerHit");
+            if (sting.clip != null) sting.Play();
+
+            // Камера следит за ним всё появление и ещё немного после: сосед поворачивается к герою.
+            float elapsed = 0f;
+            while (running && neighbor != null && elapsed < CornerEmergeSeconds + 0.5f)
+            {
+                if (Playable())
+                {
+                    elapsed += Time.deltaTime;
+                    Transform body = neighbor.transform;
+                    if (elapsed <= CornerEmergeSeconds)
+                    {
+                        float t = Mathf.SmoothStep(0f, 1f, elapsed / CornerEmergeSeconds);
+                        body.position = Vector3.Lerp(hidden, stand, t);
+                        if (view != null) view.fieldOfView = baseFov + CornerFovKick * Mathf.Sin(Mathf.PI * elapsed / CornerEmergeSeconds * 0.5f);
+                        if (body3d != null && body3d.enabled)
+                        {
+                            float step = CornerLungeDistance * t - lunged;
+                            lunged += step;
+                            body3d.Move(Vector3.ProjectOnPlane(body.position - player.position, Vector3.up).normalized * step);
+                        }
+                    }
+                    else
+                    {
+                        if (elapsed - Time.deltaTime <= CornerEmergeSeconds) { body.position = stand; SetWalking(false); }
+                        Vector3 toPlayer = Vector3.ProjectOnPlane(player.position - body.position, Vector3.up);
+                        if (toPlayer.sqrMagnitude > 0.01f)
+                            body.rotation = Quaternion.RotateTowards(body.rotation, Quaternion.LookRotation(toPlayer), 540f * Time.deltaTime);
+                    }
+                    TrackNeighbor(view, 1f - Mathf.Exp(-18f * Time.deltaTime));
+                }
+                yield return null;
+            }
+            if (view != null) view.fieldOfView = baseFov;
+            if (!running || neighbor == null) yield break;
+            neighbor.transform.position = stand;
+            SetWalking(false);
+            SetNeighborUnscaled(true);
+        }
+
+        // Корпус героя поворачивается к голове соседа по курсу, камера — по наклону.
+        private void TrackNeighbor(Camera view, float k)
+        {
+            if (view == null || neighbor == null) return;
+            Vector3 aim = neighbor.transform.position + Vector3.up * 1.6f - view.transform.position;
+            Vector3 flat = Vector3.ProjectOnPlane(aim, Vector3.up);
+            if (flat.sqrMagnitude < 0.01f) return;
+            player.rotation = Quaternion.Slerp(player.rotation, Quaternion.LookRotation(flat), k);
+            if (viewController == null) return;
+            float pitch = -Mathf.Asin(Mathf.Clamp(aim.normalized.y, -1f, 1f)) * Mathf.Rad2Deg;
+            float current = view.transform.localEulerAngles.x;
+            if (current > 180f) current -= 360f;
+            viewController.SetLookPitch(Mathf.Lerp(current, pitch, k));
+        }
+
         private IEnumerator Say(string speaker, string line)
         {
             if (!running || ThoughtManager.Instance == null) yield break;
@@ -394,20 +528,21 @@ namespace KnocksFromBeneath
             while (running && !finished) yield return null;
         }
 
-        private IEnumerator Leave()
+        private IEnumerator Leave(int firstWaypoint = 0)
         {
             if (departurePath == null) yield break;
             float pathLeft = 0f;
             Vector3 pathPoint = neighbor != null ? neighbor.transform.position : visitPoint.position;
-            foreach (Transform waypoint in departurePath)
+            for (int i = firstWaypoint; i < departurePath.Length; i++)
             {
-                if (waypoint == null) continue;
-                pathLeft += Vector3.Distance(pathPoint, waypoint.position);
-                pathPoint = waypoint.position;
+                if (departurePath[i] == null) continue;
+                pathLeft += Vector3.Distance(pathPoint, departurePath[i].position);
+                pathPoint = departurePath[i].position;
             }
             SetWalking(true);
-            foreach (Transform waypoint in departurePath)
+            for (int i = firstWaypoint; i < departurePath.Length; i++)
             {
+                Transform waypoint = departurePath[i];
                 if (waypoint == null) continue;
                 while (running && neighbor != null && (neighbor.transform.position - waypoint.position).sqrMagnitude > 0.01f)
                 {

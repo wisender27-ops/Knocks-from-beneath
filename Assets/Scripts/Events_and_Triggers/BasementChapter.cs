@@ -190,6 +190,7 @@ namespace KnocksFromBeneath
         {
             if (depths.hatch.IsUnbolted) StartCoroutine(ClimbIntoDuct());
             else if (inventory != null && inventory.HasItem("Screwdriver")) depths.hatch.Begin();
+            else FindFirstObjectByType<ScrewdriverHunt>()?.NeedScrewdriver();
         }
 
         private string VentLabel() => depths.hatch.IsUnbolted ? "Залезть в короб"

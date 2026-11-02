@@ -315,6 +315,7 @@ public class PickupController : MonoBehaviour
             return;
         }
 
+        PhysicsItemGuard.Attach(obj);
         _heldItemScript = obj.GetComponent<PickableItem>();
         CollectableItem collectable = obj.GetComponent<CollectableItem>();
         PieQuestItem pie = obj.GetComponent<PieQuestItem>();
@@ -559,6 +560,8 @@ public class PickupController : MonoBehaviour
 
         rb.useGravity = true;
         rb.isKinematic = false;
+        // Бросок 15 Н·с за шаг физики проносит лёгкий предмет сквозь тонкий пол/стену.
+        rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         rb.linearDamping = releasedRigidbodyDamping;
         rb.angularDamping = releasedRigidbodyDamping;
         rb.constraints = RigidbodyConstraints.None;
