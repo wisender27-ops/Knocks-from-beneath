@@ -458,6 +458,8 @@ namespace KnocksFromBeneath
                 }
             }
             yield return DeathTapeEffect.Play(_intro != null ? _intro.fadeScreen : null);
+            NightTwoExits.PrepareEndingLines(_camera, _intro != null ? _intro.fadeScreen : null);
+            yield return NightTwoExits.ShowLines(new[] { NightTwoExits.CaughtThought });
             _endGame?.Invoke(EndingId.Hidden);
         }
 

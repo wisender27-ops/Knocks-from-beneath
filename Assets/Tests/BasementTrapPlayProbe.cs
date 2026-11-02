@@ -8,7 +8,7 @@ using KnocksFromBeneath;
 using UnityEngine;
 
 // Play Mode проверка S-09 (ловушка). BasementTrapPlayProbe.Arm(сценарий) из Editor-команды до входа в Play Mode: сцена не
-// меняется, этап прыжка (StartBasementTrap) выставляется в рантайме. Сценарии: success, late, wedge-late, caught, mic.
+// меняется, этап прыжка (StartBasementTrap) выставляется в рантайме. Сценарии: success, late, wedge-late, caught, mic, epilogue.
 // Концовка перехватывается, EndingScreen не запускается и в реестр просмотренных ничего не пишется.
 // Отчёт и кадры — .codex/verification/basement-trap/<сценарий>.
 [DefaultExecutionOrder(-100)]
@@ -25,6 +25,7 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
     private PlayerInteraction interaction;
     private Camera view;
     private EndingId? ending;
+    private NarrativeReadingPanel panel;
     private string scenario, output, stage = "start";
 
     public static void Arm(string scenario) => UnityEditor.SessionState.SetString(ArmKey, scenario);
@@ -65,6 +66,10 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
         if (chapter == null || chapter.CurrentStage != BasementChapter.Stage.Trap) yield break;
         Action<EndingId> capture = id => ending = id;
         typeof(BasementChapter).GetField("endGame", Hidden).SetValue(chapter, capture);
+        // S-11: реплики концовок ждут подтверждения; автопрогон только в памяти, PlayerPrefs не меняется.
+        panel = (NarrativeReadingPanel)typeof(ThoughtManager).GetField("readingPanel", Hidden).GetValue(ThoughtManager.Instance);
+        typeof(NarrativeReadingPanel).GetField("autoAdvance", Hidden).SetValue(panel, true);
+        if (scenario == "epilogue") { yield return Epilogue(); yield break; }
         Check(!level.lockVisual.activeSelf, "Замок сбит");
         Check(!level.cellDoorCollider.activeSelf, "Решётка открыта");
         Check(intro.playerInventory.HasItem("Crowbar"), "Лом в инвентаре");
@@ -102,7 +107,7 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
         if (scenario == "late")
         {
             stage = "late";
-            yield return Until(() => ending.HasValue, 30f);
+            yield return LastLine(30f);
             Check(ending == EndingId.Hidden, $"Не успел захлопнуть: концовка {ending}");
             yield break;
         }
@@ -125,7 +130,7 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
         if (scenario == "wedge-late")
         {
             stage = "wedge-late";
-            yield return Until(() => ending.HasValue, 30f);
+            yield return LastLine(30f);
             Check(ending == EndingId.Hidden, $"Не вставил лом: концовка {ending}");
             yield break;
         }
@@ -187,8 +192,51 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
     {
         stage = "caught";
         Place(new Vector3(BasementLayout.TrapMouth.x, BasementLayout.FloorY, BasementLayout.TrapMouth.y + 0.6f));
-        yield return Until(() => ending.HasValue, 45f);
+        yield return LastLine(45f);
         Check(ending == EndingId.Hidden, $"Поймал на пути: концовка {ending}");
+    }
+
+    // S-11: реплика E3 видна на чёрной камере, и после неё концовка всё равно наступает.
+    private IEnumerator LastLine(float timeout)
+    {
+        yield return Until(() => PanelText() == NightTwoExits.CaughtThought, timeout);
+        Check(PanelText() == NightTwoExits.CaughtThought, "Реплика E3 на экране: " + PanelText());
+        Check(view.cullingMask == 0, "Камера чёрная");
+        yield return Wait(0.5f);
+        Shot("e3-line");
+        yield return Until(() => ending.HasValue, 15f);
+    }
+
+    // S-11: эпилог E4 напрямую, без погони.
+    private IEnumerator Epilogue()
+    {
+        stage = "epilogue";
+        var exits = intro.GetComponent<NightTwoExits>();
+        Check(exits != null, "NightTwoExits есть");
+        bool done = false;
+        StartCoroutine(RunEpilogue(exits, () => done = true));
+        yield return Until(() => PanelText().StartsWith("Новая комната"), 10f);
+        Check(PanelText().StartsWith("Новая комната"), "Первая реплика E4: " + PanelText());
+        yield return Wait(0.5f);
+        Shot("e4-first");
+        yield return Until(() => PanelText().StartsWith("Под полом"), 15f);
+        Check(PanelText().StartsWith("Под полом"), "Вторая реплика E4: " + PanelText());
+        yield return Wait(0.5f);
+        Shot("e4-second");
+        yield return Until(() => done, 15f);
+        Check(done, "Эпилог E4 завершился");
+    }
+
+    private static IEnumerator RunEpilogue(NightTwoExits exits, Action finished)
+    {
+        yield return (IEnumerator)typeof(NightTwoExits).GetMethod("EscapeEpilogue", Hidden).Invoke(exits, null);
+        finished();
+    }
+
+    private string PanelText()
+    {
+        var body = (TMPro.TMP_Text)typeof(NarrativeReadingPanel).GetField("body", Hidden).GetValue(panel);
+        return body != null ? body.text ?? "" : "";
     }
 
     private bool Press(string label)

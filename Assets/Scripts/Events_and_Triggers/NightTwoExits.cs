@@ -465,7 +465,7 @@ namespace KnocksFromBeneath
                 QuestManager.Instance.questUiText.text = "";
         }
 
-        private static IEnumerator ShowLines(string[] lines)
+        public static IEnumerator ShowLines(string[] lines)
         {
             if (ThoughtManager.Instance == null) yield break;
             bool done = false;

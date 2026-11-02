@@ -830,6 +830,8 @@ namespace KnocksFromBeneath
             controller?.StopMotion();
             yield return Jumpscare();
             yield return DeathTapeEffect.Play();
+            NightTwoExits.PrepareEndingLines(player.GetComponentInChildren<Camera>(), fade);
+            yield return NightTwoExits.ShowLines(new[] { NightTwoExits.CaughtThought });
             yield return Fade(1f, 0.01f);
             CurrentStage = Stage.Done;
             endGame?.Invoke(EndingId.Hidden);
