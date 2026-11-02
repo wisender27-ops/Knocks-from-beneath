@@ -25,6 +25,13 @@ namespace KnocksFromBeneath
             VentQuest = "basement-vent", DuctQuest = "basement-duct",
             TrapHideQuest = "basement-trap-hide", TrapSlamQuest = "basement-trap-slam", TrapWedgeQuest = "basement-trap-wedge";
         private const float CellDoorSwing = 100f;
+        public static readonly string[] KnockLines =
+        {
+            "Утром я постучал сверху. Два и один.",
+            "Снизу ответили тем же. Без пауз.",
+            "Хейл держал его стуком. Теперь это моя работа, каждую ночь.",
+            "Кто убежит отсюда, приведёт его с собой."
+        };
         public const float TrapWindowSeconds = 7f, TrapWedgeSeconds = 5f;
         private const float RushSpeed = 6f, RushReach = 1.2f, RushLimit = 3.5f;
         private const float HideReactionDelay = 1.5f, TrapLureDelay = 3f;
@@ -771,8 +778,8 @@ namespace KnocksFromBeneath
             CurrentStage = Stage.Finale;
             PlayEffect("Audio/CornerJumpscare", 1f, 0.6f);
             yield return Fade(1f, 1.2f);
-            yield return PlaySecondTape();
-            yield return new WaitForSeconds(1.2f);
+            yield return MorningKnocks();
+            yield return LastKnockLines();
             CurrentStage = Stage.Done;
             endGame?.Invoke(EndingId.Answer);
         }
@@ -896,23 +903,31 @@ namespace KnocksFromBeneath
             while (!finished) yield return null;
         }
 
-        // C-04: плёнка камеры хозяина. Живой монстр и хозяин из сцены на ней не видны: там свой сценарий BasementTape.
-        private IEnumerator PlaySecondTape()
+        // S-10: чёрный экран, утро. Сверху стучат «2·1», снизу отвечают тем же стуком, но без пауз.
+        private IEnumerator MorningKnocks()
         {
-            if (level.tapeView == null) { Debug.LogError("[C-04] У BasementLevel нет камеры хозяина."); yield break; }
-            var hidden = new System.Collections.Generic.List<Renderer>(level.tapeView.parent.GetComponentsInChildren<Renderer>(true));
-            if (monster != null) hidden.AddRange(monster.GetComponentsInChildren<Renderer>(true));
-            if (owner != null) hidden.AddRange(owner.GetComponentsInChildren<Renderer>(true));
-            if (wedgedCrowbar != null) hidden.AddRange(wedgedCrowbar.GetComponentsInChildren<Renderer>(true));
-            NightRecording recording = NightRecording.Create(level.tapeView, new TapeSetup
+            yield return new WaitForSeconds(1.5f);
+            const string clip = "Audio/Horror/AnswerKnock";
+            foreach (float pause in new[] { 0.36f, 1.0f })
             {
-                Timeline = BasementTape.Timeline,
-                Doors = new[] { tapeCellDoor },
-                Lights = BasementTape.BuildLights,
-                Hidden = hidden.ToArray()
-            });
-            yield return TapeReel.Play(recording, transform);
-            Destroy(recording.gameObject);
+                PlayEffect(clip, 0.9f, 1f);
+                yield return new WaitForSeconds(pause);
+            }
+            PlayEffect(clip, 0.9f, 1f);
+            yield return new WaitForSeconds(1.8f);
+            for (int i = 0; i < 6; i++)
+            {
+                PlayEffect(clip, 1f, 0.7f);
+                yield return new WaitForSeconds(0.36f);
+            }
+            yield return new WaitForSeconds(1.5f);
+        }
+
+        // S-10: герой понимает, что стучать теперь ему; это же объясняет E4: кто убежит, тот приведёт его с собой.
+        private IEnumerator LastKnockLines()
+        {
+            NightTwoExits.PrepareEndingLines(player != null ? player.GetComponentInChildren<Camera>() : null, fade);
+            yield return NightTwoExits.ShowLines(KnockLines);
         }
 
         private IEnumerator SwingDoor()
@@ -1045,7 +1060,7 @@ namespace KnocksFromBeneath
             level = FindFirstObjectByType<BasementLevel>(FindObjectsInactive.Include);
             if (level == null) { Debug.LogError("[P-03] BasementLevel не найден в сцене."); return; }
             cellDoor = level.cellDoor;
-            tapeCellDoor = new TapeDoor(cellDoor, CellDoorSwing, BasementTape.DoorOpen); // закрытое положение — до взлома
+            tapeCellDoor = new TapeDoor(cellDoor, CellDoorSwing, time => 0f); // закрытое положение — до взлома
             cellDoorCollider = level.cellDoorCollider;
             lockVisual = level.lockVisual;
             cellLock = level.cellLock;

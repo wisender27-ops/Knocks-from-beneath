@@ -151,6 +151,7 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
         yield return Wait(1f);
         Shot("wedged");
         float rotation = Quaternion.Angle(level.cellDoor.localRotation, Quaternion.identity);
+        yield return FinalTape();
         yield return Until(() => ending.HasValue, 90f);
         Check(ending == EndingId.Answer, $"Концовка {ending}");
         Check(chapter.CurrentStage == BasementChapter.Stage.Done, $"Глава закончена, этап {chapter.CurrentStage}");
@@ -194,6 +195,20 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
         Place(new Vector3(BasementLayout.TrapMouth.x, BasementLayout.FloorY, BasementLayout.TrapMouth.y + 0.6f));
         yield return LastLine(45f);
         Check(ending == EndingId.Hidden, $"Поймал на пути: концовка {ending}");
+    }
+
+    // S-10: после запирания идут утренние стуки на чёрном экране и четыре реплики героя.
+    private IEnumerator FinalTape()
+    {
+        stage = "final-knocks";
+        int seen = 0;
+        var lines = BasementChapter.KnockLines;
+        for (float t = 0f; t < 120f && !ending.HasValue; t += Time.unscaledDeltaTime)
+        {
+            if (seen < lines.Length && PanelText() == lines[seen]) { if (seen == 0) Shot("final-line"); seen++; }
+            yield return null;
+        }
+        Check(seen == lines.Length, $"Реплики после запирания показаны: {seen}/{lines.Length}");
     }
 
     // S-11: реплика E3 видна на чёрной камере, и после неё концовка всё равно наступает.
