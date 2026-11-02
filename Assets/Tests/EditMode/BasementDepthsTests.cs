@@ -7,7 +7,8 @@ public sealed class BasementDepthsTests
     [Test]
     public void WingStart_IsBehindTheSealedDoor()
     {
-        Assert.That(BasementLayout.CorridorA.Contains(new Vector2(DepthsLayout.WingStart.x, DepthsLayout.WingStart.z)), Is.True);
+        Assert.That(BasementLayout.HallB.Contains(new Vector2(DepthsLayout.WingStart.x, DepthsLayout.WingStart.z)), Is.True);
+        Assert.That(DepthsLayout.WingStart.z, Is.InRange(BasementLayout.EntranceFrom, BasementLayout.EntranceTo));
     }
 
     [Test]

@@ -50,8 +50,8 @@ namespace KnocksFromBeneath
             return false;
         }
 
-        // Конец прохода A, у обратной стороны забетонированного проёма: сюда возвращает после поимки.
-        public static readonly Vector3 WingStart = new Vector3(-37.3f, BasementLayout.FloorY + 0.1f, 116.2f);
+        // Зал B, у обратной стороны забетонированного проёма (сам проход A залит бетоном): сюда возвращает после поимки.
+        public static readonly Vector3 WingStart = new Vector3(-36.3f, BasementLayout.FloorY + 0.1f, 116.2f);
         public static readonly Vector3 WingStartLook = new Vector3(-30f, 0f, 116.2f);
     }
 }
