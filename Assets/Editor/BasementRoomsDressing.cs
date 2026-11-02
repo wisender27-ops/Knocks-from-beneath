@@ -23,6 +23,12 @@ public static class BasementRoomsDressing
     private const string LeaseMaterialAsset = Rooms + "Lease/LeaseContract.mat";
     private const string LeaseMeshAsset = Rooms + "Lease/LeaseContractSheet.asset";
 
+    private const string ShelterGroup = "Shelter";
+    private const string ShelterFolder = "Shelter/";
+    private const string ShelterMeshAsset = Rooms + ShelterFolder + "ShelterMeshes.asset";
+    private const float CanRadius = 0.0375f, CanHeight = 0.11f;
+
+    private static readonly Vector3 CartonSize = new Vector3(0.4f, 0.24f, 0.28f);
     private static readonly Color BulbColor = new Color(1f, 0.74f, 0.48f);
 
     [MenuItem("Tools/Basement/Dress Rooms")]
@@ -173,6 +179,7 @@ public static class BasementRoomsDressing
         Keep(Model(block, "rubber_boots", -44.1f, 107.5f, 30f, 0f, false), "rubber_boots_dirt_r_LOD0", "rubber_boots_dirty_l_LOD0");
 
         Litter(hall, block);
+        Shelter(root);
 
         Bulb(hall, new Vector3(-34.2f, Ceiling, 116.3f));
         Bulb(hall, new Vector3(-35.1f, Ceiling, 108.7f));
@@ -299,6 +306,176 @@ public static class BasementRoomsDressing
         material.SetColor("_BaseColor", Color.white);
         material.SetFloat("_Smoothness", 0.1f);
         EditorUtility.SetDirty(material);
+        return material;
+    }
+
+    // -------------------------------------------------------------------------------------------------
+    // S-07. Камера как убежище: запасы на четыре месяца, засечки дней, следы бетонных работ сына
+    // -------------------------------------------------------------------------------------------------
+
+    // Пересобирает только группу "Shelter": остальная обстановка и стены не трогаются.
+    [MenuItem("Tools/Basement/Dress Shelter")]
+    public static void BuildShelter()
+    {
+        var level = UnityEngine.Object.FindFirstObjectByType<BasementLevel>(FindObjectsInactive.Include);
+        if (level == null) throw new InvalidOperationException("В сцене нет BasementLevel.");
+        Transform root = level.transform.Find(RootName);
+        if (root == null) throw new InvalidOperationException("Нет обстановки: сначала Tools/Basement/Dress Rooms.");
+        Transform old = root.Find(ShelterGroup);
+        if (old != null) UnityEngine.Object.DestroyImmediate(old.gameObject);
+        Transform shelter = Shelter(root);
+
+        var ambient = root.GetComponent<UndergroundAmbientOverride>();
+        var serialized = new SerializedObject(ambient);
+        SerializedProperty list = serialized.FindProperty("renderers");
+        var renderers = new List<Renderer>();
+        for (int i = 0; i < list.arraySize; i++)
+            if (list.GetArrayElementAtIndex(i).objectReferenceValue is Renderer kept) renderers.Add(kept);
+        renderers.AddRange(shelter.GetComponentsInChildren<Renderer>(true));
+        list.arraySize = renderers.Count;
+        for (int i = 0; i < renderers.Count; i++) list.GetArrayElementAtIndex(i).objectReferenceValue = renderers[i];
+        serialized.ApplyModifiedPropertiesWithoutUndo();
+        ambient.Apply();
+        EditorSceneManager.MarkSceneDirty(level.gameObject.scene);
+    }
+
+    private static Transform Shelter(Transform root)
+    {
+        var shelter = Group(root, ShelterGroup);
+        var meshes = new ShelterMeshes();
+        CellSupplies(Group(shelter, "Cell"), meshes);
+        BlockStock(Group(shelter, "Block"), meshes);
+        SonWork(Group(shelter, "Sealed door"), meshes);
+        meshes.Save();
+        return shelter;
+    }
+
+    // Запасы лежат внутри камеры: Хейл заперт и до блока D не дотянется. Середина и проём свободны, по ним идёт монстр (S-09).
+    private static void CellSupplies(Transform cell, ShelterMeshes meshes)
+    {
+        var mattress = new GameObject("Mattress", typeof(MeshFilter), typeof(MeshRenderer));
+        mattress.transform.SetParent(cell, false);
+        mattress.transform.SetPositionAndRotation(new Vector3(-45.26f, Floor, 106.96f), Quaternion.Euler(0f, 181.5f, 0f));
+        mattress.GetComponent<MeshFilter>().sharedMesh = meshes.Mattress(0.86f, 1.88f, 0.13f);
+        mattress.GetComponent<MeshRenderer>().sharedMaterials = new[] { ShelterMaterial("ShelterMattress", 0.05f), ShelterMaterial("ShelterMattressSide", 0.05f) };
+
+        // Засечки на южной стене: их видно сквозь решётку поверх головы сидящего Хейла, и они попадают в кадр камеры на кронштейне.
+        Material tally = Decal("ShelterTally", "ShelterTally", 0.05f, ShelterFolder);
+        tally.SetColor("_BaseColor", new Color(0.3f, 0.27f, 0.24f)); // картинка светлая: на бетоне стены засечки терялись
+        Card(cell, "Day tally", tally, new Vector3(-44.72f, Floor + 1.42f, BasementLayout.SouthRoomsZMin + 0.006f),
+            Vector3.forward, Vector3.up, new Vector2(1.38f, 0.92f));
+
+        Material carton = ShelterMaterial("ShelterCarton", 0.08f);
+        Carton(cell, meshes, carton, -43.68f, 107.86f, 0f, 5f);
+        Carton(cell, meshes, carton, -43.7f, 107.84f, CartonSize.y, -7f);
+        foreach (Vector3 can in new[]
+        {
+            new Vector3(-43.8f, 107.9f, 0f), new Vector3(-43.7f, 107.78f, 1f), new Vector3(-43.6f, 107.92f, 2f), new Vector3(-43.82f, 107.76f, 1f)
+        })
+            Can(cell, meshes, new Vector3(can.x, Floor + CartonSize.y * 2f, can.y), (int)can.z, false, Quaternion.Euler(0f, can.x * 900f, 0f));
+        foreach (Vector3 can in new[]
+        {
+            new Vector3(-43.58f, 107.4f, 2f), new Vector3(-43.66f, 107.28f, 0f), new Vector3(-43.55f, 107.2f, 1f)
+        })
+            Can(cell, meshes, new Vector3(can.x, Floor, can.y), (int)can.z, false, Quaternion.Euler(0f, can.y * 700f, 0f));
+
+        // Вода вдоль восточной стены; ведро остаётся в дальнем углу, подальше от еды.
+        Model(cell, "plastic_bottle_gallon", -43.56f, 106.98f, 90f, 0f, false);
+        Model(cell, "plastic_bottle_gallon", -43.56f, 106.8f, 80f, 0f, false);
+        Model(cell, "plastic_bottle_gallon", -43.74f, 106.9f, 100f, 0f, false);
+        Model(cell, "plastic_bottle_gallon", -44.08f, 106.08f, 15f, 0.13f, false, 0f, 88f); // пустая, на боку
+
+        // Пустые банки сметены к южной стене: за четыре месяца их набралась гора.
+        var random = new System.Random(107);
+        for (int i = 0; i < 24; i++)
+        {
+            float angle = (float)random.NextDouble() * Mathf.PI * 2f, reach = Mathf.Sqrt((float)random.NextDouble());
+            var at = new Vector3(-44.5f + Mathf.Cos(angle) * reach * 0.27f, Floor + CanRadius, 106.1f + Mathf.Abs(Mathf.Sin(angle)) * reach * 0.26f);
+            bool upper = i >= 17;
+            if (upper) at += Vector3.up * CanRadius * 1.7f;
+            Can(cell, meshes, at, i % 3, true, Quaternion.Euler(0f, (float)random.NextDouble() * 360f, 0f) * Quaternion.Euler(90f, 0f, 0f));
+        }
+    }
+
+    // Запас, собранный одним человеком за один раз. Полоса у решётки свободна: там ходит её створка.
+    private static void BlockStock(Transform block, ShelterMeshes meshes)
+    {
+        Material carton = ShelterMaterial("ShelterCarton", 0.08f);
+        Carton(block, meshes, carton, -42.2f, 111.62f, 0f, 3f);
+        Carton(block, meshes, carton, -41.98f, 111.62f, 0f, -4f, 0.42f);
+        Carton(block, meshes, carton, -42.2f, 111.6f, CartonSize.y, -8f);
+        Carton(block, meshes, carton, -42.02f, 111.64f, CartonSize.y, 6f, 0.42f);
+        Carton(block, meshes, carton, -42.1f, 111.62f, CartonSize.y * 2f, 14f);
+        Model(block, "plastic_bottle_gallon", -44.42f, 111.6f, 90f, 0f, false, 0.72f);
+        Model(block, "plastic_bottle_gallon", -44.2f, 111.62f, 80f, 0f, false, 0.72f);
+        Model(block, "plastic_bottle_gallon", -43.98f, 111.58f, 100f, 0f, false, 0.72f);
+    }
+
+    // Сын бетонировал со стороны лестницы и ушёл наверх: инструменты брошены там, с обратной стороны только наплывы бетона.
+    private static void SonWork(Transform work, ShelterMeshes meshes)
+    {
+        float centerZ = DepthsLayout.SealedDoor.z;
+        Card(work, "Sealed door back", ShelterMaterial("SealedDoorBack", 0.1f), new Vector3(-36.944f, Floor + BasementLayout.DoorHeight * 0.5f, centerZ),
+            Vector3.right, Vector3.up, new Vector2(DepthsLayout.SealedDoorSize.z, BasementLayout.DoorHeight));
+        Card(work, "Cement splatter", Decal("CementSplatter", "CementSplatter", 0.08f, ShelterFolder), new Vector3(-38.62f, Floor + 0.009f, centerZ - 0.1f),
+            Vector3.up, Quaternion.Euler(0f, 74f, 0f) * Vector3.forward, new Vector2(1.3f, 1.05f));
+
+        var tub = new GameObject("Mortar tub", typeof(MeshFilter), typeof(MeshRenderer));
+        tub.transform.SetParent(work, false);
+        tub.transform.SetPositionAndRotation(new Vector3(-38.42f, Floor, centerZ - 0.62f), Quaternion.Euler(0f, 97f, 0f));
+        tub.GetComponent<MeshFilter>().sharedMesh = meshes.Tub(new Vector3(0.72f, 0.2f, 0.48f));
+        tub.GetComponent<MeshRenderer>().sharedMaterial = ShelterMaterial("MortarTub", 0.12f);
+        AddCollider(tub);
+
+        Card(work, "Trowel", Decal("Trowel", "Trowel", 0.25f, ShelterFolder), new Vector3(-38.42f, Floor + 0.203f, centerZ - 0.62f),
+            Vector3.up, Quaternion.Euler(0f, 38f, 0f) * Vector3.forward, new Vector2(0.1f, 0.3f));
+        Model(work, "cement_bag", -38.2f, centerZ + 0.46f, 88f, 0f, false);
+    }
+
+    private static void Carton(Transform parent, ShelterMeshes meshes, Material material, float x, float z, float lift, float yaw, float length = 0f)
+    {
+        Vector3 size = length > 0f ? new Vector3(length, CartonSize.y, CartonSize.z) : CartonSize;
+        var box = new GameObject("Carton", typeof(MeshFilter), typeof(MeshRenderer));
+        box.transform.SetParent(parent, false);
+        box.transform.SetPositionAndRotation(new Vector3(x, Floor + lift, z), Quaternion.Euler(0f, yaw, 0f));
+        box.GetComponent<MeshFilter>().sharedMesh = meshes.Box(size);
+        box.GetComponent<MeshRenderer>().sharedMaterial = material;
+    }
+
+    private static void Can(Transform parent, ShelterMeshes meshes, Vector3 at, int label, bool empty, Quaternion rotation)
+    {
+        var can = new GameObject(empty ? "Empty can" : "Can", typeof(MeshFilter), typeof(MeshRenderer));
+        can.transform.SetParent(parent, false);
+        can.transform.SetPositionAndRotation(at, rotation);
+        can.GetComponent<MeshFilter>().sharedMesh = meshes.Can(label, empty);
+        var renderer = can.GetComponent<MeshRenderer>();
+        renderer.sharedMaterials = new[] { ShelterMaterial("ShelterCanLabels", 0.2f), AssetDatabase.LoadAssetAtPath<Material>("Assets/Basement/Duct/Materials/DuctSteel.mat") };
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+    }
+
+    // Плоская картинка на стене или на полу.
+    private static void Card(Transform parent, string name, Material material, Vector3 at, Vector3 normal, Vector3 up, Vector2 size)
+    {
+        var card = GameObject.CreatePrimitive(PrimitiveType.Quad);
+        card.name = name;
+        UnityEngine.Object.DestroyImmediate(card.GetComponent<Collider>());
+        card.transform.SetParent(parent, false);
+        card.transform.SetPositionAndRotation(at, Quaternion.LookRotation(-normal, up));
+        card.transform.localScale = new Vector3(size.x, size.y, 1f);
+        var renderer = card.GetComponent<MeshRenderer>();
+        renderer.sharedMaterial = material;
+        renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+    }
+
+    private static Material ShelterMaterial(string texture, float smoothness)
+    {
+        string path = Rooms + "Materials/" + texture + ".mat";
+        var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (material != null) return material;
+        material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+        material.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(Rooms + ShelterFolder + texture + ".png"));
+        material.SetFloat("_Smoothness", smoothness);
+        AssetDatabase.CreateAsset(material, path);
         return material;
     }
 
@@ -535,12 +712,12 @@ public static class BasementRoomsDressing
     }
 
     // Прозрачный Lit: пятно берёт свет ламп и фонарика, а не светится само.
-    private static Material Decal(string name, string texture, float smoothness)
+    private static Material Decal(string name, string texture, float smoothness, string folder = "Decals/")
     {
         string path = Rooms + "Materials/" + name + ".mat";
         var material = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (material != null) return material;
-        string texturePath = Rooms + "Decals/" + texture + ".png";
+        string texturePath = Rooms + folder + texture + ".png";
         var importer = (TextureImporter)AssetImporter.GetAtPath(texturePath);
         importer.alphaIsTransparency = true;
         importer.wrapMode = TextureWrapMode.Clamp;
@@ -767,6 +944,179 @@ public static class BasementRoomsDressing
             foreach (Mesh mesh in meshes) AssetDatabase.AddObjectToAsset(mesh, holder);
             AssetDatabase.SaveAssets();
         }
+    }
+
+    // Меши убежища: основание каждого стоит на нуле, повторы кэшируются и лежат в одном файле.
+    private sealed class ShelterMeshes
+    {
+        private readonly Dictionary<string, Mesh> meshes = new Dictionary<string, Mesh>();
+
+        public Mesh Box(Vector3 size) => Cached("Carton " + size.x, () => BoxMesh(size, false));
+
+        public Mesh Tub(Vector3 size) => Cached("Mortar tub", () => BoxMesh(size, true));
+
+        public Mesh Can(int label, bool empty) => Cached((empty ? "Empty can " : "Can ") + label, () => CanMesh(label, empty));
+
+        public Mesh Mattress(float width, float length, float height) => Cached("Mattress", () => MattressMesh(width, length, height));
+
+        private Mesh Cached(string name, Func<Mesh> build)
+        {
+            if (meshes.TryGetValue(name, out Mesh mesh)) return mesh;
+            mesh = build();
+            mesh.name = name;
+            mesh.RecalculateNormals();
+            mesh.RecalculateTangents();
+            mesh.RecalculateBounds();
+            meshes.Add(name, mesh);
+            return mesh;
+        }
+
+        public void Save()
+        {
+            AssetDatabase.DeleteAsset(ShelterMeshAsset);
+            var holder = new Mesh { name = "ShelterMeshes" };
+            AssetDatabase.CreateAsset(holder, ShelterMeshAsset);
+            foreach (Mesh mesh in meshes.Values) AssetDatabase.AddObjectToAsset(mesh, holder);
+            AssetDatabase.SaveAssets();
+        }
+
+        // Коробка: картинка на каждой грани надписью вверх. edgeSides — боковины берут цвет с края картинки (корыто видно в основном сверху).
+        private static Mesh BoxMesh(Vector3 size, bool edgeSides)
+        {
+            var vertices = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var triangles = new List<int>();
+            float x = size.x * 0.5f, z = size.z * 0.5f;
+            Vector3 a = new Vector3(-x, 0f, -z), b = new Vector3(x, 0f, -z), c = new Vector3(x, 0f, z), d = new Vector3(-x, 0f, z), up = Vector3.up * size.y;
+            Side(a, b); Side(b, c); Side(c, d); Side(d, a);
+            int top = vertices.Count;
+            vertices.AddRange(new[] { a + up, d + up, c + up, b + up });
+            uvs.AddRange(new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right });
+            Quad(triangles, top);
+
+            void Side(Vector3 from, Vector3 to)
+            {
+                int start = vertices.Count;
+                vertices.AddRange(new[] { from, from + up, to + up, to });
+                if (edgeSides) uvs.AddRange(new[] { new Vector2(0.015f, 0.4f), new Vector2(0.015f, 0.45f), new Vector2(0.015f, 0.55f), new Vector2(0.015f, 0.6f) });
+                else uvs.AddRange(new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right });
+                Quad(triangles, start);
+            }
+
+            var mesh = new Mesh();
+            mesh.SetVertices(vertices);
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(triangles, 0);
+            return mesh;
+        }
+
+        // Банка: бумажная этикетка (полоса атласа) и жесть. Открытая — без крышки, с тёмным нутром.
+        private static Mesh CanMesh(int label, bool empty)
+        {
+            const int sides = 14;
+            float bandFrom = 1f - (label + 1) / 3f, bandTo = 1f - label / 3f;
+            var vertices = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var paper = new List<int>();
+            var steel = new List<int>();
+            for (int i = 0; i < sides; i++)
+            {
+                Vector3 from = Rim(i), to = Rim(i + 1), up = Vector3.up * CanHeight;
+                float u = (float)i / sides, next = (float)(i + 1) / sides;
+                int start = vertices.Count;
+                vertices.AddRange(new[] { from, from + up, to + up, to });
+                uvs.AddRange(new[] { new Vector2(u, bandFrom), new Vector2(u, bandTo), new Vector2(next, bandTo), new Vector2(next, bandFrom) });
+                Quad(paper, start);
+
+                if (empty)
+                {
+                    start = vertices.Count;
+                    vertices.AddRange(new[] { to, to + up, from + up, from });
+                    uvs.AddRange(new[] { Vector2.zero, Vector2.up, Vector2.one, Vector2.right });
+                    Quad(steel, start);
+                }
+                Vector3 center = empty ? Vector3.up * 0.004f : up;
+                start = vertices.Count;
+                vertices.AddRange(new[] { center, (empty ? center + to : to + up), (empty ? center + from : from + up) });
+                uvs.AddRange(new[] { new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.6f), new Vector2(0.6f, 0.5f) });
+                steel.AddRange(new[] { start, start + 1, start + 2 });
+            }
+
+            Vector3 Rim(int i)
+            {
+                float angle = i * Mathf.PI * 2f / sides;
+                return new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * CanRadius;
+            }
+
+            var mesh = new Mesh { subMeshCount = 2 };
+            mesh.SetVertices(vertices);
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(paper, 0);
+            mesh.SetTriangles(steel, 1);
+            return mesh;
+        }
+
+        // Матрас: продавленный верх сеткой и боковины. Голова — у южного торца, там на картинке тёмное пятно.
+        private static Mesh MattressMesh(float width, float length, float height)
+        {
+            const int across = 8, along = 16;
+            var vertices = new List<Vector3>();
+            var uvs = new List<Vector2>();
+            var top = new List<int>();
+            var sides = new List<int>();
+            for (int j = 0; j <= along; j++)
+                for (int i = 0; i <= across; i++)
+                {
+                    float u = (float)i / across, v = (float)j / along;
+                    vertices.Add(new Vector3((u - 0.5f) * width, TopHeight(u, v), (0.5f - v) * length));
+                    uvs.Add(new Vector2(u, 1f - v));
+                }
+            for (int j = 0; j < along; j++)
+                for (int i = 0; i < across; i++)
+                {
+                    int a = j * (across + 1) + i, b = a + 1, c = a + across + 1, d = c + 1;
+                    top.AddRange(new[] { a, b, d, a, d, c });
+                }
+
+            for (int i = 0; i < across; i++)
+            {
+                Wall((float)(i + 1) / across, 0f, (float)i / across, 0f);
+                Wall((float)i / across, 1f, (float)(i + 1) / across, 1f);
+            }
+            for (int j = 0; j < along; j++)
+            {
+                Wall(1f, (float)(j + 1) / along, 1f, (float)j / along);
+                Wall(0f, (float)j / along, 0f, (float)(j + 1) / along);
+            }
+
+            float TopHeight(float u, float v)
+            {
+                float edge = Mathf.Min(Mathf.Min(u, 1f - u) * width, Mathf.Min(v, 1f - v) * length);
+                float round = Mathf.Sqrt(Mathf.Clamp01(edge / 0.05f));
+                float dent = Mathf.Exp(-Mathf.Pow((u - 0.5f) / 0.28f, 2f) - Mathf.Pow((v - 0.5f) / 0.3f, 2f));
+                return height * (0.72f + 0.28f * round) - 0.035f * dent;
+            }
+
+            void Wall(float u0, float v0, float u1, float v1)
+            {
+                Vector3 from = new Vector3((u0 - 0.5f) * width, 0f, (0.5f - v0) * length), to = new Vector3((u1 - 0.5f) * width, 0f, (0.5f - v1) * length);
+                float texFrom = (from.x * 1.3f + from.z * 0.7f) / 0.3f, texTo = (to.x * 1.3f + to.z * 0.7f) / 0.3f;
+                int start = vertices.Count;
+                vertices.AddRange(new[] { from, from + Vector3.up * TopHeight(u0, v0), to + Vector3.up * TopHeight(u1, v1), to });
+                uvs.AddRange(new[] { new Vector2(texFrom, 0f), new Vector2(texFrom, 1f), new Vector2(texTo, 1f), new Vector2(texTo, 0f) });
+                Quad(sides, start);
+            }
+
+            var mesh = new Mesh { subMeshCount = 2 };
+            mesh.SetVertices(vertices);
+            mesh.SetUVs(0, uvs);
+            mesh.SetTriangles(top, 0);
+            mesh.SetTriangles(sides, 1);
+            return mesh;
+        }
+
+        private static void Quad(List<int> triangles, int start) =>
+            triangles.AddRange(new[] { start, start + 1, start + 2, start, start + 2, start + 3 });
     }
 
     // Плоские прямоугольники на полу с ячейками атласа 2×2; grid > 1 — лист с лёгкими изгибами.
