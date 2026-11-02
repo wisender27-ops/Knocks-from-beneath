@@ -221,3 +221,4 @@
 | `Assets/ThirdParty/PolyHaven/dustpan/` | Мусор на полу подвала: модель и текстуры | https://polyhaven.com/a/dustpan | Poly Haven | CC0 1.0 | 2026-11-02 |
 | `Assets/ThirdParty/PolyHaven/office_notepads/` | Мусор на полу подвала: модель и текстуры | https://polyhaven.com/a/office_notepads | Poly Haven | CC0 1.0 | 2026-11-02 |
 | `Assets/Basement/Rooms/Decals/Grime.png`, `Dust.png` | Пятна грязи и крошка: сгенерированы из текстур dirt_floor и concrete_debris | https://polyhaven.com/a/dirt_floor, https://polyhaven.com/a/concrete_debris | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/Basement/Rooms/Lease/LeaseContract.png` | S-05: текстура договора аренды | сгенерировано автором | ENDERWIS | авторский ассет | 2026-11-02 |

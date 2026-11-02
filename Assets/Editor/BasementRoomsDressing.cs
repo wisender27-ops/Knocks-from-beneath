@@ -18,6 +18,10 @@ public static class BasementRoomsDressing
     private const float Floor = BasementLayout.FloorY, Ceiling = BasementLayout.CeilingY;
     private const float Tile = 2.4f; // метров на повтор текстуры стен и пола
     private const float LeaseTableTop = -3.505f; // чуть выше столешницы WoodenTable_03 в блоке D: лист плоский
+    private const float LeaseAspect = 1103f / 1426f; // пропорции картинки договора
+    private const string LeaseTexture = Rooms + "Lease/LeaseContract.png";
+    private const string LeaseMaterialAsset = Rooms + "Lease/LeaseContract.mat";
+    private const string LeaseMeshAsset = Rooms + "Lease/LeaseContractSheet.asset";
 
     private static readonly Color BulbColor = new Color(1f, 0.74f, 0.48f);
 
@@ -225,6 +229,13 @@ public static class BasementRoomsDressing
         Vector3 up = Vector3.zero;
         up[longAxis] = 1f;
 
+        // Текст и подписи — на самой текстуре листа, поэтому наклейка с текстом не нужна.
+        Vector3 right = Vector3.Cross(normal, up);
+        mesh = LeasePageMesh(mesh, normal, up, right, LeaseAspect);
+        sheet.GetComponent<MeshFilter>().sharedMesh = mesh;
+        sheet.GetComponent<MeshRenderer>().sharedMaterial = LeasePageMaterial();
+        size = mesh.bounds.size;
+
         var hit = sheet.gameObject.AddComponent<BoxCollider>();
         hit.center = mesh.bounds.center;
         Vector3 hitSize = size;
@@ -233,10 +244,9 @@ public static class BasementRoomsDressing
 
         var clue = sheet.gameObject.AddComponent<InspectableClue>();
         Vector2 page = new Vector2(size[3 - thin - longAxis] * Mathf.Abs(sheet.lossyScale[3 - thin - longAxis]),
-            size[longAxis] * Mathf.Abs(sheet.lossyScale[longAxis])) * 0.92f;
-        clue.Configure("clue-lease", "Договор аренды", false, normal, up, page, true,
-            "RESIDENTIAL LEASE\n\nLANDLORD: W. HALE\nTENANT: DANIEL ROSS",
-            "Договор аренды старого дома. Арендодатель: У. Хейл. Арендатор: Дэниел Росс.",
+            size[longAxis] * Mathf.Abs(sheet.lossyScale[longAxis]));
+        clue.Configure("clue-lease", "Договор аренды", false, normal, up, page, false, string.Empty,
+            "Договор аренды старого дома. Арендодатель: Уолтер Хейл. Арендатор: Дэниел Росс.",
             new[]
             {
                 "Это мой договор. Мой старый дом.",
@@ -244,6 +254,52 @@ public static class BasementRoomsDressing
                 "Его сын сам нашёл меня и отдал этот дом почти даром. Это не совпадение."
             });
         return clue;
+    }
+
+    // Копия листа A4: ширина под пропорции картинки, вся картинка на лицевой стороне, изнанка — чистая бумага из её края.
+    private static Mesh LeasePageMesh(Mesh source, Vector3 normal, Vector3 up, Vector3 right, float aspect)
+    {
+        var mesh = UnityEngine.Object.Instantiate(source);
+        mesh.name = "LeaseContractSheet";
+        Vector3[] vertices = mesh.vertices;
+        Vector3[] normals = mesh.normals;
+        Bounds bounds = source.bounds;
+        float height = Mathf.Abs(Vector3.Dot(bounds.size, up));
+        float width = height * aspect;
+        float sourceWidth = Mathf.Abs(Vector3.Dot(bounds.size, right));
+        var uv = new Vector2[vertices.Length];
+        for (int i = 0; i < vertices.Length; i++)
+        {
+            Vector3 local = vertices[i] - bounds.center;
+            float x = Vector3.Dot(local, right) * width / sourceWidth;
+            float y = Vector3.Dot(local, up);
+            vertices[i] = bounds.center + right * x + up * y + normal * Vector3.Dot(local, normal);
+            uv[i] = Vector3.Dot(normals[i], normal) < 0f ? new Vector2(0.03f, 0.55f) : new Vector2(x / width + 0.5f, y / height + 0.5f);
+        }
+        mesh.vertices = vertices;
+        mesh.uv = uv;
+        mesh.RecalculateBounds();
+        AssetDatabase.DeleteAsset(LeaseMeshAsset);
+        AssetDatabase.CreateAsset(mesh, LeaseMeshAsset);
+        return mesh;
+    }
+
+    private static Material LeasePageMaterial()
+    {
+        var material = AssetDatabase.LoadAssetAtPath<Material>(LeaseMaterialAsset);
+        if (material == null)
+        {
+            material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            AssetDatabase.CreateAsset(material, LeaseMaterialAsset);
+        }
+        var page = AssetDatabase.LoadAssetAtPath<Texture2D>(LeaseTexture);
+        if (page == null) throw new InvalidOperationException("Нет текстуры " + LeaseTexture);
+        material.SetTexture("_BaseMap", page);
+        material.SetTexture("_MainTex", page);
+        material.SetColor("_BaseColor", Color.white);
+        material.SetFloat("_Smoothness", 0.1f);
+        EditorUtility.SetDirty(material);
+        return material;
     }
 
     // В файле камня лежат все три LOD сразу: достаточно самого лёгкого, камни мелкие.
