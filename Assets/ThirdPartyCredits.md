@@ -222,3 +222,7 @@
 | `Assets/ThirdParty/PolyHaven/office_notepads/` | Мусор на полу подвала: модель и текстуры | https://polyhaven.com/a/office_notepads | Poly Haven | CC0 1.0 | 2026-11-02 |
 | `Assets/Basement/Rooms/Decals/Grime.png`, `Dust.png` | Пятна грязи и крошка: сгенерированы из текстур dirt_floor и concrete_debris | https://polyhaven.com/a/dirt_floor, https://polyhaven.com/a/concrete_debris | Poly Haven | CC0 1.0 | 2026-11-02 |
 | `Assets/Basement/Rooms/Lease/LeaseContract.png` | S-05: текстура договора аренды | сгенерировано автором | ENDERWIS | авторский ассет | 2026-11-02 |
+| `Assets/Basement/Duct/Textures/Gen*.png` | S-06: текстуры вентиляционного короба и шлакоблока | сгенерировано автором через ChatGPT | ENDERWIS | авторский ассет | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/screwdriver/` | Отвёртка: модель и текстура | https://polyhaven.com/a/screwdriver | PierreB3D (Poly Haven) | CC0 1.0 | 2026-11-02 |
+| `Assets/Basement/Duct/Audio/ScrewTurn.ogg` | Откручивание болта — freesound #214892 "The Big Squeak (20) Screwing 1" (HQ preview, петля, моно) | https://freesound.org/people/Fantozzi/sounds/214892/ | Fantozzi | CC0 1.0 | 2026-11-02 |
+| `Assets/Basement/Duct/Audio/ScrewSeat.ogg` | Отвёртка встала в шлиц — Small ratchet (#0794), фрагмент | https://bigsoundbank.com/small-ratchet-s0794.html | Joseph SARDIN (BigSoundBank) | CC0 1.0 | 2026-11-02 |

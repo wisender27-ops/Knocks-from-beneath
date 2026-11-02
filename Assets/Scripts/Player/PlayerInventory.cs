@@ -21,11 +21,13 @@ namespace KnocksFromBeneath
         public bool hasCrowbar;
         public bool hasFlashlight;
         public bool hasHammer;
+        public bool hasScrewdriver;
 
         [Header("Объекты в руках (Визуал)")]
         public GameObject crowbarInHand;
         public GameObject flashlightInHand;
         public GameObject hammerInHand;
+        public GameObject screwdriverInHand;
 
         [Header("Настройки фонарика")]
         public Light flashlightLightSource;
@@ -60,7 +62,8 @@ namespace KnocksFromBeneath
             return FindEntry(id) != null ||
                    (id == "Crowbar" && hasCrowbar) ||
                    (id == "Flashlight" && hasFlashlight) ||
-                   (id == "Hammer" && hasHammer);
+                   (id == "Hammer" && hasHammer) ||
+                   (id == "Screwdriver" && hasScrewdriver);
         }
 
         private void Start()
@@ -174,7 +177,8 @@ namespace KnocksFromBeneath
             if (physicalPickup != null && physicalPickup.GetHeldObject() != null) return false;
             return (id == "Crowbar" && hasCrowbar && crowbarInHand != null) ||
                    (id == "Flashlight" && hasFlashlight && flashlightInHand != null) ||
-                   (id == "Hammer" && hasHammer && hammerInHand != null);
+                   (id == "Hammer" && hasHammer && hammerInHand != null) ||
+                   (id == "Screwdriver" && hasScrewdriver && screwdriverInHand != null);
         }
 
         // Предмет просто показывается на своём креплении у камеры (ItemHolder).
@@ -186,6 +190,7 @@ namespace KnocksFromBeneath
             GameObject item = itemName == "Crowbar" && hasCrowbar ? crowbarInHand
                 : itemName == "Flashlight" && hasFlashlight ? flashlightInHand
                 : itemName == "Hammer" && hasHammer ? hammerInHand
+                : itemName == "Screwdriver" && hasScrewdriver ? screwdriverInHand
                 : null;
             if (item != null) item.SetActive(true);
         }
@@ -203,6 +208,7 @@ namespace KnocksFromBeneath
             if (hasCrowbar) AddItem("Crowbar");
             if (hasFlashlight) AddItem("Flashlight");
             if (hasHammer) AddItem("Hammer");
+            if (hasScrewdriver) AddItem("Screwdriver");
             ActivateItem(string.Empty);
         }
 
@@ -217,6 +223,7 @@ namespace KnocksFromBeneath
             if (id == "Crowbar") hasCrowbar = value;
             else if (id == "Flashlight") hasFlashlight = value;
             else if (id == "Hammer") hasHammer = value;
+            else if (id == "Screwdriver") hasScrewdriver = value;
         }
 
         private bool TryApplyConsumable(InventoryItemDefinition definition)
@@ -232,6 +239,7 @@ namespace KnocksFromBeneath
             if (crowbarInHand != null) crowbarInHand.SetActive(false);
             if (flashlightInHand != null) flashlightInHand.SetActive(false);
             if (hammerInHand != null) hammerInHand.SetActive(false);
+            if (screwdriverInHand != null) screwdriverInHand.SetActive(false);
         }
 
         private void ToggleFlashlight()

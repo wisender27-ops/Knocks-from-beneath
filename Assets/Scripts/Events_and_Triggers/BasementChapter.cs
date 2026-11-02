@@ -32,7 +32,6 @@ namespace KnocksFromBeneath
 
         private BasementLevel level;
         private BasementDepths depths;
-        private TapeDoor tapeGrille;
         private GameObject monster;
         private BasementStalker stalker;
         private BasementHideListener hideListener;
@@ -107,7 +106,7 @@ namespace KnocksFromBeneath
             yield return Fade(0f, 1.4f);
             LockCamera(false);
             CurrentStage = Stage.Room;
-            sayQuick?.Invoke(new[] { "Решётка выбита изнутри. Штатив сбит, камера на полу.", "Можно посмотреть, что она успела записать. Или присесть и лезть в трубу." }, null);
+            sayQuick?.Invoke(new[] { "Штатив сбит, камера на полу.", "Можно посмотреть, что она успела записать." }, null);
             createQuest?.Invoke("Залезть в вентиляцию", 1, null, VentQuest);
         }
 
@@ -139,7 +138,7 @@ namespace KnocksFromBeneath
             NightRecording recording = NightRecording.Create(depths.tapeView, new TapeSetup
             {
                 Timeline = VentTape.Timeline,
-                Doors = new[] { tapeGrille },
+                Doors = new TapeDoor[0],
                 Lights = VentTape.BuildLights,
                 ViewShift = VentTape.ViewShift,
                 Hidden = gear != null ? gear.GearRenderers() : new Renderer[0]
@@ -150,11 +149,34 @@ namespace KnocksFromBeneath
 
         private void OpenVent()
         {
-            depths.OpenGrille();
-            depths.vent.gameObject.SetActive(false); // решётка выбита: проём свободен, игрок сам лезет в него присев
+            depths.vent.Initialize(() => CurrentStage == Stage.Room, UseVent, VentLabel);
         }
 
-        // Труба: только на корточках, PlayerController сам держит присед под низкой крышей. Из неё можно вернуться в подвал.
+        private void UseVent()
+        {
+            if (depths.hatch.IsUnbolted) StartCoroutine(ClimbIntoDuct());
+            else if (inventory != null && inventory.HasItem("Screwdriver")) depths.hatch.Begin();
+        }
+
+        private string VentLabel() => depths.hatch.IsUnbolted ? "Залезть в короб"
+            : inventory != null && inventory.HasItem("Screwdriver") ? "Открутить болты" : "Нужна отвёртка";
+
+        // Короб висит выше пояса: герой забирается в него с ящика, за затемнением.
+        private IEnumerator ClimbIntoDuct()
+        {
+            CurrentStage = Stage.Descending;
+            LockCamera(true);
+            yield return Fade(1f, 0.35f);
+            if (controller != null) controller.ForceCrouch = true;
+            var body = player.GetComponent<CharacterController>();
+            if (body != null) body.height = controller != null ? controller.crouchingHeight : 1f;
+            PlaceAt(DepthsLayout.DuctClimbSpot, DepthsLayout.DuctEnd);
+            CurrentStage = Stage.Room;
+            yield return Fade(0f, 0.35f);
+            LockCamera(false);
+        }
+
+        // Короб: только на корточках. Из него можно вернуться в подвал, спрыгнув с торца.
         private void EnterDuct()
         {
             CurrentStage = Stage.Duct;
@@ -175,12 +197,14 @@ namespace KnocksFromBeneath
         {
             CurrentStage = Stage.Room;
             depths.SetDuctActive(false);
+            if (controller != null) controller.ForceCrouch = false;
         }
 
         // Труба кончилась: герой вылез за забетонированной стеной, в ту половину подвала, которой «не было».
         private void EnterWing()
         {
             depths.SetDuctActive(false);
+            if (controller != null) controller.ForceCrouch = false;
             SpawnMonster();
             knockSource.transform.position = PipeInCell();
             if (QuestActive(DuctQuest)) QuestManager.Instance.AddProgress(1);
@@ -215,7 +239,7 @@ namespace KnocksFromBeneath
             if (player == null) return;
             Vector3 p = player.position;
             var at = new Vector2(p.x, p.z);
-            if (CurrentStage == Stage.Room && p.y < -2f && DepthsLayout.InDuct(at)) { EnterDuct(); return; }
+            if (CurrentStage == Stage.Room && DepthsLayout.AtDuctHeight(p.y) && DepthsLayout.InDuct(at)) { EnterDuct(); return; }
             if (CurrentStage == Stage.Duct)
             {
                 if (BasementLayout.HallB.Contains(at)) EnterWing();
@@ -728,7 +752,6 @@ namespace KnocksFromBeneath
             distractionSource.transform.position = BasementLayout.DistractionPoint;
 
             depths = BasementDepths.Get();
-            tapeGrille = new TapeDoor(depths.grillePivot, BasementDepths.GrilleSwing, VentTape.GrilleOpen); // на месте — до записи
             OpenVent();
             // Камера лежит на полу, сбитая вместе со штативом, и сама служит «пультом» записи; если снаряжения нет (отладка) — точка.
             CameraPlacementController gear = CameraPlacementController.Instance;

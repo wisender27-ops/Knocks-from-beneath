@@ -26,19 +26,19 @@ namespace KnocksFromBeneath
         public const float Gone = Hit + 0.75f; // камера уже на боку, в кадре пусто
 
         private static readonly Vector3 Vent = DepthsLayout.Vent;
-        private static readonly Vector3 InDuct = Vent + new Vector3(0.6f, 0.4f, 0f);
+        private static readonly Vector3 InDuct = Vent + new Vector3(0.6f, 0f, 0f);
         private static readonly Vector3 Lens = DepthsLayout.TapeCameraPosition;
         // Где монстр стоит при ударе: в шаге от объектива, на линии «стойка → камера».
         public static readonly Vector3 Striker = StrikerPoint(StrikeDistance);
         private static readonly Vector3 RushFrom = StrikerPoint(RushDistance);
-        // Стоит у трубы и смотрит на камеру; второй ключ на пару сантиметров ближе, чтобы задать поворот к объективу.
-        private static readonly Vector3 Stand = new Vector3(-38.85f, Floor, 117.55f);
+        // Стоит под коробом и смотрит на камеру; второй ключ на пару сантиметров ближе, чтобы задать поворот к объективу.
+        private static readonly Vector3 Stand = new Vector3(-41.25f, Floor, 117.3f);
         private static readonly Vector3 StandTurn = Stand + (new Vector3(Lens.x, Floor, Lens.z) - Stand).normalized * 0.02f;
         private static readonly Vector3 Away = AwayFromMonster();
 
         private static Vector3 StrikerPoint(float distance)
         {
-            Vector3 from = new Vector3(-40.2f, Floor, 117.0f), lens = new Vector3(Lens.x, Floor, Lens.z);
+            Vector3 from = new Vector3(-41.25f, Floor, 117.0f), lens = new Vector3(Lens.x, Floor, Lens.z);
             return lens + (from - lens).normalized * distance;
         }
 
@@ -119,7 +119,7 @@ namespace KnocksFromBeneath
             bulb.shadows = LightShadows.Soft;
             // Лампа за стойкой: без этого отсвета решётка на записи тонет в шуме.
             Light fill = NightRecording.NewLight(parent, "Vent Fill", LightType.Point);
-            fill.transform.position = new Vector3(-39.2f, BasementLayout.FloorY + 1.4f, 116.6f);
+            fill.transform.position = new Vector3(-41.6f, BasementLayout.FloorY + 1.2f, 116.5f);
             fill.color = new Color(1f, 0.8f, 0.6f);
             fill.intensity = 1.6f;
             fill.range = 5f;

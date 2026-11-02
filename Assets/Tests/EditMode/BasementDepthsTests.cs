@@ -37,7 +37,7 @@ public sealed class BasementDepthsTests
     public void Duct_LeadsFromTheVentIntoHallB()
     {
         Vector2 outlet = new Vector2(DepthsLayout.DuctOutlet.x, DepthsLayout.DuctOutlet.z);
-        Assert.That(DepthsLayout.DuctFloorY - BasementLayout.FloorY, Is.InRange(0f, 0.1f));
+        Assert.That(DepthsLayout.DuctFloorY + DepthsLayout.DuctSize, Is.LessThan(-1.86f), "Короб под балками");
         Assert.That(BasementLayout.HallB.Contains(outlet), Is.True);
         Assert.That(BasementLayout.BlockedByProp(outlet, 0.4f), Is.False);
         Assert.That(BasementLayout.BlockedByJunk(outlet, 0.4f), Is.False);
@@ -46,10 +46,24 @@ public sealed class BasementDepthsTests
     [Test]
     public void InDuct_CoversTheLegsButNotTheRoomOrTheHall()
     {
-        Assert.That(DepthsLayout.InDuct(new Vector2(-37f, 118.5f)), Is.True);
-        Assert.That(DepthsLayout.InDuct(new Vector2(-36.5f, 119.3f)), Is.True);
-        Assert.That(DepthsLayout.InDuct(new Vector2(-38.5f, 117.6f)), Is.False);
+        Assert.That(DepthsLayout.InDuct(new Vector2(-39f, 117.7f)), Is.True);
+        Assert.That(DepthsLayout.InDuct(new Vector2(-37.2f, 117.7f)), Is.True);
+        Assert.That(DepthsLayout.InDuct(new Vector2(-39f, 116.9f)), Is.False);
         Assert.That(DepthsLayout.InDuct(new Vector2(DepthsLayout.DuctOutlet.x, DepthsLayout.DuctOutlet.z)), Is.False);
+    }
+
+    [Test]
+    public void Duct_TheRoomFloorBelowItIsNotInsideIt()
+    {
+        Assert.That(DepthsLayout.AtDuctHeight(BasementLayout.FloorY), Is.False);
+        Assert.That(DepthsLayout.AtDuctHeight(DepthsLayout.DuctFloorY), Is.True);
+    }
+
+    [Test]
+    public void Duct_ClimbSpotIsInsideAndCrouchedHeroFits()
+    {
+        Assert.That(DepthsLayout.InDuct(new Vector2(DepthsLayout.DuctClimbSpot.x, DepthsLayout.DuctClimbSpot.z)), Is.True);
+        Assert.That(DepthsLayout.DuctWidth, Is.GreaterThan(0.8f));
     }
 
     [Test]
@@ -100,6 +114,17 @@ public sealed class BasementDepthsTests
         Assert.That(VentTape.ViewShift(VentTape.Hit - 0.1f).Position, Is.EqualTo(Vector3.zero));
         Assert.That(VentTape.ViewShift(VentTape.Duration).Position.y, Is.EqualTo(-VentTape.CameraFall).Within(0.1f));
         Assert.That(VentTape.ViewShift(VentTape.Duration).Euler.z, Is.GreaterThan(60f));
+    }
+
+    [Test]
+    public void Screwdriver_IsNotInTheHeroPocketsUntilTaken()
+    {
+        var holder = new GameObject("inventory");
+        var inventory = holder.AddComponent<PlayerInventory>();
+        Assert.That(inventory.HasItem("Screwdriver"), Is.False);
+        inventory.hasScrewdriver = true;
+        Assert.That(inventory.HasItem("Screwdriver"), Is.True);
+        Object.DestroyImmediate(holder);
     }
 
     [Test]

@@ -252,6 +252,9 @@ public class PlayerInteraction : MonoBehaviour
             }
 
             // 1. СЮЖЕТНЫЕ ТРИГГЕРЫ
+            ToolPickup tool = hitObj.GetComponentInParent<ToolPickup>();
+            if (tool != null) { tool.Take(inventory); return; }
+
             HammerTrap storyItem = hitObj.GetComponentInParent<HammerTrap>();
             if (storyItem != null)
             {

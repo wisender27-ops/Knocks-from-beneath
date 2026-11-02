@@ -13,6 +13,7 @@ namespace KnocksFromBeneath
         public BasementCellLock tapeCamera;
         public Transform tapeView;
         public BasementDuctScene duct;
+        public VentHatch hatch;
 
         private static BasementDepths instance;
 
@@ -34,12 +35,6 @@ namespace KnocksFromBeneath
         public void SetDuctActive(bool active)
         {
             if (duct != null) duct.SetAudible(active);
-        }
-
-        // Он вылез, решётка осталась распахнутой.
-        public void OpenGrille()
-        {
-            if (grillePivot != null) grillePivot.localRotation = Quaternion.AngleAxis(GrilleSwing, Vector3.up) * grillePivot.localRotation;
         }
     }
 }

@@ -53,6 +53,8 @@ namespace KnocksFromBeneath
             TrashPile trash = t.GetComponentInParent<TrashPile>();
             if (trash != null)
                 return quests != null && quests.IsQuestActive("trash-collect") && Set(trash.transform, "Собрать мусор", false, false, hit, out focus);
+            ToolPickup tool = t.GetComponentInParent<ToolPickup>();
+            if (tool != null) return actor.inventory != null && Set(tool.transform, tool.Prompt, false, false, hit, out focus);
             HammerTrap hammer = t.GetComponentInParent<HammerTrap>();
             if (hammer != null)
                 return actor.inventory != null && quests != null && quests.IsQuestActive("hammer-find") &&
