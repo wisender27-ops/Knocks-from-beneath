@@ -555,20 +555,15 @@ namespace KnocksFromBeneath
             if (owner != null) owner.RevealFace();
             if (QuestActive(BreakQuest)) QuestManager.Instance.AddProgress(1);
 
-            bool spoken = false;
-            say?.Invoke(new[]
-            {
-                "Кто ты? Четыре месяца стучу по трубе, а кто наверху — не знаю.",
-                "Погоди… Дэниел Росс?",
-                "Откуда вы меня знаете?",
-                "В бумагах аренды была копия твоего документа с фото.",
-                "Он никогда не шёл за мной. Он шёл за тобой.",
-                "Зачем ты сбил замок?",
-                "Мы с сыном договорились: он запер меня снаружи, чтобы тот не добрался.",
-                "Я стучал по трубе, чтобы удержать его внизу. Теперь он услышал грохот и идёт.",
-                "Камера на стене моя. Пусть пишет. Хоть раз он попадёт на плёнку там, где надо."
-            }, () => spoken = true);
-            while (!spoken) yield return null;
+            yield return SayLine("ХЕЙЛ", "Кто ты? Четыре месяца стучу по трубе, а кто наверху — не знаю.");
+            yield return SayLine("ХЕЙЛ", "Погоди… Дэниел Росс?");
+            yield return SayLine("Я", "Откуда вы меня знаете?");
+            yield return SayLine("ХЕЙЛ", "В бумагах аренды была копия твоего документа с фото.");
+            yield return SayLine("ХЕЙЛ", "Он никогда не шёл за мной. Он шёл за тобой.");
+            yield return SayLine("ХЕЙЛ", "Зачем ты сбил замок?");
+            yield return SayLine("ХЕЙЛ", "Сын запер меня по моей просьбе. Этот замок был не тюрьмой, а защитой.");
+            yield return SayLine("ХЕЙЛ", "Я стучал по трубе, чтобы удержать его внизу. Теперь он услышал грохот и идёт.");
+            yield return SayLine("ХЕЙЛ", "Камера на стене моя. Пусть пишет. Хоть раз он попадёт на плёнку там, где надо.");
 
             for (int i = 0; i < 7; i++)
             {
@@ -581,6 +576,14 @@ namespace KnocksFromBeneath
             yield return new WaitForSeconds(1.2f);
             CurrentStage = Stage.Done;
             endGame?.Invoke(EndingId.Answer);
+        }
+
+        private IEnumerator SayLine(string speaker, string line)
+        {
+            if (ThoughtManager.Instance == null) yield break;
+            bool finished = false;
+            ThoughtManager.Instance.ShowDialogue(speaker, new[] { line }, () => finished = true);
+            while (!finished) yield return null;
         }
 
         // C-04: плёнка камеры хозяина. Живой монстр и хозяин из сцены на ней не видны: там свой сценарий BasementTape.
