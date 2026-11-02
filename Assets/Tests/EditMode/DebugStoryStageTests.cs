@@ -38,5 +38,9 @@ public sealed class DebugStoryStageTests
         Assert.That((int)DebugStoryStage.StartCameraQuest, Is.EqualTo(27));
         Assert.That((int)DebugStoryStage.StartBasement, Is.EqualTo(28));
         Assert.That((int)DebugStoryStage.StartHatchChoice, Is.EqualTo(29));
+        Assert.That((int)DebugStoryStage.StartDayBasement, Is.EqualTo(30));
+        Assert.That((int)DebugStoryStage.StartBasementTunnels, Is.EqualTo(31));
+        Assert.That((int)DebugStoryStage.StartCameraStoreQuest, Is.EqualTo(32));
+        Assert.That((int)DebugStoryStage.StartBasementTrap, Is.EqualTo(33));
     }
 }

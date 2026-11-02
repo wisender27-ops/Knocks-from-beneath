@@ -35,6 +35,8 @@ public static class ChapterCheckpoints
         public int chapter;
         public int knockTrust;
         public bool knockAnswered;
+        // S-12: поля только добавляются; в старых сохранениях их нет и они читаются как false.
+        public bool knockVoicesNoticed;
         public bool sawRecording;
         public bool neighborNoteRead;
         public bool frontDoorLocked;
@@ -113,6 +115,7 @@ public static class ChapterCheckpoints
             chapter = (int)chapter,
             knockTrust = StoryFlags.KnockTrust,
             knockAnswered = StoryFlags.KnockAnswered,
+            knockVoicesNoticed = StoryFlags.KnockVoicesNoticed,
             sawRecording = StoryFlags.SawRecording,
             neighborNoteRead = StoryFlags.NeighborNoteRead,
             frontDoorLocked = StoryFlags.FrontDoorLocked,
@@ -182,7 +185,7 @@ public static class ChapterCheckpoints
         StoryFlags.Reset();
         if (snapshot == null) return;
         StoryFlags.Restore(snapshot.knockTrust, snapshot.sawRecording, snapshot.neighborNoteRead,
-            snapshot.frontDoorLocked, snapshot.clues, snapshot.knockAnswered);
+            snapshot.frontDoorLocked, snapshot.clues, snapshot.knockAnswered, snapshot.knockVoicesNoticed);
         StoryFlags.SetCameraPlacementSlot(snapshot.cameraPlacementSlot);
         StoryFlags.SetHatchForced(snapshot.hatchForced);
         if (inventory == null || snapshot.items == null) return;

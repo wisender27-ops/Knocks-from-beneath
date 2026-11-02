@@ -15,7 +15,7 @@ public static class StoryFlags
     public static int KnockTrust { get; private set; }
     // Стучащий хоть раз ответил игроку — повтором его стука или в перестуке (K-05: сосед, реплики).
     public static bool KnockAnswered { get; private set; }
-    // Герой заметил, что стучат двое: монстр под ногами, Хейл в трубах (S-03). Только на сессию: сохранение — S-12.
+    // Герой заметил, что стучат двое: монстр под ногами, Хейл в трубах (S-03). Сохраняется в чекпойнте главы (S-12).
     public static bool KnockVoicesNoticed { get; private set; }
     // Игрок увидел аномалию на записи видеокамеры (M2).
     public static bool SawRecording { get; private set; }
@@ -65,11 +65,12 @@ public static class StoryFlags
 
     // Чекпойнт главы (F-04) возвращает флаги в состояние на начало главы.
     public static void Restore(int knockTrust, bool sawRecording, bool neighborNoteRead, bool frontDoorLocked, IEnumerable<string> clueIds,
-        bool knockAnswered = false)
+        bool knockAnswered = false, bool knockVoicesNoticed = false)
     {
         Reset();
         KnockTrust = knockTrust;
         KnockAnswered = knockAnswered;
+        KnockVoicesNoticed = knockVoicesNoticed;
         SawRecording = sawRecording;
         NeighborNoteRead = neighborNoteRead;
         GameState.frontDoorLocked = frontDoorLocked;

@@ -67,6 +67,36 @@ public class ChapterCheckpointsTests
     }
 
     [Test]
+    public void KnockVoicesNoticed_SurvivesTheCheckpoint()
+    {
+        StoryFlags.MarkKnockVoicesNoticed();
+        ChapterCheckpoints.Save(StoryChapter.NightTwo, null);
+        StoryFlags.Reset();
+
+        ChapterCheckpoints.RequestChapter(StoryChapter.NightTwo);
+        ChapterCheckpoints.TryTakeLaunch(out _);
+        ChapterCheckpoints.ApplyLaunchState(null);
+        Assert.That(StoryFlags.KnockVoicesNoticed, Is.True);
+    }
+
+    [Test]
+    public void OldCheckpointWithoutS12Fields_StillRestoresTheRest()
+    {
+        PlayerPrefs.SetString("kfb.progress.chapter.3",
+            "{\"chapter\":3,\"knockTrust\":2,\"knockAnswered\":true,\"sawRecording\":true,\"clues\":[\"photo\"]}");
+        StoryFlags.MarkKnockVoicesNoticed();
+        ChapterCheckpoints.RequestChapter(StoryChapter.NightTwo);
+        ChapterCheckpoints.TryTakeLaunch(out _);
+        ChapterCheckpoints.ApplyLaunchState(null);
+
+        Assert.That(StoryFlags.KnockVoicesNoticed, Is.False);
+        Assert.That(StoryFlags.KnockTrust, Is.EqualTo(2));
+        Assert.That(StoryFlags.KnockAnswered, Is.True);
+        Assert.That(StoryFlags.SawRecording, Is.True);
+        Assert.That(StoryFlags.HasClue("photo"), Is.True);
+    }
+
+    [Test]
     public void CameraPlacement_IsRestoredFromTheChosenChapter()
     {
         StoryFlags.SetCameraPlacementSlot(1);
