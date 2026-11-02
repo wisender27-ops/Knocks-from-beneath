@@ -16,6 +16,7 @@ namespace KnocksFromBeneath
         private Action<string, int, UnityAction, string> createQuest;
         private Action<string[], Action> say, sayImportant;
         private Action knockBelow, finished;
+        private Func<bool> tapeAvailable;
         private bool wallChecked, ventChecked;
 
         public bool Running { get; private set; }
@@ -24,8 +25,10 @@ namespace KnocksFromBeneath
         public static bool IsAboveGround(Vector3 position) => position.y > SurfaceY;
 
         public void Initialize(Transform playerTransform, Action<string, int, UnityAction, string> createQuestCallback,
-            Action<string[], Action> quickThoughts, Action<string[], Action> importantThoughts, Action knockBelowCallback, Action onFinished)
+            Action<string[], Action> quickThoughts, Action<string[], Action> importantThoughts, Action knockBelowCallback, Action onFinished,
+            Func<bool> tapeAvailableCallback = null)
         {
+            tapeAvailable = tapeAvailableCallback;
             player = playerTransform;
             createQuest = createQuestCallback;
             say = quickThoughts;
@@ -85,11 +88,13 @@ namespace KnocksFromBeneath
             knockBelow?.Invoke();
             yield return new WaitForSeconds(2.4f);
             Running = false;
+            // Про запись говорим только если она есть: иначе реплика обещает просмотр, а следом идёт квест про ужин.
+            bool tape = tapeAvailable == null || tapeAvailable();
             sayImportant?.Invoke(new[]
             {
                 "Опять. Тот же стук, будто я и не спускался.",
                 "Там никого нет. Я только что там был.",
-                "Камера писала всю ночь. Надо посмотреть запись."
+                tape ? "Камера писала всю ночь. Надо посмотреть запись." : "Голова гудит. Надо поесть, иначе я ничего не пойму."
             }, finished);
         }
 

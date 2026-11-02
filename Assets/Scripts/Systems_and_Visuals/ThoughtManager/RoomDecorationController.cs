@@ -22,6 +22,7 @@ public sealed class RoomDecorationController
     private const string KitchenQuestTag = "go-kitchen";
     private const float KitchenReach = 3.8f;
     private const float FirstFloorMaxY = 3f;
+    private const float MessSightRange = 14f, MessSightAngle = 45f;
 
     public RoomDecorationController(
         GameObject[] decorationZones,
@@ -59,13 +60,38 @@ public sealed class RoomDecorationController
     IEnumerator WaitForKitchen(Vector3 kitchen)
     {
         var interval = new WaitForSeconds(.2f);
-        while (_player != null && !IsAtKitchen(_player.position, kitchen)) yield return interval;
+        while (_player != null && !IsAtKitchen(_player.position, kitchen) && !SeesMess()) yield return interval;
         QuestManager quests = QuestManager.Instance;
         if (quests != null && quests.IsQuestActive(KitchenQuestTag)) quests.AddProgress(1);
     }
 
     public static bool IsAtKitchen(Vector3 player, Vector3 kitchen) =>
         player.y < FirstFloorMaxY && Vector3.ProjectOnPlane(player - kitchen, Vector3.up).sqrMagnitude <= KitchenReach * KitchenReach;
+
+    // Погром замечен, как только разбросанная вещь попала в поле зрения без преград (например, с лестницы).
+    bool SeesMess()
+    {
+        Camera view = Camera.main;
+        if (view == null || _decorationZones == null) return false;
+        Vector3 eye = view.transform.position;
+        foreach (GameObject zoneObject in _decorationZones)
+        {
+            PlacementZone zone = zoneObject != null ? zoneObject.GetComponent<PlacementZone>() : null;
+            if (zone == null || zone.slots == null) continue;
+            foreach (Transform slot in zone.slots)
+            {
+                FurnitureSlot marker = slot != null ? slot.GetComponent<FurnitureSlot>() : null;
+                GameObject item = marker != null ? marker.ItemForSlot : null;
+                if (item == null || !item.activeInHierarchy) continue;
+                Vector3 to = item.transform.position + Vector3.up * .1f - eye;
+                if (to.sqrMagnitude > MessSightRange * MessSightRange ||
+                    Vector3.Angle(view.transform.forward, to) > MessSightAngle) continue;
+                if (!Physics.Raycast(eye, to, out RaycastHit hit, to.magnitude, PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore) ||
+                    hit.transform.IsChildOf(item.transform)) return true;
+            }
+        }
+        return false;
+    }
 
     bool TryGetKitchenPoint(out Vector3 kitchen)
     {

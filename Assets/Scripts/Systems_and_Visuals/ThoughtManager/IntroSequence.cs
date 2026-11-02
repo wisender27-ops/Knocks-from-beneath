@@ -205,7 +205,7 @@ public class IntroSequence : MonoBehaviour
         _hatchChoice = gameObject.AddComponent<HatchDescentWindow>();
         _dayVisit = gameObject.AddComponent<BasementDayVisit>();
         _dayVisit.Initialize(playerTransform, (title, amount, done, tag) => CreateQuest(title, amount, done, tag),
-            ShowThoughts, ShowImportantThoughts, () => StartCoroutine(KnocksBelowPlayer(3)), SetupWatchTapeQuest);
+            ShowThoughts, ShowImportantThoughts, () => StartCoroutine(KnocksBelowPlayer(3)), SetupWatchTapeQuest, () => _recordedView != null);
         var firstNightScare = gameObject.AddComponent<NightOneScare>();
         firstNightScare.Initialize(playerInventory);
         var floorKnock = gameObject.AddComponent<PlayerFloorKnock>(); // K-02: Q — стук в пол

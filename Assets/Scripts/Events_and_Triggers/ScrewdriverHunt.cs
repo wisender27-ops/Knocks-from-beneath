@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace KnocksFromBeneath
 {
-    // Поиск отвёртки для болтов вентиляции: ключ лежит на верстаке в подвале, отвёртка — в захламлённой кладовой
+    // Поиск отвёртки для болтов вентиляции: ключ появляется на верстаке в подвале вместе с квестом, отвёртка — в захламлённой кладовой
     // за запертой дверью наверху (бывшая верхняя ванная). Подсказки героя зависят от того, видел ли игрок запертую дверь.
     [DisallowMultipleComponent]
     public sealed class ScrewdriverHunt : MonoBehaviour
@@ -38,6 +38,8 @@ namespace KnocksFromBeneath
                 storageDoor.LockedAttempted += OnLockedAttempt;
             }
             ToolPickup.Taken += OnTaken;
+            // Ключ появляется на верстаке только вместе с квестом: иначе его берут днём и сразу открывают кладовую.
+            if (key != null && !Has(KeyId) && !Has(ScrewdriverId)) key.gameObject.SetActive(false);
             if (key != null) QuestItemMarker.Ensure(key.gameObject).ConfigureCondition(() => started && !doorOpened && !Has(KeyId));
             if (screwdriver != null) QuestItemMarker.Ensure(screwdriver.gameObject).ConfigureCondition(() => doorOpened && !Has(ScrewdriverId));
         }
@@ -65,6 +67,7 @@ namespace KnocksFromBeneath
             BasementChapter chapter = FindFirstObjectByType<BasementChapter>();
             if (chapter == null || !chapter.IsActive) return;
             started = true;
+            if (key != null && !Has(KeyId) && !doorOpened) key.gameObject.SetActive(true);
             QuestManager.Instance?.CreateQuest("Найти отвёртку", 1, null, QuestTag);
         }
 
