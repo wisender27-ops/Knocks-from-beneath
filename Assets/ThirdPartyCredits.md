@@ -178,3 +178,46 @@
 | `Assets/Resources/Audio/GlassOfWater/DontMove.ogg` | B-07: голос монстра «Don't move» — синтез Piper TTS (голос en_US-joe-medium: датасет CC0, дообучен от lessac) + своя обработка (`Tools/Audio/build_b07_voice.py`) | https://huggingface.co/rhasspy/piper-voices/tree/main/en/en_US/joe/medium | Piper / OHF-Voice | датасет CC0; лицензию модели lessac сверить перед релизом | 2026-10-27 |
 | `Assets/ThirdParty/Phone/Smartphone.fbx` | P-05: модель смартфона | https://grab3d.com/models/electronics/smartphone/ | Grab3D | CC0 1.0 | 2026-10-27 |
 | `Assets/Resources/Audio/WoodDoorOpenJTap.ogg` | Открытие деревянной двери, первая часть записи, моно | https://pixabay.com/sound-effects/household-door-open-close-45475/ | j-tap (Freesound), freesound_community | Pixabay Content License | 2026-10-27 |
+| `Assets/ThirdParty/PolyHaven/WoodenChair_01/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/WoodenChair_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/WoodenTable_03/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/WoodenTable_03 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/barrel_03/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/barrel_03 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/can_rusted/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/can_rusted | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/cardboard_box_01/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/cardboard_box_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/cement_bag/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/cement_bag | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/cross_pein_hammer/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/cross_pein_hammer | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/garden_hose_wall_mounted_01/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/garden_hose_wall_mounted_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/hanging_picture_frame_01/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/hanging_picture_frame_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/lightbulb_01/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/lightbulb_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/metal_jerrycan/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/metal_jerrycan | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/metal_tool_chest/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/metal_tool_chest | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/metal_toolbox/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/metal_toolbox | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/metal_trash_can/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/metal_trash_can | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/multi_cleaner_5_litre/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/multi_cleaner_5_litre | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/oil_tin/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/oil_tin | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/old_tyre/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/old_tyre | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/plastic_bottle_gallon/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/plastic_bottle_gallon | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/plastic_crate_01/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/plastic_crate_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/pull_chain_light_socket/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/pull_chain_light_socket | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/rubber_boots/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/rubber_boots | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/steel_frame_shelves_01/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/steel_frame_shelves_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/trashbag/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/trashbag | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/wicker_basket_01/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/wicker_basket_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/wooden_bucket_01/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/wooden_bucket_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/wooden_crate_01/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/wooden_crate_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/wooden_crate_02/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/wooden_crate_02 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/wooden_ladder/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/wooden_ladder | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/worn_metal_rack/` | Обстановка подвала: модель и текстуры | https://polyhaven.com/a/worn_metal_rack | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/Basement/Rooms/Textures/dirty_concrete_*` | Стены, пол и потолок подвала | https://polyhaven.com/a/dirty_concrete | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/Basement/Rooms/Textures/concrete_floor_worn_001_*` | Стены, пол и потолок подвала | https://polyhaven.com/a/concrete_floor_worn_001 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/Basement/Rooms/Textures/weathered_planks_*` | Стены, пол и потолок подвала | https://polyhaven.com/a/weathered_planks | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/Basement/Rooms/Audio/GasWaterHeater.ogg` | Gas water heater (#0203) | https://bigsoundbank.com/gas-water-heater-s0203.html | Joseph SARDIN (BigSoundBank) | CC0 1.0 | 2026-11-02 |
+| `Assets/Basement/Rooms/Audio/WaterDrops.ogg` | Drops of water #1 (#1384) | https://bigsoundbank.com/drops-of-water-1-s1384.html | Joseph SARDIN (BigSoundBank) | CC0 1.0 | 2026-11-02 |
+| `Assets/Basement/Rooms/Audio/BulbFlicker.ogg` | Flashing light bulb #4 (#2146) | https://bigsoundbank.com/flashing-light-bulb-4-s2146.html | Joseph SARDIN (BigSoundBank) | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/cigarette_pack/` | Мусор на полу подвала: модель и текстуры | https://polyhaven.com/a/cigarette_pack | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/russian_food_cans_01/` | Мусор на полу подвала: модель и текстуры | https://polyhaven.com/a/russian_food_cans_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/stone_01/` | Мусор на полу подвала: модель и текстуры | https://polyhaven.com/a/stone_01 | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/mousetrap/` | Мусор на полу подвала: модель и текстуры | https://polyhaven.com/a/mousetrap | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/wooden_broom/` | Мусор на полу подвала: модель и текстуры | https://polyhaven.com/a/wooden_broom | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/dustpan/` | Мусор на полу подвала: модель и текстуры | https://polyhaven.com/a/dustpan | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/ThirdParty/PolyHaven/office_notepads/` | Мусор на полу подвала: модель и текстуры | https://polyhaven.com/a/office_notepads | Poly Haven | CC0 1.0 | 2026-11-02 |
+| `Assets/Basement/Rooms/Decals/Grime.png`, `Dust.png` | Пятна грязи и крошка: сгенерированы из текстур dirt_floor и concrete_debris | https://polyhaven.com/a/dirt_floor, https://polyhaven.com/a/concrete_debris | Poly Haven | CC0 1.0 | 2026-11-02 |

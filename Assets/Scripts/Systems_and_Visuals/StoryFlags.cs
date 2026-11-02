@@ -15,6 +15,8 @@ public static class StoryFlags
     public static int KnockTrust { get; private set; }
     // Стучащий хоть раз ответил игроку — повтором его стука или в перестуке (K-05: сосед, реплики).
     public static bool KnockAnswered { get; private set; }
+    // Герой заметил, что стучат двое: монстр под ногами, Хейл в трубах (S-03). Только на сессию: сохранение — S-12.
+    public static bool KnockVoicesNoticed { get; private set; }
     // Игрок увидел аномалию на записи видеокамеры (M2).
     public static bool SawRecording { get; private set; }
     // Прочитана записка соседа (GameEvents.OnNeighborNoteRead) — открывает звонок M6.
@@ -52,6 +54,7 @@ public static class StoryFlags
     {
         KnockTrust = 0;
         KnockAnswered = false;
+        KnockVoicesNoticed = false;
         SawRecording = false;
         NeighborNoteRead = false;
         CameraPlacementSlot = 0;
@@ -76,6 +79,7 @@ public static class StoryFlags
 
     public static void AddKnockTrust(int delta) => KnockTrust += delta;
     public static void MarkKnockAnswered() => KnockAnswered = true;
+    public static void MarkKnockVoicesNoticed() => KnockVoicesNoticed = true;
     public static void MarkRecordingSeen() => SawRecording = true;
     public static void SetHatchForced(bool forced) => HatchForced = forced;
     public static void SetCameraPlacementSlot(int slot) => CameraPlacementSlot = Mathf.Clamp(slot, 0, 8);

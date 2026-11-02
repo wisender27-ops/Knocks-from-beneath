@@ -3,7 +3,8 @@ using UnityEngine;
 
 namespace KnocksFromBeneath
 {
-    // K-01: стук «под ногами». Живёт на объекте Knock Controller рядом с RandomKnock и двигает
+    // K-01: стук «под ногами» — это монстр, он идёт за героем (S-02; Хейл стучит в трубах, см. HalePipe).
+    // Живёт на объекте Knock Controller рядом с RandomKnock и двигает
     // этот объект (и его AudioSource) под полом к игроку. Время и звук ударов по-прежнему
     // решает RandomKnock — его API (PauseFor/SilencePermanently) и вызовы не меняются.
     // Активность следует за knockController: IntroSequence включает его только в нужные этапы.

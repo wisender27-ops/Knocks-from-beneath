@@ -5,10 +5,11 @@ using UnityEngine;
 namespace KnocksFromBeneath
 {
     // K-02: стучащий снизу отвечает на стук игрока. Живёт на объекте IntroSequence и не зависит от
-    // Knock Controller: тот включён только в отдельные этапы ночи 2, а хозяин в подвале — всегда.
+    // Knock Controller: тот включён только в отдельные этапы ночи 2, а монстр под полом — всегда.
     // Если слежка K-01 (KnockDirector) активна — ответ идёт из её источника, иначе из точки под полом
     // под игроком, глушённой как через одно перекрытие. Короткая серия (1..4) — повтор, длинная — тишина.
     // Первый спам за игру — «срыв»: через 3–4 с снизу бьют со всей силы (встряска камеры), потом тишина.
+    // S-02: всё это голос монстра (дерево, ровно, под ногами). Голос Хейла — PlayFromPipe: металл из точки трубы.
     [DisallowMultipleComponent]
     public sealed class KnockResponder : MonoBehaviour
     {
@@ -26,6 +27,8 @@ namespace KnocksFromBeneath
         private const float RageJolt = 5f;
         private const float RagePitch = 0.92f;   // почти родной тон: удар резкий, не тягучий
         private const float RageGain = 1.8f;     // PlayOneShot усиливает и выше 1
+        private const float PipeCutoff = 2600f;  // труба звенит: верхов больше, чем сквозь пол
+        private const float PipeVolume = 0.8f;
 
         private readonly KnockReply _reply = new KnockReply();
         private PlayerFloorKnock _playerKnock;
@@ -37,7 +40,10 @@ namespace KnocksFromBeneath
         private Vector3 _lastFloor;
         private AudioSource _rageSource;
         private AudioClip[] _rageLayers;
+        private AudioSource _pipeSource;
 
+        public AudioClip PipeClip { get; private set; }
+        public Vector3 LastPipePosition { get; private set; }
         public bool IsReplying => _replyRoutine != null;
         // K-03: пока идёт «Перестук», удары игрока — ответ на ритм, а не новая серия.
         public bool Suspended { get; set; }
@@ -72,6 +78,14 @@ namespace KnocksFromBeneath
                 _rageSource.spatialBlend = 0.6f; // наполовину «в голове» — бьёт по ушам, но слышно, что снизу
                 _rageSource.priority = 10;
             }
+            if (_pipeSource == null)
+            {
+                _pipeSource = HorrorMomentDirector.CreateSource(transform, "Knock in Hale's pipe", 25f);
+                _pipeSource.minDistance = 6f;
+                _pipeSource.volume = PipeVolume;
+                _pipeSource.gameObject.AddComponent<AudioLowPassFilter>().cutoffFrequency = PipeCutoff;
+            }
+            PipeClip = Resources.Load<AudioClip>("Audio/Horror/impactMetal_heavy_001");
             _rageLayers = new[]
             {
                 Resources.Load<AudioClip>("Audio/Horror/impactPunch_heavy_000"),
@@ -213,14 +227,19 @@ namespace KnocksFromBeneath
             _source.PlayOneShot(_clip, volume);
         }
 
+        // S-02: удар Хейла по трубе — из её ближайшей к игроку точки, а не из-под ног.
+        public void PlayFromPipe(Vector3 listener, float pitch, float volume = 1f)
+        {
+            if (PipeClip == null) return;
+            LastPipePosition = HalePipe.NearestPoint(listener);
+            _pipeSource.transform.position = LastPipePosition;
+            _pipeSource.pitch = pitch;
+            _pipeSource.PlayOneShot(PipeClip, volume);
+        }
+
         public void HoldKnocks(float seconds)
         {
             if (DirectorActive) _director.HoldKnocks(seconds);
-        }
-
-        public void ResetDirectorPitch()
-        {
-            if (DirectorActive) _director.ResetPitch();
         }
 
         private static IEnumerator WaitPlayable(float duration)

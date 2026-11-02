@@ -144,8 +144,9 @@ namespace KnocksFromBeneath
         public static readonly Vector3 TapeCameraPosition = new Vector3(-42.0f, FloorY + 2.05f, 111.6f);
         public static readonly Vector3 TapeCameraLook = new Vector3(-44.6f, FloorY + 0.9f, 107.4f);
 
-        // Укрытие за ящиками в нише A: ящики у устья, игрок внутри, выход — перед нишей.
-        public static readonly Vector3 HideCrateCenter = new Vector3(NookARect.center.x, FloorY + 0.85f, 107.85f);
+        // Укрытие в нише A: большая коробка на полу у устья, игрок присел за ней и смотрит поверх, выход — перед нишей.
+        public static readonly Vector3 HideCrateCenter = new Vector3(NookARect.center.x, FloorY + 0.4f, 107.85f);
+        public const float HideEyeHeight = 0.92f; // чуть выше коробки (0.8 м)
         public static readonly Vector3 HideSpot = new Vector3(NookARect.center.x, FloorY, 106.95f);
         public static readonly Vector3 HideExit = new Vector3(NookARect.center.x, FloorY, 108.9f);
         public static readonly Vector3 HideRespawn = new Vector3(-40.6f, FloorY, 110.6f);

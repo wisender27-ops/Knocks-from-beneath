@@ -13,5 +13,6 @@ namespace KnocksFromBeneath
         public BasementOwner owner;
         public Light cellLamp;
         public Transform tapeView;
+        public BasementRoomAtmosphere atmosphere;
     }
 }

@@ -29,6 +29,9 @@ namespace KnocksFromBeneath
             new[] { new[] { 2, 1, 2 }, new[] { 1, 2, 1 }, new[] { 3, 2 } }
         };
 
+        // S-03: подпись Хейла, ритм 2·1 с паузой. Монстр бьёт ровно и пауз не держит.
+        public static readonly KnockPattern HaleSignature = new KnockPattern(2, 2, 1);
+
         public readonly int Level;
         private readonly int[] _groups;
 

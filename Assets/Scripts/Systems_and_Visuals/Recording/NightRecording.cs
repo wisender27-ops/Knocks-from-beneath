@@ -562,6 +562,7 @@ namespace KnocksFromBeneath
                 case TapeSound.HouseCreak: return GameSounds.Pick(lib.houseCreaks, ref lastCreak);
                 case TapeSound.DoorCreak: return GameSounds.Pick(lib.doorCreaks);
                 case TapeSound.DoorClose: return GameSounds.Pick(lib.doorClose);
+                case TapeSound.Sting: return GameSounds.Pick(lib.darkHits);
                 case TapeSound.StepWood: return GameSounds.Pick(lib.stepWood, ref lastStep);
                 case TapeSound.StepStairs: return GameSounds.Pick(lib.stepStairs, ref lastStep);
                 default: return null;

@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace KnocksFromBeneath
 {
-    // K-03, мини-игра M1 «Перестук». Хозяин в подвале сам простукивает ритм под игроком, когда тот
-    // стоит над подвалом; игрок повторяет его клавишей Q (сидя, как в K-02). Без окна — в мире.
-    // Успех: тихий ответный удар, доверие +1. Ошибка или молчание: тишина, доверие −1; на уровнях 2–3
-    // после первой ошибки хозяин повторяет ритм ещё раз. Уровень по главе даёт IntroSequence
+    // K-03, мини-игра M1 «Перестук». Хейл в камере сам простукивает ритм по трубе (S-02: из ближайшей
+    // к игроку точки), когда тот стоит над подвалом; игрок повторяет его клавишей Q (сидя, как в K-02). Без окна — в мире.
+    // Успех: тихая подпись 2·1 (S-03), доверие +1. Ошибка или молчание: тишина, доверие −1; на уровнях 2–3
+    // после первой ошибки Хейл повторяет ритм ещё раз. Уровень по главе даёт IntroSequence
     // (0 — сейчас нельзя), раундов на уровень — RoundsPerLevel. Удары игрока в раунде не уходят в KnockResponder.
     [DisallowMultipleComponent]
     public sealed class KnockCallGame : MonoBehaviour
@@ -135,10 +135,9 @@ namespace KnocksFromBeneath
                 {
                     if (i > 0) yield return Wait(pattern.GapBefore(i));
                     if (!Owns) yield break;
-                    if (_responder != null) _responder.PlayUnderFloor(floor, UnityEngine.Random.Range(0.92f, 1f));
+                    if (_responder != null) _responder.PlayFromPipe(floor, UnityEngine.Random.Range(0.92f, 1f));
                     PatternKnocksPlayed++;
                 }
-                if (_responder != null) _responder.ResetDirectorPitch();
                 if (attempt == 0) _playerKnock.PromptAnswer();
 
                 _answer.Begin(pattern, _clock);
@@ -157,10 +156,12 @@ namespace KnocksFromBeneath
             {
                 yield return Wait(AckDelay);
                 if (!Owns) yield break;
-                if (_responder != null)
+                KnockPattern signature = KnockPattern.HaleSignature;
+                for (int i = 0; i < signature.TapCount; i++)
                 {
-                    _responder.PlayUnderFloor(floor, 0.85f, 0.6f);
-                    _responder.ResetDirectorPitch();
+                    if (i > 0) yield return Wait(signature.GapBefore(i));
+                    if (!Owns) yield break;
+                    if (_responder != null) _responder.PlayFromPipe(floor, 0.95f, 0.6f);
                 }
                 StoryFlags.AddKnockTrust(1);
                 StoryFlags.MarkKnockAnswered();
@@ -168,7 +169,10 @@ namespace KnocksFromBeneath
             }
             else StoryFlags.AddKnockTrust(-1);
             Finish(outcome);
-            _showThoughts?.Invoke(WithTrustLine(Reaction(outcome), TrustLine(trustBefore, StoryFlags.KnockTrust)));
+            string[] lines = WithLine(Reaction(outcome), TrustLine(trustBefore, StoryFlags.KnockTrust));
+            string voices = VoicesLine(outcome, StoryFlags.KnockVoicesNoticed);
+            if (voices != null) StoryFlags.MarkKnockVoicesNoticed();
+            _showThoughts?.Invoke(WithLine(lines, voices));
         }
 
         public const int TrustedLevel = 3;
@@ -184,12 +188,18 @@ namespace KnocksFromBeneath
             return null;
         }
 
-        private static string[] WithTrustLine(string[] lines, string trustLine)
+        // S-03: первый ответ в трубе — герой слышит, что стучат двое. Один раз за игру.
+        public static string VoicesLine(KnockCallOutcome outcome, bool noticed) =>
+            outcome == KnockCallOutcome.Correct && !noticed
+                ? "И звук другой. Металл, в трубах, с паузой. А то, что ходит у меня под ногами, бьёт по дереву. Ровно, без пауз."
+                : null;
+
+        private static string[] WithLine(string[] lines, string line)
         {
-            if (trustLine == null) return lines;
+            if (line == null) return lines;
             var all = new string[lines.Length + 1];
             lines.CopyTo(all, 0);
-            all[lines.Length] = trustLine;
+            all[lines.Length] = line;
             return all;
         }
 
@@ -199,7 +209,7 @@ namespace KnocksFromBeneath
             {
                 case KnockCallOutcome.Correct:
                     return _successes == 1
-                        ? new[] { "Тот же ритм... и тихий стук в ответ.", "Это не трубы. Там внизу кто-то есть. И он меня понял." }
+                        ? new[] { "Тот же ритм... и тихий стук в ответ.", "Трубы сами так не стучат. Там внизу кто-то есть. И он меня понял." }
                         : new[] { "Он снова ответил. Будто кивнул." };
                 case KnockCallOutcome.Wrong:
                     return new[] { "Не тот ритм. Снизу ни звука." };

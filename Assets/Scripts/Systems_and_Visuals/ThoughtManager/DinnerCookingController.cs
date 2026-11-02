@@ -78,6 +78,7 @@ public sealed class DinnerCookingController
         _recordCompletion?.Invoke("dinner-eat");
         CanCook = false;
         _showThoughts(new string[] {
+            "Дом почти даром. Кто так продаёт? Сын даже не торговался, лишь бы я поскорее въехал.",
             "На сытый желудок хоть голова работает."
         }, _onDinnerFinished);
     }

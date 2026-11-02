@@ -324,7 +324,7 @@ namespace KnocksFromBeneath
                 {
                     savedEyePosition = hideCamera.transform.parent.localPosition;
                     Vector3 eye = savedEyePosition;
-                    eye.y = 0.45f;
+                    eye.y = BasementLayout.HideEyeHeight;
                     hideCamera.transform.parent.localPosition = eye;
                 }
                 hideCamera.transform.localRotation = Quaternion.identity;
@@ -606,7 +606,7 @@ namespace KnocksFromBeneath
         // Ритм «2·1», как у перестука (K-03). Пока монстр охотится, хозяин молчит.
         private IEnumerator KnockRoutine()
         {
-            var clip = Resources.Load<AudioClip>("Audio/Horror/impactWood_heavy_000");
+            var clip = Resources.Load<AudioClip>("Audio/Horror/impactMetal_heavy_001");
             var wait = new WaitForSeconds(0.36f);
             yield return new WaitForSeconds(2f);
             while (CurrentStage != Stage.Finale && CurrentStage != Stage.Done)
@@ -711,9 +711,10 @@ namespace KnocksFromBeneath
             cellLock = level.cellLock;
             owner = level.owner;
             cellLock.Initialize(CanUseLock, UseLock, LockLabel);
-            level.hideSpot.Initialize(CanEnterHideSpot, EnterHideSpot, () => "Спрятаться за ящиками");
+            level.hideSpot.Initialize(CanEnterHideSpot, EnterHideSpot, () => "Спрятаться за коробкой");
             // Лампа без теней просвечивала бы сквозь перекрытие в дом: горит только во время главы.
             level.cellLamp.enabled = true;
+            if (level.atmosphere != null) level.atmosphere.Activate();
 
             Transform root = level.transform;
             effects = AudioRouting.Create(root, "Basement effects", AudioBus.Horror, 0f, 30f);

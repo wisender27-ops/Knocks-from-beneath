@@ -3,36 +3,43 @@ using UnityEngine;
 
 namespace KnocksFromBeneath
 {
-    // Запись камеры, которую игрок поставил в подвале днём 2: решётку вентиляции выбивают изнутри, монстр выползает из трубы
-    // на четвереньках, встаёт, смотрит в объектив и идёт к камере. Он злится на того, кто его снимает: бьёт по камере,
+    // Запись камеры, которую игрок поставил в подвале днём 2. Сделана как скример: монстр почти не в кадре, страх держат паузы.
+    // Глухие удары в трубе, долгая тишина. Сбой записи, часы прыгают вперёд — и решётка уже открыта, как она открылась, на плёнке нет.
+    // Тишина. На долю секунды у трубы стоит фигура и смотрит в объектив; сбой — её нет. Снова тишина, и он сразу в упор: бьёт по камере,
     // штатив падает, плёнка обрывается. Ночью игрок находит камеру на полу, а решётку — выбитой (BasementChapter).
     public static class VentTape
     {
-        public const float Duration = 32.5f;
+        public const float Duration = 24f;
         private const float Floor = BasementLayout.FloorY;
         private const float NightCut = 8f;
-        public const float GrilleStart = 12f, GrilleEnd = 12.7f;
-        public const float CrawlStart = 12.9f, StoodUp = 19.6f;
-        private const float LookIn = 21f, LookFull = 22f, LookHold = 31f, LookOut = Duration;
-        private const float WalkStart = 26.5f, WalkEnd = 28.8f;
-        public const float StrikeStart = 30f;
+        // Пропавшее время: решётка меняется под снегом, игрок видит только результат.
+        private const float GapCut = 15f;
+        public const float GrilleStart = GapCut - 0.1f, GrilleEnd = GapCut;
+        public const float StandStart = 18.3f, StandEnd = 18.75f; // единственный спокойный взгляд на него
+        public const float StrikeStart = 21.6f;
         // Через сколько секунд после начала клипа удара рука доходит до объектива (MonsterTapeClipBuilder строит клип по этому числу).
         public const float StrikeImpact = 0.55f;
         public const float Hit = StrikeStart + StrikeImpact;
         public const float StrikeDistance = 0.62f; // монстр бьёт почти в упор: рука не достаёт дальше
         public const float CameraFall = 1.18f; // высота объектива над полом: на столько падает камера
+        private const float RushTime = 0.32f, RushDistance = 2.4f;
+        public const float Gone = Hit + 0.75f; // камера уже на боку, в кадре пусто
 
         private static readonly Vector3 Vent = DepthsLayout.Vent;
         private static readonly Vector3 InDuct = Vent + new Vector3(0.6f, 0.4f, 0f);
         private static readonly Vector3 Lens = DepthsLayout.TapeCameraPosition;
         // Где монстр стоит при ударе: в шаге от объектива, на линии «стойка → камера».
-        public static readonly Vector3 Striker = StrikerPoint();
+        public static readonly Vector3 Striker = StrikerPoint(StrikeDistance);
+        private static readonly Vector3 RushFrom = StrikerPoint(RushDistance);
+        // Стоит у трубы и смотрит на камеру; второй ключ на пару сантиметров ближе, чтобы задать поворот к объективу.
+        private static readonly Vector3 Stand = new Vector3(-38.85f, Floor, 117.55f);
+        private static readonly Vector3 StandTurn = Stand + (new Vector3(Lens.x, Floor, Lens.z) - Stand).normalized * 0.02f;
         private static readonly Vector3 Away = AwayFromMonster();
 
-        private static Vector3 StrikerPoint()
+        private static Vector3 StrikerPoint(float distance)
         {
             Vector3 from = new Vector3(-40.2f, Floor, 117.0f), lens = new Vector3(Lens.x, Floor, Lens.z);
-            return lens + (from - lens).normalized * StrikeDistance;
+            return lens + (from - lens).normalized * distance;
         }
 
         private static Vector3 AwayFromMonster()
@@ -45,46 +52,44 @@ namespace KnocksFromBeneath
             new[]
             {
                 new TapeShot(0f, 21 * 3600 + 14 * 60 + 3),
-                new TapeShot(NightCut, 1 * 3600 + 37 * 60 + 52)
+                new TapeShot(NightCut, 1 * 3600 + 37 * 60 + 52),
+                new TapeShot(GapCut, 3 * 3600 + 12 * 60 + 41)
             },
             new[]
             {
                 new[]
                 {
-                    // Из трубы за решёткой: выползает через порог на пол и дальше на четвереньках.
-                    new TapeKey(CrawlStart, -37.10f, Floor, 117.6f, false, true),
-                    new TapeKey(14.0f, -37.55f, Floor, 117.6f, false, true),
-                    new TapeKey(16.4f, -39.2f, Floor, 117.5f, false, true),
-                    new TapeKey(18.2f, -40.0f, Floor, 117.2f, false, true),
-                    new TapeKey(StoodUp, -40.2f, Floor, 117.0f),
-                    new TapeKey(WalkStart, -40.2f, Floor, 117.0f),
-                    new TapeKey(WalkEnd, Striker.x, Floor, Striker.z),
-                    new TapeKey(Duration, Striker.x, Floor, Striker.z)
+                    new TapeKey(StandStart, Stand.x, Floor, Stand.z),
+                    new TapeKey(StandEnd, StandTurn.x, Floor, StandTurn.z)
+                },
+                new[]
+                {
+                    // Из ниоткуда и сразу в упор: разгона в кадре нет.
+                    new TapeKey(StrikeStart, RushFrom.x, Floor, RushFrom.z),
+                    new TapeKey(StrikeStart + RushTime, Striker.x, Floor, Striker.z),
+                    new TapeKey(Gone, Striker.x, Floor, Striker.z)
                 }
             },
-            new[] { NightCut },
+            new[] { NightCut, GapCut },
             new List<TapeEvent>
             {
                 new TapeEvent(3.6f, TapeSound.Knock, InDuct, 0.7f),
                 new TapeEvent(3.96f, TapeSound.Knock, InDuct, 0.7f),
                 new TapeEvent(4.96f, TapeSound.Knock, InDuct, 0.7f),
-                new TapeEvent(9.6f, TapeSound.Bars, InDuct, 0.5f),
-                new TapeEvent(10.5f, TapeSound.Bars, InDuct, 0.7f),
-                new TapeEvent(11.3f, TapeSound.Bars, Vent, 0.9f),
-                new TapeEvent(GrilleStart + 0.05f, TapeSound.Slam, Vent, 1f),
-                new TapeEvent(GrilleEnd, TapeSound.Bars, Vent, 0.8f),
-                // Скрежет жести под ладонями и коленями, пока ползёт.
-                new TapeEvent(13.3f, TapeSound.Bars, InDuct, 0.3f),
-                new TapeEvent(14.6f, TapeSound.Bars, Vent, 0.35f),
-                new TapeEvent(15.5f, TapeSound.Bars, Vent, 0.25f),
-                new TapeEvent(16.5f, TapeSound.Bars, Vent, 0.2f),
+                new TapeEvent(9.4f, TapeSound.Bars, InDuct, 0.15f),
+                new TapeEvent(10.6f, TapeSound.Knock, InDuct, 0.5f),
+                new TapeEvent(11.1f, TapeSound.Knock, InDuct, 0.6f),
+                new TapeEvent(11.6f, TapeSound.Knock, InDuct, 0.7f),
+                new TapeEvent(StandStart, TapeSound.Glitch, Vector3.zero, 0.5f),
+                new TapeEvent(StandEnd, TapeSound.Glitch, Vector3.zero, 0.4f),
                 // Удар по камере, штатив падает на бетон.
+                new TapeEvent(StrikeStart - 0.02f, TapeSound.Sting, Lens, 1f),
                 new TapeEvent(Hit - 0.03f, TapeSound.Slam, new Vector3(Lens.x, Lens.y, Lens.z), 1f),
                 new TapeEvent(Hit + 0.18f, TapeSound.Bars, new Vector3(Lens.x, Floor, Lens.z), 1f),
                 new TapeEvent(Hit + 0.5f, TapeSound.Bars, new Vector3(Lens.x, Floor, Lens.z), 0.8f),
                 new TapeEvent(Hit + 0.72f, TapeSound.Slam, new Vector3(Lens.x, Floor, Lens.z), 0.6f)
             },
-            LookIn, LookFull, LookHold, LookOut).WithStrike(StrikeStart);
+            StandStart, StandStart + 0.05f, Duration - 1f, Duration).WithStrike(StrikeStart).WithBlips(StandStart, StandEnd);
 
         // Решётка: 0 — на месте, 1 — распахнута, как её нашёл игрок.
         public static float GrilleOpen(float time) => TapeTimeline.Smooth(Mathf.InverseLerp(GrilleStart, GrilleEnd, time));

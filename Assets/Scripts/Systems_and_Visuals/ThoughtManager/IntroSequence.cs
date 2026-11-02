@@ -308,8 +308,7 @@ public class IntroSequence : MonoBehaviour
             holeEventController != null ? holeEventController.basementHatch : null, playerInventory, _phoneFlashlight, playerTransform);
         SetupBreakerPanel();
         _hintClues = FindObjectsByType<InspectableClue>(FindObjectsSortMode.None);
-        gameObject.AddComponent<KnockHints>().Initialize(playerTransform, responder,
-            knockSound != null ? knockSound.ShortestClip : null, KnockHintTarget, FirstFloorY);
+        gameObject.AddComponent<KnockHints>().Initialize(playerTransform, responder, responder.PipeClip, KnockHintTarget);
     }
 
     private InspectableClue[] _hintClues;
@@ -325,10 +324,10 @@ public class IntroSequence : MonoBehaviour
         foreach (var clue in _hintClues)
         {
             if (clue == null || !clue.gameObject.activeInHierarchy || clue.IsFound || !clue.CanInteract) continue;
-            // Хозяин остаётся под первым этажом: не зовёт под гараж или верхнюю спальню.
+            // Хейл стучит под первым этажом: не зовёт под гараж или верхнюю спальню, а в отрезанную половину подвала днём не попасть.
             Vector3 p = clue.transform.position;
             if (p.x < BasementMin.x || p.x > BasementMax.x || p.z < BasementMin.y || p.z > BasementMax.y ||
-                p.y > FirstFloorY + 2f) continue;
+                p.y > FirstFloorY + 2f || p.y < FirstFloorY - 1f) continue;
             float d = (playerTransform.position - p).sqrMagnitude;
             if (d >= distance) continue;
             distance = d;
@@ -837,7 +836,7 @@ public class IntroSequence : MonoBehaviour
     {
         ShowImportantThoughts(new string[] {
             "Ну вот. Свой дом. Может, хоть здесь будет спокойно.",
-            "Семья съехала, а срач оставила мне. Спасибо."
+            "Семья так торопилась, что срач оставила мне. Спасибо."
         }, SetupEnterHouseQuest);
     }
 
@@ -1613,6 +1612,7 @@ public class IntroSequence : MonoBehaviour
         if (!_dayHatchChain) _cornerPeek?.Retire();
         ShowThoughts(new string[] {
             "Ещё и замок.",
+            "Люк в полу, запертый снаружи. Не люблю такие. Уже не люблю.",
             "Ключа нет. Придётся найти лом."
         }, SetupCrowbarQuest);
     }
@@ -1678,7 +1678,7 @@ public class IntroSequence : MonoBehaviour
         ShowImportantThoughts(new string[] {
             "Оно исчезло.",
             "Нет. Я не стану опять от него бежать.",
-            "Заколочу люк. И всё. Больше не вылезет.",
+            "Заколочу люк. Как тогда. И всё, больше не вылезет.",
             "Нужен молоток."
         }, () => _branchEnding.Activate());
     }

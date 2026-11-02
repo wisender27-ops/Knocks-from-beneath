@@ -14,20 +14,19 @@ namespace KnocksFromBeneath
         private Transform _current;
         private float _next, _tapAt;
         private int _remaining;
-        private float _floorHeight;
         public int SeriesPlayed { get; private set; }
         public Vector3 LastPosition { get; private set; }
 
-        public void Initialize(Transform player, KnockResponder responder, AudioClip clip, Func<Transform> target, float floorHeight)
+        // S-02: подсказка — голос Хейла: подпись 2·1 из точки трубы, ближайшей к цели.
+        public void Initialize(Transform player, KnockResponder responder, AudioClip clip, Func<Transform> target)
         {
-            _floorHeight = floorHeight;
             _player = player;
             _responder = responder;
             _clip = clip;
             _target = target;
             _source = HorrorMomentDirector.CreateSource(transform, "Knock hint under target", 18f);
             _source.minDistance = 2f;
-            _source.gameObject.AddComponent<AudioLowPassFilter>().cutoffFrequency = 1250f;
+            _source.gameObject.AddComponent<AudioLowPassFilter>().cutoffFrequency = 2600f;
             _next = Time.time + 12f;
         }
 
@@ -46,12 +45,14 @@ namespace KnocksFromBeneath
                 { Cancel(); return; }
                 if (Time.time < _tapAt) return;
                 _source.PlayOneShot(_clip, 0.72f);
-                _tapAt = Time.time + 0.55f;
                 if (--_remaining == 0)
                 {
                     SeriesPlayed++;
                     Release();
+                    return;
                 }
+                KnockPattern signature = KnockPattern.HaleSignature;
+                _tapAt = Time.time + signature.GapBefore(signature.TapCount - _remaining);
                 return;
             }
             if (target == null || Time.time < _next || MinigameWindow.IsAnyOpen ||
@@ -59,11 +60,11 @@ namespace KnocksFromBeneath
                 !CanGuide(StoryFlags.KnockTrust, (_player.position - target.position).sqrMagnitude) ||
                 !horror.TryBegin(this)) return;
             _current = target;
-            LastPosition = new Vector3(target.position.x, _floorHeight - 1.2f, target.position.z);
+            LastPosition = HalePipe.NearestPoint(target.position);
             _source.transform.position = LastPosition;
             _responder?.HoldKnocks(7f);
             if (_responder != null) _responder.Suspended = true;
-            _remaining = 3;
+            _remaining = KnockPattern.HaleSignature.TapCount;
             _tapAt = Time.time + 0.4f;
         }
 

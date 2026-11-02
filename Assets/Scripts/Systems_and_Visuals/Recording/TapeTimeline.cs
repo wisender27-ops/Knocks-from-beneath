@@ -13,7 +13,8 @@ namespace KnocksFromBeneath
         StepStairs = 5,
         Glitch = 6,
         Slam = 7,
-        Bars = 8
+        Bars = 8,
+        Sting = 9
     }
 
     public readonly struct TapeEvent
@@ -89,7 +90,8 @@ namespace KnocksFromBeneath
         private readonly float lookIn, lookFull, lookHold, lookOut;
 
         private float strikeStart = float.PositiveInfinity;
-        private const float StrikeBlend = 0.2f;
+        private const float StrikeBlend = 0.06f;
+        private float[] blips = new float[0];
 
         public float Duration { get; }
         public IReadOnlyList<TapeEvent> SoundEvents => events;
@@ -100,6 +102,14 @@ namespace KnocksFromBeneath
             strikeStart = start;
             return this;
         }
+
+        // Короткие срывы картинки: кадр рвётся на долю секунды, а не на склейку.
+        public TapeTimeline WithBlips(params float[] times)
+        {
+            blips = times;
+            return this;
+        }
+
         public float FirstSighting => walks[0][0].Time;
 
         // scripted — звуки вне путей фигуры; голова в объектив — окно lookIn…lookOut.
@@ -190,6 +200,8 @@ namespace KnocksFromBeneath
             float loss = 1f - Mathf.Clamp01(time / 0.6f);
             foreach (float cut in cuts)
                 loss = Mathf.Max(loss, 1f - Mathf.Clamp01(Mathf.Abs(time - cut) / 0.4f));
+            foreach (float blip in blips)
+                loss = Mathf.Max(loss, 1f - Mathf.Clamp01(Mathf.Abs(time - blip) / 0.07f));
             return Mathf.Max(loss, Mathf.Clamp01((time - (Duration - 1.2f)) / 0.8f));
         }
 

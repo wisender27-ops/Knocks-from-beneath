@@ -327,7 +327,7 @@ namespace KnocksFromBeneath
 
         private void Update()
         {
-            if (!running || player == null || NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked) return;
+            if (!running || player == null || NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked || MinigameWindow.IsAnyOpen) return;
             float dt = Time.deltaTime;
             Vector3 position = player.position;
             bool hidden = PlayerHidden != null && PlayerHidden();

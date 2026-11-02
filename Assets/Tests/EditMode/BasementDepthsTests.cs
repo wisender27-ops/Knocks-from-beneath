@@ -63,17 +63,28 @@ public sealed class BasementDepthsTests
     }
 
     [Test]
-    public void VentTape_GrilleGoesBeforeTheMonsterCrawlsOut()
+    public void VentTape_GrilleOpensUnderStaticBeforeTheFigureAppears()
     {
         Assert.That(VentTape.GrilleOpen(VentTape.GrilleStart), Is.EqualTo(0f));
         Assert.That(VentTape.GrilleOpen(VentTape.GrilleEnd), Is.EqualTo(1f));
-        Assert.That(VentTape.CrawlStart, Is.GreaterThanOrEqualTo(VentTape.GrilleEnd));
-        Assert.That(VentTape.Timeline.Figure(VentTape.CrawlStart - 0.1f).Visible, Is.False);
-        // Он выползает из трубы за порогом на пол и дальше идёт на четвереньках, потом встаёт.
-        Assert.That(VentTape.Timeline.Figure(VentTape.CrawlStart + 0.1f).Crawl, Is.EqualTo(1f));
-        Assert.That(VentTape.Timeline.Figure(16.4f).Position.y, Is.EqualTo(BasementLayout.FloorY).Within(0.001f));
-        Assert.That(VentTape.Timeline.Figure(VentTape.StoodUp + 0.5f).Crawl, Is.EqualTo(0f));
-        Assert.That(VentTape.Timeline.Figure(VentTape.StoodUp + 0.5f).Position.y, Is.EqualTo(BasementLayout.FloorY).Within(0.001f));
+        Assert.That(VentTape.Timeline.SignalLoss(VentTape.GrilleEnd), Is.EqualTo(1f));
+        Assert.That(VentTape.StandStart, Is.GreaterThan(VentTape.GrilleEnd + 2f), "пустой кадр с открытой решёткой");
+        Assert.That(VentTape.Timeline.Figure(VentTape.StandStart - 0.1f).Visible, Is.False);
+        Assert.That(VentTape.Timeline.Figure(VentTape.StandStart + 0.1f).Position.y, Is.EqualTo(BasementLayout.FloorY).Within(0.001f));
+        Assert.That(VentTape.Timeline.Figure(VentTape.StandStart + 0.1f).Crawl, Is.EqualTo(0f));
+    }
+
+    [Test]
+    public void VentTape_MonsterIsBarelyOnScreen()
+    {
+        float seen = 0f;
+        for (float t = 0f; t < VentTape.Duration; t += 0.01f)
+            if (VentTape.Timeline.Figure(t).Visible) seen += 0.01f;
+        Assert.That(seen, Is.LessThan(2f));
+        // Между появлением у трубы и ударом кадр пуст.
+        Assert.That(VentTape.StrikeStart - VentTape.StandEnd, Is.GreaterThan(2f));
+        Assert.That(VentTape.Timeline.Figure(VentTape.StandEnd + 0.1f).Visible, Is.False);
+        Assert.That(VentTape.Timeline.Figure(VentTape.StrikeStart - 0.05f).Visible, Is.False);
     }
 
     [Test]
@@ -82,23 +93,13 @@ public sealed class BasementDepthsTests
         Assert.That(VentTape.Timeline.Figure(VentTape.StrikeStart - 0.1f).Strike, Is.EqualTo(0f));
         Assert.That(VentTape.Timeline.Figure(VentTape.Hit).Strike, Is.EqualTo(1f));
         Assert.That(VentTape.Hit, Is.EqualTo(VentTape.StrikeStart + VentTape.StrikeImpact).Within(0.0001f));
-        // Монстр стоит у самого объектива, на плёнке он всё время виден и удар идёт, пока лента не оборвалась.
-        for (float t = VentTape.StoodUp; t < VentTape.Duration; t += 0.25f)
+        // Рывок в упор, удар идёт, пока лента не оборвалась.
+        for (float t = VentTape.StrikeStart; t < VentTape.Gone; t += 0.1f)
             Assert.That(VentTape.Timeline.Figure(t).Visible, Is.True, "t=" + t);
         Assert.That(VentTape.Duration - VentTape.Hit, Is.InRange(1.2f, 2.5f));
         Assert.That(VentTape.ViewShift(VentTape.Hit - 0.1f).Position, Is.EqualTo(Vector3.zero));
         Assert.That(VentTape.ViewShift(VentTape.Duration).Position.y, Is.EqualTo(-VentTape.CameraFall).Within(0.1f));
         Assert.That(VentTape.ViewShift(VentTape.Duration).Euler.z, Is.GreaterThan(60f));
-    }
-
-    [Test]
-    public void VentTape_CrawlHasNoFootsteps()
-    {
-        foreach (TapeEvent e in VentTape.Timeline.SoundEvents)
-        {
-            if (e.Time < VentTape.CrawlStart || e.Time > VentTape.StoodUp - 1f) continue;
-            Assert.That(e.Sound, Is.Not.EqualTo(TapeSound.StepWood), "t=" + e.Time);
-        }
     }
 
     [Test]
@@ -113,7 +114,7 @@ public sealed class BasementDepthsTests
     [Test]
     public void VentTape_MonsterStaysOutOfTheCameraTripod()
     {
-        for (float t = VentTape.CrawlStart; t < VentTape.Timeline.Duration; t += 0.2f)
+        for (float t = VentTape.StandStart; t < VentTape.Timeline.Duration; t += 0.05f)
         {
             TapeFigurePose pose = VentTape.Timeline.Figure(t);
             if (!pose.Visible) continue;
