@@ -53,6 +53,7 @@ public sealed class DebugStoryStageDrawer : PropertyDrawer
         new Entry(DebugStoryStage.StartDayBasement, "День 2 — Первый спуск в подвал", "Кухня убрана, стук снизу: люк → лом → замок → подвал без монстра → запись → камера внизу."),
         new Entry(DebugStoryStage.StartBasementTunnels, "Ночь 2/13 — Тоннели", "Сразу под люком: путь на стук по тоннелям до лестницы за замурованную стену."),
         new Entry(DebugStoryStage.StartBasement, "Ночь 2/13 — Подвал (P-03, E5)", "Сразу в подвале: монстр на слух, стук хозяина, камера в конце, лом у игрока. Проверка финала «Ответ»."),
+        new Entry(DebugStoryStage.StartBasementTrap, "Ночь 2/13 — Ловушка (S-09)", "У открытой камеры после разговора с Хейлом: монстр идёт на стук, спрятаться, захлопнуть решётку, вставить лом."),
         new Entry(DebugStoryStage.StartFinale, "Ночь 2/14 — Заколотить люк (M3)", "Фонарик, лом и молоток получены; начинается заколачивание люка.")
     };
 

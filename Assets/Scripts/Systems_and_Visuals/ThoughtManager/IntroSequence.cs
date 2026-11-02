@@ -50,7 +50,9 @@ public enum DebugStoryStage
     // Ночь 2: сразу за вентиляцию, в зал B. Фонарик и лом выданы, камера стоит в подвале.
     StartBasementTunnels,
     // C-01: коробки разнесены, камера и штатив ещё внизу — отнести их в спальню.
-    StartCameraStoreQuest
+    StartCameraStoreQuest,
+    // S-09: разговор с Хейлом позади, решётка открыта, монстр идёт на стук.
+    StartBasementTrap
 }
 
 public class IntroSequence : MonoBehaviour
@@ -696,6 +698,7 @@ public class IntroSequence : MonoBehaviour
                 break;
             case DebugStoryStage.StartBasement:
             case DebugStoryStage.StartBasementTunnels:
+            case DebugStoryStage.StartBasementTrap:
                 PlaceDebugBasementCamera();
                 GrantDebugItem("Flashlight");
                 GrantDebugItem("Crowbar");
@@ -703,7 +706,8 @@ public class IntroSequence : MonoBehaviour
                 if (playerInventory != null && playerInventory.EquippedItemId != "Flashlight") playerInventory.ActivateItem("Flashlight");
                 if (playerInventory != null && playerInventory.flashlightLightSource != null)
                     playerInventory.flashlightLightSource.enabled = true;
-                BeginDescent(FindFirstObjectByType<BasementHatch>(), true, startStage == DebugStoryStage.StartBasementTunnels);
+                BeginDescent(FindFirstObjectByType<BasementHatch>(), true, startStage == DebugStoryStage.StartBasementTunnels,
+                    startStage == DebugStoryStage.StartBasementTrap);
                 break;
         }
     }
@@ -722,6 +726,7 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartNightTwoExits:
             case DebugStoryStage.StartBasement:
             case DebugStoryStage.StartBasementTunnels:
+            case DebugStoryStage.StartBasementTrap:
             case DebugStoryStage.StartHatchChoice:
                 return true;
             default:
@@ -747,6 +752,7 @@ public class IntroSequence : MonoBehaviour
             case DebugStoryStage.StartNightTwoExits:
             case DebugStoryStage.StartBasement:
             case DebugStoryStage.StartBasementTunnels:
+            case DebugStoryStage.StartBasementTrap:
             case DebugStoryStage.StartHatchChoice:
                 return true;
             default:
@@ -1797,11 +1803,11 @@ public class IntroSequence : MonoBehaviour
     }
 
     // Спуск занимает общую защёлку концовок ночи 2: люк больше не заколотить, выходы закрыты.
-    void BeginDescent(BasementHatch hatch, bool debugJump, bool debugTunnels = false)
+    void BeginDescent(BasementHatch hatch, bool debugJump, bool debugTunnels = false, bool debugTrap = false)
     {
         if (!_branchEnding.TryResolve() && !debugJump) return;
         MonsterTimer.Instance?.StopTimer();
-        _basement.Begin(hatch, debugJump, debugTunnels);
+        _basement.Begin(hatch, debugJump, debugTunnels, debugTrap);
     }
 
     void TeleportPlayerToHatch()

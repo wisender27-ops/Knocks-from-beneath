@@ -125,6 +125,16 @@ namespace KnocksFromBeneath
             return true;
         }
 
+        // Предмет уходит из игры целиком (лом в проушинах решётки, S-09): из рук, слота и старого флага.
+        public void RemoveItem(string id)
+        {
+            if (equippedItemId == id) Unequip();
+            InventoryEntry entry = FindEntry(id);
+            if (entry != null) entries.Remove(entry);
+            SetLegacyFlag(id, false);
+            Changed?.Invoke();
+        }
+
         public bool UseItemAt(int index)
         {
             if (index < 0 || index >= entries.Count) return false;

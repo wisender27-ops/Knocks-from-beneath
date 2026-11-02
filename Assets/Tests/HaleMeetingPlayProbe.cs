@@ -27,7 +27,11 @@ public sealed class HaleMeetingPlayProbe : MonoBehaviour
         new[] { "ХЕЙЛ", "Зачем ты сбил замок?" },
         new[] { "ХЕЙЛ", "Сын запер меня по моей просьбе. Этот замок был не тюрьмой, а защитой." },
         new[] { "ХЕЙЛ", "Я стучал по трубе, чтобы удержать его внизу. Теперь он услышал грохот и идёт." },
-        new[] { "ХЕЙЛ", "Камера на стене моя. Пусть пишет. Хоть раз он попадёт на плёнку там, где надо." }
+        new[] { "ХЕЙЛ", "Камера на стене моя. Пусть пишет. Хоть раз он попадёт на плёнку там, где надо." },
+        new[] { "ХЕЙЛ", "Ходить я не могу. Останусь здесь и буду стучать. Он придёт на стук." },
+        new[] { "ХЕЙЛ", "Прячься за коробку. Когда он войдёт сюда, захлопни решётку и заложи проушины ломом." },
+        new[] { "Я", "А вы?" },
+        new[] { "ХЕЙЛ", "Иди." }
     };
 
     private readonly List<string> passed = new List<string>(), failed = new List<string>(), notes = new List<string>();
@@ -77,7 +81,7 @@ public sealed class HaleMeetingPlayProbe : MonoBehaviour
         var finale = (IEnumerator)typeof(BasementChapter).GetMethod("FinaleRoutine", Hidden).Invoke(chapter, null);
         chapter.StartCoroutine(finale);
         string last = null;
-        for (float t = 0f; t < 150f && chapter.CurrentStage != BasementChapter.Stage.Done; t += Time.unscaledDeltaTime)
+        for (float t = 0f; t < 150f && chapter.CurrentStage != BasementChapter.Stage.Trap; t += Time.unscaledDeltaTime)
         {
             if (speakerText != null && body != null && body.gameObject.activeInHierarchy)
             {
@@ -102,7 +106,7 @@ public sealed class HaleMeetingPlayProbe : MonoBehaviour
             Check(seen.Contains(want), $"Реплика {i + 1}: {want}");
         }
         foreach (string line in seen) Note(line);
-        Check(chapter.CurrentStage == BasementChapter.Stage.Done, $"Сцена дошла до конца, этап {chapter.CurrentStage}");
+        Check(chapter.CurrentStage == BasementChapter.Stage.Trap, $"Сцена перешла в ловушку, этап {chapter.CurrentStage}");
         stage = "complete";
     }
 

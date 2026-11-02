@@ -1,0 +1,218 @@
+#if UNITY_EDITOR
+using System;
+using System.Collections;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using KnocksFromBeneath;
+using UnityEngine;
+
+// Play Mode проверка S-09 (ловушка). BasementTrapPlayProbe.Arm(сценарий) из Editor-команды до входа в Play Mode: сцена не
+// меняется, этап прыжка (StartBasementTrap) выставляется в рантайме. Сценарии: success, late, wedge-late, caught, mic.
+// Концовка перехватывается, EndingScreen не запускается и в реестр просмотренных ничего не пишется.
+// Отчёт и кадры — .codex/verification/basement-trap/<сценарий>.
+[DefaultExecutionOrder(-100)]
+public sealed class BasementTrapPlayProbe : MonoBehaviour
+{
+    private const string ArmKey = "kfb.basementtrap.probe";
+    private const BindingFlags Hidden = BindingFlags.Instance | BindingFlags.NonPublic;
+
+    private readonly List<string> passed = new List<string>(), failed = new List<string>(), notes = new List<string>();
+    private IntroSequence intro;
+    private BasementChapter chapter;
+    private BasementLevel level;
+    private PlayerController player;
+    private PlayerInteraction interaction;
+    private Camera view;
+    private EndingId? ending;
+    private string scenario, output, stage = "start";
+
+    public static void Arm(string scenario) => UnityEditor.SessionState.SetString(ArmKey, scenario);
+
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
+    private static void Launch()
+    {
+        string scenario = UnityEditor.SessionState.GetString(ArmKey, "");
+        if (scenario.Length == 0) return;
+        UnityEditor.SessionState.EraseString(ArmKey);
+        var sequence = FindFirstObjectByType<IntroSequence>();
+        if (sequence == null) return;
+        sequence.useDebugSkip = true;
+        sequence.startStage = DebugStoryStage.StartBasementTrap;
+        var probe = new GameObject("Basement trap verification").AddComponent<BasementTrapPlayProbe>();
+        probe.scenario = scenario;
+    }
+
+    private IEnumerator Start()
+    {
+        output = Path.GetFullPath(".codex/verification/basement-trap/" + scenario);
+        Directory.CreateDirectory(output);
+        intro = FindFirstObjectByType<IntroSequence>();
+        player = intro.playerTransform.GetComponent<PlayerController>();
+        interaction = player.GetComponent<PlayerInteraction>();
+        view = player.GetComponentInChildren<Camera>();
+        level = FindFirstObjectByType<BasementLevel>(FindObjectsInactive.Include);
+        try { yield return Run(); }
+        finally { Write(); UnityEditor.EditorApplication.isPlaying = false; }
+    }
+
+    private IEnumerator Run()
+    {
+        stage = "wait-trap";
+        yield return Until(() => (chapter = FindFirstObjectByType<BasementChapter>(FindObjectsInactive.Include)) != null &&
+            chapter.CurrentStage == BasementChapter.Stage.Trap, 40f);
+        Check(chapter != null && chapter.CurrentStage == BasementChapter.Stage.Trap, "Прыжок: этап Trap");
+        if (chapter == null || chapter.CurrentStage != BasementChapter.Stage.Trap) yield break;
+        Action<EndingId> capture = id => ending = id;
+        typeof(BasementChapter).GetField("endGame", Hidden).SetValue(chapter, capture);
+        Check(!level.lockVisual.activeSelf, "Замок сбит");
+        Check(!level.cellDoorCollider.activeSelf, "Решётка открыта");
+        Check(intro.playerInventory.HasItem("Crowbar"), "Лом в инвентаре");
+
+        // Проба молчит, но за столом шумно: только сценарий mic слушает настоящий микрофон.
+        if (scenario != "mic") ((BasementHideListener)typeof(BasementChapter).GetField("hideListener", Hidden).GetValue(chapter)).End();
+        if (scenario == "caught") { yield return Caught(); yield break; }
+
+        stage = "hide";
+        Look(BasementLayout.HideCrateCenter);
+        Place(new Vector3(BasementLayout.HideExit.x, BasementLayout.FloorY, BasementLayout.HideExit.z));
+        yield return Wait(0.3f);
+        Look(BasementLayout.HideCrateCenter);
+        yield return Wait(0.1f);
+        Check(Press("Спрятаться за коробкой"), "Прицел на коробке, подпись «Спрятаться за коробкой»");
+        yield return Wait(0.2f);
+        Shot("hidden");
+
+        stage = "wait-monster";
+        float started = Time.time;
+        yield return Until(() => chapter.CurrentTrapPhase != BasementChapter.TrapPhase.Lure, 25f);
+        Note($"Монстр дошёл за {Time.time - started:0.0} с");
+        if (scenario == "mic") { Note($"Микрофон: фаза {chapter.CurrentTrapPhase}"); yield break; }
+        Check(chapter.CurrentTrapPhase == BasementChapter.TrapPhase.Window, $"Монстр в камере, фаза {chapter.CurrentTrapPhase}");
+        if (chapter.CurrentTrapPhase != BasementChapter.TrapPhase.Window) yield break;
+        Transform monster = FindFirstObjectByType<BasementStalker>().transform;
+        Check(monster.position.z < BasementLayout.CellArea.yMax - 0.3f, $"Монстр за линией решётки, z={monster.position.z:0.00}");
+        yield return Wait(0.6f);
+        Shot("monster-in-cell");
+
+        if (scenario == "late")
+        {
+            stage = "late";
+            yield return Until(() => ending.HasValue, 30f);
+            Check(ending == EndingId.Hidden, $"Не успел захлопнуть: концовка {ending}");
+            yield break;
+        }
+
+        stage = "leave-hide";
+        typeof(BasementChapter).GetMethod("ExitHideSpot", Hidden).Invoke(chapter, null);
+        yield return null;
+        Vector3 door = level.cellDoor.TransformPoint(new Vector3(-1.15f, 1.1f, 0f));
+        Look(door);
+        yield return Wait(0.2f);
+        Look(door);
+        yield return null;
+        Check(Press("Захлопнуть решётку"), "Прицел на решётке, подпись «Захлопнуть решётку»");
+        yield return Wait(0.5f);
+        Check(chapter.CurrentTrapPhase == BasementChapter.TrapPhase.Slammed, $"Решётка захлопнута, фаза {chapter.CurrentTrapPhase}");
+        Check(Quaternion.Angle(level.cellDoor.localRotation, Quaternion.identity) < 1f, "Решётка стоит в закрытом положении");
+        Check(level.cellDoorCollider.activeSelf, "Коллайдер решётки включён");
+        Shot("slammed");
+
+        if (scenario == "wedge-late")
+        {
+            stage = "wedge-late";
+            yield return Until(() => ending.HasValue, 30f);
+            Check(ending == EndingId.Hidden, $"Не вставил лом: концовка {ending}");
+            yield break;
+        }
+
+        stage = "wedge";
+        Place(new Vector3(-44.9f, BasementLayout.FloorY, 109.5f));
+        yield return Wait(0.15f);
+        Look(BasementLayout.CellLock);
+        yield return Wait(0.1f);
+        Look(BasementLayout.CellLock);
+        yield return null;
+        Check(Press("Вставить лом в проушины"), "Прицел на проушинах, подпись «Вставить лом в проушины»");
+        yield return Wait(0.5f);
+        Check(chapter.CurrentTrapPhase == BasementChapter.TrapPhase.Wedged, $"Лом вставлен, фаза {chapter.CurrentTrapPhase}");
+        Check(!intro.playerInventory.HasItem("Crowbar"), "Лом исчез из инвентаря");
+        Check(!intro.playerInventory.hasCrowbar, "Старый флаг лома снят");
+        Check(GameObject.Find("Crowbar in eyelets") != null, "Лом стоит в проушинах");
+        yield return Wait(1f);
+        Shot("wedged");
+        float rotation = Quaternion.Angle(level.cellDoor.localRotation, Quaternion.identity);
+        yield return Until(() => ending.HasValue, 90f);
+        Check(ending == EndingId.Answer, $"Концовка {ending}");
+        Check(chapter.CurrentStage == BasementChapter.Stage.Done, $"Глава закончена, этап {chapter.CurrentStage}");
+        Note($"Решётка до плёнки: {rotation:0.0}°, после: {Quaternion.Angle(level.cellDoor.localRotation, Quaternion.identity):0.0}°");
+    }
+
+    // Игрок стоит на пути монстра и не прячется.
+    private IEnumerator Caught()
+    {
+        stage = "caught";
+        Place(new Vector3(BasementLayout.TrapMouth.x, BasementLayout.FloorY, BasementLayout.TrapMouth.y + 0.6f));
+        yield return Until(() => ending.HasValue, 45f);
+        Check(ending == EndingId.Hidden, $"Поймал на пути: концовка {ending}");
+    }
+
+    private bool Press(string label)
+    {
+        Physics.SyncTransforms();
+        if (!interaction.TryGetInteractionHit(out RaycastHit hit)) { Note("Луч ни во что не попал"); return false; }
+        var target = hit.collider.GetComponentInParent<BasementCellLock>();
+        Note($"Луч: {hit.collider.name} на {hit.distance:0.00} м, подпись «{(target != null ? target.Label : "—")}»");
+        if (target == null || !target.CanInteract || target.Label != label) return false;
+        target.Interact();
+        return true;
+    }
+
+    private void Place(Vector3 feet)
+    {
+        var body = player.GetComponent<CharacterController>();
+        body.enabled = false;
+        player.transform.position = feet + Vector3.up * 0.02f;
+        body.enabled = true;
+        Physics.SyncTransforms();
+    }
+
+    // Голова повёрнута прямо через камеру: поворот игрока по Y и наклон головы, как при обычном управлении.
+    private void Look(Vector3 point)
+    {
+        Vector3 flat = point - view.transform.position;
+        flat.y = 0f;
+        player.transform.rotation = Quaternion.LookRotation(flat);
+        view.transform.rotation = Quaternion.LookRotation(point - view.transform.position);
+        // Контроллер каждый кадр ставит наклон из своего поля.
+        typeof(PlayerController).GetField("yRotation", Hidden).SetValue(player, Mathf.DeltaAngle(0f, view.transform.localEulerAngles.x));
+        Physics.SyncTransforms();
+    }
+
+    private void Shot(string name)
+    {
+        string path = Path.Combine(output, name + ".png");
+        ScreenCapture.CaptureScreenshot(path);
+    }
+
+    private IEnumerator Until(Func<bool> condition, float timeout)
+    {
+        for (float t = 0f; t < timeout && !condition(); t += Time.unscaledDeltaTime) yield return null;
+    }
+
+    private static IEnumerator Wait(float seconds) { yield return new WaitForSecondsRealtime(seconds); }
+
+    private void Check(bool ok, string text) => (ok ? passed : failed).Add(text);
+
+    private void Note(string text) => notes.Add(text);
+
+    private void Write()
+    {
+        var lines = new List<string> { "scenario: " + scenario, "stage: " + stage, "PASSED " + passed.Count, "FAILED " + failed.Count };
+        foreach (string f in failed) lines.Add("  FAIL " + f);
+        foreach (string p in passed) lines.Add("  ok   " + p);
+        foreach (string n in notes) lines.Add("  note " + n);
+        File.WriteAllLines(Path.Combine(output, "report.txt"), lines);
+    }
+}
+#endif

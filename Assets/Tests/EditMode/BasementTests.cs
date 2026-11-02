@@ -129,6 +129,65 @@ public sealed class BasementTests
     }
 
     [Test]
+    public void Stalker_LureWalksIntoTheCellPastTheHiddenPlayer()
+    {
+        var brain = new BasementStalkerBrain();
+        brain.Reset(BasementLayout.TrapStart);
+        brain.Lure(BasementLayout.TrapRoute);
+        var hidden = new Vector2(BasementLayout.HideSpot.x, BasementLayout.HideSpot.z);
+        for (int i = 0; i < 1200 && !brain.LureFinished; i++)
+        {
+            brain.Step(hidden, KnockNoise.Quiet, false, 0.05f, true);
+            Assert.That(brain.CaughtPlayer, Is.False, "step " + i);
+        }
+        Assert.That(brain.LureFinished, Is.True);
+        Assert.That(brain.Position.x, Is.InRange(BasementLayout.CellArea.xMin, BasementLayout.CellArea.xMax));
+        Assert.That(brain.Position.y, Is.LessThan(BasementLayout.CellArea.yMax - 0.3f)); // решётка закроется перед ним
+    }
+
+    [Test]
+    public void Stalker_LureTakesLongEnoughToHide()
+    {
+        var brain = new BasementStalkerBrain();
+        brain.Reset(BasementLayout.TrapStart);
+        brain.Lure(BasementLayout.TrapRoute);
+        var hidden = new Vector2(BasementLayout.HideSpot.x, BasementLayout.HideSpot.z);
+        int steps = 0;
+        while (steps < 1200 && !brain.LureFinished) { brain.Step(hidden, KnockNoise.Quiet, false, 0.05f, true); steps++; }
+        Assert.That(steps * 0.05f, Is.InRange(8f, 15f));
+    }
+
+    [Test]
+    public void Stalker_LureResumesAfterHearingThePlayer()
+    {
+        var brain = new BasementStalkerBrain();
+        brain.Reset(BasementLayout.TrapStart);
+        brain.Lure(BasementLayout.TrapRoute);
+        Vector2 far = BasementLayout.TrapStart + new Vector2(-2f, 0f);
+        brain.Alert(far);
+        Vector2 hidden = new Vector2(BasementLayout.HideSpot.x, BasementLayout.HideSpot.z);
+        for (int i = 0; i < 1500 && !brain.LureFinished; i++) brain.Step(hidden, KnockNoise.Quiet, false, 0.05f, true);
+        Assert.That(brain.LureFinished, Is.True);
+    }
+
+    [Test]
+    public void Stalker_LureCatchesPlayerStandingOnTheWay()
+    {
+        var brain = new BasementStalkerBrain();
+        brain.Reset(BasementLayout.TrapStart);
+        brain.Lure(BasementLayout.TrapRoute);
+        Vector2 inTheWay = BasementLayout.TrapMouth;
+        for (int i = 0; i < 1200 && !brain.CaughtPlayer; i++) brain.Step(inTheWay, KnockNoise.Quiet, false, 0.05f);
+        Assert.That(brain.CaughtPlayer, Is.True);
+    }
+
+    [Test]
+    public void Layout_LockHangsAtTheFreeEdgeOfTheDoor()
+    {
+        Assert.That(BasementLayout.CellLock.x, Is.LessThan(BasementLayout.CellArea.xMin + 0.3f)); // петли на xMax
+    }
+
+    [Test]
     public void Stalker_DoesNotCatchHiddenPlayerAtCloseRangeButCatchesWhenExposed()
     {
         var brain = new BasementStalkerBrain();

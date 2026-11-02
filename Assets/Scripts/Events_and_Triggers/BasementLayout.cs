@@ -128,6 +128,14 @@ namespace KnocksFromBeneath
             new Vector2(-0.4f, -1f), Vector2.down, Vector2.down, Vector2.zero, Vector2.zero
         };
 
+        // S-09: монстр идёт на стук из зала B в камеру, западнее открытой решётки, и останавливается у Хейла.
+        public static readonly Vector2 TrapStart = new Vector2(-35.9f, 111.2f);
+        public static readonly Vector2 TrapMouth = new Vector2(-44.6f, 108.7f);
+        public static readonly Vector2[] TrapRoute =
+        {
+            new Vector2(-41.2f, 110.6f), new Vector2(-44.4f, 110.1f), TrapMouth, new Vector2(-44.65f, 107.2f)
+        };
+
         // Труба, по которой стучит хозяин: из камеры под потолком в дом. Точки (x, z), высота — под потолком.
         public const float PipeY = CeilingY - 0.3f;
         public static readonly Vector2[] PipeRoute =
@@ -136,7 +144,8 @@ namespace KnocksFromBeneath
             new Vector2(-36.2f, 116.2f), new Vector2(-37.4f, 116.2f)
         };
 
-        public static readonly Vector3 CellLock = new Vector3(-43.75f, FloorY + 1.0f, CellArea.yMax);
+        // Замок и проушины у свободного края решётки: петли стоят на востоке, x = CellArea.xMax.
+        public static readonly Vector3 CellLock = new Vector3(-45.55f, FloorY + 1.0f, CellArea.yMax);
         public static readonly Vector3 OwnerPosition = new Vector3(-44.7f, FloorY, 107.0f);
         public static readonly Vector3 CellApproach = new Vector3(-44.4f, FloorY, 109.7f);
         public static readonly Vector3 CellLampPosition = new Vector3(-43.4f, CeilingY - 0.4f, 110.0f);
@@ -212,6 +221,8 @@ namespace KnocksFromBeneath
         {
             foreach (Vector2 point in Patrol) yield return point;
             foreach (Vector2 point in SearchRoute) yield return point;
+            foreach (Vector2 point in TrapRoute) yield return point;
+            yield return TrapStart;
             yield return new Vector2(HallB.XMin, 0.5f * (EntranceFrom + EntranceTo));
             yield return new Vector2(HallB.XMin, 0.5f * (PassageFrom + PassageTo));
             yield return new Vector2(CellBlockD.XMax, 0.5f * (PassageFrom + PassageTo));

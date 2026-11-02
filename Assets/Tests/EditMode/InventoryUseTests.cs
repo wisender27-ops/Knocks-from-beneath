@@ -65,6 +65,27 @@ public class InventoryUseTests
     }
 
     [Test]
+    public void Remove_TakesTheEquippedItemOutOfHandsSlotAndFlag()
+    {
+        var held = new GameObject("HeldFlashlight");
+        held.transform.SetParent(player.transform);
+        inventory.flashlightInHand = held;
+        inventory.AddItem("Flashlight");
+        inventory.Equip("Flashlight");
+        int changes = 0;
+        inventory.Changed += () => changes++;
+
+        inventory.RemoveItem("Flashlight");
+
+        Assert.That(inventory.HasItem("Flashlight"), Is.False);
+        Assert.That(inventory.hasFlashlight, Is.False);
+        Assert.That(inventory.Entries, Is.Empty);
+        Assert.That(inventory.EquippedItemId, Is.Empty);
+        Assert.That(held.activeSelf, Is.False);
+        Assert.That(changes, Is.GreaterThan(0));
+    }
+
+    [Test]
     public void Use_MissingHeldObjectDoesNotReportSuccessOrChangeEquipment()
     {
         inventory.AddItem("Flashlight");

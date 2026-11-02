@@ -34,10 +34,12 @@ namespace KnocksFromBeneath
         private int waypoint, routeIndex;
         private float pause, searchLeft;
         private Vector2[] route, routeFacing;
-        private bool routeArrived;
+        private bool routeArrived, luring;
 
         // Обход комнаты после шума (удар по замку) закончен: монстр прошёл все точки и ушёл на свой обход.
         public bool SearchCompleted { get; private set; }
+        // S-09: монстр дошёл по стуку до последней точки маршрута.
+        public bool LureFinished { get; private set; }
         public bool AtSearchPoint(int index) => CurrentMode == Mode.RoomSearch && routeIndex == index && routeArrived;
         public Vector2 Position { get; private set; }
         public Vector2 Heading { get; private set; } = Vector2.up;
@@ -55,7 +57,7 @@ namespace KnocksFromBeneath
             waypoint = NearestWaypoint(position);
             pause = searchLeft = 0f;
             route = routeFacing = null;
-            routeArrived = false;
+            routeArrived = luring = LureFinished = false;
             SearchCompleted = false;
             CaughtPlayer = false;
             Moving = false;
@@ -79,6 +81,19 @@ namespace KnocksFromBeneath
             routeIndex = 0;
             routeArrived = false;
             SearchCompleted = false;
+        }
+
+        // S-09: монстр идёт на стук по маршруту без остановок. Если услышит игрока, отвлечётся и вернётся к маршруту.
+        public void Lure(Vector2[] path)
+        {
+            route = path;
+            routeFacing = null;
+            routeIndex = 0;
+            routeArrived = false;
+            luring = true;
+            LureFinished = false;
+            SearchCompleted = false;
+            CurrentMode = Mode.RoomSearch;
         }
 
         public void Step(Vector2 player, KnockNoise noise, bool playerInSight, float dt, bool playerHidden = false)
@@ -152,6 +167,13 @@ namespace KnocksFromBeneath
             Vector2 goal = route[routeIndex];
             if (Vector2.Distance(Position, goal) <= Arrive)
             {
+                if (luring)
+                {
+                    Moving = false;
+                    if (routeIndex < route.Length - 1) routeIndex++;
+                    else LureFinished = true;
+                    return;
+                }
                 routeArrived = true;
                 pause = RoomSearchPause;
                 Moving = false;
@@ -314,6 +336,15 @@ namespace KnocksFromBeneath
             Vector2 start = BasementLayout.Patrol[Mathf.Clamp(waypoint, 0, BasementLayout.Patrol.Length - 1)];
             brain.Reset(start);
             transform.position = new Vector3(start.x, BasementLayout.FloorY, start.y);
+        }
+
+        // S-09: монстр выходит из-за угла и идёт на стук по маршруту.
+        public void Lure(Vector2 start, Vector2[] path)
+        {
+            brain.Reset(start);
+            brain.Lure(path);
+            transform.position = new Vector3(start.x, BasementLayout.FloorY, start.y);
+            Begin();
         }
 
         public void Alert(Vector3 worldPoint) => brain.Alert(new Vector2(worldPoint.x, worldPoint.z));

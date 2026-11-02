@@ -15,12 +15,18 @@ namespace KnocksFromBeneath
     public sealed class BasementChapter : MonoBehaviour
     {
         // Значения не менять: Tunnels больше не используется, но Duct идёт после него.
-        public enum Stage { Idle, Descending, Explore, Striking, Caught, Finale, Done, Room, Tunnels, Duct }
+        public enum Stage { Idle, Descending, Explore, Striking, Caught, Finale, Done, Room, Tunnels, Duct, Trap }
+
+        // S-09: монстр идёт на стук → вошёл в камеру → решётка захлопнута → лом в проушинах.
+        public enum TrapPhase { None, Lure, Window, Slammed, Wedged, Failed }
 
         private const string FindQuest = "basement-find", ReachQuest = "basement-reach", StrikeQuest = "basement-unlock",
             HideQuest = "basement-hide", BreakQuest = "basement-break",
-            VentQuest = "basement-vent", DuctQuest = "basement-duct";
+            VentQuest = "basement-vent", DuctQuest = "basement-duct",
+            TrapHideQuest = "basement-trap-hide", TrapSlamQuest = "basement-trap-slam", TrapWedgeQuest = "basement-trap-wedge";
         private const float CellDoorSwing = 100f;
+        public const float TrapWindowSeconds = 7f, TrapWedgeSeconds = 5f;
+        private const float RushSpeed = 6f, RushReach = 1.2f, RushLimit = 3.5f;
 
         private Transform player;
         private PlayerInventory inventory;
@@ -55,8 +61,15 @@ namespace KnocksFromBeneath
         private bool[] hideInputStates;
         private AudioSource distractionSource;
         private BasementOwner owner;
+        private BasementCellLock doorGrip;
+        private BoxCollider doorGripCollider;
+        private Vector3 doorGripHasp;
+        private GameObject wedgedCrowbar;
+        private Coroutine trapKnocks;
+        private float trapLeft;
 
         public Stage CurrentStage { get; private set; }
+        public TrapPhase CurrentTrapPhase { get; private set; }
         public bool IsActive => CurrentStage != Stage.Idle && CurrentStage != Stage.Done;
 
         public void Initialize(Transform playerTransform, PlayerInventory playerInventory,
@@ -74,14 +87,14 @@ namespace KnocksFromBeneath
         }
 
         // Спуск: затемнение, подвал оживает, игрок у подножия лестницы.
-        public void Begin(BasementHatch hatch, bool debugJump = false, bool debugWing = false)
+        public void Begin(BasementHatch hatch, bool debugJump = false, bool debugWing = false, bool debugTrap = false)
         {
             if (CurrentStage != Stage.Idle || player == null) return;
             CurrentStage = Stage.Descending;
-            StartCoroutine(BeginRoutine(hatch, debugJump, debugWing));
+            StartCoroutine(BeginRoutine(hatch, debugJump, debugWing, debugTrap));
         }
 
-        private IEnumerator BeginRoutine(BasementHatch hatch, bool debugJump, bool debugWing)
+        private IEnumerator BeginRoutine(BasementHatch hatch, bool debugJump, bool debugWing, bool debugTrap)
         {
             LockCamera(true);
             EnsureFade();
@@ -92,6 +105,19 @@ namespace KnocksFromBeneath
             if (debugJump && inventory != null) inventory.hasCrowbar = true;
             catches = 0;
             reachedCell = hallSeen = struck = hideActive = hideFailed = breakReady = tapeSeen = false;
+            if (debugTrap)
+            {
+                PlaceAt(BasementLayout.CellApproach, BasementLayout.CellLock);
+                SpawnMonster();
+                reachedCell = struck = true;
+                lockVisual.SetActive(false);
+                cellDoorCollider.SetActive(false);
+                cellDoor.localRotation = tapeCellDoor.Closed * Quaternion.Euler(0f, CellDoorSwing, 0f);
+                owner.RevealFace();
+                yield return Fade(0f, 0.6f);
+                BeginTrap();
+                yield break;
+            }
             if (debugWing)
             {
                 PlaceAt(DepthsLayout.DuctOutlet, DepthsLayout.WingStart);
@@ -237,6 +263,7 @@ namespace KnocksFromBeneath
         private void Update()
         {
             if (player == null) return;
+            if (CurrentStage == Stage.Trap) { TickTrap(); return; }
             Vector3 p = player.position;
             var at = new Vector2(p.x, p.z);
             if (CurrentStage == Stage.Room && DepthsLayout.AtDuctHeight(p.y) && DepthsLayout.InDuct(at)) { EnterDuct(); return; }
@@ -298,8 +325,10 @@ namespace KnocksFromBeneath
             {
                 hideFailed = true;
                 sayQuick?.Invoke(new[] { "Услышал…" }, null);
+                if (CurrentStage == Stage.Trap) { FailTrap(); return; }
                 stalker.Alert(player.position);
             }
+            if (CurrentStage == Stage.Trap) return;
             if (!hideFailed && !distracted && inHideSpot && stalker.Brain.AtSearchPoint(1))
             {
                 inspectionTime += Time.deltaTime;
@@ -330,7 +359,8 @@ namespace KnocksFromBeneath
             }
         }
 
-        private bool CanEnterHideSpot() => hideActive && !inHideSpot && !hideFailed && CurrentStage == Stage.Explore;
+        private bool CanEnterHideSpot() => hideActive && !inHideSpot && !hideFailed &&
+            (CurrentStage == Stage.Explore || CurrentTrapPhase == TrapPhase.Lure);
 
         private void EnterHideSpot()
         {
@@ -370,13 +400,14 @@ namespace KnocksFromBeneath
             hideYaw = hidePitch = 0f;
             Physics.SyncTransforms();
             sayQuick?.Invoke(new[] { "Он рядом. Только не…" }, null);
+            if (QuestActive(TrapHideQuest)) QuestManager.Instance.AddProgress(1);
         }
 
         private void ExitHideSpot()
         {
             if (!inHideSpot) return;
             inHideSpot = false;
-            if (hideActive && !hideFailed && stalker != null)
+            if (hideActive && !hideFailed && stalker != null && CurrentStage != Stage.Trap)
             {
                 distracted = false;
                 inspectionTime = 0f;
@@ -423,6 +454,7 @@ namespace KnocksFromBeneath
 
         private void OnCaught()
         {
+            if (CurrentStage == Stage.Trap) { FailTrap(); return; }
             if (CurrentStage != Stage.Explore) return;
             CurrentStage = Stage.Caught;
             StartCoroutine(CaughtRoutine());
@@ -564,18 +596,248 @@ namespace KnocksFromBeneath
             yield return SayLine("ХЕЙЛ", "Сын запер меня по моей просьбе. Этот замок был не тюрьмой, а защитой.");
             yield return SayLine("ХЕЙЛ", "Я стучал по трубе, чтобы удержать его внизу. Теперь он услышал грохот и идёт.");
             yield return SayLine("ХЕЙЛ", "Камера на стене моя. Пусть пишет. Хоть раз он попадёт на плёнку там, где надо.");
+            yield return SayLine("ХЕЙЛ", "Ходить я не могу. Останусь здесь и буду стучать. Он придёт на стук.");
+            yield return SayLine("ХЕЙЛ", "Прячься за коробку. Когда он войдёт сюда, захлопни решётку и заложи проушины ломом.");
+            yield return SayLine("Я", "А вы?");
+            yield return SayLine("ХЕЙЛ", "Иди.");
+            BeginTrap();
+        }
 
-            for (int i = 0; i < 7; i++)
+        // -------------------------------------------------------------------------------------------------
+        // Ловушка (S-09): Хейл стучит, монстр идёт в камеру, игрок запирает его ломом
+        // -------------------------------------------------------------------------------------------------
+
+        private void BeginTrap()
+        {
+            CurrentStage = Stage.Trap;
+            CurrentTrapPhase = TrapPhase.Lure;
+            doorGrip.gameObject.SetActive(true);
+            LockCamera(false);
+            createQuest?.Invoke("Спрятаться за коробкой", 1, null, TrapHideQuest);
+            hideFailed = false;
+            hideActive = true;
+            hideListener.Begin();
+            lastPlayerPosition = player.position;
+            stalker.PlayerHidden = PlayerHidden;
+            stalker.Lure(BasementLayout.TrapStart, BasementLayout.TrapRoute);
+            trapKnocks = StartCoroutine(TrapKnockRoutine());
+        }
+
+        private IEnumerator TrapKnockRoutine()
+        {
+            var clip = Resources.Load<AudioClip>("Audio/Horror/impactMetal_heavy_001");
+            var wait = new WaitForSeconds(0.36f);
+            var rest = new WaitForSeconds(1f);
+            var pause = new WaitForSeconds(2.2f);
+            while (CurrentTrapPhase == TrapPhase.Lure)
             {
-                PlayEffect("Audio/Horror/FollowingStep1", 1f, 0.7f - i * 0.02f);
-                yield return new WaitForSeconds(0.8f - i * 0.08f);
+                hideListener.IgnoreSoundFor(2.2f);
+                knockSource.PlayOneShot(clip, 0.9f);
+                yield return wait;
+                knockSource.PlayOneShot(clip, 0.9f);
+                yield return rest;
+                knockSource.PlayOneShot(clip, 0.9f);
+                yield return pause;
             }
+        }
+
+        private void TickTrap()
+        {
+            if (NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked) return;
+            if (CurrentTrapPhase == TrapPhase.Lure)
+            {
+                if (stalker.Brain.LureFinished) OpenTrapWindow();
+            }
+            else if (CurrentTrapPhase == TrapPhase.Window || CurrentTrapPhase == TrapPhase.Slammed)
+            {
+                trapLeft -= Time.deltaTime;
+                if (trapLeft <= 0f) FailTrap();
+            }
+        }
+
+        // Монстр у Хейла и занят им: теперь его не слышно и он не слышит, но времени мало.
+        private void OpenTrapWindow()
+        {
+            CurrentTrapPhase = TrapPhase.Window;
+            trapLeft = TrapWindowSeconds;
+            if (trapKnocks != null) { StopCoroutine(trapKnocks); trapKnocks = null; }
+            hideListener.End();
+            stalker.Stop();
+            FaceMonster(BasementLayout.OwnerPosition);
+            stalker.Rig?.Lunge(0.25f, 0.6f);
+            PlayEffect("Audio/CornerJumpscare", 0.7f, 0.6f);
+            if (QuestActive(TrapHideQuest)) QuestManager.Instance.AddProgress(1);
+            sayQuick?.Invoke(new[] { "Стук оборвался. Он в камере. Решётка, сейчас!" }, null);
+            createQuest?.Invoke("Захлопнуть решётку", 1, null, TrapSlamQuest);
+        }
+
+        private void FaceMonster(Vector3 point)
+        {
+            Vector3 flat = point - monster.transform.position;
+            flat.y = 0f;
+            if (flat.sqrMagnitude > 0.001f) monster.transform.rotation = Quaternion.LookRotation(flat);
+        }
+
+        private bool OutsideCell() => player.position.z > BasementLayout.CellArea.yMax + 0.1f;
+
+        private bool CanUseDoorGrip() => CurrentStage == Stage.Trap &&
+            ((CurrentTrapPhase == TrapPhase.Window && OutsideCell()) || CurrentTrapPhase == TrapPhase.Slammed);
+
+        private string DoorGripLabel() => CurrentTrapPhase == TrapPhase.Window ? "Захлопнуть решётку" : "Вставить лом в проушины";
+
+        private void UseDoorGrip()
+        {
+            if (CurrentTrapPhase == TrapPhase.Window) SlamDoor();
+            else if (CurrentTrapPhase == TrapPhase.Slammed) StartCoroutine(WedgeRoutine());
+        }
+
+        private void SlamDoor()
+        {
+            CurrentTrapPhase = TrapPhase.Slammed;
+            trapLeft = TrapWedgeSeconds;
+            hideActive = false;
+            doorGripCollider.center = doorGripHasp;
+            doorGripCollider.size = new Vector3(0.9f, 0.9f, 0.5f);
+            if (QuestActive(TrapSlamQuest)) QuestManager.Instance.AddProgress(1);
+            createQuest?.Invoke("Вставить лом в проушины", 1, null, TrapWedgeQuest);
+            StartCoroutine(SlamRoutine());
+            StartCoroutine(RattleRoutine());
+        }
+
+        private IEnumerator SlamRoutine()
+        {
+            Quaternion from = cellDoor.localRotation;
+            for (float t = 0f; t < 1f; t += Time.deltaTime / 0.25f)
+            {
+                cellDoor.localRotation = Quaternion.Slerp(from, tapeCellDoor.Closed, t * t);
+                yield return null;
+            }
+            cellDoor.localRotation = tapeCellDoor.Closed;
+            if (cellDoorCollider != null) cellDoorCollider.SetActive(true);
+            PlayEffect("Audio/Horror/impactMetal_heavy_001", 1f, 0.8f);
+            PlayEffect("Audio/Horror/impactPunch_heavy_000", 1f, 1.1f);
+            sayQuick?.Invoke(new[] { "Он обернулся. Лом, быстрее!" }, null);
+            stalker.Rig?.Stand();
+            FaceMonster(new Vector3(monster.transform.position.x, 0f, BasementLayout.CellArea.yMax));
+            Vector3 start = monster.transform.position;
+            var bars = new Vector3(start.x, start.y, BasementLayout.CellArea.yMax - 0.45f);
+            for (float t = 0f; t < 1f && CurrentTrapPhase != TrapPhase.Failed; t += Time.deltaTime / 0.5f)
+            {
+                monster.transform.position = Vector3.Lerp(start, bars, t);
+                yield return null;
+            }
+        }
+
+        // Монстр трясёт решётку, пока игрок не уйдёт с этой сцены.
+        private IEnumerator RattleRoutine()
+        {
+            yield return new WaitForSeconds(0.7f);
+            while (CurrentTrapPhase == TrapPhase.Slammed || CurrentTrapPhase == TrapPhase.Wedged)
+            {
+                PlayEffect("Audio/Horror/impactMetal_heavy_001", 0.75f, UnityEngine.Random.Range(0.75f, 1.05f));
+                yield return new WaitForSeconds(UnityEngine.Random.Range(0.45f, 0.85f));
+            }
+        }
+
+        private IEnumerator WedgeRoutine()
+        {
+            CurrentTrapPhase = TrapPhase.Wedged;
+            doorGrip.gameObject.SetActive(false);
+            controller?.StopMotion();
+            LockCamera(true);
+            MountCrowbar();
+            inventory?.RemoveItem("Crowbar");
+            if (QuestActive(TrapWedgeQuest)) QuestManager.Instance.AddProgress(1);
+            PlayEffect("Audio/Horror/impactPlank_medium_000", 1f, 1.5f);
+            yield return TurnToward(BasementLayout.CellLock, 0.35f);
+            sayQuick?.Invoke(new[] { "Держит." }, null);
+            yield return new WaitForSeconds(2f);
+            sayQuick?.Invoke(new[] { "Хейл больше не стучит." }, null);
+            yield return new WaitForSeconds(2.5f);
+            CurrentTrapPhase = TrapPhase.None;
+            CurrentStage = Stage.Finale;
             PlayEffect("Audio/CornerJumpscare", 1f, 0.6f);
             yield return Fade(1f, 1.2f);
             yield return PlaySecondTape();
             yield return new WaitForSeconds(1.2f);
             CurrentStage = Stage.Done;
             endGame?.Invoke(EndingId.Answer);
+        }
+
+        // Лом из рук остаётся стоять в проушинах: длинная ось модели вертикально, через все три.
+        private void MountCrowbar()
+        {
+            GameObject held = inventory != null ? inventory.crowbarInHand : null;
+            if (held == null) return;
+            wedgedCrowbar = Instantiate(held);
+            wedgedCrowbar.name = "Crowbar in eyelets";
+            foreach (Animator animator in wedgedCrowbar.GetComponentsInChildren<Animator>(true)) animator.enabled = false;
+            foreach (Collider part in wedgedCrowbar.GetComponentsInChildren<Collider>(true)) Destroy(part);
+            wedgedCrowbar.transform.localScale = held.transform.lossyScale;
+            wedgedCrowbar.transform.rotation = Quaternion.identity;
+            wedgedCrowbar.SetActive(true);
+            var model = wedgedCrowbar.GetComponentInChildren<Renderer>(true);
+            if (model != null)
+            {
+                Vector3 size = model.localBounds.size;
+                Vector3 axis = size.x >= size.y && size.x >= size.z ? Vector3.right : size.y >= size.z ? Vector3.up : Vector3.forward;
+                wedgedCrowbar.transform.rotation = Quaternion.FromToRotation(model.transform.TransformDirection(axis), Vector3.up);
+                wedgedCrowbar.transform.position += HaspCenter() - model.bounds.center;
+            }
+            wedgedCrowbar.transform.SetParent(level.transform, true);
+        }
+
+        private static Vector3 HaspCenter() => BasementLayout.CellLock + new Vector3(-0.05f, 0f, 0.07f);
+
+        private void FailTrap()
+        {
+            if (CurrentTrapPhase == TrapPhase.Failed || CurrentTrapPhase == TrapPhase.Wedged) return;
+            bool burst = CurrentTrapPhase == TrapPhase.Slammed;
+            CurrentTrapPhase = TrapPhase.Failed;
+            if (trapKnocks != null) { StopCoroutine(trapKnocks); trapKnocks = null; }
+            StartCoroutine(TrapDeathRoutine(burst));
+        }
+
+        // E3: монстр вырвался или услышал. Конец всегда один, бежать уже поздно.
+        private IEnumerator TrapDeathRoutine(bool burst)
+        {
+            hideActive = false;
+            hideListener.End();
+            doorGrip.gameObject.SetActive(false);
+            stalker.Stop();
+            if (burst)
+            {
+                PlayEffect("Audio/Horror/impactPunch_heavy_000", 1f, 0.9f);
+                if (cellDoorCollider != null) cellDoorCollider.SetActive(false);
+                yield return SwingDoor();
+            }
+            yield return RushAtPlayer();
+            ExitHideSpot();
+            LockCamera(true);
+            controller?.StopMotion();
+            yield return Jumpscare();
+            yield return DeathTapeEffect.Play();
+            yield return Fade(1f, 0.01f);
+            CurrentStage = Stage.Done;
+            endGame?.Invoke(EndingId.Hidden);
+        }
+
+        private IEnumerator RushAtPlayer()
+        {
+            stalker.Rig?.Run(1.4f);
+            for (float t = 0f; t < RushLimit; t += Time.deltaTime)
+            {
+                Vector3 position = monster.transform.position;
+                var at = new Vector2(position.x, position.z);
+                var goal = new Vector2(player.position.x, player.position.z);
+                if (Vector2.Distance(at, goal) <= RushReach) yield break;
+                Vector2 next = at.y < BasementLayout.CellArea.yMax && goal.y > BasementLayout.CellArea.yMax
+                    ? BasementLayout.TrapMouth : BasementStalkerBrain.NextPoint(at, goal);
+                Vector2 step = Vector2.MoveTowards(at, next, RushSpeed * Time.deltaTime);
+                monster.transform.position = new Vector3(step.x, BasementLayout.FloorY, step.y);
+                FaceMonster(new Vector3(next.x, 0f, next.y));
+                yield return null;
+            }
         }
 
         private IEnumerator SayLine(string speaker, string line)
@@ -593,6 +855,7 @@ namespace KnocksFromBeneath
             var hidden = new System.Collections.Generic.List<Renderer>(level.tapeView.parent.GetComponentsInChildren<Renderer>(true));
             if (monster != null) hidden.AddRange(monster.GetComponentsInChildren<Renderer>(true));
             if (owner != null) hidden.AddRange(owner.GetComponentsInChildren<Renderer>(true));
+            if (wedgedCrowbar != null) hidden.AddRange(wedgedCrowbar.GetComponentsInChildren<Renderer>(true));
             NightRecording recording = NightRecording.Create(level.tapeView, new TapeSetup
             {
                 Timeline = BasementTape.Timeline,
@@ -740,6 +1003,9 @@ namespace KnocksFromBeneath
             lockVisual = level.lockVisual;
             cellLock = level.cellLock;
             owner = level.owner;
+            lockVisual.transform.position = BasementLayout.CellLock;
+            BuildDoorGrip();
+            BuildHasp();
             cellLock.Initialize(CanUseLock, UseLock, LockLabel);
             level.hideSpot.Initialize(CanEnterHideSpot, EnterHideSpot, () => "Спрятаться за коробкой");
             // Лампа без теней просвечивала бы сквозь перекрытие в дом: горит только во время главы.
@@ -766,6 +1032,43 @@ namespace KnocksFromBeneath
                 depths.tapeCamera.gameObject.SetActive(true);
                 depths.tapeCamera.Initialize(CanWatchTape, WatchTape, () => "Посмотреть запись");
             }
+        }
+
+        // Луч взаимодействия не видит триггеры, поэтому коллайдер твёрдый. Включается только на ловушке.
+        private void BuildDoorGrip()
+        {
+            float width = BasementLayout.CellArea.width;
+            var grip = new GameObject("Cell door grip", typeof(BoxCollider), typeof(BasementCellLock));
+            grip.layer = level.cellLock.gameObject.layer;
+            grip.transform.SetParent(cellDoor, false);
+            doorGripCollider = grip.GetComponent<BoxCollider>();
+            doorGripCollider.center = new Vector3(-width * 0.5f, 1.15f, 0f);
+            doorGripCollider.size = new Vector3(width, 2.3f, 0.12f);
+            doorGripHasp = cellDoor.InverseTransformPoint(BasementLayout.CellLock); // решётка ещё закрыта
+            doorGrip = grip.GetComponent<BasementCellLock>();
+            doorGrip.Initialize(CanUseDoorGrip, UseDoorGrip, DoorGripLabel);
+            grip.SetActive(false);
+        }
+
+        // Проушины: две на решётке и одна на стене, замок висит на них, лом встаёт сквозь все три.
+        private void BuildHasp()
+        {
+            Material metal = lockVisual.GetComponent<Renderer>().sharedMaterial;
+            Vector3 center = HaspCenter();
+            HaspPlate(metal, cellDoor, center + Vector3.up * 0.16f);
+            HaspPlate(metal, cellDoor, center + Vector3.down * 0.16f);
+            HaspPlate(metal, level.transform, center);
+        }
+
+        private static void HaspPlate(Material metal, Transform parent, Vector3 position)
+        {
+            GameObject plate = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            plate.name = "Cell hasp";
+            Destroy(plate.GetComponent<Collider>());
+            plate.transform.SetParent(parent, false);
+            plate.transform.position = position;
+            plate.transform.localScale = new Vector3(0.16f, 0.03f, 0.1f);
+            plate.GetComponent<Renderer>().sharedMaterial = metal;
         }
 
         private void SpawnMonster()

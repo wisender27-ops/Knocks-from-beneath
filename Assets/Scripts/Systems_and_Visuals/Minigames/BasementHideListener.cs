@@ -23,7 +23,7 @@ namespace KnocksFromBeneath
         private RectTransform meterFill, airFill;
         private Image meterBar, airBar, vignette;
         private TextMeshProUGUI meterLabel;
-        private float beat;
+        private float beat, ignoreLeft;
 
         public bool Active { get; private set; }
         public bool UsesMicrophone => micClip != null;
@@ -48,12 +48,16 @@ namespace KnocksFromBeneath
             ui = null;
         }
 
+        // Сюжетный стук из колонок попадает в микрофон: на это время его не считаем голосом игрока.
+        public void IgnoreSoundFor(float seconds) => ignoreLeft = Mathf.Max(ignoreLeft, seconds);
+
         // Шаг игры. monsterDistance — до монстра (ближе — слышнее), moving — игрок сейчас идёт.
         public void Tick(float dt, float monsterDistance, bool moving)
         {
             if (!Active || dt <= 0f || NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked) return;
             SampleMicrophone();
-            if (UsesMicrophone) voice.Advance(dt, micLevel, monsterDistance);
+            ignoreLeft -= dt;
+            if (UsesMicrophone) { if (ignoreLeft <= 0f) voice.Advance(dt, micLevel, monsterDistance); }
             else breath.Advance(dt, Input.GetKey(KeyCode.Space) || Input.GetMouseButton(1), monsterDistance, moving);
             UpdateUi(dt);
         }
