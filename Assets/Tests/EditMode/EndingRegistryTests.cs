@@ -55,6 +55,7 @@ public class EndingRegistryTests
         Assert.That(EndingGallery.CardBody(info, false), Is.EqualTo(info.Hint));
         Assert.That(EndingGallery.CardTitle(info, true), Is.EqualTo("ТЫ ОСТАЛСЯ ЗДЕСЬ"));
         Assert.That(EndingGallery.CardBody(info, true), Is.EqualTo(info.Summary));
+        Assert.That(EndingGallery.ScreenCaption(true), Is.Not.EqualTo(EndingGallery.ScreenCaption(false)));
     }
 
     [Test]
