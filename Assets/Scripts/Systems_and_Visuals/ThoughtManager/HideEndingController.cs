@@ -231,7 +231,12 @@ public sealed class HideEndingController
 
         if (_search != null)
         {
-            _endGame(EndingId.Hidden);
+            // После смерти экран может остаться затемнённым: последнюю реплику показываем на чёрной камере.
+            var intro = UnityEngine.Object.FindFirstObjectByType<IntroSequence>();
+            NightTwoExits.PrepareEndingLines(
+                _playerTransform != null ? _playerTransform.GetComponentInChildren<Camera>() : null,
+                intro != null ? intro.fadeScreen : null);
+            _showThoughts(new[] { NightTwoExits.CaughtThought }, () => _endGame(EndingId.Hidden));
             yield break;
         }
 
@@ -243,7 +248,8 @@ public sealed class HideEndingController
         yield return new WaitForSeconds(_search == null ? 1.5f : 0.6f);
 
         _showThoughts(new string[] {
-            "Нет... Оно здесь."
+            "Нет... Оно здесь.",
+            NightTwoExits.CaughtThought
         }, () => _endGame(EndingId.Hidden));
     }
 }

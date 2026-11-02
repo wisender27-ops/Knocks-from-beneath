@@ -10,6 +10,9 @@ namespace KnocksFromBeneath
     // в сцене: дом x −47…−33, z 104.7…120; задний двор — за порогом задних дверей; асфальт дороги — с z 128.6.
     public sealed class NightTwoExits : MonoBehaviour
     {
+        // E3: одна реплика на все пути, где монстр настиг героя.
+        public const string CaughtThought = "Оно шло не за домом. За мной.";
+
         private static readonly Vector3 GarageBackDoor = new Vector3(-38.04f, 1.55f, 104.71f);
         private static readonly Vector3 KitchenBackDoor = new Vector3(-43.39f, 2.10f, 104.71f);
         private const float DoorMatchDistance = 0.6f;
@@ -421,7 +424,59 @@ namespace KnocksFromBeneath
             }
             if (monster != null) Destroy(monster);
             _escapeMonster = null;
+            yield return EscapeEpilogue();
             finished(EndingId.Escaped);
+        }
+
+        private IEnumerator EscapeEpilogue()
+        {
+            var player = _player != null ? _player.GetComponent<PlayerController>() : null;
+            if (player != null) { player.StopMotion(); player.isCameraLocked = true; }
+            PrepareEndingLines(_player != null ? _player.GetComponentInChildren<Camera>() : null,
+                GetComponent<IntroSequence>()?.fadeScreen);
+            yield return ShowLines(new[] { "Новая комната. Здесь меня не найдут." });
+
+            // Стук монстра идёт без пауз, не 2·1: он нашёл героя и здесь.
+            var clip = Resources.Load<AudioClip>("Audio/Horror/AnswerKnock");
+            if (clip != null)
+            {
+                var source = AudioRouting.Create(transform, "Escape epilogue knocks", AudioBus.Horror, 0f);
+                for (int i = 0; i < 6; i++)
+                {
+                    source.PlayOneShot(clip);
+                    yield return new WaitForSeconds(clip.length);
+                }
+                Destroy(source.gameObject);
+            }
+            yield return ShowLines(new[] { "Под полом. Оно пришло за мной." });
+        }
+
+        // Экран чёрным держит камера, а не затемнение: при затемнении FadeTransitionPresentation прячет реплики.
+        public static void PrepareEndingLines(Camera camera, CanvasGroup fade)
+        {
+            if (camera != null)
+            {
+                camera.cullingMask = 0;
+                camera.clearFlags = CameraClearFlags.SolidColor;
+                camera.backgroundColor = Color.black;
+            }
+            if (fade != null) fade.alpha = 0f;
+            if (QuestManager.Instance != null && QuestManager.Instance.questUiText != null)
+                QuestManager.Instance.questUiText.text = "";
+        }
+
+        private static IEnumerator ShowLines(string[] lines)
+        {
+            if (ThoughtManager.Instance == null) yield break;
+            bool done = false;
+            ThoughtManager.Instance.ShowImportantThoughts(lines, () => done = true);
+            while (!done) yield return null;
+        }
+
+        private IEnumerator CaughtLine(Camera camera)
+        {
+            PrepareEndingLines(camera, GetComponent<IntroSequence>()?.fadeScreen);
+            yield return ShowLines(new[] { CaughtThought });
         }
 
         public static bool ChaseEscaped(Vector3 start, Vector3 position, float elapsed) =>
@@ -554,6 +609,7 @@ namespace KnocksFromBeneath
                 }
             }
             yield return PlayDeathTape();
+            yield return CaughtLine(camera);
             finished(EndingId.Hidden);
         }
 
@@ -592,6 +648,7 @@ namespace KnocksFromBeneath
             }
             yield return new WaitForSeconds(0.65f);
             yield return PlayDeathTape();
+            yield return CaughtLine(camera);
         }
 
         public static bool IsOnRoad(Vector3 position, Vector3 hatch)
