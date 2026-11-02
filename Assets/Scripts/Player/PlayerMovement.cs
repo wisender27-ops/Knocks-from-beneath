@@ -69,6 +69,13 @@ public class PlayerController : MonoBehaviour
         if (cam != null) cam.transform.localRotation = Quaternion.identity;
     }
 
+    // Катсцена навела камеру: мышь продолжает от этого наклона.
+    public void SetLookPitch(float pitch)
+    {
+        yRotation = Mathf.Clamp(pitch, minY, maxY);
+        if (cam != null) cam.transform.localRotation = Quaternion.Euler(yRotation, 0f, 0f);
+    }
+
     public void StopMotion()
     {
         horizontalVelocity = Vector3.zero;

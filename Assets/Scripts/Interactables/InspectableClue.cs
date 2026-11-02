@@ -64,7 +64,19 @@ namespace KnocksFromBeneath
         public Mesh PreviewMesh => previewMesh;
         public Material[] PreviewMaterials => previewMaterials;
         public Vector3 PreviewScale => previewScale;
-        public Quaternion PreviewRotation => previewRotation;
+        // Лист лежит плашмя, и камера превью видела бы его ребром: показываем лицом к игроку, верхом вверх.
+        public Quaternion PreviewRotation => IsFlatSheet
+            ? Quaternion.Inverse(Quaternion.LookRotation(-detailNormal, detailUp)) : previewRotation;
+        private bool IsFlatSheet
+        {
+            get
+            {
+                if (previewMesh == null) return false;
+                Vector3 size = previewMesh.bounds.size;
+                float thickness = Mathf.Abs(Vector3.Dot(size, detailNormal));
+                return thickness < Mathf.Max(size.x, size.y, size.z) * 0.05f;
+            }
+        }
         public Vector3 DetailPosition => detailPosition;
         public Vector3 DetailNormal => detailNormal;
         public Vector3 DetailUp => detailUp;

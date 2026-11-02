@@ -148,6 +148,8 @@ namespace KnocksFromBeneath
         public static readonly Vector3 CellLock = new Vector3(-45.55f, FloorY + 1.0f, CellArea.yMax);
         public static readonly Vector3 OwnerPosition = new Vector3(-44.7f, FloorY, 107.0f);
         public static readonly Vector3 CellApproach = new Vector3(-44.4f, FloorY, 109.7f);
+        // Отсюда через открытую решётку виден Хейл (S-09).
+        public static readonly Vector3 HaleTalkSpot = new Vector3(-44.7f, FloorY, 109.15f);
         public static readonly Vector3 CellLampPosition = new Vector3(-43.4f, CeilingY - 0.4f, 110.0f);
         // Старая камера хозяина на кронштейне у северной стены (C-04): смотрит на решётку.
         public static readonly Vector3 TapeCameraPosition = new Vector3(-42.0f, FloorY + 2.05f, 111.6f);

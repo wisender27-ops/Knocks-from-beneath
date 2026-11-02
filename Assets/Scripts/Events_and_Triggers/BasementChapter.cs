@@ -27,6 +27,7 @@ namespace KnocksFromBeneath
         private const float CellDoorSwing = 100f;
         public const float TrapWindowSeconds = 7f, TrapWedgeSeconds = 5f;
         private const float RushSpeed = 6f, RushReach = 1.2f, RushLimit = 3.5f;
+        private const float HideReactionDelay = 1.5f, TrapLureDelay = 3f;
 
         private Transform player;
         private PlayerInventory inventory;
@@ -318,9 +319,7 @@ namespace KnocksFromBeneath
                     ExitHideSpot();
             }
             Vector2 at = new Vector2(player.position.x, player.position.z);
-            float distance = Vector2.Distance(stalker.Brain.Position, at);
-            bool moving = !inHideSpot && controller != null && !controller.IsCrouching && PlayerMoved();
-            hideListener.Tick(Time.deltaTime, distance, moving);
+            hideListener.Tick(Time.deltaTime, Vector2.Distance(stalker.Brain.Position, at));
             if (hideListener.Found && !hideFailed)
             {
                 hideFailed = true;
@@ -337,8 +336,12 @@ namespace KnocksFromBeneath
                     distracted = true;
                     if (distractionSource != null)
                     {
-                        AudioClip clip = Resources.Load<AudioClip>("Audio/Horror/impactPunch_heavy_000");
-                        if (clip != null) distractionSource.PlayOneShot(clip);
+                        // Монстр уходит на этот звук: игрок должен слышать его из укрытия, через стены.
+                        foreach (string path in new[] { "Audio/Horror/impactPunch_heavy_000", "Audio/Horror/impactMetal_heavy_001", "Audio/Horror/impactWood_heavy_000" })
+                        {
+                            AudioClip clip = Resources.Load<AudioClip>(path);
+                            if (clip != null) distractionSource.PlayOneShot(clip, 1.5f);
+                        }
                     }
                     stalker.Distract(BasementLayout.DistractionPoint);
                 }
@@ -427,17 +430,7 @@ namespace KnocksFromBeneath
             if (savedFlashlight && inventory != null && inventory.flashlightLightSource != null) inventory.flashlightLightSource.enabled = true;
         }
 
-        private Vector3 lastPlayerPosition;
-
-        private bool PlayerMoved()
-        {
-            Vector3 position = player.position;
-            bool moved = (position - lastPlayerPosition).sqrMagnitude > 0.0004f;
-            lastPlayerPosition = position;
-            return moved;
-        }
-
-        private void BeginHide()
+        private void BeginHide(float alertDelay = 0f)
         {
             hideFailed = false;
             distracted = false;
@@ -445,7 +438,14 @@ namespace KnocksFromBeneath
             hideActive = true;
             hideListener.Begin();
             stalker.PlayerHidden = PlayerHidden;
-            stalker.AlertAndSearch(player.position);
+            StartCoroutine(AlertAfter(alertDelay));
+        }
+
+        // Пауза после удара: монстр реагирует не сразу, игрок успевает оглядеться и найти коробку.
+        private IEnumerator AlertAfter(float seconds)
+        {
+            if (seconds > 0f) yield return new WaitForSeconds(seconds);
+            if (hideActive && !hideFailed && CurrentStage == Stage.Explore) stalker.AlertAndSearch(player.position);
         }
 
         // -------------------------------------------------------------------------------------------------
@@ -564,7 +564,7 @@ namespace KnocksFromBeneath
             if (knocking != null) { StopCoroutine(knocking); knocking = null; }
             if (QuestActive(StrikeQuest)) QuestManager.Instance.AddProgress(1);
             sayQuick?.Invoke(new[] { "Грохнуло на весь подвал!", "Он идёт. Спрятаться. За ящики у стены." }, null);
-            BeginHide();
+            BeginHide(HideReactionDelay);
         }
 
         private IEnumerator FinaleRoutine()
@@ -586,6 +586,7 @@ namespace KnocksFromBeneath
             yield return SwingDoor();
             if (owner != null) owner.RevealFace();
             if (QuestActive(BreakQuest)) QuestManager.Instance.AddProgress(1);
+            yield return FaceHale();
 
             yield return SayLine("ХЕЙЛ", "Кто ты? Четыре месяца стучу по трубе, а кто наверху — не знаю.");
             yield return SayLine("ХЕЙЛ", "Погоди… Дэниел Росс?");
@@ -617,10 +618,22 @@ namespace KnocksFromBeneath
             hideFailed = false;
             hideActive = true;
             hideListener.Begin();
-            lastPlayerPosition = player.position;
             stalker.PlayerHidden = PlayerHidden;
-            stalker.Lure(BasementLayout.TrapStart, BasementLayout.TrapRoute);
+            stalker.Hold(BasementLayout.TrapStart);
             trapKnocks = StartCoroutine(TrapKnockRoutine());
+            StartCoroutine(TrapLureRoutine());
+        }
+
+        // Хейл уже стучит, монстр выходит не сразу: игрок успевает дойти до коробки.
+        private IEnumerator TrapLureRoutine()
+        {
+            float waited = 0f;
+            while (waited < TrapLureDelay)
+            {
+                if (!NarrativeReadingPanel.WorldHalted && !PauseMenuController.InputBlocked) waited += Time.deltaTime;
+                yield return null;
+            }
+            if (CurrentTrapPhase == TrapPhase.Lure) stalker.Lure(BasementLayout.TrapRoute);
         }
 
         private IEnumerator TrapKnockRoutine()
@@ -840,6 +853,39 @@ namespace KnocksFromBeneath
             }
         }
 
+        // Герой подходит к проёму и смотрит на лицо Хейла, камера за стеной его бы не показала.
+        private IEnumerator FaceHale()
+        {
+            Camera eye = player.GetComponentInChildren<Camera>();
+            if (eye == null || owner == null) yield break;
+            var body = player.GetComponent<CharacterController>();
+            if (body != null) body.enabled = false;
+            Vector3 fromPosition = player.position;
+            Vector3 toPosition = new Vector3(BasementLayout.HaleTalkSpot.x, fromPosition.y, BasementLayout.HaleTalkSpot.z);
+            Quaternion fromBody = player.rotation, fromEye = eye.transform.localRotation;
+            Vector3 face = owner.FacePoint;
+            float eyeHeight = eye.transform.position.y - fromPosition.y;
+            Vector3 aim = face - new Vector3(toPosition.x, toPosition.y + eyeHeight, toPosition.z);
+            Vector3 flat = new Vector3(aim.x, 0f, aim.z);
+            Quaternion toBody = Quaternion.LookRotation(flat);
+            float pitch = -Mathf.Atan2(aim.y, flat.magnitude) * Mathf.Rad2Deg;
+            Quaternion toEye = Quaternion.Euler(pitch, 0f, 0f);
+            for (float t = 0f; t < 1f; t += Time.deltaTime / 0.9f)
+            {
+                float smooth = Mathf.SmoothStep(0f, 1f, t);
+                player.position = Vector3.Lerp(fromPosition, toPosition, smooth);
+                player.rotation = Quaternion.Slerp(fromBody, toBody, smooth);
+                eye.transform.localRotation = Quaternion.Slerp(fromEye, toEye, smooth);
+                yield return null;
+            }
+            player.position = toPosition;
+            player.rotation = toBody;
+            eye.transform.localRotation = toEye;
+            if (body != null) body.enabled = true;
+            Physics.SyncTransforms();
+            controller?.SetLookPitch(pitch);
+        }
+
         private IEnumerator SayLine(string speaker, string line)
         {
             if (ThoughtManager.Instance == null) yield break;
@@ -941,7 +987,6 @@ namespace KnocksFromBeneath
             if (flat.sqrMagnitude > 0.01f) player.rotation = Quaternion.LookRotation(flat);
             if (body != null) body.enabled = true;
             controller?.StandUp();
-            lastPlayerPosition = player.position;
             Physics.SyncTransforms();
         }
 
@@ -1003,7 +1048,7 @@ namespace KnocksFromBeneath
             lockVisual = level.lockVisual;
             cellLock = level.cellLock;
             owner = level.owner;
-            lockVisual.transform.position = BasementLayout.CellLock;
+            BuildPadlock();
             BuildDoorGrip();
             BuildHasp();
             cellLock.Initialize(CanUseLock, UseLock, LockLabel);
@@ -1020,8 +1065,9 @@ namespace KnocksFromBeneath
             knockSource.minDistance = 3f;
             knockSource.volume = 1f;
             hideListener = level.gameObject.AddComponent<BasementHideListener>();
-            distractionSource = AudioRouting.Create(root, "Basement distant distraction", AudioBus.Horror, 1f, 30f);
+            distractionSource = AudioRouting.Create(root, "Basement distant distraction", AudioBus.Horror, 0.6f, 45f);
             distractionSource.transform.position = BasementLayout.DistractionPoint;
+            distractionSource.minDistance = 12f;
 
             depths = BasementDepths.Get();
             OpenVent();
@@ -1032,6 +1078,44 @@ namespace KnocksFromBeneath
                 depths.tapeCamera.gameObject.SetActive(true);
                 depths.tapeCamera.Initialize(CanWatchTape, WatchTape, () => "Посмотреть запись");
             }
+        }
+
+        // Куб-заглушка из сцены остаётся опорой: на нём точка взаимодействия и анимация удара, а виден амбарный замок.
+        private void BuildPadlock()
+        {
+            Transform anchor = lockVisual.transform;
+            Transform trigger = cellLock.transform;
+            Vector3 triggerAt = trigger.position - anchor.position + BasementLayout.CellLock;
+            var box = cellLock.GetComponent<BoxCollider>();
+            anchor.position = BasementLayout.CellLock;
+            anchor.localScale = Vector3.one;
+            trigger.position = triggerAt;
+            trigger.localScale = Vector3.one;
+            box.size = new Vector3(0.3f, 0.35f, 0.15f);
+
+            var cube = lockVisual.GetComponent<Renderer>();
+            Material metal = cube.sharedMaterial;
+            cube.enabled = false;
+            // Старое железо светлее решётки: замок должен читаться в луче фонаря.
+            var iron = new Material(metal) { name = "Padlock iron" };
+            iron.SetColor("_BaseColor", new Color(0.72f, 0.55f, 0.4f));
+            var dark = new Material(metal) { name = "Padlock keyhole" };
+            dark.SetColor("_BaseColor", Color.black);
+            var model = new GameObject("Barn padlock", typeof(MeshFilter), typeof(MeshRenderer));
+            model.transform.SetParent(anchor, false);
+            model.transform.position = HaspCenter() + new Vector3(0f, 0.03f, 0.025f);
+            model.GetComponent<MeshFilter>().sharedMesh = BarnPadlock.BuildMesh();
+            model.GetComponent<MeshRenderer>().sharedMaterials = new[] { iron, dark };
+            model.transform.localScale = Vector3.one * 1.5f;
+            // Слабый отсвет: цель видна издалека, а гаснет вместе со сбитым замком.
+            var glint = new GameObject("Padlock glint", typeof(Light)).GetComponent<Light>();
+            glint.transform.SetParent(anchor, false);
+            glint.transform.position = BasementLayout.CellLock + new Vector3(0.25f, 0.1f, 0.45f);
+            glint.type = LightType.Point;
+            glint.color = new Color(1f, 0.72f, 0.5f);
+            glint.intensity = 0.9f;
+            glint.range = 1.3f;
+            glint.shadows = LightShadows.None;
         }
 
         // Луч взаимодействия не видит триггеры, поэтому коллайдер твёрдый. Включается только на ловушке.

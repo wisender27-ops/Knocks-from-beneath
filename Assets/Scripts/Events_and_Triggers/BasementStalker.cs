@@ -338,12 +338,18 @@ namespace KnocksFromBeneath
             transform.position = new Vector3(start.x, BasementLayout.FloorY, start.y);
         }
 
-        // S-09: монстр выходит из-за угла и идёт на стук по маршруту.
-        public void Lure(Vector2 start, Vector2[] path)
+        // S-09: монстр ждёт за углом, пока не услышит стук.
+        public void Hold(Vector2 start)
         {
+            Stop();
             brain.Reset(start);
-            brain.Lure(path);
             transform.position = new Vector3(start.x, BasementLayout.FloorY, start.y);
+        }
+
+        // S-09: монстр идёт на стук по маршруту.
+        public void Lure(Vector2[] path)
+        {
+            brain.Lure(path);
             Begin();
         }
 

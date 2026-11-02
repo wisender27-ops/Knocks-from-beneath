@@ -70,8 +70,12 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
         Check(intro.playerInventory.HasItem("Crowbar"), "Лом в инвентаре");
 
         // Проба молчит, но за столом шумно: только сценарий mic слушает настоящий микрофон.
-        if (scenario != "mic") ((BasementHideListener)typeof(BasementChapter).GetField("hideListener", Hidden).GetValue(chapter)).End();
+        var listener = (BasementHideListener)typeof(BasementChapter).GetField("hideListener", Hidden).GetValue(chapter);
+        if (scenario != "mic") listener.End();
+        else Note($"Микрофон: {(listener.UsesMicrophone ? "есть" : "нет")}");
         if (scenario == "caught") { yield return Caught(); yield break; }
+        if (scenario == "lease") { yield return Lease(); yield break; }
+        if (scenario == "padlock") { yield return Padlock(); yield break; }
 
         stage = "hide";
         Look(BasementLayout.HideCrateCenter);
@@ -146,6 +150,36 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
         Check(ending == EndingId.Answer, $"Концовка {ending}");
         Check(chapter.CurrentStage == BasementChapter.Stage.Done, $"Глава закончена, этап {chapter.CurrentStage}");
         Note($"Решётка до плёнки: {rotation:0.0}°, после: {Quaternion.Angle(level.cellDoor.localRotation, Quaternion.identity):0.0}°");
+    }
+
+    // Договор открывается в окне «Осмотра» лицом к камере.
+    private IEnumerator Lease()
+    {
+        stage = "lease";
+        foreach (InspectableClue clue in FindObjectsByType<InspectableClue>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+            if (clue.ClueId == "clue-lease") Check(ClueInspectWindow.Show(clue), "Окно осмотра открылось");
+        yield return Wait(0.8f);
+        Shot("lease-preview");
+        yield return Wait(0.5f);
+    }
+
+    // Замок в кадре: подошли к закрытой решётке снаружи (окно прыжка держит её открытой, закрываем для снимка).
+    private IEnumerator Padlock()
+    {
+        stage = "padlock";
+        level.cellDoor.localRotation = Quaternion.identity;
+        level.lockVisual.SetActive(true);
+        if (intro.playerInventory.flashlightLightSource != null) intro.playerInventory.flashlightLightSource.enabled = true;
+        Place(new Vector3(-45.3f, BasementLayout.FloorY, 108.95f));
+        yield return Wait(0.2f);
+        Transform body = level.lockVisual.transform.Find("Barn padlock");
+        Check(body != null, "Модель амбарного замка на месте");
+        if (body == null) yield break;
+        Look(body.position + Vector3.down * 0.08f);
+        yield return Wait(0.3f);
+        Shot("padlock");
+        Note($"Замок: {body.position:F2}, размер {body.GetComponent<MeshFilter>().sharedMesh.bounds.size:F3}");
+        yield return Wait(0.5f);
     }
 
     // Игрок стоит на пути монстра и не прячется.

@@ -182,6 +182,18 @@ public sealed class BasementTests
     }
 
     [Test]
+    public void Padlock_MeshHasBodyShackleAndKeyhole()
+    {
+        var mesh = BarnPadlock.BuildMesh();
+        Assert.That(mesh.subMeshCount, Is.EqualTo(2));
+        Assert.That(mesh.GetTriangles(1).Length, Is.GreaterThan(0));
+        Assert.That(mesh.bounds.size.y, Is.InRange(0.12f, 0.16f));
+        Assert.That(mesh.bounds.size.x, Is.InRange(0.09f, 0.11f));
+        foreach (Vector3 normal in mesh.normals) Assert.That(normal.sqrMagnitude, Is.EqualTo(1f).Within(0.01f));
+        Object.DestroyImmediate(mesh);
+    }
+
+    [Test]
     public void Layout_LockHangsAtTheFreeEdgeOfTheDoor()
     {
         Assert.That(BasementLayout.CellLock.x, Is.LessThan(BasementLayout.CellArea.xMin + 0.3f)); // петли на xMax

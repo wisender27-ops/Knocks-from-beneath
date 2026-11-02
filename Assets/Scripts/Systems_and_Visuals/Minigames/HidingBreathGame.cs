@@ -10,8 +10,8 @@ namespace KnocksFromBeneath
     // видна только щель между покрывалом и полом. Монстр поднимается, обходит комнату и останавливается у кровати —
     // в щели его ступни прямо перед лицом (единственный раз, когда его видно). Игрок должен молчать по-настоящему:
     // игра слушает микрофон (VoiceNoiseGate, шумоподавление по фону комнаты; шёпот можно, голос нет), на экране —
-    // «не говори ни слова» и шкала громкости. Без микрофона — запасной вариант: Пробел/ПКМ — задержать дыхание
-    // (BreathHold). Нашёл — резко падает на колено и заглядывает под кровать (E3). Не успел спрятаться — бросок (E3).
+    // «не говори ни слова» и шкала громкости. Микрофона нет вообще — монстр просто не слышит, надо переждать.
+    // Нашёл — резко падает на колено и заглядывает под кровать (E3). Не успел спрятаться — бросок (E3).
     // Переждал — шаги уходят вниз, хлопает люк, герой вылезает.
     public sealed class HidingBreathGame : MonoBehaviour, IHidingSearch
     {
@@ -48,9 +48,8 @@ namespace KnocksFromBeneath
         private const float StepLength = 0.62f;
 
         public static HidingBreathGame Active { get; private set; }
-        public BreathHold Breath { get; private set; }     // запасной вариант без микрофона
         public VoiceNoiseGate Voice { get; private set; }
-        public bool UsesMicrophone => micClip != null;
+        public bool UsesMicrophone => mic.Available;
         public float MonsterDistance { get; private set; } = float.MaxValue;
         public GameObject Monster => monster;
         public GameObject Zone { get; private set; }
@@ -58,7 +57,6 @@ namespace KnocksFromBeneath
         public bool Hidden => hidden;
         public bool SceneRunning => sceneRunning;
         public bool PromptVisible => promptUi != null && promptUi.activeSelf;
-        public bool HoldRequested { get; set; }        // для проб: держать дыхание без клавиш
 
         private Action hideRequested, caughtInOpen;
         private PlayerController player;
@@ -94,23 +92,16 @@ namespace KnocksFromBeneath
         private AudioSource monsterSource, stepSource, worldSource, heroSource, heartSource;
         private AudioClip[] stepsWood, stepsStairs, breaths, creaks, doorCreaks;
         private AudioClip heartbeat, stinger, slam;
-        private int lastStep = -1, lastBreath = -1;
-        private string micDevice;
-        private AudioClip micClip;
-        private readonly float[] micWindow = new float[1024];
-        private float micLevel = VoiceNoiseGate.SilenceDb;
-        private int micPosition;
-        private float micStalled, micLastSound;
-        private const float MicDeadSeconds = 2f;        // ровно ноль столько времени — запись запрещена или пустая
-        private const float MicStallSeconds = 0.5f;     // позиция записи не двигается — микрофон отключили
+        private int lastStep = -1;
+        private readonly HideMicrophone mic = new HideMicrophone();
         private RandomKnock[] otherKnocks;
-        private float nextBreath, nextBeat, beatFlash;
+        private float nextBeat, beatFlash;
 
         // UI
         private GameObject ui, promptUi;
         private RawImage vignette;
-        private RectTransform bedEdge, airFill, meterFill, meterLimit;
-        private Image airBack, airBar, meterBar;
+        private RectTransform bedEdge, meterFill, meterLimit;
+        private Image meterBar;
         private TMPro.TextMeshProUGUI meterLabel;
         private static Texture2D vignetteTexture, fringeTexture;
 
@@ -176,9 +167,10 @@ namespace KnocksFromBeneath
             sceneRunning = true;
             stopped = hidden = sniffing = false;
             outcome = Outcome.None;
-            Breath = new BreathHold();
             Voice = new VoiceNoiseGate();
-            StartMicrophone(); // пока оно поднимается, меряем фон комнаты
+            mic.DeviceChanged -= OnMicrophoneChanged;
+            mic.DeviceChanged += OnMicrophoneChanged;
+            mic.Start(); // пока оно поднимается, меряем фон комнаты
             LoadAudio();
             CreateAudio();
             HorrorMomentDirector.Instance?.Interrupt(60f);
@@ -220,7 +212,7 @@ namespace KnocksFromBeneath
             }
             if (!Done && outcome == Outcome.None) outcome = Outcome.Left;
             sceneRunning = false;
-            StopMicrophone();
+            mic.Stop();
         }
 
         private bool Done => stopped || outcome != Outcome.None;
@@ -237,8 +229,6 @@ namespace KnocksFromBeneath
             yield return CrawlUnder();
             hidden = true;
             BuildUi();
-            if (!UsesMicrophone) // с микрофоном всё сказано на экране
-                ThoughtManager.Instance?.TryShowInteractionThoughts("hide-breath-start", new[] { "Не дышать." }, 0f);
 
             while (!Done)
             {
@@ -278,83 +268,35 @@ namespace KnocksFromBeneath
             // Полное расстояние: пока оно внизу, под полом, — слышит хуже.
             MonsterDistance = monster != null ? Vector3.Distance(body.position, monsterPos) : float.MaxValue;
             float suspicionBefore = Suspicion;
-            bool gasped = false;
-            if (UsesMicrophone) Voice.Advance(dt, micLevel, MonsterDistance);
-            else gasped = Breath.Advance(dt, HoldRequested || Input.GetKey(KeyCode.Space) || Input.GetMouseButton(1),
-                MonsterDistance, false);
+            if (UsesMicrophone) Voice.Advance(dt, mic.Level, MonsterDistance);
             if (!sniffing && suspicionBefore < 0.45f && Suspicion >= 0.45f) sniffing = true;
             if (Detected && outcome == Outcome.None) outcome = Outcome.Found;
-            HeroSounds(dt, gasped);
+            HeroSounds(dt);
             UpdateUi(dt);
         }
 
         private static bool Paused => NarrativeReadingPanel.WorldHalted || PauseMenuController.InputBlocked;
-        public float Suspicion => UsesMicrophone ? Voice.Suspicion : Breath != null ? Breath.Suspicion : 0f;
-        private float Pulse => UsesMicrophone ? Voice.Pulse : Breath != null ? Breath.Pulse : 0f;
-        private bool Detected => UsesMicrophone ? Voice.Found : Breath != null && Breath.Found;
+        public float Suspicion => Voice != null ? Voice.Suspicion : 0f;
+        private float Pulse => Voice != null ? Voice.Pulse : 0f;
+        private bool Detected => UsesMicrophone && Voice.Found;
 
         // ---------------------------------------------------------------- микрофон
 
-        private void StartMicrophone()
+        // Новое устройство: фон комнаты меряется заново, шкала появляется или исчезает.
+        private void OnMicrophoneChanged()
         {
-            StopMicrophone();
-            string[] devices = Microphone.devices;
-            if (devices == null || devices.Length == 0) return;
-            micDevice = devices[0];
-            micClip = Microphone.Start(micDevice, true, 1, 16000);
-            micLevel = VoiceNoiseGate.SilenceDb;
-            micPosition = 0;
-            micStalled = 0f;
-            micLastSound = Time.time;
-        }
-
-        private void StopMicrophone()
-        {
-            if (micClip != null && Microphone.IsRecording(micDevice)) Microphone.End(micDevice);
-            micClip = null;
-        }
-
-        // Последние ~64 мс с микрофона (буфер не пересоздаётся каждый кадр). Микрофон отключили (запись стоит)
-        // или Windows запретила доступ (запись идёт, но ровно ноль) — переходим на задержку дыхания.
-        private void SampleMicrophone()
-        {
-            if (micClip == null) return;
-            if (!Microphone.IsRecording(micDevice)) { MicrophoneLost(); return; }
-            int position = Microphone.GetPosition(micDevice);
-            if (position == micPosition)
-            {
-                micStalled += Time.unscaledDeltaTime;
-                if (micStalled > MicStallSeconds) MicrophoneLost();
-                return;
-            }
-            micPosition = position;
-            micStalled = 0f;
-            int offset = position - micWindow.Length;
-            if (offset < 0) offset += micClip.samples;
-            if (!micClip.GetData(micWindow, offset)) return;
-            micLevel = VoiceNoiseGate.ToDb(micWindow, micWindow.Length);
-            if (micLevel > VoiceNoiseGate.SilenceDb + 0.5f) micLastSound = Time.time;
-            else if (Time.time - micLastSound > MicDeadSeconds) MicrophoneLost();
-        }
-
-        private void MicrophoneLost()
-        {
-            StopMicrophone();
-            micLevel = VoiceNoiseGate.SilenceDb;
-            if (!hidden) return;
-            BuildUi(); // шкала микрофона → полоска воздуха и «Пробел»
-            ThoughtManager.Instance?.TryShowInteractionThoughts("hide-mic-lost",
-                new[] { "Микрофон не слышно. Задерживай дыхание Пробелом." }, 0f);
+            Voice = new VoiceNoiseGate();
+            if (hidden) BuildUi();
         }
 
         // ---------------------------------------------------------------- подсказка у кровати
 
         private void Update()
         {
-            if (sceneRunning && micClip != null && !Paused)
+            if (sceneRunning && mic.Available && !Paused)
             {
-                SampleMicrophone();
-                if (!hidden) Voice.Observe(Time.deltaTime, micLevel);
+                mic.Sample();
+                if (!hidden) Voice.Observe(Time.deltaTime, mic.Level);
             }
             bool show = promptZone >= 0 && Active == null && sceneRunning && !hidden && !Done && player != null &&
                 !player.isCameraLocked && !Paused;
@@ -819,8 +761,7 @@ namespace KnocksFromBeneath
             }
             if (Active == this) Active = null;
             hidden = false;
-            HoldRequested = false;
-            StopMicrophone();
+            mic.Stop();
         }
 
         private void OnDisable()
@@ -838,30 +779,9 @@ namespace KnocksFromBeneath
 
         // ---------------------------------------------------------------- герой: дыхание и сердце
 
-        // С микрофоном дышит сам игрок — слышно только сердце героя. Без микрофона — дыхание по BreathHold.
-        private void HeroSounds(float dt, bool gasped)
+        // Дышит сам игрок — слышно только сердце героя.
+        private void HeroSounds(float dt)
         {
-            if (!UsesMicrophone)
-            {
-                if (gasped)
-                {
-                    Sfx(heroSource, GameSounds.Pick(breaths, ref lastBreath), 1.1f, 1f);
-                    nextBreath = 1.2f;
-                    ThoughtManager.Instance?.TryShowInteractionThoughts("hide-breath-gasp", new[] { "Не могу… воздуха…" }, 0f);
-                }
-                if (!Breath.Holding)
-                {
-                    nextBreath -= dt;
-                    if (nextBreath <= 0f)
-                    {
-                        nextBreath = Mathf.Lerp(2.4f, 1.1f, Breath.Pulse);
-                        Sfx(heroSource, GameSounds.Pick(breaths, ref lastBreath), UnityEngine.Random.Range(0.95f, 1.05f),
-                            Mathf.Clamp01(Breath.Noise) * 0.8f);
-                    }
-                }
-                else nextBreath = Mathf.Max(nextBreath, 0.35f); // отпустил — первый выдох почти сразу
-            }
-
             nextBeat -= dt;
             if (nextBeat <= 0f && heartbeat != null)
             {
@@ -969,7 +889,6 @@ namespace KnocksFromBeneath
             vignette.color = new Color(0f, 0f, 0f, 0f);
 
             if (UsesMicrophone) BuildMicrophoneUi(font);
-            else BuildBreathUi(font);
             UpdateUi(0f);
         }
 
@@ -997,23 +916,6 @@ namespace KnocksFromBeneath
             meterLabel.rectTransform.sizeDelta = new Vector2(600f, 24f);
         }
 
-        // Без микрофона: задержка дыхания на Пробел и тонкая полоска воздуха.
-        private void BuildBreathUi(TMPro.TMP_FontAsset font)
-        {
-            airBack = UiStyle.Rect("Air", ui.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f),
-                new Vector2(0f, 118f), new Vector2(180f, 3f)).gameObject.AddComponent<Image>();
-            airBack.raycastTarget = false;
-            airFill = UiStyle.Rect("Fill", airBack.transform, new Vector2(0f, 0.5f), new Vector2(0f, 0.5f),
-                Vector2.zero, new Vector2(180f, 3f));
-            airBar = airFill.gameObject.AddComponent<Image>();
-            airBar.raycastTarget = false;
-
-            var keys = UiKeyHints.Create(ui.transform, "Keys", font);
-            keys.RectTransform.anchorMin = keys.RectTransform.anchorMax = keys.RectTransform.pivot = new Vector2(0.5f, 0f);
-            keys.RectTransform.anchoredPosition = new Vector2(0f, 70f);
-            keys.Set("ПРОБЕЛ", "ЗАДЕРЖАТЬ ДЫХАНИЕ");
-        }
-
         private void UpdateUi(float dt)
         {
             if (ui == null) return;
@@ -1030,34 +932,16 @@ namespace KnocksFromBeneath
             }
             beatFlash = Mathf.MoveTowards(beatFlash, 0f, dt * 5f);
 
-            if (UsesMicrophone)
-            {
-                vignette.color = new Color(0f, 0f, 0f, Mathf.Clamp01(0.3f + 0.15f * Pulse + 0.1f * Pulse * beatFlash));
-                if (meterFill == null) return;
-                float level = Voice.Loudness;
-                meterFill.sizeDelta = new Vector2(320f * level / VoiceNoiseGate.Headroom, 8f);
-                Color ivory = UiStyle.Ivory;
-                meterBar.color = level >= 1f ? UiStyle.Rust
-                    : level > 0.7f ? UiStyle.Amber : new Color(ivory.r, ivory.g, ivory.b, 0.8f);
-                meterLabel.text = !Voice.Calibrated ? "МИКРОФОН · СЛУШАЮ ТИШИНУ…"
-                    : level >= 1f ? "СЛИШКОМ ГРОМКО" : "МИКРОФОН";
-                meterLabel.color = level >= 1f ? UiStyle.Rust : UiStyle.Ash;
-                return;
-            }
-
-            float strain = Breath.Holding ? 1f - Breath.Air : 0f;
-            float alpha = 0.3f + 0.45f * strain + 0.1f * Breath.Pulse * beatFlash;
-            float red = Mathf.Clamp01((0.35f - Breath.Air) / 0.35f) * (Breath.Holding ? 0.35f : 0f);
-            vignette.color = new Color(red, 0f, 0f, Mathf.Clamp01(alpha));
-            if (airFill == null) return;
-            // Полоска видна, только пока воздуха не полный запас.
-            float show = Breath.Air < 0.995f ? 1f : 0f;
-            Color ivoryAir = UiStyle.Ivory;
-            airBack.color = new Color(0f, 0f, 0f, 0.35f * show);
-            airBar.color = Breath.Air < 0.25f
-                ? new Color(UiStyle.Rust.r, UiStyle.Rust.g, UiStyle.Rust.b, 0.8f * show)
-                : new Color(ivoryAir.r, ivoryAir.g, ivoryAir.b, 0.55f * show);
-            airFill.sizeDelta = new Vector2(180f * Breath.Air, 3f);
+            vignette.color = new Color(0f, 0f, 0f, Mathf.Clamp01(0.3f + 0.15f * Pulse + 0.1f * Pulse * beatFlash));
+            if (!UsesMicrophone || meterFill == null) return;
+            float level = Voice.Loudness;
+            meterFill.sizeDelta = new Vector2(320f * level / VoiceNoiseGate.Headroom, 8f);
+            Color ivory = UiStyle.Ivory;
+            meterBar.color = level >= 1f ? UiStyle.Rust
+                : level > 0.7f ? UiStyle.Amber : new Color(ivory.r, ivory.g, ivory.b, 0.8f);
+            meterLabel.text = !Voice.Calibrated ? "МИКРОФОН · СЛУШАЮ ТИШИНУ…"
+                : level >= 1f ? "СЛИШКОМ ГРОМКО" : "МИКРОФОН";
+            meterLabel.color = level >= 1f ? UiStyle.Rust : UiStyle.Ash;
         }
 
         // Бахрома покрывала: неровные висящие нити.
