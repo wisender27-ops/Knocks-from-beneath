@@ -105,15 +105,15 @@ public class CrosshairJuice : MonoBehaviour
             if (interaction.pickup == null || !interaction.pickup.CanPlaceInZone(zone)) continue;
 
             _targetHint = questTag == "room-decoration"
-                ? $"E поставить {pickable.displayName} на место"
-                : "E установить коробку";
+                ? Loc.T("E поставить на место")
+                : Loc.T("E установить коробку");
             return true;
         }
 
         if (!matchingTarget) return false;
         _targetHint = questTag == "room-decoration" && !string.IsNullOrEmpty(pickable.destinationHint)
-            ? pickable.destinationHint
-            : "Отнесите коробку к месту";
+            ? Loc.T(pickable.destinationHint)
+            : Loc.T("Отнесите коробку к месту");
         return true;
     }
 
@@ -133,9 +133,9 @@ public class CrosshairJuice : MonoBehaviour
 
             if (interaction.TryGetTrashDisposalTarget(out var trashTarget))
             {
-                _targetHint = "E ВЫКИНУТЬ МУСОР";
+                _targetHint = Loc.T("E ВЫКИНУТЬ МУСОР");
                 CurrentFocus = new InteractionFocus { Target = trashTarget.transform,
-                    Point = trashTarget.transform.position, Prompt = "ВЫКИНУТЬ МУСОР" };
+                    Point = trashTarget.transform.position, Prompt = Loc.T("ВЫКИНУТЬ МУСОР") };
                 return;
             }
 
@@ -173,7 +173,7 @@ public class CrosshairJuice : MonoBehaviour
             // Подсказка на поедание пирога в любом месте, когда он уже согрет и квест активен
             if (heldPie.isHeated && intro.CanEatPie())
             {
-                _targetHint = "E съесть";
+                _targetHint = Loc.T("E съесть");
                 return;
             }
 
@@ -190,11 +190,11 @@ public class CrosshairJuice : MonoBehaviour
 
             if (!microwave.microwaveDoor.isOpen)
             {
-                _targetHint = "E открыть дверцу";
+                _targetHint = Loc.T("E открыть дверцу");
                 return;
             }
 
-            _targetHint = "E поставить";
+            _targetHint = Loc.T("E поставить");
             return;
         }
 

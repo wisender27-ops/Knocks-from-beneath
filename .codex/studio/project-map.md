@@ -44,6 +44,10 @@ Recheck relevant entries before changes. This is a snapshot, not a replacement f
   NightTapeViewer (MinigameWindow, Resources/Shaders/VhsTape on a RawImage). Debug jump: DebugStoryStage.PlayNightRecording.
 - Audio: Systems_and_Visuals/Audio (MainMixer buses Music/UI/SFX{Foley,Horror,Voice}/Ambience,
   AudioRouting, GameAudio, AmbienceDirector); clips in Assets/Audio/Game, library in Resources.
+- Localization (L-02): Scripts/Localization/Loc (Russian source string = key; Loc.T / Loc.F / Loc.Key / Loc.Upper),
+  tables Resources/Localization/<code>.json (12 languages), LocFonts (CJK fallback order), LocSceneTexts (static scene
+  labels). Language row only in the main-menu settings (reloads the menu). Every player-facing Russian literal must go
+  through Loc — LocalizationTests enforce code + scene/item data coverage. Integration steps: DesignNotes/Localization-integration.md.
 - Input System 1.19.0 is installed; activeInputHandler=2 (Both). Gameplay uses
   legacy UnityEngine.Input; do not automatically migrate controls.
 - GraphicsSettings main pipeline: Assets/Settings_URP.asset; mobile quality pipeline:

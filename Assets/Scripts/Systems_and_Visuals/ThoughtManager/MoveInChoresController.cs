@@ -43,7 +43,7 @@ public sealed class MoveInChoresController
             TrashManager.Instance.Initialize();
             amount = Mathf.Max(1, TrashManager.Instance.PileCount);
         }
-        _createQuest("Собрать мусор по дому", amount, OnTrashCollected, "trash-collect");
+        _createQuest(Loc.T("Собрать мусор по дому"), amount, OnTrashCollected, "trash-collect");
     }
 
     void OnTrashCollected()
@@ -61,7 +61,7 @@ public sealed class MoveInChoresController
         _trashDeliveryQuestStarted = true;
 
         if (_trashZone != null) _trashZone.SetActive(true);
-        _createQuest("Вынести мусорный мешок", 1, OnTrashFinished, "trash-delivery");
+        _createQuest(Loc.T("Вынести мусорный мешок"), 1, OnTrashFinished, "trash-delivery");
     }
 
     public void OnTrashFinished()
@@ -79,9 +79,9 @@ public sealed class MoveInChoresController
     void ShowBoxThoughts()
     {
         _showThoughts(new string[] {
-            "Наконец-то привезли мои коробки.",
-            "Ещё их по комнатам растащить.",
-            "Переехал, блин. Отдохнул."
+            Loc.T("Наконец-то привезли мои вещи."),
+            Loc.T("Осталось разнести коробки по комнатам."),
+            Loc.T("Тишина и покой. Сразу после коробок.")
         }, SetupBoxQuest);
     }
 
@@ -91,7 +91,7 @@ public sealed class MoveInChoresController
         if (_boxDelivery != null) _boxDelivery.EnsureDelivered();
         SetRoomZonesActive(true);
         int amount = _roomZones != null ? Mathf.Max(1, _roomZones.Length) : 1;
-        _createQuest("Отнести коробки по комнатам", amount, OnBoxFinished, "box-delivery");
+        _createQuest(Loc.T("Отнести коробки по комнатам"), amount, OnBoxFinished, "box-delivery");
     }
 
     public void OnBoxFinished()
@@ -107,8 +107,8 @@ public sealed class MoveInChoresController
             }
         }
         _showThoughts(new string[] {
-            "Ну всё, спина сказала спасибо.",
-            "Теперь наверх, разобрать своё. Потом поесть и в кровать."
+            Loc.T("Всё. Спина мне этого не простит."),
+            Loc.T("Теперь наверх, разберу свои вещи. Потом ужин — и спать.")
         }, _onChoresFinished);
     }
 

@@ -89,10 +89,10 @@ public sealed class NightOneController
         if (_neighborVisit != null) yield return _neighborVisit();
 
         bool metNeighbor = _didMeetNeighbor != null && _didMeetNeighbor();
-        _showThoughts(metNeighbor ? new[] { "Он видел кого-то внизу. Но я всё это время был в кровати.", "Нет. Сам сказал, что показалось. Надо спать." } : new string[] {
-            "Опять этот стук...",
-            "Нет. Не накручивай себя.",
-            "Затихло же. Надо спать."
+        _showThoughts(metNeighbor ? new[] { Loc.T("Он видел кого-то внизу. А я всё это время спал наверху."), Loc.T("Он сам сказал, что показалось. Надо поспать.") } : new string[] {
+            Loc.T("Опять стук…"),
+            Loc.T("Хватит. Старый дом, старые трубы."),
+            Loc.T("Затихло. Надо поспать.")
         }, OnCalmNightFinished);
     }
 
@@ -115,8 +115,8 @@ public sealed class NightOneController
         yield return WakeUp();
 
         _showThoughts(new string[] {
-            "Ну вот, дожил до утра.",
-            "Сейчас тихо. А дел всё ещё до хрена."
+            Loc.T("Утро. Дожил."),
+            Loc.T("Сейчас тихо. А дел всё ещё по горло.")
         }, () =>
         {
             _isRunning = false;

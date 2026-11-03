@@ -99,7 +99,7 @@ namespace KnocksFromBeneath
                 if (porchLightSwitch != null && windowPeekPoint != null) BeginSilhouette();
                 yield return Knock();
                 if (!running) yield break;
-                QuestManager.Instance?.CreateQuest("Проверить, кто стучит в дверь", 1, questTag: "neighbor-visit");
+                QuestManager.Instance?.CreateQuest(Loc.T("Проверить, кто стучит в дверь"), 1, questTag: "neighbor-visit");
                 float reminder = 0f;
                 int cornerSide = 0;
                 bool frontDoorTouched = false;
@@ -130,32 +130,32 @@ namespace KnocksFromBeneath
                 QuestManager.Instance?.RecordQuestCompletion("neighbor-visit");
                 if (cornerSide != 0)
                 {
-                    yield return Say("СОСЕД", "Ох... Ты меня напугал. Я уже думал, что-то случилось.");
-                    yield return Say("СОСЕД", "Я из дома напротив. Видел, как ты ходишь по первому этажу, а потом пропал. Стучу, стучу — тишина.");
-                    yield return Say("Я", "Я... вышел подышать. С другой стороны дома.");
-                    yield return Say("СОСЕД", "В такую темень? Ну... главное, что всё в порядке.");
+                    yield return Say(Loc.Key("СОСЕД"), Loc.T("Господи, напугал! Я уж решил, что-то случилось."));
+                    yield return Say(Loc.Key("СОСЕД"), Loc.T("Я живу напротив. Видел в окне, как ты ходишь внизу, а потом всё стихло. Стучу — никто не открывает."));
+                    yield return Say(Loc.Key("Я"), Loc.T("Я… вышел подышать. С той стороны дома."));
+                    yield return Say(Loc.Key("СОСЕД"), Loc.T("В такую темень? Ну… главное, что ты в порядке."));
                 }
                 else
                 {
                     yield return MeetAtDoor();
                     if (!running) yield break;
-                    yield return Say("СОСЕД", "Привет. Я из дома напротив. Извини, что так поздно.");
-                    yield return Say("СОСЕД", "Увидел, как ты ходишь на первом этаже. Решил зайти познакомиться.");
-                    yield return Say("Я", "На первом? Я спал наверху. Только сейчас проснулся.");
-                    yield return Say("СОСЕД", "Да? Ну... наверное, показалось. В окне мелькнуло что-то.");
+                    yield return Say(Loc.Key("СОСЕД"), Loc.T("Привет. Я живу напротив. Прости, что так поздно."));
+                    yield return Say(Loc.Key("СОСЕД"), Loc.T("Смотрю — ты внизу ходишь, не спишь. Решил заодно познакомиться."));
+                    yield return Say(Loc.Key("Я"), Loc.T("Внизу? Я спал наверху. Ты меня разбудил."));
+                    yield return Say(Loc.Key("СОСЕД"), Loc.T("Да? Ну… значит, показалось. Что-то мелькнуло в окне."));
                 }
                 // K-05: игрок стучал в пол, пока шёл к двери, и снизу ответили — сосед это слышал.
                 if (StoryFlags.KnockAnswered)
                 {
-                    yield return Say("СОСЕД", "И ещё. Пока я стоял у двери, это ты по полу стучал?");
-                    yield return Say("СОСЕД", "Тук-тук... и снизу будто кто-то отвечает.");
-                    yield return Say("Я", "...Трубы, наверное. Старый дом.");
+                    yield return Say(Loc.Key("СОСЕД"), Loc.T("И ещё. Пока я стоял у двери — это ты стучал по полу?"));
+                    yield return Say(Loc.Key("СОСЕД"), Loc.T("Тук-тук… А снизу будто кто-то отвечал."));
+                    yield return Say(Loc.Key("Я"), Loc.T("…Трубы, наверное. Дом старый."));
                 }
                 // S-05: пока нет звонка M-06, эту часть истории рассказывает сосед на пороге.
-                yield return Say("СОСЕД", "Ты ведь у сына Хейла купил? Самого Уолтера весной не стало видно. Сын сказал, уехал к сестре.");
-                yield return Say("СОСЕД", "А потом неделю мешки с цементом таскал в подвал. Бетонировал что-то. Один, по ночам.");
-                yield return Say("Я", "Мне про подвал ничего не говорили.");
-                yield return Say("СОСЕД", "Ладно, не буду мешать. Спокойной ночи.");
+                yield return Say(Loc.Key("СОСЕД"), Loc.T("Ты ведь у сына Хейла купил? Самого Уолтера с весны не видно. Сын говорит, уехал к сестре."));
+                yield return Say(Loc.Key("СОСЕД"), Loc.T("А сам потом неделю таскал в подвал мешки с цементом. Один, по ночам. Что-то бетонировал."));
+                yield return Say(Loc.Key("Я"), Loc.T("Про подвал мне ничего не сказали."));
+                yield return Say(Loc.Key("СОСЕД"), Loc.T("Ладно, не буду задерживать. Спокойной ночи."));
                 if (!running) yield break;
                 ReleasePlayerView();
                 stayIndoors?.Invoke(true);
@@ -581,7 +581,7 @@ namespace KnocksFromBeneath
             waitingForBed = true;
             bedReached = false;
             GameEvents.OnBedTriggerReached += OnBedReached;
-            QuestManager.Instance?.CreateQuest("Вернуться в кровать", 1, questTag: "neighbor-return-bed");
+            QuestManager.Instance?.CreateQuest(Loc.T("Вернуться в кровать"), 1, questTag: "neighbor-return-bed");
         }
 
         private void OnBedReached()

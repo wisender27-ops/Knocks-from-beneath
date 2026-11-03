@@ -258,8 +258,8 @@ namespace KnocksFromBeneath
                 Refresh();
                 feedbackText.color = UiStyle.Amber;
                 feedbackText.text = definition.IsEquippable
-                    ? (wasEquipped ? "Убрано: " : "В руках: ") + definition.DisplayName
-                    : "Использовано: " + definition.DisplayName;
+                    ? (wasEquipped ? Loc.F("Убрано: {0}", definition.DisplayName) : Loc.F("В руках: {0}", definition.DisplayName))
+                    : Loc.F("Использовано: {0}", definition.DisplayName);
             }
             else
             {
@@ -273,7 +273,7 @@ namespace KnocksFromBeneath
             carouselMoving = false;
             isInspecting = value;
             draggingPreview = false;
-            titleText.text = value ? "► ОСМОТР" : "► ИНВЕНТАРЬ";
+            titleText.text = value ? Loc.T("► ОСМОТР") : Loc.T("► ИНВЕНТАРЬ");
             titleText.rectTransform.anchoredPosition = value ? new Vector2(0f, -12f) : new Vector2(0f, -39f);
             nameText.rectTransform.anchoredPosition = value ? new Vector2(350f, -76f) : new Vector2(24f, -86f);
             nameText.rectTransform.sizeDelta = value ? new Vector2(266f, 34f) : new Vector2(592f, 30f);
@@ -337,7 +337,7 @@ namespace KnocksFromBeneath
             if (!hasItems)
             {
                 if (isInspecting) SetInspection(false);
-                actionHints.Set("TAB", "ЗАКРЫТЬ");
+                actionHints.Set("TAB", Loc.T("ЗАКРЫТЬ"));
                 ClearPreview();
                 return;
             }
@@ -348,20 +348,20 @@ namespace KnocksFromBeneath
                 ? entry.Definition.DisplayName + "  ×" + entry.Quantity
                 : entry.Definition.DisplayName;
             bool deadPhone = inventory.IsDeadPhone(entry);
-            descriptionText.text = deadPhone ? PhoneFlashlight.DeadDescription : entry.Definition.Description;
-            string useAction = entry.Definition.IsEquippable ? (equipped ? "УБРАТЬ" : "ВЗЯТЬ") : "ИСПОЛЬЗОВАТЬ";
+            descriptionText.text = deadPhone ? Loc.T(PhoneFlashlight.DeadDescription) : entry.Definition.Description;
+            string useAction = entry.Definition.IsEquippable ? (equipped ? Loc.T("УБРАТЬ") : Loc.T("ВЗЯТЬ")) : Loc.T("ИСПОЛЬЗОВАТЬ");
             if (deadPhone)
             {
-                if (isInspecting) actionHints.Set("МЫШЬ", "ВРАЩАТЬ", "КОЛЕСО", "МАСШТАБ", "R", "СБРОС", "C", "НАЗАД");
-                else if (inventory.Entries.Count > 1) actionHints.Set("A D", "ВЫБОР", "C", "ОСМОТР", "TAB", "ЗАКРЫТЬ");
-                else actionHints.Set("C", "ОСМОТР", "TAB", "ЗАКРЫТЬ");
+                if (isInspecting) actionHints.Set(Loc.T("МЫШЬ"), Loc.T("ВРАЩАТЬ"), Loc.T("КОЛЕСО"), Loc.T("МАСШТАБ"), "R", Loc.T("СБРОС"), "C", Loc.T("НАЗАД"));
+                else if (inventory.Entries.Count > 1) actionHints.Set("A D", Loc.T("ВЫБОР"), "C", Loc.T("ОСМОТР"), "TAB", Loc.T("ЗАКРЫТЬ"));
+                else actionHints.Set("C", Loc.T("ОСМОТР"), "TAB", Loc.T("ЗАКРЫТЬ"));
             }
             else if (isInspecting)
-                actionHints.Set("МЫШЬ", "ВРАЩАТЬ", "КОЛЕСО", "МАСШТАБ", "R", "СБРОС", "ПРОБЕЛ", useAction, "C", "НАЗАД");
+                actionHints.Set(Loc.T("МЫШЬ"), Loc.T("ВРАЩАТЬ"), Loc.T("КОЛЕСО"), Loc.T("МАСШТАБ"), "R", Loc.T("СБРОС"), Loc.T("ПРОБЕЛ"), useAction, "C", Loc.T("НАЗАД"));
             else if (inventory.Entries.Count > 1)
-                actionHints.Set("A D", "ВЫБОР", "C", "ОСМОТР", "ПРОБЕЛ", useAction, "TAB", "ЗАКРЫТЬ");
+                actionHints.Set("A D", Loc.T("ВЫБОР"), "C", Loc.T("ОСМОТР"), Loc.T("ПРОБЕЛ"), useAction, "TAB", Loc.T("ЗАКРЫТЬ"));
             else
-                actionHints.Set("C", "ОСМОТР", "ПРОБЕЛ", useAction, "TAB", "ЗАКРЫТЬ");
+                actionHints.Set("C", Loc.T("ОСМОТР"), Loc.T("ПРОБЕЛ"), useAction, "TAB", Loc.T("ЗАКРЫТЬ"));
             ReplacePreview(entry.Definition);
             for (int offset = 0; offset < 3; offset++)
             {
@@ -473,7 +473,7 @@ namespace KnocksFromBeneath
             contentFitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             contentFitter.aspectRatio = ReferenceWidth / ReferenceHeight;
 
-            titleText = CreateText("Title", frame, "► ИНВЕНТАРЬ", 23f, TextAlignmentOptions.Center, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -39f), new Vector2(360f, 42f));
+            titleText = CreateText("Title", frame, Loc.T("► ИНВЕНТАРЬ"), 23f, TextAlignmentOptions.Center, new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0f, -39f), new Vector2(360f, 42f));
             leftArrowText = CreateText("LeftArrow", frame, "<", 28f, TextAlignmentOptions.Center, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(155f, -45f), new Vector2(40f, 40f));
             rightArrowText = CreateText("RightArrow", frame, ">", 28f, TextAlignmentOptions.Center, new Vector2(1f, 1f), new Vector2(1f, 1f), new Vector2(-155f, -45f), new Vector2(40f, 40f));
 
@@ -497,7 +497,7 @@ namespace KnocksFromBeneath
             previewImage = previewSlots[0].Image;
             previewStage = previewSlots[0].Stage;
 
-            emptyText = CreateText("Empty", frame, "Карманы пусты", 20f, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(400f, 50f));
+            emptyText = CreateText("Empty", frame, Loc.T("Карманы пусты"), 20f, TextAlignmentOptions.Center, new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(0f, 0f), new Vector2(400f, 50f));
             feedbackText = CreateText("Feedback", frame, string.Empty, 14f, TextAlignmentOptions.Center, new Vector2(0.5f, 0f), new Vector2(0.5f, 0f), new Vector2(0f, 64f), new Vector2(592f, 24f));
             actionHints = UiKeyHints.Create(frame, "Actions", font, 0.5f);
             actionHints.RectTransform.anchorMin = actionHints.RectTransform.anchorMax = actionHints.RectTransform.pivot = new Vector2(0.5f, 0f);

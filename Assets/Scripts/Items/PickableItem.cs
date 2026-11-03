@@ -12,7 +12,8 @@ public class PickableItem : MonoBehaviour
     public PlacementZone designatedZone;
 
     [Header("Подсказка при переноске")]
-    public string displayName = "предмет";
+    // L-02: имя в подсказке больше не выводится (падежи не переводятся); поле оставлено ради сериализации сцены.
+    public string displayName = "";
     public string destinationHint;
     public Transform scatteredPose;
 

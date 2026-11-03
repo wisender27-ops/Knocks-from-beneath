@@ -205,7 +205,7 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
         var lines = BasementChapter.KnockLines;
         for (float t = 0f; t < 120f && !ending.HasValue; t += Time.unscaledDeltaTime)
         {
-            if (seen < lines.Length && PanelText() == lines[seen]) { if (seen == 0) Shot("final-line"); seen++; }
+            if (seen < lines.Length && PanelText() == Loc.T(lines[seen])) { if (seen == 0) Shot("final-line"); seen++; }
             yield return null;
         }
         Check(seen == lines.Length, $"Реплики после запирания показаны: {seen}/{lines.Length}");
@@ -214,8 +214,8 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
     // S-11: реплика E3 видна на чёрной камере, и после неё концовка всё равно наступает.
     private IEnumerator LastLine(float timeout)
     {
-        yield return Until(() => PanelText() == NightTwoExits.CaughtThought, timeout);
-        Check(PanelText() == NightTwoExits.CaughtThought, "Реплика E3 на экране: " + PanelText());
+        yield return Until(() => PanelText() == Loc.T(NightTwoExits.CaughtThought), timeout);
+        Check(PanelText() == Loc.T(NightTwoExits.CaughtThought), "Реплика E3 на экране: " + PanelText());
         Check(view.cullingMask == 0, "Камера чёрная");
         yield return Wait(0.5f);
         Shot("e3-line");
@@ -260,7 +260,7 @@ public sealed class BasementTrapPlayProbe : MonoBehaviour
         if (!interaction.TryGetInteractionHit(out RaycastHit hit)) { Note("Луч ни во что не попал"); return false; }
         var target = hit.collider.GetComponentInParent<BasementCellLock>();
         Note($"Луч: {hit.collider.name} на {hit.distance:0.00} м, подпись «{(target != null ? target.Label : "—")}»");
-        if (target == null || !target.CanInteract || target.Label != label) return false;
+        if (target == null || !target.CanInteract || target.Label != Loc.T(label)) return false;
         target.Interact();
         return true;
     }

@@ -29,8 +29,8 @@ public sealed class EveningRoundController
 
     public void SetupEveningWalkQuest()
     {
-        _createQuest("Лечь спать", 1, OnEveningFinished, "evening-walk");
-        _showThoughts(new[] { "Может, на ночь задвинуть засов на входной двери?" }, null);
+        _createQuest(Loc.T("Лечь спать"), 1, OnEveningFinished, "evening-walk");
+        _showThoughts(new[] { Loc.T("Может, задвинуть на ночь засов на входной двери? Лишним не будет.") }, null);
     }
 
     public bool CanLockFrontDoor =>
@@ -41,7 +41,7 @@ public sealed class EveningRoundController
         if (!CanLockFrontDoor) return false;
         GameState.frontDoorLocked = true;
         if (_frontDoor != null) _frontDoor.SetInteractionLocked(true);
-        _showThoughts(new[] { "Вот так. Теперь хоть кто-то снаружи не войдёт." }, null);
+        _showThoughts(new[] { Loc.T("Вот так. Снаружи теперь никто не войдёт.") }, null);
         return true;
     }
 
@@ -71,7 +71,7 @@ public sealed class EveningRoundController
     void OnEveningFinished()
     {
         _showThoughts(new string[] {
-            "Всё, вымотался. Остальное завтра."
+            Loc.T("Всё, я вымотался. Остальное завтра.")
         }, _onEveningFinished);
     }
 }

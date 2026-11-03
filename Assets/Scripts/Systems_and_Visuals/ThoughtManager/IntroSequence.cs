@@ -841,8 +841,8 @@ public class IntroSequence : MonoBehaviour
     void StartIntro()
     {
         ShowImportantThoughts(new string[] {
-            "Ну вот. Свой дом. Может, хоть здесь будет спокойно.",
-            "Семья так торопилась, что срач оставила мне. Спасибо."
+            Loc.T("Ну вот и он. Свой дом. Здесь всё будет по-другому."),
+            Loc.T("Прежние хозяева так спешили, что даже мусор не вынесли.")
         }, SetupEnterHouseQuest);
     }
 
@@ -850,7 +850,7 @@ public class IntroSequence : MonoBehaviour
     void SetupEnterHouseQuest()
     {
         if (houseEntryTrigger != null) houseEntryTrigger.SetActive(true);
-        CreateQuest("Зайти в дом", 1, _moveInChores.SetupTrashQuest, "enter-house");
+        CreateQuest(Loc.T("Зайти в дом"), 1, _moveInChores.SetupTrashQuest, "enter-house");
     }
 
     void OnHouseEntered()
@@ -867,15 +867,15 @@ public class IntroSequence : MonoBehaviour
             return;
         }
         // nightStartTrigger.SetActive(true) убрано — кровать всегда видна
-        CreateQuest("Лечь спать", 1, OnGoToBedFinished, "go-to-bed");
+        CreateQuest(Loc.T("Лечь спать"), 1, OnGoToBedFinished, "go-to-bed");
     }
 
     // C-01: камера нашлась в коробке — герой просто убирает её в спальню: снимать пока нечего.
     void OnCameraGearFound()
     {
         ShowThoughts(new string[] {
-            "Видеокамера и штатив. Лежали в коробке, сверху.",
-            "Разнесу коробки и отнесу их наверх, в спальню."
+            Loc.T("Видеокамера и штатив. Всё-таки я взял их с собой."),
+            Loc.T("Разберусь с коробками и отнесу их в спальню.")
         }, null);
     }
 
@@ -886,7 +886,7 @@ public class IntroSequence : MonoBehaviour
             _pieQuest.SetupTakePieQuest();
             return;
         }
-        CreateQuest("Отнести камеру и штатив в спальню", CameraPlacementController.StoreItemCount, OnCameraStored,
+        CreateQuest(Loc.T("Отнести камеру и штатив в спальню"), CameraPlacementController.StoreItemCount, OnCameraStored,
             CameraPlacementController.StoreQuestTag);
     }
 
@@ -897,7 +897,7 @@ public class IntroSequence : MonoBehaviour
 
     void OnCameraStored()
     {
-        ShowThoughts(new string[] { "Пусть лежит. Снимать тут нечего.", "В холодильнике ещё пирог остался." },
+        ShowThoughts(new string[] { Loc.T("Надеюсь, здесь она мне не понадобится."), Loc.T("В холодильнике есть пирог. На ужин сойдёт.") },
             _pieQuest.SetupTakePieQuest);
     }
 
@@ -916,7 +916,7 @@ public class IntroSequence : MonoBehaviour
         StartCoroutine(CameraParanoiaRoutine());
     }
 
-    void CreateCameraPlaceQuest() => CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place");
+    void CreateCameraPlaceQuest() => CreateQuest(Loc.T("Установить видеокамеру на штатив"), 1, SetupGoToBedQuest, "camera-place");
 
     IEnumerator CameraParanoiaRoutine()
     {
@@ -932,11 +932,11 @@ public class IntroSequence : MonoBehaviour
         }
         yield return new WaitForSeconds(1.8f);
         ShowImportantThoughts(new string[] {
-            "...Кто здесь?",
-            "Никого. Дом пустой. Я один.",
-            "Опять начинается. Как в старом доме: кажется, что кто-то ходит, стоит мне отвернуться.",
-            "Там я месяцами не мог понять, приснилось мне или было на самом деле. Потом купил камеру.",
-            "Утром ночь забываешь, а плёнка не врёт. Заберу её из спальни и поставлю внизу, чтобы весь первый этаж был в кадре."
+            Loc.T("…Кто здесь?"),
+            Loc.T("Никого. Только я и пустой дом."),
+            Loc.T("Опять. Как в старом доме: стоит отвернуться, и кажется, что за спиной кто-то ходит."),
+            Loc.T("Там я месяцами не мог отличить сон от яви. Пока не купил камеру."),
+            Loc.T("К утру память всё сглаживает. Плёнка — нет. Поставлю камеру внизу, чтобы весь первый этаж был в кадре.")
         }, CreateCameraPlaceQuest);
     }
 
@@ -945,14 +945,14 @@ public class IntroSequence : MonoBehaviour
         if (IsQuestActive("basement-camera") && StoryFlags.BasementCameraSet) QuestManager.Instance?.AddProgress(1);
         if (!IsQuestActive("camera-place")) return;
         QuestManager.Instance?.AddProgress(1);
-        ShowThoughts(new string[] { "Красный огонёк горит. Пусть пишет до утра." }, null);
+        ShowThoughts(new string[] { Loc.T("Запись пошла. Утром посмотрю, что она увидела.") }, null);
     }
 
     void OnCameraRemoved()
     {
         if (!IsQuestActive("go-to-bed")) return;
-        CreateQuest("Установить видеокамеру на штатив", 1, SetupGoToBedQuest, "camera-place");
-        ShowThoughts(new string[] { "Так она ничего не снимет. Надо поставить обратно." }, null);
+        CreateQuest(Loc.T("Установить видеокамеру на штатив"), 1, SetupGoToBedQuest, "camera-place");
+        ShowThoughts(new string[] { Loc.T("Так она ничего не снимет. Верну её на штатив.") }, null);
     }
 
     // Утро дня 2: про запись герой вспомнит сам, когда стук останется без объяснения (SetupWatchTapeQuest).
@@ -981,9 +981,9 @@ public class IntroSequence : MonoBehaviour
         yield return KnocksBelowPlayer(3);
         yield return new WaitForSeconds(1f);
         ShowImportantThoughts(new string[] {
-            "Опять. Днём. Прямо у меня под ногами.",
-            "Вещи сами на пол не падают, и трубы так не стучат.",
-            "Вход в подвал снаружи. Надо сходить и посмотреть."
+            Loc.T("Опять. Средь бела дня, прямо подо мной."),
+            Loc.T("Сначала вещи на полу, теперь это. Трубы так не стучат."),
+            Loc.T("Вход в подвал — снаружи. Пора на него взглянуть.")
         }, SetupHatchQuest);
     }
 
@@ -1005,8 +1005,8 @@ public class IntroSequence : MonoBehaviour
             return;
         }
         ShowImportantThoughts(new string[] {
-            "Камера всю ночь писала дом.",
-            "Подключу её к телевизору в гостиной и посмотрю запись."
+            Loc.T("Камера писала всю ночь."),
+            Loc.T("Подключу её к телевизору в гостиной. Посмотрим, что тут было, пока я спал.")
         }, CreateWatchTapeQuest);
     }
 
@@ -1014,22 +1014,22 @@ public class IntroSequence : MonoBehaviour
     {
         _tapeUnlocked = true;
         EnsureTapeTarget();
-        CreateQuest("Посмотреть запись на телевизоре в гостиной", 1, SetupBasementCameraQuest, "watch-tape");
+        CreateQuest(Loc.T("Посмотреть запись на телевизоре в гостиной"), 1, SetupBasementCameraQuest, "watch-tape");
     }
 
     void SetupBasementCameraQuest()
     {
         ShowImportantThoughts(new string[] {
-            "Оно вошло с улицы. А люк прямо перед дверью.",
-            "Значит, оно приходит из подвала. Только в подвале негде даже спрятаться.",
-            "Камера не врёт. Поставлю её вниз и оставлю на ночь."
-        }, () => CreateQuest("Поставить камеру в подвале", 1, OnBasementCameraPlaced, "basement-camera"));
+            Loc.T("Оно зашло с улицы. А люк подвала — прямо у крыльца."),
+            Loc.T("Значит, приходит оно оттуда. Хотя в этом подвале и спрятаться-то негде."),
+            Loc.T("Поставлю камеру внизу, напротив решётки вентиляции. Пусть смотрит туда всю ночь.")
+        }, () => CreateQuest(Loc.T("Поставить камеру в подвале"), 1, OnBasementCameraPlaced, "basement-camera"));
     }
 
     void OnBasementCameraPlaced()
     {
         _cameraPlacement?.FixInPlace();
-        ShowThoughts(new string[] { "Решётка в кадре, красный огонёк горит.", "Теперь поесть. Иначе я сегодня с ума сойду." },
+        ShowThoughts(new string[] { Loc.T("Решётка в кадре. Если оно полезет оттуда, я это увижу."), Loc.T("А теперь поесть. Я с утра ничего не ел.") },
             _dinner.SetupIngredientQuest);
     }
 
@@ -1115,7 +1115,7 @@ public class IntroSequence : MonoBehaviour
 
         GameEvents.OnNightTwoAwake?.Invoke();
 
-        if (brokenIn) ShowThoughts(new[] { "Что это грохнуло?!", "Внизу… у входной двери." }, null);
+        if (brokenIn) ShowThoughts(new[] { Loc.T("Что это было?!"), Loc.T("Грохнуло внизу. У входной двери.") }, null);
         SetupCheckLightQuest(false);
         RandomKnock firstKnock = knockController != null ? knockController.GetComponentInChildren<RandomKnock>(true) : null;
         int knockCount = firstKnock != null ? firstKnock.PlayedKnockCount : 0;
@@ -1125,10 +1125,10 @@ public class IntroSequence : MonoBehaviour
         if (firstKnock == null) yield break;
         yield return new WaitForSeconds(Mathf.Max(0f, firstKnock.LastKnockTime + 1f - Time.time));
         ShowThoughts(new[] {
-            "Опять этот стук.",
-            _hasReactedToPowerOutage ? "Нужно выяснить, откуда он." : "Сначала проверю свет, потом пойду разбираться."
+            Loc.T("Опять стук."),
+            _hasReactedToPowerOutage ? Loc.T("Надо понять, откуда он идёт.") : Loc.T("Сначала свет. Потом разберусь со стуком.")
         }, () => {
-            if (_checkingLight) CreateQuest("Проверить выключатель света", 1, questTag: "night-two-light");
+            if (_checkingLight) CreateQuest(Loc.T("Проверить выключатель света"), 1, questTag: "night-two-light");
         });
     }
 
@@ -1163,7 +1163,7 @@ public class IntroSequence : MonoBehaviour
     void SetupSearchNoiseQuest()
     {
         if (kitchenNoiseTrigger != null) kitchenNoiseTrigger.SetActive(true);
-        CreateQuest("Проверить шум на кухне", 1, OnKitchenQuestCompleted, "search-kitchen-noise");
+        CreateQuest(Loc.T("Проверить шум на кухне"), 1, OnKitchenQuestCompleted, "search-kitchen-noise");
     }
 
     public void PrepareCornerScare()
@@ -1197,9 +1197,9 @@ public class IntroSequence : MonoBehaviour
         if (knockController != null) knockController.SetActive(false);
         bool hasFlashlight = playerInventory != null && playerInventory.hasFlashlight;
         ShowImportantThoughts(new string[] {
-            "Стук идёт снизу. Из подвала.",
-            "Только бы не та же история...",
-            hasFlashlight ? "Вход в подвал снаружи. Пойду проверю люк." : "Стоило бы взять фонарик. Без него я туда не полезу."
+            Loc.T("Стучат снизу. Из подвала."),
+            Loc.T("Только не как в прошлый раз…"),
+            hasFlashlight ? Loc.T("Люк снаружи. Пойду посмотрю.") : Loc.T("Без фонаря я туда не полезу.")
         }, hasFlashlight ? (System.Action)SetupHatchQuest : SetupFlashlightQuest);
     }
 
@@ -1207,8 +1207,8 @@ public class IntroSequence : MonoBehaviour
     void SetupFlashlightQuest()
     {
         _phoneFlashlight?.DrainBattery();
-        CreateQuest("Найти фонарик", 1, OnFlashlightPickedUp, "flashlight-find");
-        ShowThoughts(new[] { "Телефон разрядился... Пора искать настоящий фонарик." }, ShowFlashlightOutline);
+        CreateQuest(Loc.T("Найти фонарик"), 1, OnFlashlightPickedUp, "flashlight-find");
+        ShowThoughts(new[] { Loc.T("Телефон сел. Нужен нормальный фонарик.") }, ShowFlashlightOutline);
     }
 
     void ShowFlashlightOutline()
@@ -1276,12 +1276,12 @@ public class IntroSequence : MonoBehaviour
         {
             if (!_nightTape.EvidenceCaptured)
             {
-                if (IsQuestActive("watch-tape")) ShowThoughts(new[] { "Там что-то было. Надо пересмотреть и остановить кадр." }, null);
+                if (IsQuestActive("watch-tape")) ShowThoughts(new[] { Loc.T("Там что-то мелькнуло. Перемотаю и остановлю кадр.") }, null);
                 return;
             }
             if (IsQuestActive("watch-tape")) QuestManager.Instance?.AddProgress(1);
             else if (!alreadySeen)
-                ShowThoughts(new[] { "Оно смотрело прямо в камеру.", "Потом пошло наверх. Пока я спал…" }, null);
+                ShowThoughts(new[] { Loc.T("Оно смотрело прямо в объектив."), Loc.T("А потом поднялось наверх. К спальне. Пока я спал…") }, null);
         });
     }
 
@@ -1386,10 +1386,10 @@ public class IntroSequence : MonoBehaviour
         {
             // Квест ставится до мыслей: мысли может оборвать пугалка, а квест держит сюжет.
             SetupBreakerQuest();
-            ShowThoughts(new[] { "Фонарик есть.", "Наверное, выбило автоматы. Щиток в гараже." }, null);
+            ShowThoughts(new[] { Loc.T("Так-то лучше."), Loc.T("Скорее всего, выбило автоматы. Щиток в гараже.") }, null);
             return;
         }
-        ShowThoughts(new[] { "Фонарик есть. Теперь проверю, откуда шум." }, SetupSearchNoiseQuest);
+        ShowThoughts(new[] { Loc.T("С фонарём спокойнее. Теперь — откуда этот шум.") }, SetupSearchNoiseQuest);
     }
 
     // =====================================================================
@@ -1417,7 +1417,7 @@ public class IntroSequence : MonoBehaviour
 
     void SetupBreakerQuest()
     {
-        CreateQuest("Проверить щиток", 1, null, "breaker-panel");
+        CreateQuest(Loc.T("Проверить щиток"), 1, null, "breaker-panel");
     }
 
     void OnBreakerPanelFinished(bool restored)
@@ -1431,8 +1431,8 @@ public class IntroSequence : MonoBehaviour
         }
         QuestManager.Instance?.AddProgress(1);
         ShowThoughts(restored
-            ? new[] { "Есть. Свет.", "А кухня не держит. Автомат сам выбивает.", "Стук ведь тоже оттуда... Проверю кухню." }
-            : new[] { "Оно прямо за стеной...", "К чёрту щиток. Обойдусь фонариком.", "Надо понять, откуда этот стук." },
+            ? new[] { Loc.T("Есть свет."), Loc.T("Только кухня не держит: автомат выбивает снова и снова."), Loc.T("И стук как раз оттуда. Проверю кухню.") }
+            : new[] { Loc.T("Оно прямо за стеной…"), Loc.T("К чёрту щиток. Обойдусь фонариком."), Loc.T("Сначала выясню, откуда стук.") },
             SetupSearchNoiseQuest);
     }
 
@@ -1481,7 +1481,7 @@ public class IntroSequence : MonoBehaviour
         }
         if (_powerOutageAudio != null)
             _powerOutageAudio.PlayOneShot(_powerOutageAudio.clip);
-        ShowThoughts(new[] { "Странно. Свет не работает." }, null);
+        ShowThoughts(new[] { Loc.T("Свет не включается. Пробки выбило?") }, null);
         SetupFlashlightQuest();
     }
 
@@ -1513,7 +1513,7 @@ public class IntroSequence : MonoBehaviour
     private Door _bedroomDoor;
     private bool _checkingLight, _bedroomDoorWasLocked, _stairRunPlayed;
     private int _doorHintIndex;
-    private readonly string[] _doorHints = { "Сначала бы свет включить.", "В темноте я никуда не пойду.", "Нужно проверить выключатель." };
+    private readonly string[] _doorHints = { Loc.Key("Сначала свет."), Loc.Key("В такой темноте я никуда не пойду."), Loc.Key("Выключатель. Начну с него.") };
 
     void SetupCheckLightQuest(bool showQuest = true)
     {
@@ -1531,13 +1531,13 @@ public class IntroSequence : MonoBehaviour
             _bedroomDoor.Opened -= OnBedroomDoorOpened;
             _bedroomDoor.Opened += OnBedroomDoorOpened;
         }
-        if (showQuest) CreateQuest("Проверить выключатель света", 1, questTag: "night-two-light");
+        if (showQuest) CreateQuest(Loc.T("Проверить выключатель света"), 1, questTag: "night-two-light");
     }
 
     void OnBedroomDoorAttempt()
     {
         if (!_checkingLight || _doorHintIndex >= _doorHints.Length || ThoughtManager.Instance == null) return;
-        if (ThoughtManager.Instance.TryShowInteractionThoughts("bedroom-light-check", new[] { _doorHints[_doorHintIndex] }))
+        if (ThoughtManager.Instance.TryShowInteractionThoughts("bedroom-light-check", new[] { Loc.T(_doorHints[_doorHintIndex]) }))
             _doorHintIndex++;
     }
 
@@ -1587,7 +1587,7 @@ public class IntroSequence : MonoBehaviour
         }
         if (emitter != null) Destroy(emitter);
         if (!CornerPeekSequence.IsPlaying)
-            ShowThoughts(new[] { "Кто-то только что пробежал по моей лестнице..." }, null);
+            ShowThoughts(new[] { Loc.T("Кто-то только что пробежал по лестнице…") }, null);
     }
 
     // --- 5. Идём к подвалу и пробуем открыть ---
@@ -1607,7 +1607,7 @@ public class IntroSequence : MonoBehaviour
         // Пугалка из-за угла ещё ждёт игрока по пути к входной двери (после щитка M-04 он приходит на
         // кухню из гаража, и реплики про люк кончаются раньше, чем он доходит до прихожей). Во время этого
         // квеста она ничего не откатывает: ContinueAfterCornerScare оставляет «open-basement» как есть.
-        CreateQuest("Проверить люк подвала снаружи", 1, OnHatchLockedFound, "open-basement");
+        CreateQuest(Loc.T("Проверить люк подвала снаружи"), 1, OnHatchLockedFound, "open-basement");
     }
 
     // Игрок нажал E на запертом люке — засчитываем шаг и отправляем за ломом.
@@ -1617,9 +1617,9 @@ public class IntroSequence : MonoBehaviour
         // (например, на репликах про молоток), оборвать их и откатить историю.
         if (!_dayHatchChain) _cornerPeek?.Retire();
         ShowThoughts(new string[] {
-            "Ещё и замок.",
-            "Люк в полу, запертый снаружи. Не люблю такие. Уже не люблю.",
-            "Ключа нет. Придётся найти лом."
+            Loc.T("Заперт. На навесной замок."),
+            Loc.T("Люк, запертый снаружи… С такими у меня свои счёты."),
+            Loc.T("Ключа у меня нет. Замок можно сбить ломом.")
         }, SetupCrowbarQuest);
     }
 
@@ -1627,21 +1627,21 @@ public class IntroSequence : MonoBehaviour
     void SetupCrowbarQuest()
     {
         if (crowbarItem != null) crowbarItem.SetActive(true);
-        CreateQuest("Найти лом", 1, OnCrowbarPickedUp, "crowbar-find");
+        CreateQuest(Loc.T("Найти лом"), 1, OnCrowbarPickedUp, "crowbar-find");
     }
 
     public void OnCrowbarPickedUp()
     {
         ShowThoughts(new string[] {
-            "Этим замок можно сорвать.",
-            _dayHatchChain ? "Вскрывать собственный подвал. Отличный переезд." : "Ночью вскрывать собственный подвал. Отличный переезд."
+            Loc.T("Этим замок и собью."),
+            _dayHatchChain ? Loc.T("Взламываю собственный подвал. Хорошее начало новой жизни.") : Loc.T("Взламываю собственный подвал посреди ночи. Хорошее начало новой жизни.")
         }, SetupPryLockQuest);
     }
 
     // --- 7. Вскрыть замок люка ---
     void SetupPryLockQuest()
     {
-        CreateQuest("Сорвать замок с люка подвала", 1, OnHatchLockPried, "pry-hatch-lock");
+        CreateQuest(Loc.T("Сорвать замок с люка подвала"), 1, OnHatchLockPried, "pry-hatch-lock");
     }
 
     public void OnHatchLockPried()
@@ -1650,19 +1650,19 @@ public class IntroSequence : MonoBehaviour
         {
             _dayHatchChain = false;
             StoryFlags.SetHatchForced(true);
-            ShowThoughts(new string[] { "Готово. Теперь посмотрим, что там." }, _dayVisit.Begin);
+            ShowThoughts(new string[] { Loc.T("Замок слетел. Посмотрим, что внизу.") }, _dayVisit.Begin);
             return;
         }
         ShowThoughts(new string[] {
-            "Теперь можно открыть люк.",
-            "Сперва посветить на лестницу. Вслепую туда не полезу."
+            Loc.T("Замок снят."),
+            Loc.T("Сначала посвечу на лестницу. Вслепую я туда не полезу.")
         }, SetupLookInHoleQuest);
     }
 
     // --- 8. Открыть створки и посветить вниз ---
     void SetupLookInHoleQuest()
     {
-        CreateQuest("Открыть подвал и осветить лестницу", 1, OnHoleEventFinished, "open-basement-after-lock");
+        CreateQuest(Loc.T("Открыть подвал и осветить лестницу"), 1, OnHoleEventFinished, "open-basement-after-lock");
         if (holeEventController != null)
         {
             holeEventController.gameObject.SetActive(true);
@@ -1682,10 +1682,10 @@ public class IntroSequence : MonoBehaviour
     {
         _cornerPeek?.Retire();
         ShowImportantThoughts(new string[] {
-            "Оно исчезло.",
-            "Нет. Я не стану опять от него бежать.",
-            "Заколочу люк. Как тогда. И всё, больше не вылезет.",
-            "Нужен молоток."
+            Loc.T("Исчезло."),
+            Loc.T("Нет. Второй раз я не побегу."),
+            Loc.T("Заколочу люк. Как тогда. И больше оно не вылезет."),
+            Loc.T("Нужен молоток.")
         }, () => _branchEnding.Activate());
     }
 
@@ -1741,7 +1741,7 @@ public class IntroSequence : MonoBehaviour
     void SetupHammerQuest()
     {
         if (hammerItem != null) hammerItem.SetActive(true);
-        CreateQuest("Найти молоток", 1, OnHammerPickedUp, "hammer-find");
+        CreateQuest(Loc.T("Найти молоток"), 1, OnHammerPickedUp, "hammer-find");
     }
 
     // --- 9. Молоток и финал ---
@@ -1752,11 +1752,11 @@ public class IntroSequence : MonoBehaviour
         if (_branchEnding.IsResolved) return;
         _hideEnding.ActivateZones();
         _hidingScene.BeginScene();
-        CreateQuest("Спрятаться под кровать", 1, questTag: "hide-bed");
+        CreateQuest(Loc.T("Спрятаться под кровать"), 1, questTag: "hide-bed");
         // Обычные мысли, не «важные»: важные ставят игру на паузу до нажатия, а оно уже идёт.
         ShowThoughts(new string[] {
-            "Люк… Оно вылезло.",
-            "Идёт сюда. Под кровать!"
+            Loc.T("Люк… Оно вылезло."),
+            Loc.T("Идёт сюда. Под кровать!")
         }, null);
     }
 
@@ -1765,8 +1765,8 @@ public class IntroSequence : MonoBehaviour
     {
         // B-05: если стучащему можно верить (любые два из трёх условий), появляется третий путь — спуститься.
         string[] lines = CanDescendForAnswer
-            ? new[] { "Ушло вниз.", "Заколотить люк… или бежать отсюда?", "А камера в подвале всё ещё пишет. И тот, кто стучал мне все эти дни, всё ещё там." }
-            : new[] { "Ушло вниз.", "Заколотить люк… или бежать отсюда?" };
+            ? new[] { Loc.T("Ушло вниз."), Loc.T("Заколотить люк… или бежать отсюда?"), Loc.T("Камера в подвале ещё пишет. И тот, кто отвечал мне стуком, всё ещё там, внизу.") }
+            : new[] { Loc.T("Ушло вниз."), Loc.T("Заколотить люк… или бежать отсюда?") };
         ShowThoughts(lines, () =>
         {
             if (_branchEnding.IsResolved) return;
@@ -1778,7 +1778,7 @@ public class IntroSequence : MonoBehaviour
     void SetupBoardBasementQuest()
     {
         if (finaleTrigger != null) finaleTrigger.SetActive(true);
-        CreateQuest("Заколотить люк подвала", 1, questTag: "board-basement");
+        CreateQuest(Loc.T("Заколотить люк подвала"), 1, questTag: "board-basement");
         MonsterTimer.Instance?.StartTimer();
     }
 

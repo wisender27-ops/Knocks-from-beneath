@@ -66,7 +66,7 @@ public class EndingScreen : MonoBehaviour
             titleText.gameObject.SetActive(true);
             // Концовка оформлена как конец записи на кассете — в общем VHS-стиле интерфейса.
             titleText.text = titleText.richText
-                ? "<size=40%><color=" + UiStyle.Hex(UiStyle.Amber) + ">■ СТОП</color></size>\n" + title
+                ? "<size=40%><color=" + UiStyle.Hex(UiStyle.Amber) + ">" + Loc.T("■ СТОП") + "</color></size>\n" + title
                 : title;
         }
 

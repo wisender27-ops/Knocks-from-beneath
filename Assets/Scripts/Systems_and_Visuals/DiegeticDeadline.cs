@@ -14,9 +14,9 @@ namespace KnocksFromBeneath
         private const float TapeAlpha = 0.34f, VignetteAlpha = 0.8f;
         private const float DimmedLight = 0.3f;
 
-        private static readonly string[] FrontLines = { "Быстрее…" };
-        private static readonly string[] BackLines = { "Оно уже у створки." };
-        private static readonly string[] TooLateLines = { "Поздно. Люк открыт.", "Оно вышло." };
+        private static readonly string[] FrontLines = { Loc.Key("Быстрее…") };
+        private static readonly string[] BackLines = { Loc.Key("Оно уже у самой створки.") };
+        private static readonly string[] TooLateLines = { Loc.Key("Поздно. Люк открыт."), Loc.Key("Оно вышло.") };
 
         private BasementHatch _hatch;
         private PlayerInventory _inventory;
@@ -75,7 +75,7 @@ namespace KnocksFromBeneath
         private void Update()
         {
             if (_tooLatePending && ThoughtManager.Instance != null &&
-                ThoughtManager.Instance.TryShowInteractionThoughts("deadline-too-late", TooLateLines))
+                ThoughtManager.Instance.TryShowInteractionThoughts("deadline-too-late", Loc.T(TooLateLines)))
                 _tooLatePending = false;
 
             // MonsterTimer живёт на своём объекте сцены: в Awake IntroSequence его Instance может быть ещё пуст.
@@ -236,9 +236,9 @@ namespace KnocksFromBeneath
         {
             if (ThoughtManager.Instance == null) return;
             if (!_frontShown && tension >= DeadlineScale.FrontThought)
-                _frontShown = ThoughtManager.Instance.TryShowInteractionThoughts("deadline-front", FrontLines);
+                _frontShown = ThoughtManager.Instance.TryShowInteractionThoughts("deadline-front", Loc.T(FrontLines));
             if (!_backShown && tension >= DeadlineScale.BackThought)
-                _backShown = ThoughtManager.Instance.TryShowInteractionThoughts("deadline-back", BackLines);
+                _backShown = ThoughtManager.Instance.TryShowInteractionThoughts("deadline-back", Loc.T(BackLines));
         }
 
         private void EnterSilence()

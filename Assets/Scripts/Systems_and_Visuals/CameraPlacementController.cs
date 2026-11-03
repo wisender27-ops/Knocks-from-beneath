@@ -360,7 +360,7 @@ namespace KnocksFromBeneath
             CreateRecordLight();
             cameraObject.tag = "Pickable";
             if (cameraObject.GetComponent<PickableItem>() == null)
-                cameraObject.AddComponent<PickableItem>().displayName = "видеокамеру";
+                cameraObject.AddComponent<PickableItem>();
             Rigidbody body = cameraObject.GetComponent<Rigidbody>();
             if (body == null) body = cameraObject.AddComponent<Rigidbody>();
             body.mass = 1f;
@@ -454,7 +454,7 @@ namespace KnocksFromBeneath
             tripod.SetActive(true);
             tripod.tag = "Pickable";
             if (tripod.GetComponent<PickableItem>() == null)
-                tripod.AddComponent<PickableItem>().displayName = "штатив";
+                tripod.AddComponent<PickableItem>();
             tripodBody = tripod.GetComponent<Rigidbody>();
             if (tripodBody == null) tripodBody = tripod.AddComponent<Rigidbody>();
             tripodBody.mass = 3f;
@@ -556,17 +556,17 @@ namespace KnocksFromBeneath
             if (StoreActive && held != null && IsGear(held))
             {
                 hint = held == tripod
-                    ? NearStore(pickup, held) ? "E поставить штатив у комода" : "Отнесите штатив в спальню, к комоду"
-                    : NearStore(pickup, held) ? "E положить камеру на комод" : "Отнесите камеру в спальню, на комод";
+                    ? NearStore(pickup, held) ? Loc.T("E поставить штатив у комода") : Loc.T("Отнесите штатив в спальню, к комоду")
+                    : NearStore(pickup, held) ? Loc.T("E положить камеру на комод") : Loc.T("Отнесите камеру в спальню, на комод");
                 return true;
             }
             if (tripod != null && held == tripod)
             {
-                hint = FindSlot(pickup) >= 0 ? "E поставить штатив здесь" : "Поднесите штатив к отмеченному месту";
+                hint = FindSlot(pickup) >= 0 ? Loc.T("E поставить штатив здесь") : Loc.T("Поднесите штатив к отмеченному месту");
                 return true;
             }
             if (cameraObject == null || held != cameraObject || !MountActive) return false;
-            hint = FindTarget(pickup) ? "E установить камеру на штатив" : "Поднесите камеру к штативу";
+            hint = FindTarget(pickup) ? Loc.T("E установить камеру на штатив") : Loc.T("Поднесите камеру к штативу");
             return true;
         }
 

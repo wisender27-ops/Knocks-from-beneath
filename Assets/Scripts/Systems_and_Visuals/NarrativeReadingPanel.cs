@@ -171,7 +171,7 @@ namespace KnocksFromBeneath
 
         private IEnumerator ShowNoteLine(string line, string title, int version, float minimumDuration)
         {
-            noteTitle.text = SentenceCase(title);
+            noteTitle.text = SentenceCase(Loc.T(title));
             if (noteText.Length > 0) noteText.Append("\n\n");
             noteText.Append(line);
             noteBody.text = noteText.ToString();
@@ -281,8 +281,8 @@ namespace KnocksFromBeneath
         private void UpdateHints()
         {
             if (!important) return;
-            if (autoAdvance) hints.Set("H", "ИСТОРИЯ", "", "АВТО");
-            else hints.Set("ЛКМ", "ДАЛЕЕ", "H", "ИСТОРИЯ");
+            if (autoAdvance) hints.Set("H", Loc.T("ИСТОРИЯ"), "", Loc.T("АВТО"));
+            else hints.Set(Loc.T("ЛКМ"), Loc.T("ДАЛЕЕ"), "H", Loc.T("ИСТОРИЯ"));
         }
 
         private void ApplySpeaker(string speaker)
@@ -290,8 +290,8 @@ namespace KnocksFromBeneath
             bool thought = style == NarrativeStyle.Thought;
             bool named = !thought && !string.IsNullOrEmpty(speaker);
             speakerBacking.gameObject.SetActive(named);
-            speakerText.text = named ? speaker : string.Empty;
-            speakerText.color = speaker == "Я" ? UiStyle.Ash : UiStyle.Amber;
+            speakerText.text = named ? Loc.T(speaker) : string.Empty;
+            speakerText.color = speaker == HeroSpeaker ? UiStyle.Ash : UiStyle.Amber;
         }
 
         private void ApplyBodyStyle()
@@ -379,18 +379,21 @@ namespace KnocksFromBeneath
                 entry = "<color=" + UiStyle.Hex(UiStyle.Thought) + ">" + escaped + "</color>";
             else
             {
-                Color label = speaker == "Я" ? UiStyle.Ash : UiStyle.Amber;
-                entry = "<size=70%><color=" + UiStyle.Hex(label) + "><noparse>" + speaker + "</noparse></color></size>\n" + escaped;
+                Color label = speaker == HeroSpeaker ? UiStyle.Ash : UiStyle.Amber;
+                entry = "<size=70%><color=" + UiStyle.Hex(label) + "><noparse>" + Loc.T(speaker) + "</noparse></color></size>\n" + escaped;
             }
             history.Add(entry);
             if (history.Count > 200) history.RemoveAt(0);
         }
 
+        // Реплики героя: имя говорящего — ключ Loc «Я», переводится при показе.
+        public static readonly string HeroSpeaker = Loc.Key("Я");
+
         private static string SentenceCase(string value)
         {
             if (string.IsNullOrEmpty(value)) return string.Empty;
-            string lower = value.ToLowerInvariant();
-            return char.ToUpperInvariant(lower[0]) + lower.Substring(1);
+            string lower = value.ToLower(Loc.Culture);
+            return char.ToUpper(lower[0], Loc.Culture) + lower.Substring(1);
         }
 
         public void OpenHistory()
@@ -408,7 +411,7 @@ namespace KnocksFromBeneath
             Canvas.ForceUpdateCanvases();
             var text = new StringBuilder();
             foreach (string entry in history) text.Append(entry).Append("\n\n");
-            historyBody.text = history.Count == 0 ? "Здесь появятся прочитанные реплики и мысли." : text.ToString();
+            historyBody.text = history.Count == 0 ? Loc.T("Здесь появятся прочитанные реплики и мысли.") : text.ToString();
             historyContent.sizeDelta = new Vector2(0f, Mathf.Max(400f, historyBody.preferredHeight + 20f));
             Canvas.ForceUpdateCanvases();
             scroll.verticalNormalizedPosition = 0f;
@@ -486,8 +489,8 @@ namespace KnocksFromBeneath
             autoItem.SetCaption(AutoCaption);
         }
 
-        private string SizeCaption => "Размер текста: " + Mathf.RoundToInt(textScale * 100f) + "%";
-        private string AutoCaption =>"Автопродолжение: " + (autoAdvance ? "вкл" : "выкл");
+        private string SizeCaption => Loc.F("Размер текста: {0}%", Mathf.RoundToInt(textScale * 100f));
+        private string AutoCaption => autoAdvance ? Loc.T("Автопродолжение: вкл") : Loc.T("Автопродолжение: выкл");
 
         private void BuildInterface()
         {
@@ -550,7 +553,7 @@ namespace KnocksFromBeneath
             UiStyle.Scanlines(historyPanel);
             var title = UiStyle.Text("Title", historyPanel, font, 30f, UiStyle.Amber);
             Place(title.rectTransform, new Vector2(120f, -64f), new Vector2(700f, 40f));
-            title.text = "► ИСТОРИЯ";
+            title.text = Loc.T("► ИСТОРИЯ");
             var viewport = UiStyle.Rect("HistoryViewport", historyPanel, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(120f, -130f), new Vector2(760f, 470f));
             viewport.anchorMin = new Vector2(0f, 0f);
             viewport.anchorMax = new Vector2(0f, 1f);
@@ -583,20 +586,20 @@ namespace KnocksFromBeneath
             column.childForceExpandWidth = column.childForceExpandHeight = false;
             column.spacing = 6f;
             autoItem = UiMenuItem.Create(options, AutoCaption, font, 20f, ToggleAuto);
-            UiMenuItem smaller = UiMenuItem.Create(options, "Текст меньше", font, 20f, () => ChangeSize(-.1f));
-            UiMenuItem larger = UiMenuItem.Create(options, "Текст крупнее", font, 20f, () => ChangeSize(.1f));
+            UiMenuItem smaller = UiMenuItem.Create(options, Loc.T("Текст меньше"), font, 20f, () => ChangeSize(-.1f));
+            UiMenuItem larger = UiMenuItem.Create(options, Loc.T("Текст крупнее"), font, 20f, () => ChangeSize(.1f));
             sizeLabel = UiStyle.Text("TextSize", options, font, 17f, UiStyle.Ash);
             sizeLabel.gameObject.AddComponent<LayoutElement>().preferredHeight = 34f;
             // Отступ совпадает с началом подписи пунктов меню: поле + маркер + интервал.
             sizeLabel.margin = new Vector4(32f, 6f, 0f, 0f);
             sizeLabel.text = SizeCaption;
-            closeItem = UiMenuItem.Create(options, "Закрыть", font, 20f, CloseHistory);
+            closeItem = UiMenuItem.Create(options, Loc.T("Закрыть"), font, 20f, CloseHistory);
             UiMenuItem.LinkVertical(new[] { closeItem, autoItem, smaller, larger });
 
             historyHints = UiKeyHints.Create(historyPanel, "HistoryHints", font);
             historyHints.RectTransform.anchorMin = historyHints.RectTransform.anchorMax = historyHints.RectTransform.pivot = new Vector2(1f, 0f);
             historyHints.RectTransform.anchoredPosition = new Vector2(-30f, 30f);
-            historyHints.Set("H", "ЗАКРЫТЬ", "↑ ↓", "ЛИСТАТЬ");
+            historyHints.Set("H", Loc.T("ЗАКРЫТЬ"), "↑ ↓", Loc.T("ЛИСТАТЬ"));
             historyPanel.gameObject.SetActive(false);
         }
 
