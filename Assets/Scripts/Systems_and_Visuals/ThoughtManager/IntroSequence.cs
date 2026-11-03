@@ -383,12 +383,15 @@ public class IntroSequence : MonoBehaviour
 
         if (ChapterCheckpoints.TryTakeLaunch(out StoryChapter chapter))
             StartChapter(chapter);
+#if UNITY_EDITOR || DEVELOPMENT_BUILD
+        // В релизной сборке старта со стадии нет: галочка в сцене не должна доходить до игрока.
         else if (useDebugSkip && startStage != DebugStoryStage.None)
         {
             ChapterCheckpoints.DisableSaves(); // проверки с прыжка не открывают главы игроку
             PrepareDebugState(startStage);
             ApplyDebugSkip(startStage);
         }
+#endif
         else
             StartNewGame();
     }
