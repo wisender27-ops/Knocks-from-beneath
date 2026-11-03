@@ -23,7 +23,7 @@ UnityEngine 2021.3 (без TMP/uGUI — их сборок там не было) 
     MonoBehaviour нельзя трогать PlayerPrefs/Resources). Переводится потом через `Loc.T` в месте показа;
   - `Loc.Upper` — заглавные по правилам языка (турецкое i → İ) вместо `ToUpperInvariant` в UI;
   - язык: `PlayerPrefs["kfb.settings.language"]`, по умолчанию — язык системы (`FromSystemLanguage`), иначе английский.
-- Таблицы: `Assets/Resources/Localization/<code>.json` (`{"language","entries":[{"source","text"}]}`), 12 языков:
+- Таблицы: `Assets/Resources/Localization/<code>.json` (`{"language","entries":[{"source","text"}]}`), 12 языков, по 542 ключа (499 из кода + 43 из данных сцен и предметов **уже в новой редакции** — до шага 3 тест покрытия красный):
   en, zh-Hans, es, pt-BR, de, fr, ja, ko, pl, tr, it, uk. Русский — без таблицы. Арабский/хинди/тайский не добавлены
   намеренно: TMP не делает шейпинг/RTL — был бы гарантированно кривой текст.
 - Данные сцены остаются русскими ключами, перевод в свойствах: `InventoryItemDefinition.DisplayName/Description`,
