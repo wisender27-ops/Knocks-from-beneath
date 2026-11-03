@@ -217,31 +217,32 @@ namespace KnocksFromBeneath
             context.text = "";
             if (heldDoor != null)
             {
-                Control("МЫШЬ", "ТЯНУТЬ ДВЕРЬ");
-                Control("E", "ОТПУСТИТЬ КЛАВИШУ");
+                Control(Loc.T("МЫШЬ"), Loc.T("ТЯНУТЬ ДВЕРЬ"));
+                Control("E", Loc.T("ОТПУСТИТЬ КЛАВИШУ"));
             }
             else if (working)
-                Control("", actor.IsEatingPie ? "ЕСТЬ..." : "ВЫПОЛНЯЕТСЯ...");
+                Control("", actor.IsEatingPie ? Loc.T("ЕСТЬ...") : Loc.T("ВЫПОЛНЯЕТСЯ..."));
             else if (held != null)
             {
-                bool specific = hint.StartsWith("E ") || hint.StartsWith("Нажмите E");
+                // Подсказки с клавишей начинаются с «E » / «F » на любом языке (так их пишут и переводы).
+                bool specific = hint.StartsWith("E ");
                 bool drink = hint.StartsWith("F "); // B-07: стакан воды — своя клавиша
-                Control("E", specific ? CleanHint(hint) : "ОПУСТИТЬ");
+                Control("E", specific ? CleanHint(hint) : Loc.T("ОПУСТИТЬ"));
                 if (drink) Control("F", hint.Substring(2));
                 if (manipulate)
                 {
-                    if (PickupController.HeldRotationEnabled) Control("R / ПКМ", "ВРАЩАТЬ");
-                    Control("КОЛЕСО", "БЛИЖЕ / ДАЛЬШЕ");
-                    if (PickupController.HeldRotationEnabled) Control("СКМ", "СБРОС ВРАЩЕНИЯ");
+                    if (PickupController.HeldRotationEnabled) Control(Loc.T("R / ПКМ"), Loc.T("ВРАЩАТЬ"));
+                    Control(Loc.T("КОЛЕСО"), Loc.T("БЛИЖЕ / ДАЛЬШЕ"));
+                    if (PickupController.HeldRotationEnabled) Control(Loc.T("СКМ"), Loc.T("СБРОС ВРАЩЕНИЯ"));
                 }
-                Control("ЛКМ", "БРОСИТЬ");
-                if (!specific && !drink && !string.IsNullOrEmpty(hint)) context.text = hint.ToUpperInvariant();
-                if (pickup.IsCarryObstructed) context.text = "НЕТ МЕСТА ДЛЯ ПРЕДМЕТА, ОТОЙДИТЕ ОТ ПРЕПЯТСТВИЯ";
+                Control(Loc.T("ЛКМ"), Loc.T("БРОСИТЬ"));
+                if (!specific && !drink && !string.IsNullOrEmpty(hint)) context.text = Loc.Upper(hint);
+                if (pickup.IsCarryObstructed) context.text = Loc.T("НЕТ МЕСТА ДЛЯ ПРЕДМЕТА, ОТОЙДИТЕ ОТ ПРЕПЯТСТВИЯ");
             }
             else if (focus.IsValid)
             {
                 Control(focus.Blocked && !focus.IsDoor ? "" : "E", focus.Prompt);
-                if (focus.IsDoor && !focus.Blocked) Control("E + МЫШЬ", "УДЕРЖИВАТЬ И ТЯНУТЬ");
+                if (focus.IsDoor && !focus.Blocked) Control(Loc.T("E + МЫШЬ"), Loc.T("УДЕРЖИВАТЬ И ТЯНУТЬ"));
             }
             float total = 0f;
             for (int i = 0; i < controlCount; i++) total += chips[i].sizeDelta.x + (i == 0 ? 0f : 20f);
@@ -260,7 +261,6 @@ namespace KnocksFromBeneath
         private static string CleanHint(string hint)
         {
             if (hint.StartsWith("E ")) return hint.Substring(2);
-            if (hint.StartsWith("Нажмите E, чтобы ")) return hint.Substring(16);
             return hint;
         }
 
@@ -268,7 +268,7 @@ namespace KnocksFromBeneath
         {
             if (controlCount >= chips.Length) return;
             int i = controlCount++;
-            label = (label ?? "").ToUpperInvariant();
+            label = Loc.Upper(label ?? "");
             keyLabels[i].text = key;
             actionLabels[i].text = label;
             float keyWidth = string.IsNullOrEmpty(key) ? 0f : Mathf.Max(32f, keyLabels[i].GetPreferredValues(key).x + 18f);

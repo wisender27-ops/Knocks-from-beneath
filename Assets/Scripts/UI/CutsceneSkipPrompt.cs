@@ -98,7 +98,7 @@ namespace KnocksFromBeneath
         {
             if (holding == shownHolding) return;
             shownHolding = holding;
-            hints.Set("ПРОБЕЛ", holding ? "Удерживать, чтобы пропустить" : "");
+            hints.Set(Loc.T("ПРОБЕЛ"), holding ? Loc.T("Удерживать, чтобы пропустить") : "");
             track.gameObject.SetActive(holding);
         }
 

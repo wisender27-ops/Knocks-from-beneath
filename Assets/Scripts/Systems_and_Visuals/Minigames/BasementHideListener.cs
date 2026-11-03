@@ -83,7 +83,7 @@ namespace KnocksFromBeneath
                 title.rectTransform.anchorMin = title.rectTransform.anchorMax = title.rectTransform.pivot = new Vector2(0.5f, 1f);
                 title.rectTransform.anchoredPosition = new Vector2(0f, -70f);
                 title.rectTransform.sizeDelta = new Vector2(1000f, 46f);
-                title.text = "НЕ ГОВОРИ НИ СЛОВА";
+                title.text = Loc.T("НЕ ГОВОРИ НИ СЛОВА");
                 const float width = 320f;
                 var meter = UiStyle.Rect("Meter", ui.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f), new Vector2(0f, 96f), new Vector2(width, 8f));
                 meter.gameObject.AddComponent<Image>().color = new Color(0f, 0f, 0f, 0.55f);
@@ -110,7 +110,7 @@ namespace KnocksFromBeneath
             meterFill.sizeDelta = new Vector2(320f * level / VoiceNoiseGate.Headroom, 8f);
             Color ivory = UiStyle.Ivory;
             meterBar.color = level >= 1f ? UiStyle.Rust : level > 0.7f ? UiStyle.Amber : new Color(ivory.r, ivory.g, ivory.b, 0.8f);
-            meterLabel.text = !voice.Calibrated ? "МИКРОФОН · СЛУШАЮ ТИШИНУ…" : level >= 1f ? "СЛИШКОМ ГРОМКО" : "МИКРОФОН";
+            meterLabel.text = !voice.Calibrated ? Loc.T("МИКРОФОН · СЛУШАЮ ТИШИНУ…") : level >= 1f ? Loc.T("СЛИШКОМ ГРОМКО") : Loc.T("МИКРОФОН");
             meterLabel.color = level >= 1f ? UiStyle.Rust : UiStyle.Ash;
         }
     }

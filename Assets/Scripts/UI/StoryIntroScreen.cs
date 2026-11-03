@@ -56,7 +56,7 @@ namespace KnocksFromBeneath
             prompt.rectTransform.pivot = new Vector2(1f, 0f);
             prompt.rectTransform.anchoredPosition = new Vector2(-56f, 44f);
             prompt.rectTransform.sizeDelta = new Vector2(600f, 40f);
-            prompt.text = "ПРОБЕЛ / ЛКМ ДАЛЕЕ";
+            prompt.text = Loc.T("ПРОБЕЛ / ЛКМ — ДАЛЕЕ");
             prompt.alpha = 0f;
 
             ticks = gameObject.AddComponent<AudioSource>();
@@ -91,7 +91,7 @@ namespace KnocksFromBeneath
             yield return new WaitForSecondsRealtime(1f);
             foreach (string page in pages)
             {
-                yield return Type(page);
+                yield return Type(Loc.T(page));
                 yield return WaitForContinue();
                 yield return FadeText(1f, 0f, .45f);
                 yield return new WaitForSecondsRealtime(.35f);

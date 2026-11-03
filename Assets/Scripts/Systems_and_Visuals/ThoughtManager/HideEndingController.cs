@@ -163,8 +163,8 @@ public sealed class HideEndingController
             return;
         }
         _showThoughts(new string[] {
-            "Ушло. Обратно вниз.",
-            "Пока его нет, надо заколотить люк."
+            Loc.T("Ушло. Обратно вниз."),
+            Loc.T("Пока оно внизу — заколочу люк.")
         }, null);
     }
 
@@ -214,8 +214,8 @@ public sealed class HideEndingController
         if (_resolved) yield break;
 
         _showThoughts(new string[] {
-            "Больше ничего не слышно.",
-            "Может, ушло. Надо выбираться."
+            Loc.T("Тихо."),
+            Loc.T("Похоже, ушло. Пора выбираться.")
         }, null);
     }
 
@@ -236,7 +236,7 @@ public sealed class HideEndingController
             NightTwoExits.PrepareEndingLines(
                 _playerTransform != null ? _playerTransform.GetComponentInChildren<Camera>() : null,
                 intro != null ? intro.fadeScreen : null);
-            _showThoughts(new[] { NightTwoExits.CaughtThought }, () => _endGame(EndingId.Hidden));
+            _showThoughts(new[] { Loc.T(NightTwoExits.CaughtThought) }, () => _endGame(EndingId.Hidden));
             yield break;
         }
 
@@ -248,8 +248,8 @@ public sealed class HideEndingController
         yield return new WaitForSeconds(_search == null ? 1.5f : 0.6f);
 
         _showThoughts(new string[] {
-            "Нет... Оно здесь.",
-            NightTwoExits.CaughtThought
+            Loc.T("Нет… Оно здесь."),
+            Loc.T(NightTwoExits.CaughtThought)
         }, () => _endGame(EndingId.Hidden));
     }
 }

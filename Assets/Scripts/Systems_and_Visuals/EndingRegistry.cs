@@ -21,33 +21,35 @@ public static class EndingRegistry
     public sealed class EndingInfo
     {
         public readonly EndingId Id;
-        public readonly string Title;
+        // Тексты хранятся русскими ключами Loc; свойства отдают перевод на текущий язык.
+        private readonly string title, hint, summary;
+        public string Title => Loc.T(title);
         // Hint — намёк на условие без спойлера (закрытая кассета); Summary — итог (открытая).
-        public readonly string Hint;
-        public readonly string Summary;
+        public string Hint => Loc.T(hint);
+        public string Summary => Loc.T(summary);
         public EndingInfo(EndingId id, string title, string hint = "", string summary = "")
         {
-            Id = id; Title = title; Hint = hint; Summary = summary;
+            Id = id; this.title = title; this.hint = hint; this.summary = summary;
         }
     }
 
     public static readonly EndingInfo[] Endings =
     {
-        new EndingInfo(EndingId.Boarded, "Тихо",
-            "Иногда люк лучше оставить закрытым. Навсегда.",
-            "Дэниел заколотил люк. Снизу кто-то кричал, но стук прекратился."),
-        new EndingInfo(EndingId.Pushed, "Внизу",
-            "Не всё решается у люка. Промедление стоит дорого.",
-            "Гвозди не удержали. Монстр забрал того, кто стоял над люком."),
-        new EndingInfo(EndingId.Hidden, "Ты остался здесь",
-            "Спрятаться — не значит скрыться. Тихий чёрный ход не безопаснее парадного.",
-            "Монстр нашёл Дэниела раньше, чем тот успел уйти."),
-        new EndingInfo(EndingId.Escaped, "Побег",
-            "Дорога ведёт прочь от дома. Не оглядывайся.",
-            "Дэниел уехал. В новой комнате снова послышался стук под полом."),
-        new EndingInfo(EndingId.Answer, "Ответ",
-            "Тому, кто стучит, можно ответить. Не всё надо заколачивать.",
-            "Дэниел спустился и ответил на стук. Теперь стучать приходится ему."),
+        new EndingInfo(EndingId.Boarded, Loc.Key("Тихо"),
+            Loc.Key("Иногда люк лучше оставить закрытым. Навсегда."),
+            Loc.Key("Дэниел снова заколотил люк. Снизу звал человек — потом затих. Как в прошлый раз.")),
+        new EndingInfo(EndingId.Pushed, Loc.Key("Внизу"),
+            Loc.Key("У люка нельзя медлить."),
+            Loc.Key("Доски не выдержали. Оно забрало того, за кем пришло.")),
+        new EndingInfo(EndingId.Hidden, Loc.Key("Ты остался здесь"),
+            Loc.Key("Спрятаться — не значит скрыться. Тихий чёрный ход не безопаснее парадного."),
+            Loc.Key("Оно нашло Дэниела раньше, чем он успел уйти.")),
+        new EndingInfo(EndingId.Escaped, Loc.Key("Побег"),
+            Loc.Key("Дорога ведёт прочь от дома. Не оглядывайся."),
+            Loc.Key("Дэниел уехал. В новой комнате под полом снова постучали.")),
+        new EndingInfo(EndingId.Answer, Loc.Key("Ответ"),
+            Loc.Key("Тому, кто стучит, можно ответить. Не всё надо заколачивать."),
+            Loc.Key("Дэниел спустился и впервые не сбежал. Теперь каждую ночь стучать будет он.")),
     };
 
     private const string SeenKey = "kfb.endings.seen";
@@ -65,7 +67,7 @@ public static class EndingRegistry
 
     // Текст карточки концовки: «КОНЕЦ: ТИХО (1/5)».
     public static string ScreenTitle(EndingId id) =>
-        "КОНЕЦ: " + Info(id).Title.ToUpperInvariant() + " (" + Number(id) + "/" + Count + ")";
+        Loc.F("КОНЕЦ: {0} ({1}/{2})", Loc.Upper(Info(id).Title), Number(id), Count);
 
     public static bool IsSeen(EndingId id) => (PlayerPrefs.GetInt(SeenKey, 0) & (1 << (int)id)) != 0;
 

@@ -18,7 +18,7 @@ namespace KnocksFromBeneath
         }
 
         public bool CanInteract => canInteract != null && canInteract();
-        public string Label => label != null ? label() : "Вскрыть замок";
+        public string Label => label != null ? label() : Loc.T("Вскрыть замок");
 
         public void Interact()
         {

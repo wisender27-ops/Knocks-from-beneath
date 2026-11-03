@@ -112,8 +112,8 @@ namespace KnocksFromBeneath
                 }
             if (fade != null) fade.alpha = 0f;
 
-            _showThoughts(new[] { "Пить хочется…", "Схожу вниз, на кухню, за водой." }, null);
-            _createQuest("Взять стакан на кухне", 1, OnGlassTaken, TakeQuestTag);
+            _showThoughts(new[] { Loc.T("Пересохло в горле…"), Loc.T("Схожу на кухню за водой.") }, null);
+            _createQuest(Loc.T("Взять стакан на кухне"), 1, OnGlassTaken, TakeQuestTag);
 
             while (!_inBed && !_dead) yield return null;
             if (_dead) yield break;
@@ -282,8 +282,8 @@ namespace KnocksFromBeneath
         // Подсказка, пока стакан в руках (CrosshairJuice): у раковины — E, с водой — F.
         public string HeldHint(bool aimingAtSink)
         {
-            if (CanDrink) return "F выпить воды";
-            if (CanFill) return aimingAtSink ? "E налить воды" : "Подойдите к раковине";
+            if (CanDrink) return Loc.T("F выпить воды");
+            if (CanFill) return aimingAtSink ? Loc.T("E налить воды") : Loc.T("Подойдите к раковине");
             return null;
         }
 
@@ -316,9 +316,9 @@ namespace KnocksFromBeneath
                 PlayVoice();
                 return;
             }
-            thoughts.ShowDialogue("???", new[] { "Не двигайся." }, () =>
+            thoughts.ShowDialogue(Loc.Key("???"), new[] { Loc.T("Не двигайся.") }, () =>
             {
-                if (!_dead) _showThoughts(new[] { "Оно… говорит.", "Не подходить к нему. Взять воды и обратно в кровать." }, null);
+                if (!_dead) _showThoughts(new[] { Loc.T("Оно… говорит."), Loc.T("Не подходить. Набрать воды — и обратно в кровать.") }, null);
             }, PlayVoice);
         }
 
@@ -331,7 +331,7 @@ namespace KnocksFromBeneath
         private void OnGlassTaken()
         {
             if (_dead) return;
-            _createQuest("Налить воды", 1, OnGlassFilled, FillQuestTag);
+            _createQuest(Loc.T("Налить воды"), 1, OnGlassFilled, FillQuestTag);
         }
 
         // E у раковины со стаканом в руках: кран, стакан наполняется.
@@ -363,7 +363,7 @@ namespace KnocksFromBeneath
         private void OnGlassFilled()
         {
             if (_dead) return;
-            _createQuest("Выпить воды", 1, OnWaterDrunk, DrinkQuestTag);
+            _createQuest(Loc.T("Выпить воды"), 1, OnWaterDrunk, DrinkQuestTag);
         }
 
         // F со стаканом воды в руках: только звук глотков, вода уходит.
@@ -387,8 +387,8 @@ namespace KnocksFromBeneath
         private void OnWaterDrunk()
         {
             if (_dead) return;
-            _showThoughts(new[] { "Холодная.", "А теперь наверх. Не оглядываться." }, null);
-            _createQuest("Вернуться в кровать", 1, () => _inBed = true, BedQuestTag);
+            _showThoughts(new[] { Loc.T("Холодная."), Loc.T("Теперь наверх. И не оглядываться.") }, null);
+            _createQuest(Loc.T("Вернуться в кровать"), 1, () => _inBed = true, BedQuestTag);
         }
 
         private void OnBedReached()

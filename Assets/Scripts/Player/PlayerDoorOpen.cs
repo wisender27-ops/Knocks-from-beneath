@@ -131,7 +131,7 @@ public class PlayerDoorOpen : MonoBehaviour
 
         if (ThoughtManager.Instance != null)
             ThoughtManager.Instance.TryShowInteractionThoughts("front-door-locked",
-                new[] { "Чёрт, заперто.", "Сам же перед сном задвинул засов." }, 5f);
+                new[] { Loc.T("Заперто."), Loc.T("Точно, я же сам задвинул засов.") }, 5f);
     }
 }
 }

@@ -6,12 +6,12 @@ namespace KnocksFromBeneath
     public sealed class ToolPickup : MonoBehaviour
     {
         [SerializeField] private string itemId = "Screwdriver";
-        [SerializeField] private string prompt = "Взять отвёртку";
+        [SerializeField] private string prompt = Loc.Key("Взять отвёртку");
 
         // Сюжетные сцены (поиск отвёртки) слушают подбор по id предмета.
         public static event System.Action<string> Taken;
 
-        public string Prompt => prompt;
+        public string Prompt => Loc.T(prompt);
 
         public void Take(PlayerInventory inventory)
         {

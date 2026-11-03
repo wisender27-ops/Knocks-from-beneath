@@ -33,19 +33,19 @@ public sealed class DinnerCookingController
     public void SetupIngredientQuest()
     {
         CanCook = false;
-        _createQuest("Собрать продукты на ужин", 3, OnIngredientsCollected, "dinner-ingredients");
+        _createQuest(Loc.T("Собрать продукты на ужин"), 3, OnIngredientsCollected, "dinner-ingredients");
     }
 
     public void SetupCookDinnerDebug()
     {
         CanCook = true;
-        _createQuest("Приготовить ужин на плите", 1, null, "dinner-cook");
+        _createQuest(Loc.T("Приготовить ужин на плите"), 1, null, "dinner-cook");
     }
 
     public void SetupEatDinnerDebug()
     {
         CanCook = false;
-        _createQuest("Съесть ужин", 1, null, "dinner-eat");
+        _createQuest(Loc.T("Съесть ужин"), 1, null, "dinner-eat");
     }
 
     void OnIngredientsCollected()
@@ -54,9 +54,9 @@ public sealed class DinnerCookingController
         // Как и в PieQuestController, следующий шаг сразу становится квестом — иначе
         // после сбора продуктов на экране не остаётся вообще никакой подсказки (баг:
         // "квест собрать продукты выполнен, а дальше тишина, новый квест не дали").
-        _createQuest("Приготовить ужин на плите", 1, null, "dinner-cook");
+        _createQuest(Loc.T("Приготовить ужин на плите"), 1, null, "dinner-cook");
         _showThoughts(new string[] {
-            "Всё есть. Теперь к плите."
+            Loc.T("Всё на месте. Теперь к плите.")
         }, null);
     }
 
@@ -67,8 +67,8 @@ public sealed class DinnerCookingController
     public void OnDinnerCooked()
     {
         _recordCompletion?.Invoke("dinner-cook");
-        _createQuest("Съесть ужин на обеденном столе", 1, null, "dinner-eat");
-        _showThoughts(new[] { "Ужин готов. Тарелка на обеденном столе." }, null);
+        _createQuest(Loc.T("Съесть ужин на обеденном столе"), 1, null, "dinner-eat");
+        _showThoughts(new[] { Loc.T("Готово. Поем за столом.") }, null);
     }
 
     // Вызывается с тарелки через StoveInteractable.TryEatDinner() и IntroSequence.OnDinnerEaten() —
@@ -78,8 +78,8 @@ public sealed class DinnerCookingController
         _recordCompletion?.Invoke("dinner-eat");
         CanCook = false;
         _showThoughts(new string[] {
-            "Дом почти даром. Кто так продаёт? Сын даже не торговался, лишь бы я поскорее въехал.",
-            "На сытый желудок хоть голова работает."
+            Loc.T("Дом почти даром. Так дома не продают. Сын даже не торговался — лишь бы я поскорее въехал."),
+            Loc.T("Поел, и голова наконец заработала. Только ничего хорошего она не говорит.")
         }, _onDinnerFinished);
     }
 }

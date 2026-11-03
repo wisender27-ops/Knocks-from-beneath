@@ -80,7 +80,7 @@ namespace KnocksFromBeneath
             stage.Visible = false;
 
             var title = Label("Title", 312f, 30f);
-            title.text = "► ОСМОТР";
+            title.text = Loc.T("► ОСМОТР");
             title.color = UiStyle.Amber;
             nameText = Label("Name", 268f, 24f);
 
@@ -144,13 +144,13 @@ namespace KnocksFromBeneath
                 statusText.color = UiStyle.Amber;
                 statusText.text = clue.FoundCaption;
                 if (detailLabel != null) detailLabel.color = clue.PaperLabel ? UiStyle.PaperInk : UiStyle.Amber;
-                keys.Set("МЫШЬ", "ВРАЩАТЬ", "КОЛЕСО", "ПРИБЛИЗИТЬ", "E", "ОТЛОЖИТЬ");
+                keys.Set(Loc.T("МЫШЬ"), Loc.T("ВРАЩАТЬ"), Loc.T("КОЛЕСО"), Loc.T("ПРИБЛИЗИТЬ"), "E", Loc.T("ОТЛОЖИТЬ"));
                 return;
             }
             statusText.color = UiStyle.Ash;
-            statusText.text = state == ClueView.Glimpse ? "Здесь что-то есть… надо присмотреться"
+            statusText.text = state == ClueView.Glimpse ? Loc.T("Здесь что-то есть… надо присмотреться")
                 : state == ClueView.Reading ? "…" : string.Empty;
-            keys.Set("МЫШЬ", "ВРАЩАТЬ", "КОЛЕСО", "ПРИБЛИЗИТЬ", "R", "СБРОС", "E", "ОТЛОЖИТЬ");
+            keys.Set(Loc.T("МЫШЬ"), Loc.T("ВРАЩАТЬ"), Loc.T("КОЛЕСО"), Loc.T("ПРИБЛИЗИТЬ"), "R", Loc.T("СБРОС"), "E", Loc.T("ОТЛОЖИТЬ"));
         }
 
         private void BuildModel()

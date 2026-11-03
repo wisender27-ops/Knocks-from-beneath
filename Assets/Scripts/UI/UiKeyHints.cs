@@ -64,9 +64,9 @@ namespace KnocksFromBeneath
                 chips[i].gameObject.SetActive(active);
                 if (!active) continue;
                 string key = pairs[i * 2];
-                keys[i].text = key?.ToUpperInvariant();
+                keys[i].text = Loc.Upper(key);
                 keys[i].transform.parent.gameObject.SetActive(!string.IsNullOrEmpty(key));
-                labels[i].text = pairs[i * 2 + 1]?.ToUpperInvariant();
+                labels[i].text = Loc.Upper(pairs[i * 2 + 1]);
                 labels[i].gameObject.SetActive(!string.IsNullOrEmpty(labels[i].text));
             }
         }

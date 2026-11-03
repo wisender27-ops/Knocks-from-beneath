@@ -60,7 +60,8 @@ namespace KnocksFromBeneath
         }
 
         public string ClueId => clueId;
-        public string DisplayName => displayName;
+        // Тексты улики — русские ключи Loc (данные сцены); наружу отдаётся перевод.
+        public string DisplayName => Loc.T(displayName);
         public Mesh PreviewMesh => previewMesh;
         public Material[] PreviewMaterials => previewMaterials;
         public Vector3 PreviewScale => previewScale;
@@ -92,8 +93,8 @@ namespace KnocksFromBeneath
         public Vector3 TellUp => tellUp;
         public Vector2 TellSize => tellSize;
         public bool DetailsShown => worldDetails != null;
-        public string FoundCaption => foundCaption;
-        public string[] ThoughtLines => thoughtLines;
+        public string FoundCaption => Loc.T(foundCaption);
+        public string[] ThoughtLines => thoughtLines == null ? null : Loc.T(thoughtLines);
         public bool IsFound => StoryFlags.HasClue(clueId);
 
         public bool CanInteract => previewMesh != null && !MinigameWindow.IsAnyOpen && !ClueInspectWindow.JustClosed && Available;

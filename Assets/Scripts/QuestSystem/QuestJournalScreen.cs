@@ -91,8 +91,8 @@ namespace KnocksFromBeneath
             if (phoneHintVisible != showPhone)
             {
                 phoneHintVisible = showPhone;
-                if (showPhone) hint.Set("F", "ФОНАРИК ТЕЛЕФОНА", "J", "ЗАДАНИЯ", "H", "ИСТОРИЯ");
-                else hint.Set("J", "ЗАДАНИЯ", "H", "ИСТОРИЯ");
+                if (showPhone) hint.Set("F", Loc.T("ФОНАРИК ТЕЛЕФОНА"), "J", Loc.T("ЗАДАНИЯ"), "H", Loc.T("ИСТОРИЯ"));
+                else hint.Set("J", Loc.T("ЗАДАНИЯ"), "H", Loc.T("ИСТОРИЯ"));
             }
 
             if (!IsOpen && !closing) return;
@@ -171,10 +171,10 @@ namespace KnocksFromBeneath
         {
             if (!IsOpen || manager == null) return;
             QuestManager.QuestData quest = manager.GetActiveQuest();
-            currentTitle.text = quest != null ? quest.questTitle : "Сейчас нет активного задания";
+            currentTitle.text = quest != null ? quest.questTitle : Loc.T("Сейчас нет активного задания");
             currentProgress.text = quest != null && quest.requiredAmount > 1
-                ? $"Прогресс: {Mathf.Clamp(quest.currentAmount, 0, quest.requiredAmount)} из {quest.requiredAmount}"
-                : quest != null ? string.Empty : "Новые цели появятся по ходу истории";
+                ? Loc.F("Прогресс: {0} из {1}", Mathf.Clamp(quest.currentAmount, 0, quest.requiredAmount), quest.requiredAmount)
+                : quest != null ? string.Empty : Loc.T("Новые цели появятся по ходу истории");
             int count = 0;
             for (int i = manager.questList.Count - 1; i >= 0; i--)
             {
@@ -182,8 +182,8 @@ namespace KnocksFromBeneath
                 if (completed == null || !completed.IsCompleted) continue;
                 SetHistoryRow(count++, completed.questTitle, true);
             }
-            completedHeading.text = count > 0 ? $"Выполнено: {count}" : "Выполнено";
-            if (count == 0) SetHistoryRow(count++, "Выполненные задания появятся здесь", false);
+            completedHeading.text = count > 0 ? Loc.F("Выполнено: {0}", count) : Loc.T("Выполнено");
+            if (count == 0) SetHistoryRow(count++, Loc.T("Выполненные задания появятся здесь"), false);
             for (int i = count; i < historyRows.Count; i++) historyRows[i].gameObject.SetActive(false);
         }
 
@@ -212,14 +212,14 @@ namespace KnocksFromBeneath
             UiStyle.Scanlines(root);
             group = root.gameObject.AddComponent<CanvasGroup>();
             panel = Rect("JournalPanel", root, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);
-            PositionedText("JournalTitle", "► ЗАДАНИЯ", 30f, Amber, 120f, -64f, 780f, 40f);
-            PositionedText("ActiveHeading", "Текущая цель", 17f, Ash, 120f, -134f, 800f, 26f);
+            PositionedText("JournalTitle", Loc.T("► ЗАДАНИЯ"), 30f, Amber, 120f, -64f, 780f, 40f);
+            PositionedText("ActiveHeading", Loc.T("Текущая цель"), 17f, Ash, 120f, -134f, 800f, 26f);
             currentTitle = PositionedText("ActiveTitle", "", 30f, Ivory, 120f, -164f, 860f, 84f);
             currentProgress = PositionedText("ActiveProgress", "", 18f, Ash, 120f, -250f, 860f, 28f);
             RectTransform divider = Rect("Divider", panel, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(120f, -298f), new Vector2(860f, 2f));
             divider.pivot = new Vector2(0f, 1f);
             divider.gameObject.AddComponent<Image>().color = new Color(Ash.r, Ash.g, Ash.b, .25f);
-            completedHeading = PositionedText("CompletedHeading", "Выполнено", 17f, Ash, 120f, -318f, 820f, 26f);
+            completedHeading = PositionedText("CompletedHeading", Loc.T("Выполнено"), 17f, Ash, 120f, -318f, 820f, 26f);
             RectTransform scroll = Rect("HistoryScroll", panel, new Vector2(0f, 1f), new Vector2(0f, 1f), new Vector2(120f, -356f), new Vector2(860f, 250f));
             scroll.pivot = new Vector2(0f, 1f);
             historyScroll = scroll.gameObject.AddComponent<ScrollRect>();
@@ -244,11 +244,11 @@ namespace KnocksFromBeneath
             UiKeyHints controls = UiKeyHints.Create(root, "Controls", font);
             controls.RectTransform.anchorMin = controls.RectTransform.anchorMax = controls.RectTransform.pivot = new Vector2(1f, 0f);
             controls.RectTransform.anchoredPosition = new Vector2(-30f, 30f);
-            controls.Set("J", "ЗАКРЫТЬ", "↑ ↓", "ЛИСТАТЬ");
+            controls.Set("J", Loc.T("ЗАКРЫТЬ"), "↑ ↓", Loc.T("ЛИСТАТЬ"));
             hint = UiKeyHints.Create(canvasObject.transform, "JournalHint", font, .85f, new Color(Ivory.r, Ivory.g, Ivory.b, .8f)).Backed();
             hint.RectTransform.anchorMin = hint.RectTransform.anchorMax = hint.RectTransform.pivot = new Vector2(1f, 0f);
             hint.RectTransform.anchoredPosition = new Vector2(-30f, 30f);
-            hint.Set("J", "ЗАДАНИЯ", "H", "ИСТОРИЯ");
+            hint.Set("J", Loc.T("ЗАДАНИЯ"), "H", Loc.T("ИСТОРИЯ"));
         }
 
         private TextMeshProUGUI PositionedText(string name, string value, float size, Color color, float x, float y, float width, float height)

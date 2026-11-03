@@ -94,7 +94,7 @@ public class PlayerInteraction : MonoBehaviour
             var held = GetHeldObject();
             if (microwave == null || held == null || held.GetComponent<PieQuestItem>() == null ||
                 _interactionIntro == null || !_interactionIntro.CanPlacePieInMicrowave()) return;
-            focus = new InteractionFocus { Target = microwave.transform, Point = hit.point, Prompt = "Поставить пирог" };
+            focus = new InteractionFocus { Target = microwave.transform, Point = hit.point, Prompt = Loc.T("Поставить пирог") };
         }
         InteractionAttempted?.Invoke(focus);
         if (HasActiveAction && ActionTarget != null) return;
