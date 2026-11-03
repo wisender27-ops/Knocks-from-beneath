@@ -65,8 +65,7 @@ public class SettingsMenuUI : MonoBehaviour
     const float RowHeight = 52f, SliderWidth = 400f, ValueWidth = 100f, RowSpacing = 16f;
     const float ControlZoneWidth = SliderWidth + RowSpacing + ValueWidth;
 
-    // onLanguageSelected задан только в главном меню: язык меняется там, посреди игры строки уже на экране.
-    public static SettingsMenuUI BuildRuntime(Transform parent, TMP_FontAsset font, Action onBack, Action onLanguageSelected = null)
+    public static SettingsMenuUI BuildRuntime(Transform parent, TMP_FontAsset font, Action onBack)
     {
         RectTransform panel = Rect("Settings", parent, new Vector2(1160, 0));
         panel.gameObject.AddComponent<Image>().color = PanelColor;
@@ -82,15 +81,6 @@ public class SettingsMenuUI : MonoBehaviour
         rule.gameObject.AddComponent<LayoutElement>().preferredHeight = 2;
         Spacer(panel, 14);
 
-        if (onLanguageSelected != null)
-        {
-            int languageIndex = Array.FindIndex(Loc.Languages, language => language.Code == Loc.Current);
-            ChoiceRow(panel, font, Loc.T("Язык"), Loc.Languages[languageIndex].NativeName, direction => {
-                languageIndex = (languageIndex + direction + Loc.Languages.Length) % Loc.Languages.Length;
-                Loc.Select(Loc.Languages[languageIndex].Code);
-                onLanguageSelected();
-            });
-        }
         ui.masterVolumeSlider = SliderRow(panel, font, Loc.T("Общая громкость"), out ui.masterVolumeValueText);
         VolumeRow(panel, font, Loc.T("Музыка"), SettingsStore.GetMusicVolume, SettingsStore.SetMusicVolume);
         VolumeRow(panel, font, Loc.T("Фоновые звуки"), SettingsStore.GetAmbienceVolume, SettingsStore.SetAmbienceVolume);
