@@ -58,6 +58,8 @@ public class SettingsMenuUI : MonoBehaviour
     static readonly Color TrackColor = new Color(UiStyle.Ash.r, UiStyle.Ash.g, UiStyle.Ash.b, .3f);
     static readonly Color ControlColor = new Color(.19f, .19f, .18f, 1f);
     static readonly Color ControlHover = new Color(.3f, .28f, .24f, 1f);
+    static readonly Color ToggleColor = new Color(.38f, .37f, .35f, 1f);
+    static readonly Color ToggleHover = new Color(.52f, .48f, .4f, 1f);
     // Шкала текста меню: база 28, шаг x1.5 (28 / 42 / 64 / 95 / 142). Заголовок названия и пункты главного меню - на старших ступенях.
     const float TextBase = 28f, TextHeading = 42f;
     const float RowHeight = 52f, SliderWidth = 400f, ValueWidth = 100f, RowSpacing = 16f;
@@ -228,7 +230,7 @@ public class SettingsMenuUI : MonoBehaviour
         RectTransform markRect = Rect("Check", box, Vector2.zero); Stretch(markRect); markRect.offsetMin = new Vector2(8, 8); markRect.offsetMax = new Vector2(-8, -8);
         Image mark = markRect.gameObject.AddComponent<Image>(); mark.color = Accent; mark.raycastTarget = false;
         toggle.targetGraphic = background; toggle.graphic = mark;
-        ApplyColors(toggle, ControlColor, ControlHover);
+        ApplyColors(toggle, ToggleColor, ToggleHover);
         toggle.SetIsOnWithoutNotify(value); toggle.onValueChanged.AddListener(action); return toggle;
     }
     static TextMeshProUGUI ChoiceRow(Transform parent, TMP_FontAsset font, string caption, string value, Action<int> changed)

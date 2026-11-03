@@ -306,10 +306,7 @@ namespace KnocksFromBeneath
             canvas = g.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 110;
-            var scaler = g.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1280, 720);
-            scaler.matchWidthOrHeight = .5f;
+            UiStyle.ScaleWithScreen(g.GetComponent<CanvasScaler>(), new Vector2(1280, 720));
             root = g.GetComponent<RectTransform>();
             marker = Rect("WorldHand", root, Vector2.one * .5f, new Vector2(50, 50));
             markerGroup = marker.gameObject.AddComponent<CanvasGroup>(); markerGroup.alpha = 0f;

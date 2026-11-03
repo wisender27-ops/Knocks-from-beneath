@@ -111,11 +111,17 @@ namespace KnocksFromBeneath
             var canvas = root.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = order;
-            var scaler = root.GetComponent<CanvasScaler>();
+            ScaleWithScreen(root.GetComponent<CanvasScaler>(), reference);
+            return canvas;
+        }
+
+        // Expand: эталонная область целиком на экране при любых пропорциях, запас уходит в поля.
+        // На 16:9 масштаб тот же, что и при совпадении с эталоном.
+        public static void ScaleWithScreen(CanvasScaler scaler, Vector2 reference)
+        {
             scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
             scaler.referenceResolution = reference;
-            scaler.matchWidthOrHeight = .5f;
-            return canvas;
+            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.Expand;
         }
     }
 }

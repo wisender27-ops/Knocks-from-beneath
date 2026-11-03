@@ -233,7 +233,7 @@ namespace KnocksFromBeneath
             Canvas canvas = UiStyle.OverlayCanvas(transform, "FloorKnockHintCanvas", 400, new Vector2(1280f, 720f), false);
             TMP_FontAsset font = UiStyle.Font();
             _hint = UiKeyHints.Create(canvas.transform, "FloorKnockHint", font, .85f,
-                new Color(UiStyle.Ivory.r, UiStyle.Ivory.g, UiStyle.Ivory.b, .8f));
+                new Color(UiStyle.Ivory.r, UiStyle.Ivory.g, UiStyle.Ivory.b, .8f)).Backed();
             _hint.RectTransform.anchorMin = _hint.RectTransform.anchorMax = _hint.RectTransform.pivot = new Vector2(0f, 0f);
             _hint.RectTransform.anchoredPosition = new Vector2(30f, 30f);
             _hint.Set("Q", "ПОСТУЧАТЬ В ПОЛ");

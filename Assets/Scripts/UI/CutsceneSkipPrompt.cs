@@ -49,10 +49,7 @@ namespace KnocksFromBeneath
             var canvas = root.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 5001; // над чёрным экраном StoryIntroScreen, под паузой
-            var scaler = root.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1280f, 720f);
-            scaler.matchWidthOrHeight = 1f;
+            UiStyle.ScaleWithScreen(root.GetComponent<CanvasScaler>(), new Vector2(1280f, 720f));
             var prompt = root.AddComponent<CutsceneSkipPrompt>();
             prompt.onSkip = onSkip;
             prompt.Build();

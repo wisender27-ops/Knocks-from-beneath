@@ -63,10 +63,11 @@ namespace KnocksFromBeneath
 
         private void Compose(RectTransform root, TMP_FontAsset font, Action onBack)
         {
-            // Сцена держит пропорции 16:9 и заполняет экран, координаты ниже — в пикселях арта.
+            // Сцена держит пропорции 16:9 и вписана в экран целиком: заголовок, кассеты и «Назад» лежат
+            // у краёв арта и не должны обрезаться, поля закрывает чёрный фон. Координаты ниже — в пикселях арта.
             RectTransform stage = UiStyle.Stretch("Stage", root);
             var fitter = stage.gameObject.AddComponent<AspectRatioFitter>();
-            fitter.aspectMode = AspectRatioFitter.AspectMode.EnvelopeParent;
+            fitter.aspectMode = AspectRatioFitter.AspectMode.FitInParent;
             fitter.aspectRatio = StageWidth / StageHeight;
 
             RectTransform screen = Area("Screen", stage, ScreenLeft, ScreenTop, ScreenRight, ScreenBottom);

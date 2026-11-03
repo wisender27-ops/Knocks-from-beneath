@@ -94,6 +94,9 @@ namespace KnocksFromBeneath
 
             var manager = FindFirstObjectByType<QuestManager>();
             keys = KeyHints(manager != null && manager.questUiText != null ? manager.questUiText.font : null, -318f);
+            // На экранах выше 16:9 строка от центра поднялась бы на субтитры: держим её у нижнего края.
+            keys.RectTransform.anchorMin = keys.RectTransform.anchorMax = new Vector2(0.5f, 0f);
+            keys.RectTransform.anchoredPosition = new Vector2(0f, 42f);
         }
 
         protected override void Tick()

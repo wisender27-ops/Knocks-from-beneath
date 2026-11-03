@@ -445,11 +445,7 @@ namespace KnocksFromBeneath
             canvas = canvasObject.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 500;
-            CanvasScaler scaler = canvasObject.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(ReferenceWidth, ReferenceHeight);
-            scaler.screenMatchMode = CanvasScaler.ScreenMatchMode.MatchWidthOrHeight;
-            scaler.matchWidthOrHeight = 0.5f;
+            UiStyle.ScaleWithScreen(canvasObject.GetComponent<CanvasScaler>(), new Vector2(ReferenceWidth, ReferenceHeight));
             group = canvasObject.GetComponent<CanvasGroup>();
 
             RectTransform root = CreateRect("InventoryRoot", canvasObject.transform, Vector2.zero, Vector2.one, Vector2.zero, Vector2.zero);

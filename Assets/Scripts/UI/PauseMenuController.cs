@@ -163,10 +163,7 @@ namespace KnocksFromBeneath
             var result = root.GetComponent<Canvas>();
             result.renderMode = RenderMode.ScreenSpaceOverlay;
             result.sortingOrder = order;
-            var scaler = root.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1920, 1080);
-            scaler.matchWidthOrHeight = .5f;
+            UiStyle.ScaleWithScreen(root.GetComponent<CanvasScaler>(), new Vector2(1920, 1080));
             if (FindFirstObjectByType<EventSystem>() == null)
                 new GameObject("MenuEventSystem", typeof(EventSystem), typeof(StandaloneInputModule));
             return result;

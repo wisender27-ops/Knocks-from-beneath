@@ -90,10 +90,7 @@ namespace KnocksFromBeneath
             var canvas = Root.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 200;
-            var scaler = Root.GetComponent<UnityEngine.UI.CanvasScaler>();
-            scaler.uiScaleMode = UnityEngine.UI.CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1280f, 720f);
-            scaler.matchWidthOrHeight = 0.5f;
+            UiStyle.ScaleWithScreen(Root.GetComponent<UnityEngine.UI.CanvasScaler>(), new Vector2(1280f, 720f));
             var shade = Rect("Shade", Root.transform, Vector2.zero, Vector2.zero);
             shade.anchorMin = Vector2.zero;
             shade.anchorMax = Vector2.one;

@@ -245,7 +245,7 @@ namespace KnocksFromBeneath
             controls.RectTransform.anchorMin = controls.RectTransform.anchorMax = controls.RectTransform.pivot = new Vector2(1f, 0f);
             controls.RectTransform.anchoredPosition = new Vector2(-30f, 30f);
             controls.Set("J", "ЗАКРЫТЬ", "↑ ↓", "ЛИСТАТЬ");
-            hint = UiKeyHints.Create(canvasObject.transform, "JournalHint", font, .85f, new Color(Ivory.r, Ivory.g, Ivory.b, .8f));
+            hint = UiKeyHints.Create(canvasObject.transform, "JournalHint", font, .85f, new Color(Ivory.r, Ivory.g, Ivory.b, .8f)).Backed();
             hint.RectTransform.anchorMin = hint.RectTransform.anchorMax = hint.RectTransform.pivot = new Vector2(1f, 0f);
             hint.RectTransform.anchoredPosition = new Vector2(-30f, 30f);
             hint.Set("J", "ЗАДАНИЯ", "H", "ИСТОРИЯ");

@@ -28,10 +28,7 @@ namespace KnocksFromBeneath
             var canvas = root.GetComponent<Canvas>();
             canvas.renderMode = RenderMode.ScreenSpaceOverlay;
             canvas.sortingOrder = 5000;
-            var scaler = root.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
-            scaler.referenceResolution = new Vector2(1280f, 720f);
-            scaler.matchWidthOrHeight = 1f;
+            UiStyle.ScaleWithScreen(root.GetComponent<CanvasScaler>(), new Vector2(1280f, 720f));
             var screen = root.AddComponent<StoryIntroScreen>();
             screen.Build(font != null ? font : PauseMenuController.FindFont());
             return screen;

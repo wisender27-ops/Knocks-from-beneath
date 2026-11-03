@@ -39,6 +39,17 @@ namespace KnocksFromBeneath
 
         public RectTransform RectTransform => (RectTransform)transform;
 
+        // Подложка для подсказок поверх игрового кадра: на светлых стенах голый текст теряется.
+        public UiKeyHints Backed()
+        {
+            int pad = Mathf.RoundToInt(height * .4f);
+            GetComponent<HorizontalLayoutGroup>().padding = new RectOffset(pad, pad, pad / 2, pad / 2);
+            var plate = gameObject.AddComponent<Image>();
+            plate.color = UiStyle.InkSoft;
+            plate.raycastTarget = false;
+            return this;
+        }
+
         // Пары «клавиша, действие». Пустая клавиша — только текст, пустое действие — только клавиша.
         public void Set(params string[] pairs)
         {
