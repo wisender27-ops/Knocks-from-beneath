@@ -16,13 +16,13 @@ public static class InventorySetup
         EnsureFolder(Root, "Prefabs");
 
         InventoryItemDefinition crowbar = CreateItem(
-            "Crowbar", "ЛОМ", "Тяжёлый старый лом. Пригодится, чтобы вскрывать и ломать непрочные преграды.",
+            "Crowbar", "ЛОМ", "Тяжёлый старый лом. Им можно сбить замок или что-нибудь вскрыть.",
             InventoryItemCategory.Weapon, "Assets/Textures/crowbar.png", "Assets/Prefabs/Models/Crowbar/CrowBar_Low-Poly.fbx");
         InventoryItemDefinition flashlight = CreateItem(
-            "Flashlight", "ФОНАРИК", "Потёртый фонарик. Луч слабый, но без него в тёмных комнатах почти ничего не видно.",
+            "Flashlight", "ФОНАРИК", "Потёртый фонарик. Луч слабый, но в темноте с ним спокойнее.",
             InventoryItemCategory.Tool, "Assets/Textures/flashlight.png", "Assets/Prefabs/Models/Flashlight/flashlight.fbx");
         InventoryItemDefinition hammer = CreateItem(
-            "Hammer", "МОЛОТОК", "Прочный рабочий молоток. Нужен для ремонта и некоторых механизмов в доме.",
+            "Hammer", "МОЛОТОК", "Тяжёлый плотницкий молоток. Гвоздь войдёт с пары ударов.",
             InventoryItemCategory.Tool, "Assets/Textures/hammer.png", "Assets/Prefabs/Hammer/Hammer.fbx", "Assets/Prefabs/Hammer/Hammer_BaseColor.png");
 
         InventoryDatabase database = AssetDatabase.LoadAssetAtPath<InventoryDatabase>(Root + "/InventoryDatabase.asset");
