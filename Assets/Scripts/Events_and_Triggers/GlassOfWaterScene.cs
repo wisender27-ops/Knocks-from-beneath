@@ -23,6 +23,7 @@ namespace KnocksFromBeneath
         private static readonly Vector3 BacklightSpot = new Vector3(-43.2f, 2.5f, 103.3f);   // на улице, за стеклом двери
         public const float ApproachDistance = 1.8f;
         private const float GroundFloorMaxY = 3f;
+        private const float GroundFloorMinY = 0.5f; // ниже — подвал, его выключатели сцена не трогает
         private const float VoiceDistance = 7f;
         private const float FadeSeconds = 1.5f;
         public const string TakeQuestTag = "night-two-water";
@@ -68,6 +69,8 @@ namespace KnocksFromBeneath
         }
         public bool Survived { get; private set; }
         public bool IsGlassHeld => _glass != null && _pickup != null && _pickup.GetHeldObject() == _glass;
+        // U-09 (7): пока из крана льётся вода, стакан нельзя бросить, отпустить или поставить.
+        public bool IsFilling => IsRunning && _filling && !_dead;
         public bool CanFill => IsRunning && !_dead && !_filling && !_filled && IsGlassHeld && IsQuestActive(FillQuestTag);
         public bool CanDrink => IsRunning && !_dead && _filled && !_drinking && !_drunk && IsGlassHeld && IsQuestActive(DrinkQuestTag);
         private static bool IsQuestActive(string tag) => QuestManager.Instance != null && QuestManager.Instance.IsQuestActive(tag);
@@ -89,6 +92,7 @@ namespace KnocksFromBeneath
 
         private void OnDisable()
         {
+            LightSwitch.SetToggleBlocker(null);
             GameEvents.OnBedTriggerReached -= OnBedReached;
             foreach (Door door in _outerDoors) if (door != null) door.Opened -= OnOuterDoorOpened;
             _outerDoors.Clear();
@@ -148,8 +152,12 @@ namespace KnocksFromBeneath
             light.range = 5.5f;
             light.shadows = LightShadows.None;
 
-            // Выключатели работают как обычно: авария дома — после сцены, когда герой проснётся снова.
+            // Авария дома — после сцены, когда герой проснётся снова.
             LightSwitch.SetNightTwoPowerTrip(false);
+            // U-09 (6): пока идёт «попить воды», свет на первом этаже не включить — кухня только в темноте.
+            LightSwitch.SetToggleBlocker(IsGroundFloorSwitch);
+            foreach (LightSwitch lightSwitch in FindObjectsByType<LightSwitch>())
+                if (IsGroundFloorSwitch(lightSwitch)) lightSwitch.ForceTurnOff();
             MonsterWatcherManager watchers = MonsterWatcherManager.Instance;
             if (watchers != null) { _watchersWere = watchers.ambientWatchersEnabled; watchers.ambientWatchersEnabled = false; }
 
@@ -166,8 +174,17 @@ namespace KnocksFromBeneath
             GameEvents.OnBedTriggerReached += OnBedReached;
         }
 
+        private static bool IsGroundFloorSwitch(LightSwitch lightSwitch)
+        {
+            // Вытяжка на кухне (выключатель без ламп) остаётся рабочей — это не свет.
+            if (lightSwitch == null || lightSwitch.lightsToControl == null || lightSwitch.lightsToControl.Length == 0) return false;
+            float y = lightSwitch.transform.position.y;
+            return y > GroundFloorMinY && y < GroundFloorMaxY;
+        }
+
         private void Cleanup()
         {
+            LightSwitch.SetToggleBlocker(null);
             GameEvents.OnBedTriggerReached -= OnBedReached;
             foreach (Door door in _outerDoors) if (door != null) door.Opened -= OnOuterDoorOpened;
             _outerDoors.Clear();

@@ -61,7 +61,7 @@ namespace KnocksFromBeneath
                     Set(hammer.transform, "Взять молоток", false, false, hit, out focus);
             LightSwitch lightSwitch = t.GetComponentInParent<LightSwitch>();
             if (lightSwitch != null)
-                return Set(lightSwitch.transform, "Переключить свет", false, false, hit, out focus);
+                return lightSwitch.CanToggle && Set(lightSwitch.transform, "Переключить свет", false, false, hit, out focus);
             SimpleItem item = t.GetComponentInParent<SimpleItem>();
             if (item != null)
                 return item.IsAvailable && actor.inventory != null && quests != null && quests.IsItemRequired(item.itemType) &&

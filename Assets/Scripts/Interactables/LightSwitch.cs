@@ -46,6 +46,11 @@ public class LightSwitch : MonoBehaviour
     private static bool _powerOutage;
     private static readonly System.Collections.Generic.List<Light> _trippedLights = new System.Collections.Generic.List<Light>();
     private bool _lineDead; // M-04: после щитка линия этого выключателя осталась без тока
+    // U-09 (6): сюжетная сцена может запретить игроку щёлкать часть выключателей (B-07: первый этаж).
+    private static System.Predicate<LightSwitch> _toggleBlocked;
+
+    public static void SetToggleBlocker(System.Predicate<LightSwitch> blocked) => _toggleBlocked = blocked;
+    public bool CanToggle => _toggleBlocked == null || !_toggleBlocked(this);
 
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     private static void ResetStatics()
@@ -53,6 +58,7 @@ public class LightSwitch : MonoBehaviour
         _nightTwoPowerTripEnabled = false;
         _powerOutage = false;
         _trippedLights.Clear();
+        _toggleBlocked = null;
     }
 
 
@@ -115,6 +121,7 @@ public class LightSwitch : MonoBehaviour
 
     public void ToggleLight()
     {
+        if (!CanToggle) return;
         isOn = !isOn;
 
         Debug.Log($"[LightSwitch] '{name}' toggled -> {(isOn ? "ON" : "OFF")} fanLinked={(fanRotator != null)}");
