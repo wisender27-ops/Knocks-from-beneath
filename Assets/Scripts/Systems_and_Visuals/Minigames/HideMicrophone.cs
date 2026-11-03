@@ -53,7 +53,10 @@ namespace KnocksFromBeneath
         {
             Stop();
             candidates.Clear();
-            candidates.AddRange(Order(Microphone.devices, workingDevice));
+            // Выбранное в настройках — первым; если оно немое или отключено, дальше идут остальные, как раньше.
+            string chosen = SettingsStore.GetMicrophone();
+            bool chosenPresent = !string.IsNullOrEmpty(chosen) && Array.IndexOf(Microphone.devices, chosen) >= 0;
+            candidates.AddRange(Order(Microphone.devices, chosenPresent ? chosen : workingDevice));
             Next();
         }
 

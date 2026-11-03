@@ -44,14 +44,21 @@ public class HoleEventController : MonoBehaviour
     // объекта не вызывается — monsterFace.SetActive(false) в Start() не срабатывает, и
     // фигура монстра под полом кухни видна/слышна с самого запуска игры. Прячем её при
     // загрузке сцены независимо от активности контроллера — тот же приём, что
-    // PlacementZone.HideAllRevealItemsAtBoot.
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void HideAllMonsterFacesAtBoot()
+    // PlacementZone.HideRevealItemsInScene. Хук на sceneLoaded, а не AfterSceneLoad: тот срабатывает
+    // один раз за запуск приложения (в билде — на главном меню), и сцена Main его не получала.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void WatchSceneLoads()
     {
-        var controllers = FindObjectsByType<HoleEventController>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        for (int i = 0; i < controllers.Length; i++)
-            if (controllers[i].monsterFace != null)
-                controllers[i].monsterFace.SetActive(false);
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= HideMonsterFacesInScene;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += HideMonsterFacesInScene;
+    }
+
+    static void HideMonsterFacesInScene(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+            foreach (HoleEventController controller in root.GetComponentsInChildren<HoleEventController>(true))
+                if (controller.monsterFace != null)
+                    controller.monsterFace.SetActive(false);
     }
 
     void Start()

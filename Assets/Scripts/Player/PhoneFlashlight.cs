@@ -19,7 +19,7 @@ namespace KnocksFromBeneath
         private NeighborVisitSequence neighborVisit;
         private GlassOfWaterScene waterScene;
         private float flickerRemaining;
-        private bool introductionShown, usedOnce;
+        private bool introductionShown, usedOnce, handsWereBusy;
         private float hintReadyAt;
         // Первая подсказка крупная и пульсирует по центру, пока игрок не включит фонарик сам.
         private UiKeyHints firstHint;
@@ -125,6 +125,8 @@ namespace KnocksFromBeneath
             }
             bool handsBusy = pickup != null && pickup.GetHeldObject() != null;
             if (handsBusy && state.IsOn) Hide();
+            bool handsBusyLastFrame = handsWereBusy;
+            handsWereBusy = handsBusy;
             bool available = !IsDead && GameplayAvailable && !handsBusy && playerCamera != null;
             UpdateFirstHint(available);
             if (!available) return;
@@ -133,7 +135,11 @@ namespace KnocksFromBeneath
                 ThoughtManager.Instance.TryShowInteractionThoughts("phone-light-intro", Introduction))
                 introductionShown = true;
 
-            if (Input.GetKeyDown(KeyCode.F)) TryUse();
+            // ЛКМ тоже включает фонарик, но только пустой рукой: с ломом в руке это удар, а в кадр броска
+            // предмета ЛКМ уже сработал в PlayerInteraction — руки были заняты на прошлом кадре.
+            bool leftClick = Input.GetMouseButtonDown(0) && !handsBusyLastFrame &&
+                (inventory == null || string.IsNullOrEmpty(inventory.EquippedItemId));
+            if (Input.GetKeyDown(KeyCode.F) || leftClick) TryUse();
         }
 
         private void UpdateFirstHint(bool available)
@@ -158,7 +164,7 @@ namespace KnocksFromBeneath
             firstHint = UiKeyHints.Create(canvas.transform, "PhoneFlashlightHint", font, 1.7f, UiStyle.Amber);
             firstHint.RectTransform.anchorMin = firstHint.RectTransform.anchorMax = firstHint.RectTransform.pivot = new Vector2(.5f, .5f);
             firstHint.RectTransform.anchoredPosition = new Vector2(0f, -120f);
-            firstHint.Set("F", "ВКЛЮЧИТЬ ФОНАРИК НА ТЕЛЕФОНЕ");
+            firstHint.Set("ЛКМ", "ВКЛЮЧИТЬ ФОНАРИК НА ТЕЛЕФОНЕ");
             firstHintGroup = firstHint.gameObject.AddComponent<CanvasGroup>();
             firstHint.gameObject.SetActive(false);
         }

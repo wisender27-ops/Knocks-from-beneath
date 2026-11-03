@@ -91,7 +91,7 @@ namespace KnocksFromBeneath
             if (phoneHintVisible != showPhone)
             {
                 phoneHintVisible = showPhone;
-                if (showPhone) hint.Set("F", "ФОНАРИК ТЕЛЕФОНА", "J", "ЗАДАНИЯ", "H", "ИСТОРИЯ");
+                if (showPhone) hint.Set("ЛКМ", "ФОНАРИК ТЕЛЕФОНА", "J", "ЗАДАНИЯ", "H", "ИСТОРИЯ");
                 else hint.Set("J", "ЗАДАНИЯ", "H", "ИСТОРИЯ");
             }
 

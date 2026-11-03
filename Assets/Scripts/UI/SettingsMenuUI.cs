@@ -15,7 +15,9 @@ public class SettingsMenuUI : MonoBehaviour
     Slider fovSlider;
     TextMeshProUGUI fovText;
     Toggle invertToggle, fullscreenToggle, vsyncToggle;
-    TextMeshProUGUI qualityValue, resolutionValue;
+    TextMeshProUGUI qualityValue, resolutionValue, microphoneValue;
+
+    static string MicrophoneLabel(string device) => string.IsNullOrEmpty(device) ? "Авто" : device;
     readonly List<Vector2Int> resolutions = new List<Vector2Int>();
 
     void OnEnable()
@@ -113,6 +115,22 @@ public class SettingsMenuUI : MonoBehaviour
             Vector2Int size = ui.resolutions[resolutionIndex];
             SettingsStore.SetResolution(size.x, size.y); ui.resolutionValue.text = options[resolutionIndex];
         });
+
+        // Микрофон для сцен, где слышен голос. «Авто» — первое работающее устройство (виртуальные в конце).
+        // Unity не умеет выбирать устройство вывода: наушники выбираются в Windows, на это указывает строка ниже.
+        List<string> microphones = new List<string> { string.Empty };
+        microphones.AddRange(Microphone.devices);
+        int microphoneIndex = Mathf.Max(0, microphones.IndexOf(SettingsStore.GetMicrophone()));
+        ui.microphoneValue = ChoiceRow(panel, font, "Микрофон", MicrophoneLabel(microphones[microphoneIndex]), direction => {
+            microphoneIndex = (microphoneIndex + direction + microphones.Count) % microphones.Count;
+            SettingsStore.SetMicrophone(microphones[microphoneIndex]);
+            ui.microphoneValue.text = MicrophoneLabel(microphones[microphoneIndex]);
+        });
+        ui.microphoneValue.textWrappingMode = TextWrappingModes.NoWrap;
+        ui.microphoneValue.overflowMode = TextOverflowModes.Ellipsis;
+        TextMeshProUGUI outputNote = Label(panel, font, "Наушники: устройство вывода звука выбирается в Windows.",
+            20, TextAnchor.MiddleLeft, 32);
+        outputNote.color = UiStyle.Ash;
 
         Spacer(panel, 28);
         HorizontalLayoutGroup footer = HorizontalRow("Footer", panel, 64, TextAnchor.MiddleLeft);

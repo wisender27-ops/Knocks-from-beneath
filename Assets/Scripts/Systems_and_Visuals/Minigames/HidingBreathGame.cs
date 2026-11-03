@@ -251,7 +251,29 @@ namespace KnocksFromBeneath
             yield return CrawlOut();
             Finish(true);
             RestoreLights();
+            StartCoroutine(BasementBang());
             finished?.Invoke(false);
+        }
+
+        // Монстр ушёл вниз, и стоит герою вылезти — через 3 с оттуда бьют по железу, на весь дом. Только звук, без слов:
+        // выдох и тишина после ухода монстра должны кончиться ударом.
+        private const float BangDelay = 3f;
+
+        private IEnumerator BasementBang()
+        {
+            yield return new WaitForSeconds(BangDelay);
+            var iron = Resources.Load<AudioClip>("Audio/Horror/impactMetal_heavy_001");
+            var thud = Resources.Load<AudioClip>("Audio/Horror/impactPunch_heavy_000");
+            if (iron == null) yield break;
+            AudioSource source = HorrorMomentDirector.CreateSource(transform, "Basement Bang", 60f);
+            source.transform.position = Climb[0];
+            // Слышно по всему дому, а не из угла: большая «полная» дистанция и часть звука без панорамы.
+            source.minDistance = 25f;
+            source.spatialBlend = 0.6f;
+            source.pitch = 0.8f;
+            source.PlayOneShot(iron, 1f);
+            if (thud != null) source.PlayOneShot(thud, 1f);
+            Destroy(source.gameObject, iron.length / source.pitch + 1f);
         }
 
         // Кадр под кроватью: обзор, дыхание, звук, экран.

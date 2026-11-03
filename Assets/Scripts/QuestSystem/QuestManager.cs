@@ -213,9 +213,7 @@ public class QuestManager : MonoBehaviour
             _toastOrigin = questUiText.rectTransform.anchoredPosition;
             _toastOriginCaptured = true;
         }
-        string text = quest.requiredAmount <= 1
-            ? quest.questTitle
-            : $"{quest.questTitle} ({Mathf.Max(0, quest.requiredAmount - quest.currentAmount)})";
+        string text = QuestText(quest);
         if (!newQuest && text == _lastQueuedText) return;
         _lastQueuedText = text;
         // Тост задания идёт своей корутиной, параллельно мыслям: в общей очереди он держал её 3.65 с,
@@ -224,8 +222,39 @@ public class QuestManager : MonoBehaviour
         {
             if (_toastRoutine != null) StopCoroutine(_toastRoutine);
             _toastRoutine = StartCoroutine(PlayQuestTextColorTransition(text));
+            _nextReminder = Time.time + ReminderDelay;
         }
     }
+
+    static string QuestText(QuestData quest) => quest.requiredAmount <= 1
+        ? quest.questTitle
+        : $"{quest.questTitle} ({Mathf.Max(0, quest.requiredAmount - quest.currentAmount)})";
+
+    // Тост живёт около 3.65 с, а осмотр или поиск занимают минуты: игроку приходилось открывать журнал (J),
+    // чтобы вспомнить, что от него требуется. Пока цель не меняется, она всплывает снова — как при выдаче.
+    // Не напоминаем, когда идёт мысль, окно, пауза или затемнение, и во время сцен, где подсказка выдала бы засаду.
+    const float ReminderDelay = 25f, ReminderInterval = 40f;
+    static readonly HashSet<string> NoReminderTags = new HashSet<string>
+    {
+        "hide-bed", "basement-hide", "basement-trap-hide", "basement-trap-slam", "basement-trap-wedge", "parcel-pickup"
+    };
+    float _nextReminder = float.MaxValue;
+
+    void Update()
+    {
+        if (_toastRoutine != null || questUiText == null || Time.time < _nextReminder) return;
+        QuestData quest = GetActiveQuest();
+        if (quest == null) { _nextReminder = float.MaxValue; return; }
+        if (!CanRemind(quest)) return;
+        _nextReminder = Time.time + ReminderInterval;
+        _toastRoutine = StartCoroutine(PlayQuestTextColorTransition(QuestText(quest)));
+    }
+
+    static bool CanRemind(QuestData quest) =>
+        !NoReminderTags.Contains(quest.questTag ?? string.Empty) && Time.timeScale > 0f &&
+        !PauseMenuController.InputBlocked && !NarrativeReadingPanel.WorldHalted && !NarrativeReadingPanel.IsModal &&
+        NarrativeDisplayQueue.CanShowInteractionHint && !MinigameWindow.IsAnyOpen && !FadeTransitionPresentation.IsActive &&
+        !QuestJournalScreen.IsAnyOpen && !RetroInventoryScreen.IsAnyOpen && !DeathTapeEffect.IsActive;
 
     public void HideToast()
     {

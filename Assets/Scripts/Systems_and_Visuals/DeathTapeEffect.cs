@@ -98,7 +98,8 @@ namespace KnocksFromBeneath
             ScreenCapture.CaptureScreenshotIntoRenderTexture(frame);
             captured = true;
             Time.timeScale = 0f;
-            AudioListener.pause = true;
+            // Звук затухает, а не замирает: пауза слушателя обрывала крик монстра посреди сэмпла.
+            BeginAudioFade();
             material = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
             var staticClip = Resources.Load<AudioClip>("DeathTape/Static");
             if (staticClip != null)
@@ -132,6 +133,11 @@ namespace KnocksFromBeneath
             {
                 float strength = Mathf.Lerp(0.45f, 1f, elapsed / Duration);
                 float clock = Time.unscaledTime;
+                if (!audioPaused)
+                {
+                    FadeAudio(Mathf.SmoothStep(0f, 1f, elapsed / AudioFadeSeconds));
+                    if (elapsed >= AudioFadeSeconds) FinishAudioFade();
+                }
                 if (staticSource != null)
                     staticSource.volume = 0.35f * Mathf.Clamp01(elapsed / 0.03f) * Mathf.Clamp01((Duration - elapsed) / 0.15f);
                 material.SetVector(Jitter, new Vector4(0.018f + 0.075f * strength, 0.72f - 0.35f * strength, 0f, 0f));
@@ -144,6 +150,51 @@ namespace KnocksFromBeneath
                 yield return null;
             }
             if (endingFade != null) endingFade.alpha = 1f;
+        }
+
+        // Играющие источники затухают за AudioFadeSeconds, потом слушатель встаёт на паузу. Короткие звуки
+        // (крик, шаги) обрываются совсем: после паузы они не должны доиграться с середины. Фон-петли пойдут дальше.
+        private struct FadedSource
+        {
+            public AudioSource Source;
+            public float Volume;
+        }
+
+        private const float AudioFadeSeconds = 0.35f;
+        private readonly System.Collections.Generic.List<FadedSource> fadedSources = new System.Collections.Generic.List<FadedSource>();
+        private bool audioPaused;
+
+        private void BeginAudioFade()
+        {
+            audioPaused = false;
+            fadedSources.Clear();
+            foreach (AudioSource source in FindObjectsByType<AudioSource>(FindObjectsInactive.Exclude, FindObjectsSortMode.None))
+                if (source != null && source != staticSource && source.isPlaying && !source.ignoreListenerPause)
+                    fadedSources.Add(new FadedSource { Source = source, Volume = source.volume });
+        }
+
+        private void FadeAudio(float progress)
+        {
+            foreach (FadedSource faded in fadedSources)
+                if (faded.Source != null) faded.Source.volume = faded.Volume * (1f - progress);
+        }
+
+        private void FinishAudioFade()
+        {
+            audioPaused = true;
+            AudioListener.pause = true;
+            RestoreFadedVolumes(stopOneShots: true);
+        }
+
+        private void RestoreFadedVolumes(bool stopOneShots)
+        {
+            foreach (FadedSource faded in fadedSources)
+            {
+                if (faded.Source == null) continue;
+                if (stopOneShots && !faded.Source.loop) faded.Source.Stop();
+                faded.Source.volume = faded.Volume;
+            }
+            fadedSources.Clear();
         }
 
         private static RenderTexture CreateBuffer(string bufferName)
@@ -163,6 +214,7 @@ namespace KnocksFromBeneath
         {
             if (overlay != null) overlay.SetActive(false);
             if (staticSource != null) staticSource.Stop();
+            RestoreFadedVolumes(stopOneShots: false);
             if (ownsState)
             {
                 ownsState = false;

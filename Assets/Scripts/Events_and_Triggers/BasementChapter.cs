@@ -34,7 +34,8 @@ namespace KnocksFromBeneath
         };
         public const float TrapWindowSeconds = 7f, TrapWedgeSeconds = 5f;
         private const float RushSpeed = 6f, RushReach = 1.2f, RushLimit = 3.5f;
-        private const float HideReactionDelay = 1.5f, TrapLureDelay = 3f;
+        // Монстр реагирует на удар не сразу: у игрока есть время найти засаду (было 1.5 с — не хватало).
+        private const float HideReactionDelay = 4.5f, TrapLureDelay = 3f;
 
         private Transform player;
         private PlayerInventory inventory;
@@ -53,7 +54,9 @@ namespace KnocksFromBeneath
         private Transform cellDoor;
         private TapeDoor tapeCellDoor;
         private GameObject cellDoorCollider, lockVisual;
-        private AudioSource knockSource, effects;
+        private AudioSource knockSource, effects, screamSource;
+        private UiKeyHints exitHint;
+        private GameObject exitHintCanvas;
         private Coroutine knocking;
         private CanvasGroup fade;
         private int catches;
@@ -206,6 +209,10 @@ namespace KnocksFromBeneath
             var body = player.GetComponent<CharacterController>();
             if (body != null) body.height = controller != null ? controller.crouchingHeight : 1f;
             PlaceAt(DepthsLayout.DuctClimbSpot, DepthsLayout.DuctEnd);
+            // Присед сразу, пока экран чёрный: иначе камера на высоте роста полсекунды видит подвал сквозь стены короба.
+            controller?.SnapCrouch();
+            // Монстр появляется тоже за чёрным экраном: стоит в зале до выхода из трубы, а не возникает на глазах.
+            SpawnMonster();
             CurrentStage = Stage.Room;
             yield return Fade(0f, 0.35f);
             LockCamera(false);
@@ -325,6 +332,7 @@ namespace KnocksFromBeneath
                 if (hideCamera != null) hideCamera.transform.localRotation = Quaternion.Euler(hidePitch, 0f, 0f);
                 if (Time.frameCount != hideEnteredFrame && (Input.GetKeyDown(KeyCode.E) || Input.GetKeyDown(KeyCode.LeftControl)))
                     ExitHideSpot();
+                else SetHideHint(true);
             }
             Vector2 at = new Vector2(player.position.x, player.position.z);
             hideListener.Tick(Time.deltaTime, Vector2.Distance(stalker.Brain.Position, at));
@@ -414,8 +422,26 @@ namespace KnocksFromBeneath
             if (QuestActive(TrapHideQuest)) QuestManager.Instance.AddProgress(1);
         }
 
+        // Подсказка о выходе из засады: без неё не очевидно, что ждать можно не вечно и что выйти можно по E.
+        private void SetHideHint(bool visible)
+        {
+            if (exitHint == null)
+            {
+                if (!visible) return;
+                Canvas canvas = UiStyle.OverlayCanvas(transform, "Basement Hide Hint", 140, new Vector2(1280f, 720f), false);
+                exitHintCanvas = canvas.gameObject;
+                exitHint = UiKeyHints.Create(canvas.transform, "Hide exit", UiStyle.Font(), 1.2f).Backed();
+                exitHint.RectTransform.anchorMin = exitHint.RectTransform.anchorMax = exitHint.RectTransform.pivot = new Vector2(0.5f, 0f);
+                // Выше индикатора микрофона, он занимает низ по центру.
+                exitHint.RectTransform.anchoredPosition = new Vector2(0f, 120f);
+            }
+            if (exitHintCanvas.activeSelf != visible) exitHintCanvas.SetActive(visible);
+            if (visible) exitHint.Set("E", CurrentTrapPhase == TrapPhase.Window ? "ВЫЙТИ И ЗАХЛОПНУТЬ РЕШЁТКУ" : "ВЫЙТИ ИЗ УКРЫТИЯ");
+        }
+
         private void ExitHideSpot()
         {
+            SetHideHint(false);
             if (!inHideSpot) return;
             inHideSpot = false;
             if (hideActive && !hideFailed && stalker != null && CurrentStage != Stage.Trap)
@@ -512,7 +538,7 @@ namespace KnocksFromBeneath
             var camera = player.GetComponentInChildren<Camera>();
             var rig = stalker.Rig;
             if (rig != null) { rig.StopMoving(); rig.Lunge(0.25f, 0.6f); }
-            PlayEffect("Audio/CornerJumpscare", 1f, 0.95f);
+            PlayScream(1f, 0.95f);
             Vector3 from = monster.transform.position;
             Vector3 direction = player.position - from;
             direction.y = 0f;
@@ -582,6 +608,8 @@ namespace KnocksFromBeneath
             stalker.Stop();
             if (knocking != null) { StopCoroutine(knocking); knocking = null; }
             yield return TurnToward(BasementLayout.CellLock, 0.6f);
+            // Разговор и ловушка идут без фона: капель и гула с потолка достаточно было до финала.
+            if (level != null && level.atmosphere != null) level.atmosphere.Silence(1.2f);
             for (int i = 0; i < 3; i++)
             {
                 PlayEffect("Audio/Horror/impactPunch_heavy_000", 1f, 1.35f);
@@ -604,7 +632,6 @@ namespace KnocksFromBeneath
             yield return SayLine("ХЕЙЛ", "Зачем ты сбил замок?");
             yield return SayLine("ХЕЙЛ", "Сын запер меня по моей просьбе. Этот замок был не тюрьмой, а защитой.");
             yield return SayLine("ХЕЙЛ", "Я стучал по трубе, чтобы удержать его внизу. Теперь он услышал грохот и идёт.");
-            yield return SayLine("ХЕЙЛ", "Камера на стене моя. Пусть пишет. Хоть раз он попадёт на плёнку там, где надо.");
             yield return SayLine("ХЕЙЛ", "Ходить я не могу. Останусь здесь и буду стучать. Он придёт на стук.");
             yield return SayLine("ХЕЙЛ", "Прячься за коробку. Когда он войдёт сюда, захлопни решётку и заложи проушины ломом.");
             yield return SayLine("Я", "А вы?");
@@ -686,7 +713,7 @@ namespace KnocksFromBeneath
             stalker.Stop();
             FaceMonster(BasementLayout.OwnerPosition);
             stalker.Rig?.Lunge(0.25f, 0.6f);
-            PlayEffect("Audio/CornerJumpscare", 0.7f, 0.6f);
+            PlayScream(0.7f, 0.6f);
             if (QuestActive(TrapHideQuest)) QuestManager.Instance.AddProgress(1);
             sayQuick?.Invoke(new[] { "Стук оборвался. Он в камере. Решётка, сейчас!" }, null);
             createQuest?.Invoke("Захлопнуть решётку", 1, null, TrapSlamQuest);
@@ -753,7 +780,8 @@ namespace KnocksFromBeneath
         private IEnumerator RattleRoutine()
         {
             yield return new WaitForSeconds(0.7f);
-            while (CurrentTrapPhase == TrapPhase.Slammed || CurrentTrapPhase == TrapPhase.Wedged)
+            // Лом встал в проушины — решётка держит, и грохот прекращается: дальше только тишина и реплики.
+            while (CurrentTrapPhase == TrapPhase.Slammed)
             {
                 PlayEffect("Audio/Horror/impactMetal_heavy_001", 0.75f, UnityEngine.Random.Range(0.75f, 1.05f));
                 yield return new WaitForSeconds(UnityEngine.Random.Range(0.45f, 0.85f));
@@ -777,7 +805,6 @@ namespace KnocksFromBeneath
             yield return new WaitForSeconds(2.5f);
             CurrentTrapPhase = TrapPhase.None;
             CurrentStage = Stage.Finale;
-            PlayEffect("Audio/CornerJumpscare", 1f, 0.6f);
             yield return Fade(1f, 1.2f);
             yield return MorningKnocks();
             yield return LastKnockLines();
@@ -1044,6 +1071,17 @@ namespace KnocksFromBeneath
             effects.PlayOneShot(clip, volume);
         }
 
+        // Крик монстра идёт на своём источнике: у effects высота тона общая для всех звуков, и грохот решётки
+        // (каждые 0.5 с, другой pitch) менял тон крика на ходу — он плыл, рвался и «прыгал» по громкости.
+        private void PlayScream(float volume, float pitch)
+        {
+            var clip = Resources.Load<AudioClip>("Audio/CornerJumpscare");
+            if (clip == null || screamSource == null) return;
+            screamSource.Stop();
+            screamSource.pitch = pitch;
+            screamSource.PlayOneShot(clip, volume);
+        }
+
         private void OnDestroy()
         {
             if (controller != null) controller.ForceCrouch = false;
@@ -1071,12 +1109,23 @@ namespace KnocksFromBeneath
             BuildHasp();
             cellLock.Initialize(CanUseLock, UseLock, LockLabel);
             level.hideSpot.Initialize(CanEnterHideSpot, EnterHideSpot, () => "Спрятаться за коробкой");
-            // Лампа без теней просвечивала бы сквозь перекрытие в дом: горит только во время главы.
-            level.cellLamp.enabled = true;
+            // Метка над укрытием: после удара по замку не очевидно, куда бежать. Видна, пока в укрытие можно залезть.
+            QuestItemMarker hideMarker = QuestItemMarker.Ensure(level.hideSpot.gameObject);
+            // Над самим ящиком, а не за ним: точка за ящиком закрыта им же, и метка не показывалась бы.
+            hideMarker.ConfigureAnchor(new Bounds(level.hideSpot.transform.position + Vector3.up * 0.6f, Vector3.one * 0.2f));
+            hideMarker.ConfigureCondition(CanEnterHideSpot);
+            hideMarker.VisibleDistance = 14f;
+            // Света в подвале нет: ночью 2 дом обесточен, идти приходится с фонарём. Ни лампа камеры, ни плафон не горят.
+            if (level.cellLamp != null) level.cellLamp.enabled = false;
+            Transform reference = level.transform.parent;
+            Transform bulb = reference != null ? reference.Find("WarmBareBulb") : null;
+            Light bulbLight = bulb != null ? bulb.GetComponent<Light>() : null;
+            if (bulbLight != null) bulbLight.enabled = false;
             if (level.atmosphere != null) level.atmosphere.Activate();
 
             Transform root = level.transform;
             effects = AudioRouting.Create(root, "Basement effects", AudioBus.Horror, 0f, 30f);
+            screamSource = AudioRouting.Create(root, "Basement scream", AudioBus.Horror, 0f, 30f);
             // Хозяин стучит по трубе у решётки: звук идёт оттуда, где труба поднимается от камеры.
             knockSource = AudioRouting.Create(root, "Walter knocks (pipe)", AudioBus.Horror, 1f, 45f);
             knockSource.transform.position = PipeInCell();
@@ -1125,15 +1174,6 @@ namespace KnocksFromBeneath
             model.GetComponent<MeshFilter>().sharedMesh = BarnPadlock.BuildMesh();
             model.GetComponent<MeshRenderer>().sharedMaterials = new[] { iron, dark };
             model.transform.localScale = Vector3.one * 1.5f;
-            // Слабый отсвет: цель видна издалека, а гаснет вместе со сбитым замком.
-            var glint = new GameObject("Padlock glint", typeof(Light)).GetComponent<Light>();
-            glint.transform.SetParent(anchor, false);
-            glint.transform.position = BasementLayout.CellLock + new Vector3(0.25f, 0.1f, 0.45f);
-            glint.type = LightType.Point;
-            glint.color = new Color(1f, 0.72f, 0.5f);
-            glint.intensity = 0.9f;
-            glint.range = 1.3f;
-            glint.shadows = LightShadows.None;
         }
 
         // Луч взаимодействия не видит триггеры, поэтому коллайдер твёрдый. Включается только на ловушке.

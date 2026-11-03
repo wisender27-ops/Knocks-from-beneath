@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.SceneManagement;
 using System.Collections;
 using System.Collections.Generic;
 
@@ -48,14 +49,22 @@ public class PlacementZone : MonoBehaviour
     // RoomDecorationController по ходу сюжета) — Awake() выключенного GameObject не
     // вызывается, пока его не включат, поэтому HideItems() в Awake() одной зоны не
     // спрячет предметы сразу при запуске игры. Прогоняем скрытие по всем зонам сцены
-    // (включая выключенные) один раз при загрузке — независимо от того, активна зона
-    // или нет.
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void HideAllRevealItemsAtBoot()
+    // (включая выключенные) при каждой загрузке сцены. RuntimeInitializeOnLoadMethod
+    // с AfterSceneLoad срабатывает один раз за запуск приложения — в билде им была
+    // главное меню, и сцена Main не получала скрытия: 130 вещей стояли на виду, а при
+    // включении зоны Awake() прятал их все разом.
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void WatchSceneLoads()
     {
-        var zones = FindObjectsByType<PlacementZone>(FindObjectsInactive.Include);
-        for (int i = 0; i < zones.Length; i++)
-            zones[i].HideItems();
+        SceneManager.sceneLoaded -= HideRevealItemsInScene;
+        SceneManager.sceneLoaded += HideRevealItemsInScene;
+    }
+
+    static void HideRevealItemsInScene(Scene scene, LoadSceneMode mode)
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+            foreach (PlacementZone zone in root.GetComponentsInChildren<PlacementZone>(true))
+                zone.HideItems();
     }
     private bool _preciseBoxPlacement;
     private string _placementQuestTag;

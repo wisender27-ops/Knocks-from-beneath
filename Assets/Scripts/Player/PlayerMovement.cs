@@ -62,6 +62,26 @@ public class PlayerController : MonoBehaviour
     public void StandUp() => crouchToggled = false;
     public void CrouchDown() => crouchToggled = true;
 
+    // Присед сразу, без плавного опускания камеры: телепорт в тесное место (вентиляционный короб) за чёрным экраном.
+    // Иначе камера полсекунды стоит на высоте роста внутри стен короба и видит подвал сквозь них.
+    public void SnapCrouch()
+    {
+        crouchToggled = true;
+        isCrouching = true;
+        if (controller != null)
+        {
+            controller.height = crouchingHeight;
+            controller.center = new Vector3(0f, crouchingHeight * 0.5f, 0f);
+        }
+        currentCameraY = crouchingHeight - 0.1f;
+        if (cam != null && cam.transform.parent != null)
+        {
+            Vector3 position = cam.transform.parent.localPosition;
+            position.y = currentCameraY;
+            cam.transform.parent.localPosition = position;
+        }
+    }
+
     // Катсцена двигала камеру сама: взгляд продолжается от горизонта, а не от старого наклона.
     public void ResetLook()
     {

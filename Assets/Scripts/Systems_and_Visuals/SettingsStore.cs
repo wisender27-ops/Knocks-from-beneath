@@ -26,6 +26,11 @@ public static class SettingsStore
         if (PlayerPrefs.HasKey(WidthKey) || PlayerPrefs.HasKey(FullscreenKey)) ApplyDisplay();
     }
 
+    // Микрофон для сцен с голосом (прятки). Пусто — «Авто»: первое работающее устройство.
+    const string MicrophoneKey = "settings_microphone";
+    public static string GetMicrophone() => PlayerPrefs.GetString(MicrophoneKey, string.Empty);
+    public static void SetMicrophone(string device) { PlayerPrefs.SetString(MicrophoneKey, device ?? string.Empty); Save(); NotifyChanged(); }
+
     public static float GetMasterVolume(float defaultValue = 1f) => Mathf.Clamp01(PlayerPrefs.GetFloat(Key_MasterVolume, defaultValue));
     public static void SetMasterVolume(float value) { PlayerPrefs.SetFloat(Key_MasterVolume, Mathf.Clamp01(value)); ApplyMasterVolume(); Save(); }
     public static void ApplyMasterVolume() => AudioListener.volume = GetMasterVolume() * FadeGain;

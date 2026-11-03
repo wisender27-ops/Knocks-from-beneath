@@ -62,6 +62,10 @@ namespace KnocksFromBeneath
         }
 
         public void ConfigureTags(string[] tags) => explicitTags = tags;
+        // Метка на точке в мире (укрытие): у объекта нет ни видимой модели, ни твёрдого коллайдера.
+        public void ConfigureAnchor(Bounds bounds) { anchor = bounds; hasAnchor = true; }
+        private Bounds anchor;
+        private bool hasAnchor;
         // Для предметов без квестового тега: метка видна, пока условие истинно.
         public void ConfigureCondition(System.Func<bool> condition) => this.condition = condition;
 
@@ -143,6 +147,7 @@ namespace KnocksFromBeneath
         private bool TryGetBounds(out Bounds bounds)
         {
             bounds = new Bounds();
+            if (hasAnchor) { bounds = anchor; return true; }
             bool found = false;
             foreach (Renderer renderer in renderers)
             {

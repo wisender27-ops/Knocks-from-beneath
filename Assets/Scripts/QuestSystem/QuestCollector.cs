@@ -58,13 +58,20 @@ public class QuestCollector : MonoBehaviour
     // Зоны в сцене иногда выключены при старте (см. PlacementZone) — Awake() выключенного
     // GameObject не вызывается, пока его не включат, поэтому скрытие не может полагаться
     // только на Awake() конкретного коллектора. Прогоняем по всем коллекторам сцены сразу
-    // при загрузке, включая выключенные.
-    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
-    static void HideAllRevealItemsAtBoot()
+    // при каждой загрузке сцены, включая выключенные (AfterSceneLoad срабатывает один раз
+    // за запуск приложения — в билде на главном меню, и сцена Main его не получала).
+    [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+    static void WatchSceneLoads()
     {
-        var collectors = FindObjectsByType<QuestCollector>(FindObjectsInactive.Include, FindObjectsSortMode.None);
-        for (int i = 0; i < collectors.Length; i++)
-            collectors[i].HideItems();
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded -= HideRevealItemsInScene;
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += HideRevealItemsInScene;
+    }
+
+    static void HideRevealItemsInScene(UnityEngine.SceneManagement.Scene scene, UnityEngine.SceneManagement.LoadSceneMode mode)
+    {
+        foreach (GameObject root in scene.GetRootGameObjects())
+            foreach (QuestCollector collector in root.GetComponentsInChildren<QuestCollector>(true))
+                collector.HideItems();
     }
 
     void Awake()

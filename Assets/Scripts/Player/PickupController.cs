@@ -59,6 +59,8 @@ public class PickupController : MonoBehaviour
     private PlayerInteraction _interaction;
     private PlayerController _playerController;
     private readonly RaycastHit[] _carryObstacles = new RaycastHit[16];
+    private readonly RaycastHit[] _carryRays = new RaycastHit[16];
+    private const float CarryWallSkin = .03f;
     private readonly RaycastHit[] _placementSightHits = new RaycastHit[16];
 
     private GameObject _heldObj;
@@ -802,7 +804,8 @@ public class PickupController : MonoBehaviour
             return holdPoint.position + holdPoint.forward * _zoomOffset;
         if (!_heldObjectUsesTwoHandGrip)
         {
-            Vector3 smallCenter = playerCamera.transform.TransformPoint(new Vector3(.18f, -.19f, .32f + _carryDepth + _zoomOffset));
+            Vector3 smallCenter = ClampCenterToObstacles(
+                playerCamera.transform.TransformPoint(new Vector3(.18f, -.19f, .32f + _carryDepth + _zoomOffset)), targetRotation);
             return smallCenter - targetRotation * Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
         }
         Vector3 center = TwoHandedCarryCenter(targetRotation);
@@ -832,7 +835,33 @@ public class PickupController : MonoBehaviour
                 center = origin + path / length * nearest;
             }
         }
+        center = ClampCenterToObstacles(center, targetRotation);
         return center - targetRotation * Vector3.Scale(_carryCenterLocal, _heldObj.transform.lossyScale);
+    }
+
+    // Страховка для любого хвата: центр предмета не уходит дальше первого препятствия на линии от камеры.
+    // Колёсико отодвигает предмет вперёд (_zoomOffset); у предмета в одной руке проверки не было вовсе, а проба
+    // коробкой у самой стены ничего не находит (distance == 0 пропускается) — предмет проезжал сквозь стену.
+    private Vector3 ClampCenterToObstacles(Vector3 center, Quaternion rotation)
+    {
+        if (playerCamera == null || _heldObj == null) return center;
+        Vector3 origin = playerCamera.transform.position;
+        Vector3 path = center - origin;
+        float length = path.magnitude;
+        if (length < .0001f) return center;
+        Vector3 direction = path / length;
+        float margin = ExtentAlong(rotation, direction) + CarryWallSkin;
+        int count = Physics.RaycastNonAlloc(origin, direction, _carryRays, length + margin,
+            PhysicsMasks.RaycastDefault, QueryTriggerInteraction.Ignore);
+        float nearest = float.PositiveInfinity;
+        for (int i = 0; i < count; i++)
+        {
+            Transform hit = _carryRays[i].collider.transform;
+            if (hit.IsChildOf(_heldObj.transform) || hit.IsChildOf(transform)) continue;
+            if (_carryRays[i].distance < nearest) nearest = _carryRays[i].distance;
+        }
+        if (float.IsPositiveInfinity(nearest)) return center;
+        return origin + direction * Mathf.Min(length, Mathf.Max(0f, nearest - margin));
     }
 
     // Коробка, которой предмет проверяется на препятствия. У штатива она меньше самого предмета
