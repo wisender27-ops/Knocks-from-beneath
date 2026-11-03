@@ -3,6 +3,7 @@
   "rootNamespace": "",
   "references": [
     "KnocksFromBeneath.Runtime",
+    "Unity.TextMeshPro",
     "UnityEngine.TestRunner",
     "UnityEditor.TestRunner"
   ],

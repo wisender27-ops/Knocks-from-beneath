@@ -27,10 +27,10 @@ namespace KnocksFromBeneath
         private const float CellDoorSwing = 100f;
         public static readonly string[] KnockLines =
         {
-            "Утром я постучал сверху. Два и один.",
-            "Снизу ответили тем же. Без пауз.",
-            "Хейл держал его стуком. Теперь это моя работа, каждую ночь.",
-            "Кто убежит отсюда, приведёт его с собой."
+            Loc.Key("Утром я постучал в пол. Два и один."),
+            Loc.Key("Снизу ответили тем же. Без пауз."),
+            Loc.Key("Хейл держал его стуком. Теперь это делать мне. Каждую ночь."),
+            Loc.Key("Если я сбегу, оно пойдёт следом. Как пришло сюда.")
         };
         public const float TrapWindowSeconds = 7f, TrapWedgeSeconds = 5f;
         private const float RushSpeed = 6f, RushReach = 1.2f, RushLimit = 3.5f;
@@ -140,8 +140,8 @@ namespace KnocksFromBeneath
             yield return Fade(0f, 1.4f);
             LockCamera(false);
             CurrentStage = Stage.Room;
-            sayQuick?.Invoke(new[] { "Штатив сбит, камера на полу.", "Можно посмотреть, что она успела записать." }, null);
-            createQuest?.Invoke("Залезть в вентиляцию", 1, null, VentQuest);
+            sayQuick?.Invoke(new[] { Loc.T("Штатив опрокинут, камера валяется на полу."), Loc.T("Посмотрю, что она успела снять.") }, null);
+            createQuest?.Invoke(Loc.T("Залезть в вентиляцию"), 1, null, VentQuest);
         }
 
         // Запись необязательна: решётка открыта, в трубу можно лезть сразу. Смотреть её можно, пока игрок в подвале.
@@ -162,7 +162,7 @@ namespace KnocksFromBeneath
             CurrentStage = Stage.Room;
             if (tapeSeen) yield break;
             tapeSeen = true;
-            sayQuick?.Invoke(new[] { "Он вылез отсюда. Увидел объектив — и ударил.", "Он знал, что его снимают. И он идёт за тем, кто поставил камеру." }, null);
+            sayQuick?.Invoke(new[] { Loc.T("Оно вылезло отсюда. Увидело объектив — и ударило."), Loc.T("Оно знало, что его снимают. И знает, кто поставил камеру.") }, null);
         }
 
         private IEnumerator PlayVentTape()
@@ -193,8 +193,8 @@ namespace KnocksFromBeneath
             else FindFirstObjectByType<ScrewdriverHunt>()?.NeedScrewdriver();
         }
 
-        private string VentLabel() => depths.hatch.IsUnbolted ? "Залезть в короб"
-            : inventory != null && inventory.HasItem("Screwdriver") ? "Открутить болты" : "Нужна отвёртка";
+        private string VentLabel() => depths.hatch.IsUnbolted ? Loc.T("Залезть в короб")
+            : inventory != null && inventory.HasItem("Screwdriver") ? Loc.T("Открутить болты") : Loc.T("Нужна отвёртка");
 
         // Короб висит выше пояса: герой забирается в него с ящика, за затемнением.
         private IEnumerator ClimbIntoDuct()
@@ -222,8 +222,8 @@ namespace KnocksFromBeneath
             if (QuestActive(VentQuest))
             {
                 QuestManager.Instance.AddProgress(1);
-                sayQuick?.Invoke(new[] { "Ну и вонь. Гниль, сырость, будто здесь что-то сдохло.", "Жесть сгнила, прогибается под коленями. Стук впереди." }, null);
-                createQuest?.Invoke("Ползти по трубе", 1, null, DuctQuest);
+                sayQuick?.Invoke(new[] { Loc.T("Ну и вонь. Гниль и сырость — будто здесь что-то сдохло."), Loc.T("Жесть проржавела и гнётся под коленями. Стук — где-то впереди.") }, null);
+                createQuest?.Invoke(Loc.T("Ползти по коробу"), 1, null, DuctQuest);
             }
             if (knocking == null) knocking = StartCoroutine(KnockRoutine());
         }
@@ -244,8 +244,8 @@ namespace KnocksFromBeneath
             knockSource.transform.position = PipeInCell();
             if (QuestActive(DuctQuest)) QuestManager.Instance.AddProgress(1);
             CurrentStage = Stage.Explore;
-            sayQuick?.Invoke(new[] { "За этой стеной подвал, из которого я ушёл. Вот вторая половина.", "Он ходит здесь. Присесть и идти медленно, тогда он не услышит." }, null);
-            createQuest?.Invoke("Найти того, кто стучал", 1, () => createQuest("Добраться до камеры", 1, OnReached, ReachQuest), FindQuest);
+            sayQuick?.Invoke(new[] { Loc.T("Вот она, вторая половина подвала. Та, что за свежей кладкой."), Loc.T("Оно бродит где-то здесь. Если пригнуться и идти медленно, оно не услышит.") }, null);
+            createQuest?.Invoke(Loc.T("Найти того, кто стучал"), 1, () => createQuest(Loc.T("Добраться до стальной камеры"), 1, OnReached, ReachQuest), FindQuest);
             stalker.Begin();
         }
 
@@ -255,18 +255,18 @@ namespace KnocksFromBeneath
         // Цепочка заданий: дойти → ударить по замку → спрятаться → сбить замок.
         private void OnReached()
         {
-            createQuest?.Invoke("Ударить по замку ломом", 1, OnStruckQuestDone, StrikeQuest);
+            createQuest?.Invoke(Loc.T("Ударить по замку ломом"), 1, OnStruckQuestDone, StrikeQuest);
         }
 
         private void OnStruckQuestDone()
         {
-            createQuest?.Invoke("Спрятаться от монстра", 1, OnHideQuestDone, HideQuest);
+            createQuest?.Invoke(Loc.T("Спрятаться от монстра"), 1, OnHideQuestDone, HideQuest);
         }
 
         private void OnHideQuestDone()
         {
             breakReady = true;
-            createQuest?.Invoke("Сбить замок", 1, null, BreakQuest);
+            createQuest?.Invoke(Loc.T("Сбить замок"), 1, null, BreakQuest);
         }
 
         private void Update()
@@ -287,7 +287,7 @@ namespace KnocksFromBeneath
             if (!hallSeen && inHall)
             {
                 hallSeen = true;
-                sayQuick?.Invoke(new[] { "Над головой труба. Уходит наверх, в дом.", "Если по ней стучать, звук уйдёт во все комнаты." }, null);
+                sayQuick?.Invoke(new[] { Loc.T("Над головой труба. Уходит наверх, в дом."), Loc.T("Стучи по такой — и услышат во всех комнатах.") }, null);
             }
             if (QuestActive(FindQuest) && inHall) QuestManager.Instance.AddProgress(1);
             else if (QuestActive(ReachQuest) && BasementLayout.CellBlockD.Contains(at) &&
@@ -295,7 +295,7 @@ namespace KnocksFromBeneath
             {
                 reachedCell = true;
                 QuestManager.Instance.AddProgress(1);
-                sayQuick?.Invoke(new[] { "Он стучит по этой трубе. Вот почему стук слышно по всему дому.", "Замок на решётке. Лом при мне." }, null);
+                sayQuick?.Invoke(new[] { Loc.T("Вот по этой трубе он и стучит. Поэтому стук слышен по всему дому."), Loc.T("На решётке замок. Хорошо, что лом при мне.") }, null);
             }
         }
 
@@ -331,7 +331,7 @@ namespace KnocksFromBeneath
             if (hideListener.Found && !hideFailed)
             {
                 hideFailed = true;
-                sayQuick?.Invoke(new[] { "Услышал…" }, null);
+                sayQuick?.Invoke(new[] { Loc.T("Услышало…") }, null);
                 if (CurrentStage == Stage.Trap) { FailTrap(); return; }
                 stalker.Alert(player.position);
             }
@@ -364,7 +364,7 @@ namespace KnocksFromBeneath
                 hideActive = false;
                 hideListener.End();
                 ExitHideSpot();
-                sayQuick?.Invoke(new[] { "Ушёл. Что-то упало далеко. Пока он не вернулся, к замку." }, null);
+                sayQuick?.Invoke(new[] { Loc.T("Ушло. Что-то упало вдалеке. Пока оно не вернулось — к замку.") }, null);
                 if (QuestActive(HideQuest)) QuestManager.Instance.AddProgress(1);
                 if (knocking == null) knocking = StartCoroutine(KnockRoutine());
             }
@@ -410,7 +410,7 @@ namespace KnocksFromBeneath
             player.SetPositionAndRotation(BasementLayout.HideSpot, Quaternion.identity);
             hideYaw = hidePitch = 0f;
             Physics.SyncTransforms();
-            sayQuick?.Invoke(new[] { "Он рядом. Только не…" }, null);
+            sayQuick?.Invoke(new[] { Loc.T("Оно рядом. Только не…") }, null);
             if (QuestActive(TrapHideQuest)) QuestManager.Instance.AddProgress(1);
         }
 
@@ -493,14 +493,14 @@ namespace KnocksFromBeneath
             }
             yield return new WaitForSeconds(0.9f);
             if (!wasHiding && catches == 2)
-                sayQuick?.Invoke(new[] { "Он слышит шаги. Присесть на Ctrl. Красться, а не бежать." }, null);
+                sayQuick?.Invoke(new[] { Loc.T("Оно идёт на звук шагов. Пригнуться — Ctrl. Не бежать, красться.") }, null);
             yield return Fade(0f, 1f);
             LockCamera(false);
             CurrentStage = Stage.Explore;
             stalker.Begin();
             if (wasHiding)
             {
-                sayQuick?.Invoke(new[] { "Он вернётся к замку. За ящики у стены. Молчать." }, null);
+                sayQuick?.Invoke(new[] { Loc.T("Оно вернётся к замку. За ящики у стены — и ни звука.") }, null);
                 yield return new WaitForSeconds(6f);
                 if (CurrentStage == Stage.Explore && struck) BeginHide();
             }
@@ -542,13 +542,13 @@ namespace KnocksFromBeneath
         private bool CanUseLock() => CurrentStage == Stage.Explore && reachedCell && !hideActive &&
             ((!struck && QuestActive(StrikeQuest)) || (struck && breakReady && QuestActive(BreakQuest)));
 
-        private string LockLabel() => !struck ? "Ударить по замку" : "Сбить замок";
+        private string LockLabel() => !struck ? Loc.T("Ударить по замку") : Loc.T("Сбить замок");
 
         private void UseLock()
         {
             if (inventory == null || !inventory.hasCrowbar)
             {
-                sayQuick?.Invoke(new[] { "Замок. Голыми руками не сбить. Нужен лом." }, null);
+                sayQuick?.Invoke(new[] { Loc.T("Голыми руками этот замок не сбить. Нужен лом.") }, null);
                 return;
             }
             if (!struck) StartCoroutine(StrikeRoutine());
@@ -571,7 +571,7 @@ namespace KnocksFromBeneath
             CurrentStage = Stage.Explore;
             if (knocking != null) { StopCoroutine(knocking); knocking = null; }
             if (QuestActive(StrikeQuest)) QuestManager.Instance.AddProgress(1);
-            sayQuick?.Invoke(new[] { "Грохнуло на весь подвал!", "Он идёт. Спрятаться. За ящики у стены." }, null);
+            sayQuick?.Invoke(new[] { Loc.T("Грохот на весь подвал!"), Loc.T("Оно идёт сюда. За ящики у стены, быстро.") }, null);
             BeginHide(HideReactionDelay);
         }
 
@@ -596,19 +596,19 @@ namespace KnocksFromBeneath
             if (QuestActive(BreakQuest)) QuestManager.Instance.AddProgress(1);
             yield return FaceHale();
 
-            yield return SayLine("ХЕЙЛ", "Кто ты? Четыре месяца стучу по трубе, а кто наверху — не знаю.");
-            yield return SayLine("ХЕЙЛ", "Погоди… Дэниел Росс?");
-            yield return SayLine("Я", "Откуда вы меня знаете?");
-            yield return SayLine("ХЕЙЛ", "В бумагах аренды была копия твоего документа с фото.");
-            yield return SayLine("ХЕЙЛ", "Он никогда не шёл за мной. Он шёл за тобой.");
-            yield return SayLine("ХЕЙЛ", "Зачем ты сбил замок?");
-            yield return SayLine("ХЕЙЛ", "Сын запер меня по моей просьбе. Этот замок был не тюрьмой, а защитой.");
-            yield return SayLine("ХЕЙЛ", "Я стучал по трубе, чтобы удержать его внизу. Теперь он услышал грохот и идёт.");
-            yield return SayLine("ХЕЙЛ", "Камера на стене моя. Пусть пишет. Хоть раз он попадёт на плёнку там, где надо.");
-            yield return SayLine("ХЕЙЛ", "Ходить я не могу. Останусь здесь и буду стучать. Он придёт на стук.");
-            yield return SayLine("ХЕЙЛ", "Прячься за коробку. Когда он войдёт сюда, захлопни решётку и заложи проушины ломом.");
-            yield return SayLine("Я", "А вы?");
-            yield return SayLine("ХЕЙЛ", "Иди.");
+            yield return SayLine(Loc.Key("ХЕЙЛ"), Loc.T("Кто ты? Четыре месяца я стучу по трубе и не знаю, кто меня слышит."));
+            yield return SayLine(Loc.Key("ХЕЙЛ"), Loc.T("Погоди… Дэниел Росс?"));
+            yield return SayLine(Loc.Key("Я"), Loc.T("Откуда вы меня знаете?"));
+            yield return SayLine(Loc.Key("ХЕЙЛ"), Loc.T("Ты снимал у меня дом. В договоре была копия твоих прав. С фотографией."));
+            yield return SayLine(Loc.Key("ХЕЙЛ"), Loc.T("Он никогда не шёл за мной. Он шёл за тобой."));
+            yield return SayLine(Loc.Key("ХЕЙЛ"), Loc.T("Зачем ты сбил замок?"));
+            yield return SayLine(Loc.Key("ХЕЙЛ"), Loc.T("Сын запер меня здесь по моей же просьбе. Этот замок меня не держал. Он меня защищал."));
+            yield return SayLine(Loc.Key("ХЕЙЛ"), Loc.T("Я стучал по трубе, чтобы он оставался внизу. А теперь он услышал грохот. Он идёт сюда."));
+            yield return SayLine(Loc.Key("ХЕЙЛ"), Loc.T("Камера на стене — моя. Пусть пишет. Хоть раз он попадёт на плёнку там, где нужно."));
+            yield return SayLine(Loc.Key("ХЕЙЛ"), Loc.T("Ходить я не могу. Останусь и буду стучать. Он пойдёт на стук."));
+            yield return SayLine(Loc.Key("ХЕЙЛ"), Loc.T("Спрячься за коробкой. Когда он войдёт ко мне, захлопни решётку и вставь лом в проушины."));
+            yield return SayLine(Loc.Key("Я"), Loc.T("А вы?"));
+            yield return SayLine(Loc.Key("ХЕЙЛ"), Loc.T("Иди."));
             BeginTrap();
         }
 
@@ -622,7 +622,7 @@ namespace KnocksFromBeneath
             CurrentTrapPhase = TrapPhase.Lure;
             doorGrip.gameObject.SetActive(true);
             LockCamera(false);
-            createQuest?.Invoke("Спрятаться за коробкой", 1, null, TrapHideQuest);
+            createQuest?.Invoke(Loc.T("Спрятаться за коробкой"), 1, null, TrapHideQuest);
             hideFailed = false;
             hideActive = true;
             hideListener.Begin();
@@ -688,8 +688,8 @@ namespace KnocksFromBeneath
             stalker.Rig?.Lunge(0.25f, 0.6f);
             PlayEffect("Audio/CornerJumpscare", 0.7f, 0.6f);
             if (QuestActive(TrapHideQuest)) QuestManager.Instance.AddProgress(1);
-            sayQuick?.Invoke(new[] { "Стук оборвался. Он в камере. Решётка, сейчас!" }, null);
-            createQuest?.Invoke("Захлопнуть решётку", 1, null, TrapSlamQuest);
+            sayQuick?.Invoke(new[] { Loc.T("Стук оборвался. Оно в камере. Решётку, сейчас!") }, null);
+            createQuest?.Invoke(Loc.T("Захлопнуть решётку"), 1, null, TrapSlamQuest);
         }
 
         private void FaceMonster(Vector3 point)
@@ -704,7 +704,7 @@ namespace KnocksFromBeneath
         private bool CanUseDoorGrip() => CurrentStage == Stage.Trap &&
             ((CurrentTrapPhase == TrapPhase.Window && OutsideCell()) || CurrentTrapPhase == TrapPhase.Slammed);
 
-        private string DoorGripLabel() => CurrentTrapPhase == TrapPhase.Window ? "Захлопнуть решётку" : "Вставить лом в проушины";
+        private string DoorGripLabel() => CurrentTrapPhase == TrapPhase.Window ? Loc.T("Захлопнуть решётку") : Loc.T("Вставить лом в проушины");
 
         private void UseDoorGrip()
         {
@@ -720,7 +720,7 @@ namespace KnocksFromBeneath
             doorGripCollider.center = doorGripHasp;
             doorGripCollider.size = new Vector3(0.9f, 0.9f, 0.5f);
             if (QuestActive(TrapSlamQuest)) QuestManager.Instance.AddProgress(1);
-            createQuest?.Invoke("Вставить лом в проушины", 1, null, TrapWedgeQuest);
+            createQuest?.Invoke(Loc.T("Вставить лом в проушины"), 1, null, TrapWedgeQuest);
             StartCoroutine(SlamRoutine());
             StartCoroutine(RattleRoutine());
         }
@@ -737,7 +737,7 @@ namespace KnocksFromBeneath
             if (cellDoorCollider != null) cellDoorCollider.SetActive(true);
             PlayEffect("Audio/Horror/impactMetal_heavy_001", 1f, 0.8f);
             PlayEffect("Audio/Horror/impactPunch_heavy_000", 1f, 1.1f);
-            sayQuick?.Invoke(new[] { "Он обернулся. Лом, быстрее!" }, null);
+            sayQuick?.Invoke(new[] { Loc.T("Оно оборачивается. Лом, быстрее!") }, null);
             stalker.Rig?.Stand();
             FaceMonster(new Vector3(monster.transform.position.x, 0f, BasementLayout.CellArea.yMax));
             Vector3 start = monster.transform.position;
@@ -771,9 +771,9 @@ namespace KnocksFromBeneath
             if (QuestActive(TrapWedgeQuest)) QuestManager.Instance.AddProgress(1);
             PlayEffect("Audio/Horror/impactPlank_medium_000", 1f, 1.5f);
             yield return TurnToward(BasementLayout.CellLock, 0.35f);
-            sayQuick?.Invoke(new[] { "Держит." }, null);
+            sayQuick?.Invoke(new[] { Loc.T("Держит.") }, null);
             yield return new WaitForSeconds(2f);
-            sayQuick?.Invoke(new[] { "Хейл больше не стучит." }, null);
+            sayQuick?.Invoke(new[] { Loc.T("Хейл больше не стучит.") }, null);
             yield return new WaitForSeconds(2.5f);
             CurrentTrapPhase = TrapPhase.None;
             CurrentStage = Stage.Finale;
@@ -1070,7 +1070,7 @@ namespace KnocksFromBeneath
             BuildDoorGrip();
             BuildHasp();
             cellLock.Initialize(CanUseLock, UseLock, LockLabel);
-            level.hideSpot.Initialize(CanEnterHideSpot, EnterHideSpot, () => "Спрятаться за коробкой");
+            level.hideSpot.Initialize(CanEnterHideSpot, EnterHideSpot, () => Loc.T("Спрятаться за коробкой"));
             // Лампа без теней просвечивала бы сквозь перекрытие в дом: горит только во время главы.
             level.cellLamp.enabled = true;
             if (level.atmosphere != null) level.atmosphere.Activate();
@@ -1091,10 +1091,10 @@ namespace KnocksFromBeneath
             OpenVent();
             // Камера лежит на полу, сбитая вместе со штативом, и сама служит «пультом» записи; если снаряжения нет (отладка) — точка.
             CameraPlacementController gear = CameraPlacementController.Instance;
-            if (gear == null || !gear.KnockOverAsPlayer(DepthsLayout.Vent, BasementLayout.FloorY, CanWatchTape, WatchTape, () => "Посмотреть запись"))
+            if (gear == null || !gear.KnockOverAsPlayer(DepthsLayout.Vent, BasementLayout.FloorY, CanWatchTape, WatchTape, () => Loc.T("Посмотреть запись")))
             {
                 depths.tapeCamera.gameObject.SetActive(true);
-                depths.tapeCamera.Initialize(CanWatchTape, WatchTape, () => "Посмотреть запись");
+                depths.tapeCamera.Initialize(CanWatchTape, WatchTape, () => Loc.T("Посмотреть запись"));
             }
         }
 

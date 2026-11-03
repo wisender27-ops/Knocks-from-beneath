@@ -168,8 +168,8 @@ namespace KnocksFromBeneath
             bool show = canKnock && _overBasement && Time.time < _hintUntil;
             if (show)
             {
-                if (_player.IsCrouching) _hint.Set("Q", "ПОСТУЧАТЬ В ПОЛ");
-                else _hint.Set("CTRL", "ПРИСЕСТЬ", "Q", "ПОСТУЧАТЬ В ПОЛ");
+                if (_player.IsCrouching) _hint.Set("Q", Loc.T("ПОСТУЧАТЬ В ПОЛ"));
+                else _hint.Set("CTRL", Loc.T("ПРИСЕСТЬ"), "Q", Loc.T("ПОСТУЧАТЬ В ПОЛ"));
             }
             if (_hint.gameObject.activeSelf != show) _hint.gameObject.SetActive(show);
         }
@@ -236,7 +236,7 @@ namespace KnocksFromBeneath
                 new Color(UiStyle.Ivory.r, UiStyle.Ivory.g, UiStyle.Ivory.b, .8f)).Backed();
             _hint.RectTransform.anchorMin = _hint.RectTransform.anchorMax = _hint.RectTransform.pivot = new Vector2(0f, 0f);
             _hint.RectTransform.anchoredPosition = new Vector2(30f, 30f);
-            _hint.Set("Q", "ПОСТУЧАТЬ В ПОЛ");
+            _hint.Set("Q", Loc.T("ПОСТУЧАТЬ В ПОЛ"));
             _hint.gameObject.SetActive(false);
         }
     }

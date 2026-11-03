@@ -159,9 +159,9 @@ namespace KnocksFromBeneath
                 }
                 RestoreControl();
                 ThoughtManager.Instance?.ShowImportantThoughts(new[] {
-                    "Блядь! Это что за хрень?!",
-                    "Какого чёрта... Он был прямо передо мной!",
-                    "Стук был из подвала. Он оттуда вылез?.."
+                    Loc.T("Блядь! Что это было?!"),
+                    Loc.T("Какого чёрта… Оно стояло прямо передо мной!"),
+                    Loc.T("Стучали из подвала. Оно оттуда и вылезло?..")
                 }, () => _intro?.ContinueAfterCornerScare());
                 if (ThoughtManager.Instance == null) _intro?.ContinueAfterCornerScare();
             }

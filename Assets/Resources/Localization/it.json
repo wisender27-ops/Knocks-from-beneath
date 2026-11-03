@@ -1,0 +1,2173 @@
+{
+ "language": "it",
+ "entries": [
+  {
+   "source": "Из старого дома я уехал за одну ночь.\nВещи потом пришлось отправлять следом.",
+   "text": "Ho lasciato la vecchia casa in una sola notte.\nLe mie cose, poi, ho dovuto farle spedire."
+  },
+  {
+   "source": "О том, что там случилось, я стараюсь не думать.\nЛюк заколочен. Туда я не вернусь.",
+   "text": "Cerco di non pensare a quello che è successo lì.\nLa botola è inchiodata. Non ci torno."
+  },
+  {
+   "source": "Новый дом нашёлся почти сразу.\nСемья продавала его срочно и почти даром.",
+   "text": "La casa nuova l'ho trovata quasi subito.\nLa famiglia la vendeva in fretta, quasi regalata."
+  },
+  {
+   "source": "Цена настораживала.\nДва этажа, гараж, участок — и почти ничего за это.",
+   "text": "Il prezzo mi metteva a disagio.\nDue piani, garage, giardino… e quasi niente in cambio."
+  },
+  {
+   "source": "И они очень торопились.\nСами меня нашли, сами привезли бумаги.",
+   "text": "E avevano una gran fretta.\nMi hanno cercato loro, le carte me le hanno portate loro."
+  },
+  {
+   "source": "Но в моём положении\nот таких предложений не отказываются.",
+   "text": "Ma nella mia situazione\nofferte così non si rifiutano."
+  },
+  {
+   "source": "Я подписал всё и не стал задавать вопросов.",
+   "text": "Ho firmato tutto senza fare domande."
+  },
+  {
+   "source": "Утром я постучал в пол. Два и один.",
+   "text": "Al mattino ho bussato sul pavimento. Due e uno."
+  },
+  {
+   "source": "Снизу ответили тем же. Без пауз.",
+   "text": "Da sotto hanno risposto allo stesso modo. Senza pause."
+  },
+  {
+   "source": "Хейл держал его стуком. Теперь это делать мне. Каждую ночь.",
+   "text": "Hale teneva quella cosa laggiù con i suoi colpi. Ora tocca a me. Ogni notte."
+  },
+  {
+   "source": "Если я сбегу, оно пойдёт следом. Как пришло сюда.",
+   "text": "Se scappo, mi seguirà. Come mi ha seguito fin qui."
+  },
+  {
+   "source": "Штатив опрокинут, камера валяется на полу.",
+   "text": "Il treppiede è rovesciato, la videocamera è a terra."
+  },
+  {
+   "source": "Посмотрю, что она успела снять.",
+   "text": "Vediamo cosa è riuscita a riprendere."
+  },
+  {
+   "source": "Залезть в вентиляцию",
+   "text": "Entrare nel condotto"
+  },
+  {
+   "source": "Оно вылезло отсюда. Увидело объектив — и ударило.",
+   "text": "È uscita da qui. Ha visto l'obiettivo… e ha colpito."
+  },
+  {
+   "source": "Оно знало, что его снимают. И знает, кто поставил камеру.",
+   "text": "Sapeva di essere ripresa. E sa chi ha messo la videocamera."
+  },
+  {
+   "source": "Залезть в короб",
+   "text": "Entrare nel condotto"
+  },
+  {
+   "source": "Открутить болты",
+   "text": "Svitare i bulloni"
+  },
+  {
+   "source": "Нужна отвёртка",
+   "text": "Serve un cacciavite"
+  },
+  {
+   "source": "Ну и вонь. Гниль и сырость — будто здесь что-то сдохло.",
+   "text": "Che puzza. Marcio e umido… come se qui dentro fosse morto qualcosa."
+  },
+  {
+   "source": "Жесть проржавела и гнётся под коленями. Стук — где-то впереди.",
+   "text": "La lamiera è arrugginita e cede sotto le ginocchia. I colpi vengono da qualche parte più avanti."
+  },
+  {
+   "source": "Ползти по коробу",
+   "text": "Strisciare nel condotto"
+  },
+  {
+   "source": "Вот она, вторая половина подвала. Та, что за свежей кладкой.",
+   "text": "Eccola, l'altra metà del seminterrato. Quella dietro il muro appena tirato su."
+  },
+  {
+   "source": "Оно бродит где-то здесь. Если пригнуться и идти медленно, оно не услышит.",
+   "text": "Quella cosa si aggira qui intorno. Se sto basso e vado piano, non mi sentirà."
+  },
+  {
+   "source": "Найти того, кто стучал",
+   "text": "Trovare chi bussava"
+  },
+  {
+   "source": "Добраться до стальной камеры",
+   "text": "Raggiungere la cella d'acciaio"
+  },
+  {
+   "source": "Ударить по замку ломом",
+   "text": "Colpire il lucchetto con la spranga"
+  },
+  {
+   "source": "Спрятаться от монстра",
+   "text": "Nascondersi dal mostro"
+  },
+  {
+   "source": "Сбить замок",
+   "text": "Spaccare il lucchetto"
+  },
+  {
+   "source": "Над головой труба. Уходит наверх, в дом.",
+   "text": "Sopra la testa c'è un tubo. Sale su, in casa."
+  },
+  {
+   "source": "Стучи по такой — и услышат во всех комнатах.",
+   "text": "Bussi su un tubo così e ti sentono in tutte le stanze."
+  },
+  {
+   "source": "Вот по этой трубе он и стучит. Поэтому стук слышен по всему дому.",
+   "text": "Ecco il tubo su cui bussa lui. Per questo lo si sente in tutta la casa."
+  },
+  {
+   "source": "На решётке замок. Хорошо, что лом при мне.",
+   "text": "Sulla porta della cella c'è un lucchetto. Meno male che ho la spranga."
+  },
+  {
+   "source": "Услышало…",
+   "text": "Ha sentito…"
+  },
+  {
+   "source": "Ушло. Что-то упало вдалеке. Пока оно не вернулось — к замку.",
+   "text": "Se n'è andata. Qualcosa è caduto, lontano. Al lucchetto, prima che torni."
+  },
+  {
+   "source": "Оно рядом. Только не…",
+   "text": "È vicina. Ti prego, non…"
+  },
+  {
+   "source": "Оно идёт на звук шагов. Пригнуться — Ctrl. Не бежать, красться.",
+   "text": "Segue il rumore dei passi. Abbassarsi con Ctrl. Non correre: avanzare piano."
+  },
+  {
+   "source": "Оно вернётся к замку. За ящики у стены — и ни звука.",
+   "text": "Tornerà al lucchetto. Dietro le casse vicino al muro, e senza fiatare."
+  },
+  {
+   "source": "Ударить по замку",
+   "text": "Colpire il lucchetto"
+  },
+  {
+   "source": "Голыми руками этот замок не сбить. Нужен лом.",
+   "text": "A mani nude questo lucchetto non lo spacco. Serve la spranga."
+  },
+  {
+   "source": "Грохот на весь подвал!",
+   "text": "L'avrà sentito tutto il seminterrato!"
+  },
+  {
+   "source": "Оно идёт сюда. За ящики у стены, быстро.",
+   "text": "Sta arrivando. Dietro le casse vicino al muro, presto."
+  },
+  {
+   "source": "ХЕЙЛ",
+   "text": "HALE"
+  },
+  {
+   "source": "Кто ты? Четыре месяца я стучу по трубе и не знаю, кто меня слышит.",
+   "text": "Chi sei? Sono quattro mesi che busso su questo tubo senza sapere chi mi sente."
+  },
+  {
+   "source": "Погоди… Дэниел Росс?",
+   "text": "Aspetta… Daniel Ross?"
+  },
+  {
+   "source": "Я",
+   "text": "Io"
+  },
+  {
+   "source": "Откуда вы меня знаете?",
+   "text": "Come fa a conoscermi?"
+  },
+  {
+   "source": "Ты снимал у меня дом. В договоре была копия твоих прав. С фотографией.",
+   "text": "Hai affittato una mia casa. Nel contratto c'era la copia della tua patente. Con la foto."
+  },
+  {
+   "source": "Он никогда не шёл за мной. Он шёл за тобой.",
+   "text": "Non ha mai seguito me. Ha sempre seguito te."
+  },
+  {
+   "source": "Зачем ты сбил замок?",
+   "text": "Perché hai spaccato il lucchetto?"
+  },
+  {
+   "source": "Сын запер меня здесь по моей же просьбе. Этот замок меня не держал. Он меня защищал.",
+   "text": "Mio figlio mi ha chiuso qui perché gliel'ho chiesto io. Quel lucchetto non mi teneva dentro. Mi proteggeva."
+  },
+  {
+   "source": "Я стучал по трубе, чтобы он оставался внизу. А теперь он услышал грохот. Он идёт сюда.",
+   "text": "Bussavo sul tubo per tenere quella cosa laggiù. Adesso ha sentito il fracasso. Sta venendo qui."
+  },
+  {
+   "source": "Камера на стене — моя. Пусть пишет. Хоть раз он попадёт на плёнку там, где нужно.",
+   "text": "La telecamera sul muro è mia. Lasciala registrare. Almeno una volta finirà sul nastro dove serve."
+  },
+  {
+   "source": "Ходить я не могу. Останусь и буду стучать. Он пойдёт на стук.",
+   "text": "Non posso camminare. Resto qui e continuo a bussare. Seguirà i colpi."
+  },
+  {
+   "source": "Спрячься за коробкой. Когда он войдёт ко мне, захлопни решётку и вставь лом в проушины.",
+   "text": "Nasconditi dietro la scatola. Quando entra da me, chiudi la porta e infila la spranga negli occhielli."
+  },
+  {
+   "source": "А вы?",
+   "text": "E lei?"
+  },
+  {
+   "source": "Иди.",
+   "text": "Va'."
+  },
+  {
+   "source": "Спрятаться за коробкой",
+   "text": "Nascondersi dietro la scatola"
+  },
+  {
+   "source": "Стук оборвался. Оно в камере. Решётку, сейчас!",
+   "text": "I colpi si sono interrotti. È nella cella. La porta, adesso!"
+  },
+  {
+   "source": "Захлопнуть решётку",
+   "text": "Chiudere la porta della cella"
+  },
+  {
+   "source": "Вставить лом в проушины",
+   "text": "Infilare la spranga negli occhielli"
+  },
+  {
+   "source": "Оно оборачивается. Лом, быстрее!",
+   "text": "Si sta girando. La spranga, presto!"
+  },
+  {
+   "source": "Держит.",
+   "text": "Tiene."
+  },
+  {
+   "source": "Хейл больше не стучит.",
+   "text": "Hale non bussa più."
+  },
+  {
+   "source": "Посмотреть запись",
+   "text": "Guardare la registrazione"
+  },
+  {
+   "source": "Осмотреть стену",
+   "text": "Esaminare il muro"
+  },
+  {
+   "source": "Осмотреть решётку",
+   "text": "Esaminare la grata"
+  },
+  {
+   "source": "Спуститься в подвал",
+   "text": "Scendere nel seminterrato"
+  },
+  {
+   "source": "Осмотреть подвал",
+   "text": "Perlustrare il seminterrato"
+  },
+  {
+   "source": "Котёл, верстак, полки. Подвал как подвал.",
+   "text": "Caldaia, banco da lavoro, scaffali. Un seminterrato come tanti."
+  },
+  {
+   "source": "И тихо. Здесь стука не слышно.",
+   "text": "E silenzio. Quaggiù non si sente bussare."
+  },
+  {
+   "source": "Здесь был проём. Его заложили, и недавно: кладка свежее остальной.",
+   "text": "Qui c'era un passaggio. L'hanno murato, e da poco: la malta è più fresca del resto."
+  },
+  {
+   "source": "Десять шагов от стены до стены. А дом наверху раза в полтора длиннее. Где остальное?",
+   "text": "Dieci passi da parete a parete. Ma la casa sopra è lunga una volta e mezzo. Dov'è il resto?"
+  },
+  {
+   "source": "Вентиляционный короб шириной с человека. Зачем такой маленькому подвалу?",
+   "text": "Un condotto di ventilazione largo quanto un uomo. A che serve in un seminterrato così piccolo?"
+  },
+  {
+   "source": "Решётка на болтах. Из короба тянет холодом.",
+   "text": "La grata è imbullonata. Dal condotto arriva aria fredda."
+  },
+  {
+   "source": "Никого. Стучать здесь некому.",
+   "text": "Nessuno. Quaggiù non c'è nessuno a bussare."
+  },
+  {
+   "source": "И всё равно что-то не сходится.",
+   "text": "Eppure qualcosa non torna."
+  },
+  {
+   "source": "Подняться наверх",
+   "text": "Tornare di sopra"
+  },
+  {
+   "source": "Опять. Тот же стук — будто я и не спускался.",
+   "text": "Di nuovo. Gli stessi colpi… come se non fossi mai sceso."
+  },
+  {
+   "source": "Внизу никого нет. Я только что оттуда.",
+   "text": "Laggiù non c'è nessuno. Ci sono appena stato."
+  },
+  {
+   "source": "Камера писала всю ночь. Пора посмотреть запись.",
+   "text": "La videocamera ha registrato tutta la notte. È ora di guardare il nastro."
+  },
+  {
+   "source": "Голова гудит. Сначала поем, потом буду думать.",
+   "text": "Mi scoppia la testa. Prima mangio, poi ci penso."
+  },
+  {
+   "source": "Блядь! Что это было?!",
+   "text": "Cazzo! Che cos'era?!"
+  },
+  {
+   "source": "Какого чёрта… Оно стояло прямо передо мной!",
+   "text": "Ma che diavolo… Era proprio davanti a me!"
+  },
+  {
+   "source": "Стучали из подвала. Оно оттуда и вылезло?..",
+   "text": "Bussavano dal seminterrato. Che sia uscita da lì?"
+  },
+  {
+   "source": "Забрать коробки у курьера",
+   "text": "Ritirare gli scatoloni dal corriere"
+  },
+  {
+   "source": "Пересохло в горле…",
+   "text": "Ho la gola secca…"
+  },
+  {
+   "source": "Схожу на кухню за водой.",
+   "text": "Vado in cucina a prendere un po' d'acqua."
+  },
+  {
+   "source": "Взять стакан на кухне",
+   "text": "Prendere un bicchiere in cucina"
+  },
+  {
+   "source": "F выпить воды",
+   "text": "F bere l'acqua"
+  },
+  {
+   "source": "E налить воды",
+   "text": "E riempire il bicchiere"
+  },
+  {
+   "source": "Подойдите к раковине",
+   "text": "Avvicinati al lavandino"
+  },
+  {
+   "source": "???",
+   "text": "???"
+  },
+  {
+   "source": "Не двигайся.",
+   "text": "Non muoverti."
+  },
+  {
+   "source": "Оно… говорит.",
+   "text": "Quella cosa… parla."
+  },
+  {
+   "source": "Не подходить. Набрать воды — и обратно в кровать.",
+   "text": "Non avvicinarsi. Riempire il bicchiere e tornare a letto."
+  },
+  {
+   "source": "Налить воды",
+   "text": "Riempire il bicchiere"
+  },
+  {
+   "source": "Выпить воды",
+   "text": "Bere l'acqua"
+  },
+  {
+   "source": "Холодная.",
+   "text": "Fredda."
+  },
+  {
+   "source": "Теперь наверх. И не оглядываться.",
+   "text": "Ora di sopra. E non voltarti."
+  },
+  {
+   "source": "Вернуться в кровать",
+   "text": "Tornare a letto"
+  },
+  {
+   "source": "Отвечает сразу, будто ждал. Будто доверяет мне.",
+   "text": "Risponde subito, come se aspettasse. Come se si fidasse di me."
+  },
+  {
+   "source": "Он больше не зовёт. Похоже, я сам его отвадил.",
+   "text": "Non chiama più. A quanto pare l'ho spaventato io."
+  },
+  {
+   "source": "И звук другой: металл, в трубах, с паузой. А то, что ходит у меня под ногами, бьёт по дереву — ровно, без пауз. Их двое.",
+   "text": "E il suono è diverso: metallo, nei tubi, con una pausa. Quella cosa che cammina sotto i miei piedi batte sul legno, regolare, senza pause. Sono in due."
+  },
+  {
+   "source": "Тот же ритм… и тихий стук в ответ.",
+   "text": "Lo stesso ritmo… e un colpo leggero in risposta."
+  },
+  {
+   "source": "Трубы так не стучат. Внизу кто-то есть. И он меня понял.",
+   "text": "I tubi non bussano così. Laggiù c'è qualcuno. E mi ha capito."
+  },
+  {
+   "source": "Он снова ответил. Будто кивнул.",
+   "text": "Ha risposto di nuovo. Come un cenno del capo."
+  },
+  {
+   "source": "Сбился. Снизу — ни звука.",
+   "text": "Ho perso il ritmo. Da sotto, nessun suono."
+  },
+  {
+   "source": "Я не ответил. Внизу затихли.",
+   "text": "Non ho risposto. Laggiù è calato il silenzio."
+  },
+  {
+   "source": "…Столько же ударов. Повторило.",
+   "text": "…Lo stesso numero di colpi. Li ha ripetuti."
+  },
+  {
+   "source": "Это не эхо. Эхо не ждёт, пока ты закончишь.",
+   "text": "Non è un'eco. Un'eco non aspetta che tu abbia finito."
+  },
+  {
+   "source": "Твою мать!",
+   "text": "Cristo santo!"
+  },
+  {
+   "source": "Оно… разозлилось? Больше я так колотить не буду.",
+   "text": "L'ho… fatta arrabbiare? Non picchierò più così forte."
+  },
+  {
+   "source": "Проверить, кто стучит в дверь",
+   "text": "Vedere chi bussa alla porta"
+  },
+  {
+   "source": "СОСЕД",
+   "text": "VICINO"
+  },
+  {
+   "source": "Господи, напугал! Я уж решил, что-то случилось.",
+   "text": "Gesù, mi hai fatto prendere un colpo! Pensavo fosse successo qualcosa."
+  },
+  {
+   "source": "Я живу напротив. Видел в окне, как ты ходишь внизу, а потом всё стихло. Стучу — никто не открывает.",
+   "text": "Abito qui di fronte. Ti ho visto dalla finestra girare di sotto, poi più niente. Busso e non apre nessuno."
+  },
+  {
+   "source": "Я… вышел подышать. С той стороны дома.",
+   "text": "Sono… uscito a prendere aria. Dall'altro lato della casa."
+  },
+  {
+   "source": "В такую темень? Ну… главное, что ты в порядке.",
+   "text": "Con questo buio? Be'… l'importante è che stai bene."
+  },
+  {
+   "source": "Привет. Я живу напротив. Прости, что так поздно.",
+   "text": "Ciao. Abito qui di fronte. Scusa l'ora."
+  },
+  {
+   "source": "Смотрю — ты внизу ходишь, не спишь. Решил заодно познакомиться.",
+   "text": "Ti ho visto girare di sotto, ancora sveglio. Ho pensato di passare a presentarmi."
+  },
+  {
+   "source": "Внизу? Я спал наверху. Ты меня разбудил.",
+   "text": "Di sotto? Dormivo di sopra. Mi hai svegliato."
+  },
+  {
+   "source": "Да? Ну… значит, показалось. Что-то мелькнуло в окне.",
+   "text": "Ah, sì? Be'… mi sarò sbagliato. Qualcosa si è mosso alla finestra."
+  },
+  {
+   "source": "И ещё. Пока я стоял у двери — это ты стучал по полу?",
+   "text": "Un'altra cosa. Mentre ero alla porta… eri tu a bussare sul pavimento?"
+  },
+  {
+   "source": "Тук-тук… А снизу будто кто-то отвечал.",
+   "text": "Toc toc… E da sotto pareva che qualcuno rispondesse."
+  },
+  {
+   "source": "…Трубы, наверное. Дом старый.",
+   "text": "…Le tubature, credo. La casa è vecchia."
+  },
+  {
+   "source": "Ты ведь у сына Хейла купил? Самого Уолтера с весны не видно. Сын говорит, уехал к сестре.",
+   "text": "L'hai comprata dal figlio di Hale, no? Walter non si vede più dalla primavera. Il figlio dice che è andato dalla sorella."
+  },
+  {
+   "source": "А сам потом неделю таскал в подвал мешки с цементом. Один, по ночам. Что-то бетонировал.",
+   "text": "E poi per una settimana ha portato sacchi di cemento nel seminterrato. Da solo, di notte. Stava cementando qualcosa."
+  },
+  {
+   "source": "Про подвал мне ничего не сказали.",
+   "text": "Del seminterrato non mi hanno detto niente."
+  },
+  {
+   "source": "Ладно, не буду задерживать. Спокойной ночи.",
+   "text": "Va be', non ti trattengo. Buonanotte."
+  },
+  {
+   "source": "Оно шло не за домом. Оно шло за мной.",
+   "text": "Non cercava la casa. Cercava me."
+  },
+  {
+   "source": "Выходить в такую темень? Нет уж.",
+   "text": "Uscire con questo buio? No, grazie."
+  },
+  {
+   "source": "Никуда я сейчас не пойду. Мне нужно поспать.",
+   "text": "Ora non vado da nessuna parte. Devo dormire."
+  },
+  {
+   "source": "Другой город, чужая комната. Здесь меня не найдут.",
+   "text": "Un'altra città, la stanza di un estraneo. Qui non mi troveranno."
+  },
+  {
+   "source": "Под полом. Оно пришло за мной.",
+   "text": "Sotto il pavimento. È venuta a prendermi."
+  },
+  {
+   "source": "Заперто. Про запертые комнаты мне никто не говорил.",
+   "text": "Chiuso a chiave. Nessuno mi aveva parlato di stanze chiuse."
+  },
+  {
+   "source": "Похоже, от той запертой двери наверху.",
+   "text": "Dev'essere della porta chiusa di sopra."
+  },
+  {
+   "source": "Если отвёртка в доме есть, то там.",
+   "text": "Se in casa c'è un cacciavite, è lì dentro."
+  },
+  {
+   "source": "Старый ключ. Что-то в этом доме он да открывает.",
+   "text": "Una vecchia chiave. Qualcosa in questa casa la apre di sicuro."
+  },
+  {
+   "source": "Болты руками не открутить. Нужна отвёртка.",
+   "text": "I bulloni non si svitano a mano. Serve un cacciavite."
+  },
+  {
+   "source": "Где-то в доме она должна быть.",
+   "text": "Da qualche parte in casa deve esserci."
+  },
+  {
+   "source": "Открыто. Кладовка, забитая хламом.",
+   "text": "Aperto. Uno sgabuzzino pieno di cianfrusaglie."
+  },
+  {
+   "source": "Вот и отвёртка. Теперь вниз, к вентиляции.",
+   "text": "Ecco il cacciavite. Ora giù, al condotto."
+  },
+  {
+   "source": "Найти отвёртку",
+   "text": "Trovare un cacciavite"
+  },
+  {
+   "source": "Вскрыть замок",
+   "text": "Forzare il lucchetto"
+  },
+  {
+   "source": "Дверь выбита. Вместе с петлями.",
+   "text": "La porta è stata sfondata. Cardini compresi."
+  },
+  {
+   "source": "Засов выдержал. Петли — нет.",
+   "text": "Il chiavistello ha tenuto. I cardini no."
+  },
+  {
+   "source": "► ГОТОВКА",
+   "text": "► CUCINA"
+  },
+  {
+   "source": "Останови стрелку пробелом в янтарной зоне. Попытка одна.",
+   "text": "Ferma la lancetta nella zona ambra con SPAZIO. Hai un solo tentativo."
+  },
+  {
+   "source": "НАЧАТЬ",
+   "text": "INIZIA"
+  },
+  {
+   "source": "ВЫЙТИ",
+   "text": "ESCI"
+  },
+  {
+   "source": "Останови стрелку в янтарной зоне",
+   "text": "Ferma la lancetta nella zona ambra"
+  },
+  {
+   "source": "ПРОБЕЛ",
+   "text": "SPAZIO"
+  },
+  {
+   "source": "СТОП",
+   "text": "STOP"
+  },
+  {
+   "source": "ПОДАТЬ УЖИН",
+   "text": "SERVI LA CENA"
+  },
+  {
+   "source": "Идеально!",
+   "text": "Perfetto!"
+  },
+  {
+   "source": "Нормально",
+   "text": "Niente male"
+  },
+  {
+   "source": "Подгорело",
+   "text": "Bruciato"
+  },
+  {
+   "source": "Убрано: {0}",
+   "text": "Messo via: {0}"
+  },
+  {
+   "source": "В руках: {0}",
+   "text": "In mano: {0}"
+  },
+  {
+   "source": "Использовано: {0}",
+   "text": "Usato: {0}"
+  },
+  {
+   "source": "► ОСМОТР",
+   "text": "► ESAMINA"
+  },
+  {
+   "source": "► ИНВЕНТАРЬ",
+   "text": "► INVENTARIO"
+  },
+  {
+   "source": "ЗАКРЫТЬ",
+   "text": "CHIUDI"
+  },
+  {
+   "source": "УБРАТЬ",
+   "text": "METTI VIA"
+  },
+  {
+   "source": "ВЗЯТЬ",
+   "text": "EQUIPAGGIA"
+  },
+  {
+   "source": "ИСПОЛЬЗОВАТЬ",
+   "text": "USA"
+  },
+  {
+   "source": "МЫШЬ",
+   "text": "MOUSE"
+  },
+  {
+   "source": "ВРАЩАТЬ",
+   "text": "RUOTA"
+  },
+  {
+   "source": "КОЛЕСО",
+   "text": "ROTELLA"
+  },
+  {
+   "source": "МАСШТАБ",
+   "text": "ZOOM"
+  },
+  {
+   "source": "СБРОС",
+   "text": "RIPRISTINA"
+  },
+  {
+   "source": "НАЗАД",
+   "text": "INDIETRO"
+  },
+  {
+   "source": "ВЫБОР",
+   "text": "SELEZIONA"
+  },
+  {
+   "source": "ОСМОТР",
+   "text": "ESAMINA"
+  },
+  {
+   "source": "Карманы пусты",
+   "text": "Tasche vuote"
+  },
+  {
+   "source": "Взять отвёртку",
+   "text": "Prendere il cacciavite"
+  },
+  {
+   "source": "Подойдите ближе",
+   "text": "Avvicinati"
+  },
+  {
+   "source": "Люк подвала",
+   "text": "Botola del seminterrato"
+  },
+  {
+   "source": "Заколотить люк",
+   "text": "Inchiodare la botola"
+  },
+  {
+   "source": "Проверить замок",
+   "text": "Controllare il lucchetto"
+  },
+  {
+   "source": "Закрыть люк",
+   "text": "Chiudere la botola"
+  },
+  {
+   "source": "Открыть люк",
+   "text": "Aprire la botola"
+  },
+  {
+   "source": "Вскрыть доски",
+   "text": "Schiodare le assi"
+  },
+  {
+   "source": "Собрать мусор",
+   "text": "Raccogliere la spazzatura"
+  },
+  {
+   "source": "Взять молоток",
+   "text": "Prendere il martello"
+  },
+  {
+   "source": "Переключить свет",
+   "text": "Azionare l'interruttore"
+  },
+  {
+   "source": "Взять",
+   "text": "Prendi"
+  },
+  {
+   "source": "Посмотреть ночную запись",
+   "text": "Guardare la registrazione notturna"
+  },
+  {
+   "source": "Лечь спать",
+   "text": "Andare a dormire"
+  },
+  {
+   "source": "Достать пирог",
+   "text": "Tirare fuori la torta"
+  },
+  {
+   "source": "Открыть дверцу",
+   "text": "Aprire lo sportello"
+  },
+  {
+   "source": "Взять продукт",
+   "text": "Prendere l'ingrediente"
+  },
+  {
+   "source": "Съесть ужин",
+   "text": "Mangiare la cena"
+  },
+  {
+   "source": "Готовить ужин",
+   "text": "Preparare la cena"
+  },
+  {
+   "source": "Осмотреть",
+   "text": "Esamina"
+  },
+  {
+   "source": "Открыть щиток",
+   "text": "Aprire il quadro elettrico"
+  },
+  {
+   "source": "Отодвинуть засов",
+   "text": "Aprire il chiavistello"
+  },
+  {
+   "source": "Задвинуть засов",
+   "text": "Chiudere il chiavistello"
+  },
+  {
+   "source": "Заперто",
+   "text": "Chiuso a chiave"
+  },
+  {
+   "source": "Закрыть",
+   "text": "Chiudi"
+  },
+  {
+   "source": "Открыть",
+   "text": "Apri"
+  },
+  {
+   "source": "Мой телефон. Сел намертво — экран не включается.",
+   "text": "Il mio telefono. Morto del tutto: lo schermo non si accende."
+  },
+  {
+   "source": "Темно. На телефоне есть фонарик.",
+   "text": "Buio. Il telefono ha la torcia."
+  },
+  {
+   "source": "ВКЛЮЧИТЬ ФОНАРИК НА ТЕЛЕФОНЕ",
+   "text": "ACCENDI LA TORCIA DEL TELEFONO"
+  },
+  {
+   "source": "Заперто.",
+   "text": "Chiuso a chiave."
+  },
+  {
+   "source": "Точно, я же сам задвинул засов.",
+   "text": "Già, il chiavistello l'ho chiuso io."
+  },
+  {
+   "source": "ПОСТУЧАТЬ В ПОЛ",
+   "text": "BUSSA SUL PAVIMENTO"
+  },
+  {
+   "source": "ПРИСЕСТЬ",
+   "text": "ABBASSATI"
+  },
+  {
+   "source": "Поставить пирог",
+   "text": "Posare la torta"
+  },
+  {
+   "source": "ФОНАРИК ТЕЛЕФОНА",
+   "text": "TORCIA DEL TELEFONO"
+  },
+  {
+   "source": "ЗАДАНИЯ",
+   "text": "OBIETTIVI"
+  },
+  {
+   "source": "ИСТОРИЯ",
+   "text": "STORIA"
+  },
+  {
+   "source": "Сейчас нет активного задания",
+   "text": "Nessun obiettivo attivo"
+  },
+  {
+   "source": "Прогресс: {0} из {1}",
+   "text": "Progressi: {0} su {1}"
+  },
+  {
+   "source": "Новые цели появятся по ходу истории",
+   "text": "Nuovi obiettivi compariranno nel corso della storia"
+  },
+  {
+   "source": "Выполнено: {0}",
+   "text": "Completati: {0}"
+  },
+  {
+   "source": "Выполнено",
+   "text": "Completati"
+  },
+  {
+   "source": "Выполненные задания появятся здесь",
+   "text": "Gli obiettivi completati compariranno qui"
+  },
+  {
+   "source": "► ЗАДАНИЯ",
+   "text": "► OBIETTIVI"
+  },
+  {
+   "source": "Текущая цель",
+   "text": "Obiettivo attuale"
+  },
+  {
+   "source": "ЛИСТАТЬ",
+   "text": "SCORRI"
+  },
+  {
+   "source": "E поставить штатив у комода",
+   "text": "E metti il treppiede vicino al comò"
+  },
+  {
+   "source": "Отнесите штатив в спальню, к комоду",
+   "text": "Porta il treppiede in camera da letto, vicino al comò"
+  },
+  {
+   "source": "E положить камеру на комод",
+   "text": "E metti la videocamera sul comò"
+  },
+  {
+   "source": "Отнесите камеру в спальню, на комод",
+   "text": "Porta la videocamera in camera da letto, sul comò"
+  },
+  {
+   "source": "E поставить штатив здесь",
+   "text": "E piazza il treppiede qui"
+  },
+  {
+   "source": "Поднесите штатив к отмеченному месту",
+   "text": "Porta il treppiede nel punto segnato"
+  },
+  {
+   "source": "E установить камеру на штатив",
+   "text": "E monta la videocamera sul treppiede"
+  },
+  {
+   "source": "Поднесите камеру к штативу",
+   "text": "Avvicina la videocamera al treppiede"
+  },
+  {
+   "source": "1. Переезд",
+   "text": "1. Il trasloco"
+  },
+  {
+   "source": "2. Первая ночь",
+   "text": "2. La prima notte"
+  },
+  {
+   "source": "3. Второй день",
+   "text": "3. Il secondo giorno"
+  },
+  {
+   "source": "4. Вторая ночь",
+   "text": "4. La seconda notte"
+  },
+  {
+   "source": "E поставить на место",
+   "text": "E rimetti a posto"
+  },
+  {
+   "source": "E установить коробку",
+   "text": "E posa lo scatolone"
+  },
+  {
+   "source": "Отнесите коробку к месту",
+   "text": "Porta lo scatolone al suo posto"
+  },
+  {
+   "source": "E ВЫКИНУТЬ МУСОР",
+   "text": "E BUTTA LA SPAZZATURA"
+  },
+  {
+   "source": "ВЫКИНУТЬ МУСОР",
+   "text": "BUTTA LA SPAZZATURA"
+  },
+  {
+   "source": "E съесть",
+   "text": "E mangia"
+  },
+  {
+   "source": "E открыть дверцу",
+   "text": "E apri lo sportello"
+  },
+  {
+   "source": "E поставить",
+   "text": "E posa"
+  },
+  {
+   "source": "Быстрее…",
+   "text": "Presto…"
+  },
+  {
+   "source": "Оно уже у самой створки.",
+   "text": "È già proprio sotto la botola."
+  },
+  {
+   "source": "Поздно. Люк открыт.",
+   "text": "Troppo tardi. La botola è aperta."
+  },
+  {
+   "source": "Оно вышло.",
+   "text": "È uscita."
+  },
+  {
+   "source": "Тихо",
+   "text": "Silenzio"
+  },
+  {
+   "source": "Иногда люк лучше оставить закрытым. Навсегда.",
+   "text": "A volte è meglio lasciare una botola chiusa. Per sempre."
+  },
+  {
+   "source": "Дэниел снова заколотил люк. Снизу звал человек — потом затих. Как в прошлый раз.",
+   "text": "Daniel ha inchiodato di nuovo la botola. Da sotto un uomo chiamava, poi ha smesso. Come l'altra volta."
+  },
+  {
+   "source": "Внизу",
+   "text": "Laggiù"
+  },
+  {
+   "source": "У люка нельзя медлить.",
+   "text": "Alla botola non si esita."
+  },
+  {
+   "source": "Доски не выдержали. Оно забрало того, за кем пришло.",
+   "text": "Le assi non hanno retto. Ha preso chi era venuta a prendere."
+  },
+  {
+   "source": "Ты остался здесь",
+   "text": "Sei rimasto qui"
+  },
+  {
+   "source": "Спрятаться — не значит скрыться. Тихий чёрный ход не безопаснее парадного.",
+   "text": "Nascondersi non è fuggire. La porta di servizio, silenziosa, non è più sicura di quella principale."
+  },
+  {
+   "source": "Оно нашло Дэниела раньше, чем он успел уйти.",
+   "text": "Ha trovato Daniel prima che riuscisse ad andarsene."
+  },
+  {
+   "source": "Побег",
+   "text": "Fuga"
+  },
+  {
+   "source": "Дорога ведёт прочь от дома. Не оглядывайся.",
+   "text": "La strada porta lontano dalla casa. Non voltarti."
+  },
+  {
+   "source": "Дэниел уехал. В новой комнате под полом снова постучали.",
+   "text": "Daniel se n'è andato. Nella sua nuova stanza, sotto il pavimento, qualcosa ha bussato di nuovo."
+  },
+  {
+   "source": "Ответ",
+   "text": "La risposta"
+  },
+  {
+   "source": "Тому, кто стучит, можно ответить. Не всё надо заколачивать.",
+   "text": "A chi bussa si può rispondere. Non tutto va inchiodato."
+  },
+  {
+   "source": "Дэниел спустился и впервые не сбежал. Теперь каждую ночь стучать будет он.",
+   "text": "Daniel è sceso e, per una volta, non è scappato. Ora sarà lui a bussare ogni notte."
+  },
+  {
+   "source": "КОНЕЦ: {0} ({1}/{2})",
+   "text": "FINALE: {0} ({1}/{2})"
+  },
+  {
+   "source": "■ СТОП",
+   "text": "■ STOP"
+  },
+  {
+   "source": "ГОЛОС",
+   "text": "VOCE"
+  },
+  {
+   "source": "Эй! Наверху! Кто-нибудь!",
+   "text": "Ehi! Lassù! C'è qualcuno?!"
+  },
+  {
+   "source": "Не заколачивай! Выпусти меня!",
+   "text": "Non inchiodarla! Fammi uscire!"
+  },
+  {
+   "source": "Там внизу человек. И я снова его заколотил.",
+   "text": "Laggiù c'è un uomo. E io l'ho chiuso dentro un'altra volta."
+  },
+  {
+   "source": "Нет! Не закрывай люк!",
+   "text": "No! Non chiudere la botola!"
+  },
+  {
+   "source": "Выпусти меня, сука!",
+   "text": "Fammi uscire, figlio di puttana!"
+  },
+  {
+   "source": "Я не открыл тогда. Теперь открывать некому.",
+   "text": "Allora non ho aperto. Adesso non c'è più nessuno per cui aprire."
+  },
+  {
+   "source": "ТЯНУТЬ ДВЕРЬ",
+   "text": "TIRA LA PORTA"
+  },
+  {
+   "source": "ОТПУСТИТЬ КЛАВИШУ",
+   "text": "RILASCIA IL TASTO"
+  },
+  {
+   "source": "ЕСТЬ...",
+   "text": "MANGIO..."
+  },
+  {
+   "source": "ВЫПОЛНЯЕТСЯ...",
+   "text": "IN CORSO..."
+  },
+  {
+   "source": "ОПУСТИТЬ",
+   "text": "POSA"
+  },
+  {
+   "source": "R / ПКМ",
+   "text": "R / TASTO DX"
+  },
+  {
+   "source": "БЛИЖЕ / ДАЛЬШЕ",
+   "text": "AVVICINA / ALLONTANA"
+  },
+  {
+   "source": "СКМ",
+   "text": "CLIC ROTELLA"
+  },
+  {
+   "source": "СБРОС ВРАЩЕНИЯ",
+   "text": "AZZERA ROTAZIONE"
+  },
+  {
+   "source": "ЛКМ",
+   "text": "TASTO SX"
+  },
+  {
+   "source": "БРОСИТЬ",
+   "text": "LANCIA"
+  },
+  {
+   "source": "НЕТ МЕСТА ДЛЯ ПРЕДМЕТА, ОТОЙДИТЕ ОТ ПРЕПЯТСТВИЯ",
+   "text": "NON C'È SPAZIO PER L'OGGETTO, ALLONTANATI DALL'OSTACOLO"
+  },
+  {
+   "source": "E + МЫШЬ",
+   "text": "E + MOUSE"
+  },
+  {
+   "source": "УДЕРЖИВАТЬ И ТЯНУТЬ",
+   "text": "TIENI PREMUTO E TIRA"
+  },
+  {
+   "source": "НЕ ГОВОРИ НИ СЛОВА",
+   "text": "NON DIRE UNA PAROLA"
+  },
+  {
+   "source": "МИКРОФОН · СЛУШАЮ ТИШИНУ…",
+   "text": "MICROFONO · ASCOLTO IL SILENZIO…"
+  },
+  {
+   "source": "СЛИШКОМ ГРОМКО",
+   "text": "TROPPO FORTE"
+  },
+  {
+   "source": "МИКРОФОН",
+   "text": "MICROFONO"
+  },
+  {
+   "source": "КУХНЯ",
+   "text": "CUCINA"
+  },
+  {
+   "source": "ПРИХОЖАЯ",
+   "text": "INGRESSO"
+  },
+  {
+   "source": "ГОСТИНАЯ",
+   "text": "SOGGIORNO"
+  },
+  {
+   "source": "ЛЕСТНИЦА",
+   "text": "SCALE"
+  },
+  {
+   "source": "СПАЛЬНЯ",
+   "text": "CAMERA"
+  },
+  {
+   "source": "СПАЛЬНЯ 2",
+   "text": "CAMERA 2"
+  },
+  {
+   "source": "ГАРДЕРОБ",
+   "text": "ARMADIO"
+  },
+  {
+   "source": "САНУЗЕЛ",
+   "text": "WC"
+  },
+  {
+   "source": "ВАННАЯ",
+   "text": "BAGNO"
+  },
+  {
+   "source": "ВАННАЯ 2",
+   "text": "BAGNO 2"
+  },
+  {
+   "source": "ГАРАЖ",
+   "text": "GARAGE"
+  },
+  {
+   "source": "КРЫЛЬЦО",
+   "text": "PORTICO"
+  },
+  {
+   "source": "ДВОР",
+   "text": "CORTILE"
+  },
+  {
+   "source": "РОЗЕТКИ",
+   "text": "PRESE"
+  },
+  {
+   "source": "БОЙЛЕР",
+   "text": "SCALDABAGNO"
+  },
+  {
+   "source": "ПОДВАЛ",
+   "text": "SEMINTERRATO"
+  },
+  {
+   "source": "Снова выбило. Сначала группы, потом вводной.",
+   "text": "È saltato di nuovo. Prima i circuiti, poi il generale."
+  },
+  {
+   "source": "Кухня опять выбила. Там что-то не так.",
+   "text": "La cucina è saltata di nuovo. Lì c'è qualcosa che non va."
+  },
+  {
+   "source": "ВВОДНОЙ",
+   "text": "GENERALE"
+  },
+  {
+   "source": "СВЕТИТЬ",
+   "text": "ILLUMINA"
+  },
+  {
+   "source": "ЩЁЛКНУТЬ АВТОМАТ",
+   "text": "AZIONA INTERRUTTORE"
+  },
+  {
+   "source": "ПРИБЛИЗИТЬ",
+   "text": "INGRANDISCI"
+  },
+  {
+   "source": "ОТЛОЖИТЬ",
+   "text": "POSA"
+  },
+  {
+   "source": "Здесь что-то есть… надо присмотреться",
+   "text": "C'è qualcosa… devo guardare meglio"
+  },
+  {
+   "source": "ЗАКОЛОТИТЬ",
+   "text": "INCHIODA"
+  },
+  {
+   "source": "СПУСТИТЬСЯ",
+   "text": "SCENDI"
+  },
+  {
+   "source": "ПОДУМАТЬ",
+   "text": "PENSACI"
+  },
+  {
+   "source": "ЛЮК ПОДВАЛА",
+   "text": "BOTOLA DEL SEMINTERRATO"
+  },
+  {
+   "source": "Заколотить — и оно больше не вылезет.\nИли спуститься и узнать, кто стучал.",
+   "text": "Inchiodarla, e non uscirà mai più.\nOppure scendere e scoprire chi bussava."
+  },
+  {
+   "source": "ЦЕЛИТЬСЯ",
+   "text": "MIRA"
+  },
+  {
+   "source": "ДЕРЖАТЬ ДЛЯ ЗАМАХА, ОТПУСТИТЬ ДЛЯ УДАРА",
+   "text": "TIENI PREMUTO PER CARICARE, RILASCIA PER COLPIRE"
+  },
+  {
+   "source": "ЗАЛЕЗТЬ ПОД КРОВАТЬ",
+   "text": "NASCONDITI SOTTO IL LETTO"
+  },
+  {
+   "source": "Удерживай ЛКМ над болтом",
+   "text": "Tieni premuto il tasto sinistro su un bullone"
+  },
+  {
+   "source": "отойти",
+   "text": "allontanati"
+  },
+  {
+   "source": "АВТО",
+   "text": "AUTO"
+  },
+  {
+   "source": "ДАЛЕЕ",
+   "text": "AVANTI"
+  },
+  {
+   "source": "Здесь появятся прочитанные реплики и мысли.",
+   "text": "Qui compariranno le battute e i pensieri già letti."
+  },
+  {
+   "source": "Размер текста: {0}%",
+   "text": "Dimensione testo: {0}%"
+  },
+  {
+   "source": "Автопродолжение: вкл",
+   "text": "Avanzamento automatico: sì"
+  },
+  {
+   "source": "Автопродолжение: выкл",
+   "text": "Avanzamento automatico: no"
+  },
+  {
+   "source": "► ИСТОРИЯ",
+   "text": "► STORIA"
+  },
+  {
+   "source": "Текст меньше",
+   "text": "Testo più piccolo"
+  },
+  {
+   "source": "Текст крупнее",
+   "text": "Testo più grande"
+  },
+  {
+   "source": "Кто был в доме ночью? Остановите плёнку на нужном кадре и сохраните его.",
+   "text": "Chi c'era in casa stanotte? Ferma il nastro sul fotogramma giusto e salvalo."
+  },
+  {
+   "source": "Кадр сохранён. Esc вернёт в комнату.",
+   "text": "Fotogramma salvato. Premi Esc per tornare nella stanza."
+  },
+  {
+   "source": "Кадр сохранён {0}",
+   "text": "Fotogramma salvato: {0}"
+  },
+  {
+   "source": "На этом кадре ничего необычного.",
+   "text": "Niente di strano in questo fotogramma."
+  },
+  {
+   "source": "Сначала остановите плёнку.",
+   "text": "Prima ferma il nastro."
+  },
+  {
+   "source": "ПУСК",
+   "text": "PLAY"
+  },
+  {
+   "source": "ПЕРЕМОТКА",
+   "text": "SCORRI"
+  },
+  {
+   "source": "СОХРАНИТЬ КАДР",
+   "text": "SALVA FOTOGRAMMA"
+  },
+  {
+   "source": "Собрать продукты на ужин",
+   "text": "Raccogliere gli ingredienti per la cena"
+  },
+  {
+   "source": "Приготовить ужин на плите",
+   "text": "Cucinare la cena sui fornelli"
+  },
+  {
+   "source": "Всё на месте. Теперь к плите.",
+   "text": "C'è tutto. Ora ai fornelli."
+  },
+  {
+   "source": "Съесть ужин на обеденном столе",
+   "text": "Mangiare la cena al tavolo da pranzo"
+  },
+  {
+   "source": "Готово. Поем за столом.",
+   "text": "Fatto. Mangio a tavola."
+  },
+  {
+   "source": "Дом почти даром. Так дома не продают. Сын даже не торговался — лишь бы я поскорее въехал.",
+   "text": "Una casa quasi regalata. Le case non si vendono così. Il figlio non ha nemmeno trattato, pur di farmi entrare subito."
+  },
+  {
+   "source": "Поел, и голова наконец заработала. Только ничего хорошего она не говорит.",
+   "text": "Ho mangiato, e la testa ha ripreso a funzionare. Peccato che non abbia niente di buono da dire."
+  },
+  {
+   "source": "Может, задвинуть на ночь засов на входной двери? Лишним не будет.",
+   "text": "Magari stanotte chiudo il chiavistello della porta d'ingresso? Male non fa."
+  },
+  {
+   "source": "Вот так. Снаружи теперь никто не войдёт.",
+   "text": "Ecco fatto. Ora da fuori non entra nessuno."
+  },
+  {
+   "source": "Всё, я вымотался. Остальное завтра.",
+   "text": "Basta, sono distrutto. Il resto domani."
+  },
+  {
+   "source": "Ушло. Обратно вниз.",
+   "text": "Se n'è andata. È tornata giù."
+  },
+  {
+   "source": "Пока оно внизу — заколочу люк.",
+   "text": "Finché è laggiù, inchiodo la botola."
+  },
+  {
+   "source": "Тихо.",
+   "text": "Silenzio."
+  },
+  {
+   "source": "Похоже, ушло. Пора выбираться.",
+   "text": "Sembra che se ne sia andata. È ora di uscire."
+  },
+  {
+   "source": "Нет… Оно здесь.",
+   "text": "No… È qui."
+  },
+  {
+   "source": "Ну вот и он. Свой дом. Здесь всё будет по-другому.",
+   "text": "Eccola. Casa mia. Qui sarà tutto diverso."
+  },
+  {
+   "source": "Прежние хозяева так спешили, что даже мусор не вынесли.",
+   "text": "I vecchi proprietari avevano così fretta che non hanno nemmeno portato fuori la spazzatura."
+  },
+  {
+   "source": "Зайти в дом",
+   "text": "Entrare in casa"
+  },
+  {
+   "source": "Видеокамера и штатив. Всё-таки я взял их с собой.",
+   "text": "La videocamera e il treppiede. Alla fine li ho portati."
+  },
+  {
+   "source": "Разберусь с коробками и отнесу их в спальню.",
+   "text": "Sistemo gli scatoloni e poi li porto in camera da letto."
+  },
+  {
+   "source": "Отнести камеру и штатив в спальню",
+   "text": "Portare videocamera e treppiede in camera da letto"
+  },
+  {
+   "source": "Надеюсь, здесь она мне не понадобится.",
+   "text": "Spero di non averne bisogno, qui."
+  },
+  {
+   "source": "В холодильнике есть пирог. На ужин сойдёт.",
+   "text": "In frigo c'è una torta. Per cena andrà bene."
+  },
+  {
+   "source": "Установить видеокамеру на штатив",
+   "text": "Montare la videocamera sul treppiede"
+  },
+  {
+   "source": "…Кто здесь?",
+   "text": "…Chi c'è?"
+  },
+  {
+   "source": "Никого. Только я и пустой дом.",
+   "text": "Nessuno. Solo io e una casa vuota."
+  },
+  {
+   "source": "Опять. Как в старом доме: стоит отвернуться, и кажется, что за спиной кто-то ходит.",
+   "text": "Di nuovo. Come nella vecchia casa: basta girarsi e sembra che qualcuno cammini alle tue spalle."
+  },
+  {
+   "source": "Там я месяцами не мог отличить сон от яви. Пока не купил камеру.",
+   "text": "Lì per mesi non distinguevo il sogno dalla realtà. Finché non ho comprato la videocamera."
+  },
+  {
+   "source": "К утру память всё сглаживает. Плёнка — нет. Поставлю камеру внизу, чтобы весь первый этаж был в кадре.",
+   "text": "Al mattino la memoria smussa tutto. Il nastro no. Metto la videocamera di sotto, così inquadra tutto il pianterreno."
+  },
+  {
+   "source": "Запись пошла. Утром посмотрю, что она увидела.",
+   "text": "Sta registrando. Domattina vedrò cosa ha visto."
+  },
+  {
+   "source": "Так она ничего не снимет. Верну её на штатив.",
+   "text": "Così non riprende niente. La rimetto sul treppiede."
+  },
+  {
+   "source": "Опять. Средь бела дня, прямо подо мной.",
+   "text": "Di nuovo. In pieno giorno, proprio sotto di me."
+  },
+  {
+   "source": "Сначала вещи на полу, теперь это. Трубы так не стучат.",
+   "text": "Prima le mie cose sul pavimento, ora questo. I tubi non bussano così."
+  },
+  {
+   "source": "Вход в подвал — снаружи. Пора на него взглянуть.",
+   "text": "L'ingresso del seminterrato è fuori. È ora di darci un'occhiata."
+  },
+  {
+   "source": "Камера писала всю ночь.",
+   "text": "La videocamera ha registrato tutta la notte."
+  },
+  {
+   "source": "Подключу её к телевизору в гостиной. Посмотрим, что тут было, пока я спал.",
+   "text": "La collego alla TV in soggiorno. Vediamo cos'è successo qui mentre dormivo."
+  },
+  {
+   "source": "Посмотреть запись на телевизоре в гостиной",
+   "text": "Guardare la registrazione sulla TV del soggiorno"
+  },
+  {
+   "source": "Оно зашло с улицы. А люк подвала — прямо у крыльца.",
+   "text": "È entrata da fuori. E la botola del seminterrato è proprio accanto al portico."
+  },
+  {
+   "source": "Значит, приходит оно оттуда. Хотя в этом подвале и спрятаться-то негде.",
+   "text": "Quindi viene da lì. Anche se in quel seminterrato non c'è neanche un posto dove nascondersi."
+  },
+  {
+   "source": "Поставлю камеру внизу, напротив решётки вентиляции. Пусть смотрит туда всю ночь.",
+   "text": "Metto la videocamera di sotto, davanti alla grata della ventilazione. Che la tenga d'occhio tutta la notte."
+  },
+  {
+   "source": "Поставить камеру в подвале",
+   "text": "Piazzare la videocamera nel seminterrato"
+  },
+  {
+   "source": "Решётка в кадре. Если оно полезет оттуда, я это увижу.",
+   "text": "La grata è inquadrata. Se quella cosa esce da lì, la vedrò."
+  },
+  {
+   "source": "А теперь поесть. Я с утра ничего не ел.",
+   "text": "Ora si mangia. Non tocco cibo da stamattina."
+  },
+  {
+   "source": "Что это было?!",
+   "text": "Che cos'era?!"
+  },
+  {
+   "source": "Грохнуло внизу. У входной двери.",
+   "text": "Un tonfo di sotto. Alla porta d'ingresso."
+  },
+  {
+   "source": "Опять стук.",
+   "text": "Ancora quei colpi."
+  },
+  {
+   "source": "Надо понять, откуда он идёт.",
+   "text": "Devo capire da dove vengono."
+  },
+  {
+   "source": "Сначала свет. Потом разберусь со стуком.",
+   "text": "Prima la luce. Poi penso ai colpi."
+  },
+  {
+   "source": "Проверить выключатель света",
+   "text": "Controllare l'interruttore della luce"
+  },
+  {
+   "source": "Проверить шум на кухне",
+   "text": "Controllare il rumore in cucina"
+  },
+  {
+   "source": "Стучат снизу. Из подвала.",
+   "text": "Bussano da sotto. Dal seminterrato."
+  },
+  {
+   "source": "Только не как в прошлый раз…",
+   "text": "Non come l'altra volta…"
+  },
+  {
+   "source": "Люк снаружи. Пойду посмотрю.",
+   "text": "La botola è fuori. Vado a vedere."
+  },
+  {
+   "source": "Без фонаря я туда не полезу.",
+   "text": "Senza una torcia lì sotto non ci vado."
+  },
+  {
+   "source": "Найти фонарик",
+   "text": "Trovare una torcia"
+  },
+  {
+   "source": "Телефон сел. Нужен нормальный фонарик.",
+   "text": "Il telefono è scarico. Mi serve una torcia vera."
+  },
+  {
+   "source": "Там что-то мелькнуло. Перемотаю и остановлю кадр.",
+   "text": "Lì si è mosso qualcosa. Riavvolgo e fermo il fotogramma."
+  },
+  {
+   "source": "Оно смотрело прямо в объектив.",
+   "text": "Guardava dritto nell'obiettivo."
+  },
+  {
+   "source": "А потом поднялось наверх. К спальне. Пока я спал…",
+   "text": "E poi è salita di sopra. Verso la camera da letto. Mentre dormivo…"
+  },
+  {
+   "source": "Так-то лучше.",
+   "text": "Così va meglio."
+  },
+  {
+   "source": "Скорее всего, выбило автоматы. Щиток в гараже.",
+   "text": "Probabilmente sono saltati gli interruttori. Il quadro è in garage."
+  },
+  {
+   "source": "С фонарём спокойнее. Теперь — откуда этот шум.",
+   "text": "Con la torcia mi sento meglio. Ora: da dove viene quel rumore?"
+  },
+  {
+   "source": "Проверить щиток",
+   "text": "Controllare il quadro elettrico"
+  },
+  {
+   "source": "Есть свет.",
+   "text": "La corrente è tornata."
+  },
+  {
+   "source": "Только кухня не держит: автомат выбивает снова и снова.",
+   "text": "Solo la cucina non regge: l'interruttore continua a saltare."
+  },
+  {
+   "source": "И стук как раз оттуда. Проверю кухню.",
+   "text": "E i colpi vengono proprio da lì. Controllo la cucina."
+  },
+  {
+   "source": "Оно прямо за стеной…",
+   "text": "È proprio dietro il muro…"
+  },
+  {
+   "source": "К чёрту щиток. Обойдусь фонариком.",
+   "text": "Al diavolo il quadro. Mi basta la torcia."
+  },
+  {
+   "source": "Сначала выясню, откуда стук.",
+   "text": "Prima scopro da dove vengono i colpi."
+  },
+  {
+   "source": "Свет не включается. Пробки выбило?",
+   "text": "La luce non si accende. Saltato il salvavita?"
+  },
+  {
+   "source": "Сначала свет.",
+   "text": "Prima la luce."
+  },
+  {
+   "source": "В такой темноте я никуда не пойду.",
+   "text": "Con questo buio non vado da nessuna parte."
+  },
+  {
+   "source": "Выключатель. Начну с него.",
+   "text": "L'interruttore. Comincio da lì."
+  },
+  {
+   "source": "Кто-то только что пробежал по лестнице…",
+   "text": "Qualcuno ha appena corso su per le scale…"
+  },
+  {
+   "source": "Проверить люк подвала снаружи",
+   "text": "Controllare la botola esterna del seminterrato"
+  },
+  {
+   "source": "Заперт. На навесной замок.",
+   "text": "Chiusa. Con un lucchetto."
+  },
+  {
+   "source": "Люк, запертый снаружи… С такими у меня свои счёты.",
+   "text": "Una botola chiusa da fuori… Con queste ho un conto in sospeso."
+  },
+  {
+   "source": "Ключа у меня нет. Замок можно сбить ломом.",
+   "text": "Non ho la chiave. Il lucchetto si può spaccare con una spranga."
+  },
+  {
+   "source": "Найти лом",
+   "text": "Trovare una spranga"
+  },
+  {
+   "source": "Этим замок и собью.",
+   "text": "Con questa il lucchetto lo spacco."
+  },
+  {
+   "source": "Взламываю собственный подвал. Хорошее начало новой жизни.",
+   "text": "Scassino il mio stesso seminterrato. Bell'inizio per una nuova vita."
+  },
+  {
+   "source": "Взламываю собственный подвал посреди ночи. Хорошее начало новой жизни.",
+   "text": "Scassino il mio stesso seminterrato in piena notte. Bell'inizio per una nuova vita."
+  },
+  {
+   "source": "Сорвать замок с люка подвала",
+   "text": "Strappare il lucchetto dalla botola del seminterrato"
+  },
+  {
+   "source": "Замок слетел. Посмотрим, что внизу.",
+   "text": "Il lucchetto è saltato. Vediamo cosa c'è sotto."
+  },
+  {
+   "source": "Замок снят.",
+   "text": "Lucchetto tolto."
+  },
+  {
+   "source": "Сначала посвечу на лестницу. Вслепую я туда не полезу.",
+   "text": "Prima illumino le scale. Lì sotto alla cieca non ci vado."
+  },
+  {
+   "source": "Открыть подвал и осветить лестницу",
+   "text": "Aprire il seminterrato e illuminare le scale"
+  },
+  {
+   "source": "Исчезло.",
+   "text": "Sparita."
+  },
+  {
+   "source": "Нет. Второй раз я не побегу.",
+   "text": "No. Non scapperò una seconda volta."
+  },
+  {
+   "source": "Заколочу люк. Как тогда. И больше оно не вылезет.",
+   "text": "Inchiodo la botola. Come allora. E non uscirà mai più."
+  },
+  {
+   "source": "Нужен молоток.",
+   "text": "Serve un martello."
+  },
+  {
+   "source": "Найти молоток",
+   "text": "Trovare un martello"
+  },
+  {
+   "source": "Спрятаться под кровать",
+   "text": "Nascondersi sotto il letto"
+  },
+  {
+   "source": "Люк… Оно вылезло.",
+   "text": "La botola… È uscita."
+  },
+  {
+   "source": "Идёт сюда. Под кровать!",
+   "text": "Viene qui. Sotto il letto!"
+  },
+  {
+   "source": "Ушло вниз.",
+   "text": "È tornata giù."
+  },
+  {
+   "source": "Заколотить люк… или бежать отсюда?",
+   "text": "Inchiodare la botola… o scappare da qui?"
+  },
+  {
+   "source": "Камера в подвале ещё пишет. И тот, кто отвечал мне стуком, всё ещё там, внизу.",
+   "text": "La videocamera nel seminterrato sta ancora registrando. E chi mi rispondeva bussando è ancora laggiù."
+  },
+  {
+   "source": "Заколотить люк подвала",
+   "text": "Inchiodare la botola del seminterrato"
+  },
+  {
+   "source": "Собрать мусор по дому",
+   "text": "Raccogliere la spazzatura in casa"
+  },
+  {
+   "source": "Вынести мусорный мешок",
+   "text": "Portare fuori il sacco della spazzatura"
+  },
+  {
+   "source": "Наконец-то привезли мои вещи.",
+   "text": "Finalmente sono arrivate le mie cose."
+  },
+  {
+   "source": "Осталось разнести коробки по комнатам.",
+   "text": "Ora devo solo portare gli scatoloni nelle stanze."
+  },
+  {
+   "source": "Тишина и покой. Сразу после коробок.",
+   "text": "Pace e tranquillità. Subito dopo gli scatoloni."
+  },
+  {
+   "source": "Отнести коробки по комнатам",
+   "text": "Portare gli scatoloni nelle stanze"
+  },
+  {
+   "source": "Всё. Спина мне этого не простит.",
+   "text": "Fatto. La schiena non me lo perdonerà."
+  },
+  {
+   "source": "Теперь наверх, разберу свои вещи. Потом ужин — и спать.",
+   "text": "Ora di sopra, a sistemare le mie cose. Poi cena, e a letto."
+  },
+  {
+   "source": "Он видел кого-то внизу. А я всё это время спал наверху.",
+   "text": "Ha visto qualcuno di sotto. E io per tutto il tempo dormivo di sopra."
+  },
+  {
+   "source": "Он сам сказал, что показалось. Надо поспать.",
+   "text": "L'ha detto lui che si era sbagliato. Devo dormire."
+  },
+  {
+   "source": "Опять стук…",
+   "text": "Di nuovo quei colpi…"
+  },
+  {
+   "source": "Хватит. Старый дом, старые трубы.",
+   "text": "Basta. Casa vecchia, tubi vecchi."
+  },
+  {
+   "source": "Затихло. Надо поспать.",
+   "text": "Ha smesso. Devo dormire."
+  },
+  {
+   "source": "Утро. Дожил.",
+   "text": "Mattina. Ce l'ho fatta."
+  },
+  {
+   "source": "Сейчас тихо. А дел всё ещё по горло.",
+   "text": "Ora è tutto tranquillo. Ma ho ancora un sacco da fare."
+  },
+  {
+   "source": "Достать пирог из холодильника",
+   "text": "Prendere la torta dal frigo"
+  },
+  {
+   "source": "Поставить пирог в микроволновку",
+   "text": "Mettere la torta nel microonde"
+  },
+  {
+   "source": "Съесть пирог",
+   "text": "Mangiare la torta"
+  },
+  {
+   "source": "Хоть поел по-человечески.",
+   "text": "Almeno ho mangiato come una persona normale."
+  },
+  {
+   "source": "Всё. На сегодня хватит.",
+   "text": "Basta. Per oggi è abbastanza."
+  },
+  {
+   "source": "Пойти на кухню",
+   "text": "Andare in cucina"
+  },
+  {
+   "source": "Что здесь случилось?",
+   "text": "Cos'è successo qui?"
+  },
+  {
+   "source": "Убрать разбросанные вещи на кухне",
+   "text": "Rimettere in ordine la cucina"
+  },
+  {
+   "source": "Вчера всё стояло на местах. Само оно на пол не попадало.",
+   "text": "Ieri era tutto al suo posto. Le cose non finiscono sul pavimento da sole."
+  },
+  {
+   "source": "МЫСЛИ",
+   "text": "PENSIERI"
+  },
+  {
+   "source": "Только не это. Не снова.",
+   "text": "No, non questo. Non di nuovo."
+  },
+  {
+   "source": "Нет. Старый дом, тут всё скрипит.",
+   "text": "No. È una casa vecchia, qui scricchiola tutto."
+  },
+  {
+   "source": "Сначала вынесу этот чёртов мусор.",
+   "text": "Prima porto fuori questa maledetta spazzatura."
+  },
+  {
+   "source": "Удерживать, чтобы пропустить",
+   "text": "Tieni premuto per saltare"
+  },
+  {
+   "source": "НЕТ СИГНАЛА",
+   "text": "NESSUN SEGNALE"
+  },
+  {
+   "source": "ЗАПИСАНО: {0}/{1}",
+   "text": "REGISTRATI: {0}/{1}"
+  },
+  {
+   "source": "► КОНЦОВКИ",
+   "text": "► FINALI"
+  },
+  {
+   "source": "Назад",
+   "text": "Indietro"
+  },
+  {
+   "source": "Продолжить",
+   "text": "Continua"
+  },
+  {
+   "source": "Новая игра",
+   "text": "Nuova partita"
+  },
+  {
+   "source": "Выбор главы",
+   "text": "Selezione capitolo"
+  },
+  {
+   "source": "Концовки",
+   "text": "Finali"
+  },
+  {
+   "source": "Следующие главы откроются по мере прохождения",
+   "text": "Altri capitoli si sbloccheranno proseguendo nel gioco"
+  },
+  {
+   "source": "▌▌ ПАУЗА",
+   "text": "▌▌ PAUSA"
+  },
+  {
+   "source": "Настройки",
+   "text": "Impostazioni"
+  },
+  {
+   "source": "В главное меню",
+   "text": "Menu principale"
+  },
+  {
+   "source": "Выйти в главное меню?",
+   "text": "Tornare al menu principale?"
+  },
+  {
+   "source": "Текущий прогресс будет потерян.",
+   "text": "I progressi attuali andranno persi."
+  },
+  {
+   "source": "Остаться",
+   "text": "Resta"
+  },
+  {
+   "source": "Выйти в меню",
+   "text": "Esci al menu"
+  },
+  {
+   "source": "СЧЁТЧИК {0}",
+   "text": "CONTATORE {0}"
+  },
+  {
+   "source": "ПРОДОЛЖИТЬ",
+   "text": "RIPRENDI"
+  },
+  {
+   "source": "► НАСТРОЙКИ",
+   "text": "► IMPOSTAZIONI"
+  },
+  {
+   "source": "Язык",
+   "text": "Lingua"
+  },
+  {
+   "source": "Общая громкость",
+   "text": "Volume generale"
+  },
+  {
+   "source": "Музыка",
+   "text": "Musica"
+  },
+  {
+   "source": "Фоновые звуки",
+   "text": "Suoni ambientali"
+  },
+  {
+   "source": "Эффекты",
+   "text": "Effetti sonori"
+  },
+  {
+   "source": "Чувствительность мыши",
+   "text": "Sensibilità del mouse"
+  },
+  {
+   "source": "Поле зрения",
+   "text": "Campo visivo"
+  },
+  {
+   "source": "Инверсия мыши по вертикали",
+   "text": "Inverti asse Y del mouse"
+  },
+  {
+   "source": "Полноэкранный режим",
+   "text": "Schermo intero"
+  },
+  {
+   "source": "Вертикальная синхронизация",
+   "text": "Sincronizzazione verticale"
+  },
+  {
+   "source": "Качество графики",
+   "text": "Qualità grafica"
+  },
+  {
+   "source": "Разрешение",
+   "text": "Risoluzione"
+  },
+  {
+   "source": "ПРОБЕЛ / ЛКМ — ДАЛЕЕ",
+   "text": "SPAZIO / TASTO SX — AVANTI"
+  },
+  {
+   "source": "Старый будильник",
+   "text": "Vecchia sveglia"
+  },
+  {
+   "source": "На дне нацарапано: «Постучи в пол — оно повторит столько же. Без пауз. Это не я».",
+   "text": "Sul fondo c'è inciso: «Bussa sul pavimento: quella cosa ripeterà lo stesso numero di colpi. Senza pause. Non sono io»."
+  },
+  {
+   "source": "«Оно», не «он». И «это не я»… Тогда что же мне отвечает?",
+   "text": "«Quella cosa», non «lui». E «non sono io»… Allora cos'è che mi risponde?"
+  },
+  {
+   "source": "Проверить можно только внизу, над подвалом.",
+   "text": "Posso verificarlo solo di sotto, sopra il seminterrato."
+  },
+  {
+   "source": "Прошло несколько часов...",
+   "text": "Qualche ora dopo..."
+  },
+  {
+   "source": "Старая книга",
+   "text": "Vecchio libro"
+  },
+  {
+   "source": "На обложке наклейка: «Эта книга принадлежит Уолтеру Хейлу». Прежний хозяин её не забрал.",
+   "text": "Sulla copertina c'è un adesivo: «Questo libro appartiene a Walter Hale». Il vecchio proprietario non l'ha portato via."
+  },
+  {
+   "source": "Уолтер Хейл. Значит, так звали прежнего хозяина.",
+   "text": "Walter Hale. Quindi si chiamava così, il vecchio proprietario."
+  },
+  {
+   "source": "Книги бросают, когда уезжают в спешке. Уж я-то знаю.",
+   "text": "I libri si lasciano quando si parte in fretta. Ne so qualcosa."
+  },
+  {
+   "source": "Нажмите E, чтобы открыть дверь",
+   "text": "Premi E per aprire la porta"
+  },
+  {
+   "source": "Старое радио",
+   "text": "Vecchia radio"
+  },
+  {
+   "source": "Сзади наклейка: «Дослушай до конца. Повтори. Паузы тоже».",
+   "text": "Dietro c'è un adesivo: «Ascolta fino alla fine. Ripeti. Anche le pause»."
+  },
+  {
+   "source": "Повторить стук. Вместе с паузами.",
+   "text": "Ripetere i colpi. Pause comprese."
+  },
+  {
+   "source": "Кто-то оставил инструкцию. Для следующего жильца?",
+   "text": "Qualcuno ha lasciato delle istruzioni. Per il prossimo inquilino?"
+  },
+  {
+   "source": "Взять ключ",
+   "text": "Prendere la chiave"
+  },
+  {
+   "source": "Записка на тумбе",
+   "text": "Biglietto sul comodino"
+  },
+  {
+   "source": "На тумбе записка: «Если я внизу, отвечай мне. У. Х.»",
+   "text": "Sul comodino c'è un biglietto: «Se sono là sotto, rispondimi. W. H.»"
+  },
+  {
+   "source": "Лежала здесь с самого переезда, а я не заметил.",
+   "text": "Era qui fin dal trasloco, e non me n'ero accorto."
+  },
+  {
+   "source": "У. Х.… Уолтер Хейл? Прежний хозяин.",
+   "text": "W. H.… Walter Hale? Il vecchio proprietario."
+  },
+  {
+   "source": "«Если я внизу»… Он что, там? До сих пор?",
+   "text": "«Se sono là sotto»… Ma è laggiù? Ancora adesso?"
+  },
+  {
+   "source": "Верните кружку к кофеварке",
+   "text": "Riporta la tazza vicino alla macchina del caffè"
+  },
+  {
+   "source": "Верните сковороду на плиту",
+   "text": "Rimetti la padella sui fornelli"
+  },
+  {
+   "source": "Верните крышку на кастрюлю",
+   "text": "Rimetti il coperchio sulla pentola"
+  },
+  {
+   "source": "Договор аренды",
+   "text": "Contratto d'affitto"
+  },
+  {
+   "source": "Договор аренды старого дома. Арендодатель: Уолтер Хейл. Арендатор: Дэниел Росс.",
+   "text": "Il contratto d'affitto della vecchia casa. Locatore: Walter Hale. Conduttore: Daniel Ross."
+  },
+  {
+   "source": "Это мой договор. Мой старый дом.",
+   "text": "È il mio contratto. La mia vecchia casa."
+  },
+  {
+   "source": "Я платил через агентство и ни разу не видел хозяина. Хейл.",
+   "text": "Pagavo tramite un'agenzia e non ho mai visto il proprietario. Hale."
+  },
+  {
+   "source": "Его сын сам нашёл меня и отдал этот дом почти даром. Это не совпадение.",
+   "text": "Suo figlio mi ha rintracciato di persona e mi ha ceduto questa casa quasi gratis. Non è una coincidenza."
+  },
+  {
+   "source": "Выйти",
+   "text": "Esci"
+  },
+  {
+   "source": "Громкость",
+   "text": "Volume"
+  },
+  {
+   "source": "Начать игру",
+   "text": "Inizia a giocare"
+  },
+  {
+   "source": "ЛОМ",
+   "text": "SPRANGA"
+  },
+  {
+   "source": "Тяжёлый старый лом. Им можно сбить замок или что-нибудь вскрыть.",
+   "text": "Una vecchia spranga di ferro, pesante. Serve a spaccare un lucchetto o a forzare qualcosa."
+  },
+  {
+   "source": "ФОНАРИК",
+   "text": "TORCIA"
+  },
+  {
+   "source": "Потёртый фонарик. Луч слабый, но в темноте с ним спокойнее.",
+   "text": "Una torcia consunta. Il fascio è debole, ma al buio mi fa sentire meglio."
+  },
+  {
+   "source": "МОЛОТОК",
+   "text": "MARTELLO"
+  },
+  {
+   "source": "Тяжёлый плотницкий молоток. Гвоздь войдёт с пары ударов.",
+   "text": "Un martello da carpentiere, pesante. Bastano un paio di colpi per piantare un chiodo."
+  },
+  {
+   "source": "КЛЮЧ",
+   "text": "CHIAVE"
+  },
+  {
+   "source": "Старый ключ с верстака в подвале. Где-то в этом доме есть запертая дверь.",
+   "text": "Una vecchia chiave trovata sul banco da lavoro del seminterrato. Da qualche parte in questa casa c'è una porta chiusa a chiave."
+  },
+  {
+   "source": "ТЕЛЕФОН",
+   "text": "TELEFONO"
+  },
+  {
+   "source": "Мой телефон. Связи почти нет, зато есть фонарик.",
+   "text": "Il mio telefono. Quasi niente campo, ma ha la torcia."
+  },
+  {
+   "source": "ОТВЁРТКА",
+   "text": "CACCIAVITE"
+  },
+  {
+   "source": "Плоская отвёртка. Болты на решётке ей поддадутся.",
+   "text": "Un cacciavite a taglio. Con questo i bulloni della grata cederanno."
+  }
+ ]
+}

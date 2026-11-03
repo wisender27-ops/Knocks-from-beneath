@@ -39,7 +39,7 @@ namespace KnocksFromBeneath
             screen.texture = recording.Texture;
             recording.Playing = true;
             trackMark.gameObject.SetActive(false);
-            SetFeedback("Кто был в доме ночью? Остановите плёнку на нужном кадре и сохраните его.", 10f);
+            SetFeedback(Loc.T("Кто был в доме ночью? Остановите плёнку на нужном кадре и сохраните его."), 10f);
             counterSeconds = -1;
             playLabel.gameObject.SetActive(true);
             GameAudio.PlayUi(playClip, 0.9f);
@@ -160,7 +160,7 @@ namespace KnocksFromBeneath
             if (feedbackTime > 0f)
             {
                 feedbackTime -= Time.deltaTime;
-                if (feedbackTime <= 0f) SetFeedback(EvidenceCaptured ? "Кадр сохранён. Esc вернёт в комнату." : "", 0f);
+                if (feedbackTime <= 0f) SetFeedback(EvidenceCaptured ? Loc.T("Кадр сохранён. Esc вернёт в комнату.") : "", 0f);
             }
             if (motor != null)
             {
@@ -177,10 +177,10 @@ namespace KnocksFromBeneath
             {
                 EvidenceCaptured = true;
                 savedFrameTime = transport.Time;
-                SetFeedback("Кадр сохранён " + NightTape.Stamp(transport.Time), 4f);
+                SetFeedback(Loc.F("Кадр сохранён {0}", NightTape.Stamp(transport.Time)), 4f);
                 GameAudio.PlayUi(stopClip, 0.7f);
             }
-            else SetFeedback(transport.IsStopped ? "На этом кадре ничего необычного." : "Сначала остановите плёнку.", 4f);
+            else SetFeedback(transport.IsStopped ? Loc.T("На этом кадре ничего необычного.") : Loc.T("Сначала остановите плёнку."), 4f);
         }
 
         private void SetFeedback(string message, float seconds)
@@ -215,9 +215,9 @@ namespace KnocksFromBeneath
                 PlaceOnTrack(trackMark, savedFrameTime);
             }
             if (transport.IsStopped)
-                keys.Set("ПРОБЕЛ", "ПУСК", "A D", "ПЕРЕМОТКА", "E", "СОХРАНИТЬ КАДР", "ESC", "ВЫЙТИ");
+                keys.Set(Loc.T("ПРОБЕЛ"), Loc.T("ПУСК"), "A D", Loc.T("ПЕРЕМОТКА"), "E", Loc.T("СОХРАНИТЬ КАДР"), "ESC", Loc.T("ВЫЙТИ"));
             else
-                keys.Set("ПРОБЕЛ", "СТОП", "A D", "ПЕРЕМОТКА", "ESC", "ВЫЙТИ");
+                keys.Set(Loc.T("ПРОБЕЛ"), Loc.T("СТОП"), "A D", Loc.T("ПЕРЕМОТКА"), "ESC", Loc.T("ВЫЙТИ"));
             int seconds = Mathf.FloorToInt(recording.Time);
             if (seconds == counterSeconds) return;
             counterSeconds = seconds;

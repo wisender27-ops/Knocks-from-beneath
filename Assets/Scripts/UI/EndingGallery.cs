@@ -38,10 +38,10 @@ namespace KnocksFromBeneath
         private static readonly int[] StackArt = { 1, 2, 0, 1, 2 };
         private static readonly bool[] StackFlip = { false, false, false, true, true };
 
-        public static string CardTitle(EndingRegistry.EndingInfo info, bool seen) => seen ? info.Title.ToUpperInvariant() : LockedTitle;
+        public static string CardTitle(EndingRegistry.EndingInfo info, bool seen) => seen ? Loc.Upper(info.Title) : LockedTitle;
         public static string CardBody(EndingRegistry.EndingInfo info, bool seen) => seen ? info.Summary : info.Hint;
-        public static string ScreenCaption(bool seen) => seen ? "► PLAY" : "НЕТ СИГНАЛА";
-        public static string Counter() => "ЗАПИСАНО: " + EndingRegistry.SeenCount + "/" + EndingRegistry.Count;
+        public static string ScreenCaption(bool seen) => seen ? "► PLAY" : Loc.T("НЕТ СИГНАЛА");
+        public static string Counter() => Loc.F("ЗАПИСАНО: {0}/{1}", EndingRegistry.SeenCount, EndingRegistry.Count);
 
         private EndingTapeSlot[] slots;
         private Texture2D[] frames;
@@ -91,10 +91,10 @@ namespace KnocksFromBeneath
             title = Label("Title", Area("TitleArea", stage, 1530f, 322f, 1870f, 450f), font, 46f, UiStyle.Amber, TextAlignmentOptions.BottomLeft);
             body = Label("Body", Area("BodyArea", stage, 1530f, 468f, 1870f, 720f), font, 28f, UiStyle.Ivory, TextAlignmentOptions.TopLeft);
 
-            Label("Heading", Area("HeadingArea", stage, 180f, 52f, 1100f, 142f), font, 64f, UiStyle.Amber, TextAlignmentOptions.TopLeft).text = "► КОНЦОВКИ";
+            Label("Heading", Area("HeadingArea", stage, 180f, 52f, 1100f, 142f), font, 64f, UiStyle.Amber, TextAlignmentOptions.TopLeft).text = Loc.T("► КОНЦОВКИ");
             Label("Counter", Area("CounterArea", stage, 184f, 140f, 900f, 186f), font, 28f, UiStyle.Ash, TextAlignmentOptions.TopLeft).text = Counter();
 
-            UiMenuItem back = UiMenuItem.Create(stage, "Назад", font, 40f, () => onBack?.Invoke());
+            UiMenuItem back = UiMenuItem.Create(stage, Loc.T("Назад"), font, 40f, () => onBack?.Invoke());
             var backRect = (RectTransform)back.transform;
             backRect.pivot = Vector2.zero;
             backRect.anchorMin = backRect.anchorMax = new Vector2(158f / StageWidth, 24f / StageHeight);

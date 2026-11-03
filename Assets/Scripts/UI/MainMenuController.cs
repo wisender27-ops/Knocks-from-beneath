@@ -25,6 +25,8 @@ public class MainMenuController : MonoBehaviour
     private readonly List<GameObject> chapterButtons = new List<GameObject>();
     private bool chaptersOpen;
     private const float LockedAlpha = 0.45f;
+    // L-02: смена языка перезагружает меню, чтобы все подписи собрались заново; настройки открываются снова.
+    private static bool reopenSettingsAfterLanguageChange;
 
     void Awake()
     {
@@ -38,6 +40,17 @@ public class MainMenuController : MonoBehaviour
         ChapterCheckpoints.CommitReached(); // вышли из игры в меню — открываем пройденные главы
         BuildChapterMenu();
         ShowMain();
+        if (reopenSettingsAfterLanguageChange)
+        {
+            reopenSettingsAfterLanguageChange = false;
+            OpenSettings();
+        }
+    }
+
+    void ReloadForLanguage()
+    {
+        reopenSettingsAfterLanguageChange = true;
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void StartGame()
@@ -80,7 +93,7 @@ public class MainMenuController : MonoBehaviour
         if (runtimeSettings == null)
         {
             runtimeSettingsCanvas = PauseMenuController.CreateCanvas(transform, "SettingsCanvas", 200);
-            runtimeSettings = SettingsMenuUI.BuildRuntime(runtimeSettingsCanvas.transform, PauseMenuController.FindFont(), BackFromSettings);
+            runtimeSettings = SettingsMenuUI.BuildRuntime(runtimeSettingsCanvas.transform, PauseMenuController.FindFont(), BackFromSettings, ReloadForLanguage);
         }
         if (mainPanel != null) mainPanel.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(false);
@@ -126,13 +139,13 @@ public class MainMenuController : MonoBehaviour
 
         if (ChapterCheckpoints.HasSave)
         {
-            GameObject resume = CloneButton(start, "BtnContinue", "Продолжить", ContinueGame);
+            GameObject resume = CloneButton(start, "BtnContinue", Loc.T("Продолжить"), ContinueGame);
             resume.transform.SetSiblingIndex(index);
-            SetLabel(start, "Новая игра");
+            SetLabel(start, Loc.T("Новая игра"));
         }
-        GameObject chapters = CloneButton(start, "BtnChapters", "Выбор главы", OpenChapters);
+        GameObject chapters = CloneButton(start, "BtnChapters", Loc.T("Выбор главы"), OpenChapters);
         chapters.transform.SetSiblingIndex(start.GetSiblingIndex() + 1);
-        GameObject gallery = CloneButton(start, "BtnEndings", "Концовки", OpenGallery);
+        GameObject gallery = CloneButton(start, "BtnEndings", Loc.T("Концовки"), OpenGallery);
         gallery.transform.SetSiblingIndex(chapters.transform.GetSiblingIndex() + 1);
 
         foreach (Transform child in mainPanel.transform)
@@ -147,12 +160,12 @@ public class MainMenuController : MonoBehaviour
             bool open = ChapterCheckpoints.IsUnlocked(chapter);
             if (!open && lockedShown)
             {
-                GameObject hint = CloneHint(start, "Следующие главы откроются по мере прохождения");
+                GameObject hint = CloneHint(start, Loc.T("Следующие главы откроются по мере прохождения"));
                 hint.transform.SetSiblingIndex(slot++);
                 chapterButtons.Add(hint);
                 break;
             }
-            GameObject button = CloneButton(start, "BtnChapter" + (int)chapter, info.Title, () => StartChapter(chapter));
+            GameObject button = CloneButton(start, "BtnChapter" + (int)chapter, Loc.T(info.Title), () => StartChapter(chapter));
             if (!open)
             {
                 lockedShown = true;
@@ -162,7 +175,7 @@ public class MainMenuController : MonoBehaviour
             button.transform.SetSiblingIndex(slot++);
             chapterButtons.Add(button);
         }
-        GameObject back = CloneButton(start, "BtnChaptersBack", "Назад", ShowMain);
+        GameObject back = CloneButton(start, "BtnChaptersBack", Loc.T("Назад"), ShowMain);
         back.transform.SetSiblingIndex(slot);
         chapterButtons.Add(back);
     }

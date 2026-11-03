@@ -54,15 +54,15 @@ namespace KnocksFromBeneath
             UiStyle.Scanlines(canvas.transform);
             TMP_FontAsset font = FindFont();
             menu = ScreenLayer(canvas.transform, "Pause");
-            Heading(menu.transform, "▌▌ ПАУЗА", font, 64f, UiStyle.Amber, -96f);
+            Heading(menu.transform, Loc.T("▌▌ ПАУЗА"), font, 64f, UiStyle.Amber, -96f);
             counter = Heading(menu.transform, string.Empty, font, 26f, UiStyle.Ash, -178f);
             menuItems = Column(menu.transform, font, -270f,
-                ("Продолжить", Resume), ("Настройки", OpenSettings), ("В главное меню", ConfirmReturnToMenu));
+                (Loc.T("Продолжить"), Resume), (Loc.T("Настройки"), OpenSettings), (Loc.T("В главное меню"), ConfirmReturnToMenu));
             settings = SettingsMenuUI.BuildRuntime(canvas.transform, font, ShowMenu);
             confirmation = ScreenLayer(canvas.transform, "ConfirmExit");
-            Heading(confirmation.transform, "Выйти в главное меню?", font, 48f, UiStyle.Ivory, -96f);
-            Heading(confirmation.transform, "Текущий прогресс будет потерян.", font, 28f, UiStyle.Ash, -170f);
-            confirmItems = Column(confirmation.transform, font, -270f, ("Остаться", ShowMenu), ("Выйти в меню", ReturnToMainMenu));
+            Heading(confirmation.transform, Loc.T("Выйти в главное меню?"), font, 48f, UiStyle.Ivory, -96f);
+            Heading(confirmation.transform, Loc.T("Текущий прогресс будет потерян."), font, 28f, UiStyle.Ash, -170f);
+            confirmItems = Column(confirmation.transform, font, -270f, (Loc.T("Остаться"), ShowMenu), (Loc.T("Выйти в меню"), ReturnToMainMenu));
             hints = UiKeyHints.Create(canvas.transform, "PauseHints", font, 1.5f);
             hints.RectTransform.anchorMin = hints.RectTransform.anchorMax = hints.RectTransform.pivot = new Vector2(1f, 0f);
             hints.RectTransform.anchoredPosition = new Vector2(-45f, 45f);
@@ -95,7 +95,7 @@ namespace KnocksFromBeneath
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
             int seconds = Mathf.FloorToInt(Time.timeSinceLevelLoad);
-            counter.text = $"СЧЁТЧИК {seconds / 3600}:{seconds / 60 % 60:00}:{seconds % 60:00}";
+            counter.text = Loc.F("СЧЁТЧИК {0}", $"{seconds / 3600}:{seconds / 60 % 60:00}:{seconds % 60:00}");
             canvas.gameObject.SetActive(true);
             ShowMenu();
             GameAudio.HookSelectables(canvas.transform);
@@ -122,7 +122,7 @@ namespace KnocksFromBeneath
             menu.SetActive(false);
             confirmation.SetActive(false);
             settings.gameObject.SetActive(true);
-            hints.Set("ESC", "НАЗАД");
+            hints.Set("ESC", Loc.T("НАЗАД"));
         }
 
         public void ShowMenu()
@@ -130,7 +130,7 @@ namespace KnocksFromBeneath
             menu.SetActive(true);
             settings.gameObject.SetActive(false);
             confirmation.SetActive(false);
-            hints.Set("↑ ↓", "ВЫБОР", "ENTER", "OK", "ESC", "ПРОДОЛЖИТЬ");
+            hints.Set("↑ ↓", Loc.T("ВЫБОР"), "ENTER", "OK", "ESC", Loc.T("ПРОДОЛЖИТЬ"));
             UiMenuItem.Select(menuItems[0]);
         }
 
@@ -138,7 +138,7 @@ namespace KnocksFromBeneath
         {
             menu.SetActive(false);
             confirmation.SetActive(true);
-            hints.Set("↑ ↓", "ВЫБОР", "ENTER", "OK", "ESC", "НАЗАД");
+            hints.Set("↑ ↓", Loc.T("ВЫБОР"), "ENTER", "OK", "ESC", Loc.T("НАЗАД"));
             UiMenuItem.Select(confirmItems[0]);
         }
 

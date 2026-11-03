@@ -1,0 +1,2173 @@
+{
+ "language": "tr",
+ "entries": [
+  {
+   "source": "Из старого дома я уехал за одну ночь.\nВещи потом пришлось отправлять следом.",
+   "text": "Eski evden tek bir gecede ayrıldım.\nEşyalarımı sonradan ardımdan yollatmak zorunda kaldım."
+  },
+  {
+   "source": "О том, что там случилось, я стараюсь не думать.\nЛюк заколочен. Туда я не вернусь.",
+   "text": "Orada olanları düşünmemeye çalışıyorum.\nKapak çivili. Oraya geri dönmeyeceğim."
+  },
+  {
+   "source": "Новый дом нашёлся почти сразу.\nСемья продавала его срочно и почти даром.",
+   "text": "Yeni evi neredeyse hemen buldum.\nAile acilen, neredeyse bedavaya satıyordu."
+  },
+  {
+   "source": "Цена настораживала.\nДва этажа, гараж, участок — и почти ничего за это.",
+   "text": "Fiyat beni kuşkulandırdı.\nİki kat, garaj, bahçe — karşılığında neredeyse hiçbir şey."
+  },
+  {
+   "source": "И они очень торопились.\nСами меня нашли, сами привезли бумаги.",
+   "text": "Üstelik çok aceleleri vardı.\nBeni kendileri buldular, evrakı kendileri getirdiler."
+  },
+  {
+   "source": "Но в моём положении\nот таких предложений не отказываются.",
+   "text": "Ama benim durumumda\nböyle teklifler geri çevrilmez."
+  },
+  {
+   "source": "Я подписал всё и не стал задавать вопросов.",
+   "text": "Her şeyi imzaladım, hiç soru sormadım."
+  },
+  {
+   "source": "Утром я постучал в пол. Два и один.",
+   "text": "Sabah yere vurdum. İki ve bir."
+  },
+  {
+   "source": "Снизу ответили тем же. Без пауз.",
+   "text": "Aşağıdan aynısıyla cevap geldi. Duraksamadan."
+  },
+  {
+   "source": "Хейл держал его стуком. Теперь это делать мне. Каждую ночь.",
+   "text": "Hale o şeyi vuruşlarla aşağıda tutuyordu. Artık bu benim işim. Her gece."
+  },
+  {
+   "source": "Если я сбегу, оно пойдёт следом. Как пришло сюда.",
+   "text": "Kaçarsam peşimden gelir. Buraya geldiği gibi."
+  },
+  {
+   "source": "Штатив опрокинут, камера валяется на полу.",
+   "text": "Tripod devrilmiş, kamera yerde yatıyor."
+  },
+  {
+   "source": "Посмотрю, что она успела снять.",
+   "text": "Bakalım neler çekebilmiş."
+  },
+  {
+   "source": "Залезть в вентиляцию",
+   "text": "Havalandırmaya gir"
+  },
+  {
+   "source": "Оно вылезло отсюда. Увидело объектив — и ударило.",
+   "text": "O şey buradan çıkmış. Objektifi görmüş — ve vurmuş."
+  },
+  {
+   "source": "Оно знало, что его снимают. И знает, кто поставил камеру.",
+   "text": "Çekildiğini biliyordu. Kamerayı kimin kurduğunu da biliyor."
+  },
+  {
+   "source": "Залезть в короб",
+   "text": "Hava kanalına gir"
+  },
+  {
+   "source": "Открутить болты",
+   "text": "Cıvataları sök"
+  },
+  {
+   "source": "Нужна отвёртка",
+   "text": "Tornavida lazım"
+  },
+  {
+   "source": "Ну и вонь. Гниль и сырость — будто здесь что-то сдохло.",
+   "text": "Ne leş bir koku. Çürük ve rutubet — sanki burada bir şey gebermiş."
+  },
+  {
+   "source": "Жесть проржавела и гнётся под коленями. Стук — где-то впереди.",
+   "text": "Sac paslanmış, dizlerimin altında bükülüyor. Vuruşlar ileride bir yerden geliyor."
+  },
+  {
+   "source": "Ползти по коробу",
+   "text": "Kanal boyunca sürün"
+  },
+  {
+   "source": "Вот она, вторая половина подвала. Та, что за свежей кладкой.",
+   "text": "İşte bodrumun öbür yarısı. Yeni örülmüş duvarın ardındaki kısım."
+  },
+  {
+   "source": "Оно бродит где-то здесь. Если пригнуться и идти медленно, оно не услышит.",
+   "text": "O şey buralarda bir yerde dolaşıyor. Eğilip yavaş yürürsem beni duymaz."
+  },
+  {
+   "source": "Найти того, кто стучал",
+   "text": "Vuranı bul"
+  },
+  {
+   "source": "Добраться до стальной камеры",
+   "text": "Çelik hücreye ulaş"
+  },
+  {
+   "source": "Ударить по замку ломом",
+   "text": "Kilide levyeyle vur"
+  },
+  {
+   "source": "Спрятаться от монстра",
+   "text": "Canavardan saklan"
+  },
+  {
+   "source": "Сбить замок",
+   "text": "Kilidi kır"
+  },
+  {
+   "source": "Над головой труба. Уходит наверх, в дом.",
+   "text": "Tepemde bir boru. Yukarı, eve çıkıyor."
+  },
+  {
+   "source": "Стучи по такой — и услышат во всех комнатах.",
+   "text": "Böyle bir boruya vurursan bütün odalardan duyulur."
+  },
+  {
+   "source": "Вот по этой трубе он и стучит. Поэтому стук слышен по всему дому.",
+   "text": "Demek vurduğu boru bu. Vuruşlar o yüzden bütün evde duyuluyor."
+  },
+  {
+   "source": "На решётке замок. Хорошо, что лом при мне.",
+   "text": "Hücre kapısında kilit var. İyi ki levye yanımda."
+  },
+  {
+   "source": "Услышало…",
+   "text": "Duydu…"
+  },
+  {
+   "source": "Ушло. Что-то упало вдалеке. Пока оно не вернулось — к замку.",
+   "text": "Gitti. Uzakta bir şey düştü. O dönmeden — kilide."
+  },
+  {
+   "source": "Оно рядом. Только не…",
+   "text": "Yakınımda. Sakın…"
+  },
+  {
+   "source": "Оно идёт на звук шагов. Пригнуться — Ctrl. Не бежать, красться.",
+   "text": "Ayak seslerine yöneliyor. Ctrl ile eğil. Koşma, sessizce ilerle."
+  },
+  {
+   "source": "Оно вернётся к замку. За ящики у стены — и ни звука.",
+   "text": "Kilide geri dönecek. Duvardaki sandıkların arkasına geç — ve çıt çıkarma."
+  },
+  {
+   "source": "Ударить по замку",
+   "text": "Kilide vur"
+  },
+  {
+   "source": "Голыми руками этот замок не сбить. Нужен лом.",
+   "text": "Bu kilidi çıplak elle kıramam. Levye lazım."
+  },
+  {
+   "source": "Грохот на весь подвал!",
+   "text": "Bütün bodrum duydu bunu!"
+  },
+  {
+   "source": "Оно идёт сюда. За ящики у стены, быстро.",
+   "text": "Buraya geliyor. Duvardaki sandıkların arkasına, çabuk."
+  },
+  {
+   "source": "ХЕЙЛ",
+   "text": "HALE"
+  },
+  {
+   "source": "Кто ты? Четыре месяца я стучу по трубе и не знаю, кто меня слышит.",
+   "text": "Kimsin sen? Dört aydır bu boruya vuruyorum, beni kimin duyduğunu bilmeden."
+  },
+  {
+   "source": "Погоди… Дэниел Росс?",
+   "text": "Dur… Daniel Ross?"
+  },
+  {
+   "source": "Я",
+   "text": "Ben"
+  },
+  {
+   "source": "Откуда вы меня знаете?",
+   "text": "Beni nereden tanıyorsunuz?"
+  },
+  {
+   "source": "Ты снимал у меня дом. В договоре была копия твоих прав. С фотографией.",
+   "text": "Evimi kiralamıştın. Sözleşmede ehliyetinin fotokopisi vardı. Fotoğraflı."
+  },
+  {
+   "source": "Он никогда не шёл за мной. Он шёл за тобой.",
+   "text": "O şey hiçbir zaman benim peşimde değildi. Senin peşindeydi."
+  },
+  {
+   "source": "Зачем ты сбил замок?",
+   "text": "Kilidi neden kırdın?"
+  },
+  {
+   "source": "Сын запер меня здесь по моей же просьбе. Этот замок меня не держал. Он меня защищал.",
+   "text": "Oğlum beni buraya kendi isteğimle kilitledi. O kilit beni hapsetmiyordu. Beni koruyordu."
+  },
+  {
+   "source": "Я стучал по трубе, чтобы он оставался внизу. А теперь он услышал грохот. Он идёт сюда.",
+   "text": "Aşağıda kalsın diye boruya vuruyordum. Şimdi o gürültüyü duydu. Buraya geliyor."
+  },
+  {
+   "source": "Камера на стене — моя. Пусть пишет. Хоть раз он попадёт на плёнку там, где нужно.",
+   "text": "Duvardaki kamera benim. Bırak kaydetsin. Bir kez olsun gereken yerde banda girsin."
+  },
+  {
+   "source": "Ходить я не могу. Останусь и буду стучать. Он пойдёт на стук.",
+   "text": "Yürüyemiyorum. Kalıp vurmaya devam edeceğim. Vuruşlara gelecek."
+  },
+  {
+   "source": "Спрячься за коробкой. Когда он войдёт ко мне, захлопни решётку и вставь лом в проушины.",
+   "text": "Kutunun arkasına saklan. O şey yanıma girince parmaklıklı kapıyı çarp, levyeyi halkalardan geçir."
+  },
+  {
+   "source": "А вы?",
+   "text": "Ya siz?"
+  },
+  {
+   "source": "Иди.",
+   "text": "Git."
+  },
+  {
+   "source": "Спрятаться за коробкой",
+   "text": "Kutunun arkasına saklan"
+  },
+  {
+   "source": "Стук оборвался. Оно в камере. Решётку, сейчас!",
+   "text": "Vuruşlar kesildi. O şey hücrede. Kapı, hemen!"
+  },
+  {
+   "source": "Захлопнуть решётку",
+   "text": "Hücre kapısını çarp"
+  },
+  {
+   "source": "Вставить лом в проушины",
+   "text": "Levyeyi halkalardan geçir"
+  },
+  {
+   "source": "Оно оборачивается. Лом, быстрее!",
+   "text": "Dönüyor. Levye, çabuk!"
+  },
+  {
+   "source": "Держит.",
+   "text": "Dayanıyor."
+  },
+  {
+   "source": "Хейл больше не стучит.",
+   "text": "Hale artık vurmuyor."
+  },
+  {
+   "source": "Посмотреть запись",
+   "text": "Kaydı izle"
+  },
+  {
+   "source": "Осмотреть стену",
+   "text": "Duvarı incele"
+  },
+  {
+   "source": "Осмотреть решётку",
+   "text": "Izgarayı incele"
+  },
+  {
+   "source": "Спуститься в подвал",
+   "text": "Bodruma in"
+  },
+  {
+   "source": "Осмотреть подвал",
+   "text": "Bodrumu araştır"
+  },
+  {
+   "source": "Котёл, верстак, полки. Подвал как подвал.",
+   "text": "Kazan, tezgâh, raflar. Sıradan bir bodrum."
+  },
+  {
+   "source": "И тихо. Здесь стука не слышно.",
+   "text": "Ve sessiz. Burada vuruşlar duyulmuyor."
+  },
+  {
+   "source": "Здесь был проём. Его заложили, и недавно: кладка свежее остальной.",
+   "text": "Burada bir geçit varmış. Örülüp kapatılmış, hem de yakın zamanda: harç ötekilerden taze."
+  },
+  {
+   "source": "Десять шагов от стены до стены. А дом наверху раза в полтора длиннее. Где остальное?",
+   "text": "Duvardan duvara on adım. Oysa yukarıdaki ev bunun bir buçuk katı. Gerisi nerede?"
+  },
+  {
+   "source": "Вентиляционный короб шириной с человека. Зачем такой маленькому подвалу?",
+   "text": "İnsan sığacak genişlikte bir havalandırma kanalı. Bu küçücük bodruma ne gerek var bunun?"
+  },
+  {
+   "source": "Решётка на болтах. Из короба тянет холодом.",
+   "text": "Izgara cıvatalı. Kanaldan soğuk hava geliyor."
+  },
+  {
+   "source": "Никого. Стучать здесь некому.",
+   "text": "Kimse yok. Burada vuracak kimse yok."
+  },
+  {
+   "source": "И всё равно что-то не сходится.",
+   "text": "Yine de bir şeyler uymuyor."
+  },
+  {
+   "source": "Подняться наверх",
+   "text": "Yukarı çık"
+  },
+  {
+   "source": "Опять. Тот же стук — будто я и не спускался.",
+   "text": "Yine. Aynı vuruşlar — sanki hiç aşağı inmemişim gibi."
+  },
+  {
+   "source": "Внизу никого нет. Я только что оттуда.",
+   "text": "Aşağıda kimse yok. Daha yeni oradaydım."
+  },
+  {
+   "source": "Камера писала всю ночь. Пора посмотреть запись.",
+   "text": "Kamera bütün gece kayıttaydı. Kayda bakma vakti."
+  },
+  {
+   "source": "Голова гудит. Сначала поем, потом буду думать.",
+   "text": "Kafam zonkluyor. Önce bir şeyler yiyeyim, sonra düşünürüm."
+  },
+  {
+   "source": "Блядь! Что это было?!",
+   "text": "Siktir! Neydi o?!"
+  },
+  {
+   "source": "Какого чёрта… Оно стояло прямо передо мной!",
+   "text": "Ne halt… Tam karşımda duruyordu!"
+  },
+  {
+   "source": "Стучали из подвала. Оно оттуда и вылезло?..",
+   "text": "Vuruşlar bodrumdan geliyordu. O şey oradan mı çıktı?.."
+  },
+  {
+   "source": "Забрать коробки у курьера",
+   "text": "Kuryeden kutuları al"
+  },
+  {
+   "source": "Пересохло в горле…",
+   "text": "Boğazım kupkuru…"
+  },
+  {
+   "source": "Схожу на кухню за водой.",
+   "text": "Mutfaktan su alayım."
+  },
+  {
+   "source": "Взять стакан на кухне",
+   "text": "Mutfaktan bardak al"
+  },
+  {
+   "source": "F выпить воды",
+   "text": "F su iç"
+  },
+  {
+   "source": "E налить воды",
+   "text": "E su doldur"
+  },
+  {
+   "source": "Подойдите к раковине",
+   "text": "Lavaboya git"
+  },
+  {
+   "source": "???",
+   "text": "???"
+  },
+  {
+   "source": "Не двигайся.",
+   "text": "Kıpırdama."
+  },
+  {
+   "source": "Оно… говорит.",
+   "text": "O şey… konuşuyor."
+  },
+  {
+   "source": "Не подходить. Набрать воды — и обратно в кровать.",
+   "text": "Yanına gitme. Suyu doldur, sonra doğru yatağa."
+  },
+  {
+   "source": "Налить воды",
+   "text": "Su doldur"
+  },
+  {
+   "source": "Выпить воды",
+   "text": "Suyu iç"
+  },
+  {
+   "source": "Холодная.",
+   "text": "Soğuk."
+  },
+  {
+   "source": "Теперь наверх. И не оглядываться.",
+   "text": "Şimdi yukarı. Ve arkana bakma."
+  },
+  {
+   "source": "Вернуться в кровать",
+   "text": "Yatağa dön"
+  },
+  {
+   "source": "Отвечает сразу, будто ждал. Будто доверяет мне.",
+   "text": "Hemen cevap veriyor, sanki bekliyormuş. Sanki bana güveniyor."
+  },
+  {
+   "source": "Он больше не зовёт. Похоже, я сам его отвадил.",
+   "text": "Artık çağırmıyor. Galiba onu ben ürküttüm."
+  },
+  {
+   "source": "И звук другой: металл, в трубах, с паузой. А то, что ходит у меня под ногами, бьёт по дереву — ровно, без пауз. Их двое.",
+   "text": "Ses de farklı: metal, borulardan, aralıklı. Ayaklarımın altında dolaşan şeyse tahtaya vuruyor — düzenli, duraksamadan. İki ayrı vuran var."
+  },
+  {
+   "source": "Тот же ритм… и тихий стук в ответ.",
+   "text": "Aynı ritim… ve karşılığında hafif bir vuruş."
+  },
+  {
+   "source": "Трубы так не стучат. Внизу кто-то есть. И он меня понял.",
+   "text": "Borular böyle vurmaz. Aşağıda biri var. Ve beni anladı."
+  },
+  {
+   "source": "Он снова ответил. Будто кивнул.",
+   "text": "Yine cevap verdi. Sanki başını salladı."
+  },
+  {
+   "source": "Сбился. Снизу — ни звука.",
+   "text": "Ritmi kaçırdım. Aşağıdan çıt yok."
+  },
+  {
+   "source": "Я не ответил. Внизу затихли.",
+   "text": "Cevap vermedim. Aşağısı sustu."
+  },
+  {
+   "source": "…Столько же ударов. Повторило.",
+   "text": "…Aynı sayıda vuruş. Tekrarladı."
+  },
+  {
+   "source": "Это не эхо. Эхо не ждёт, пока ты закончишь.",
+   "text": "Bu yankı değil. Yankı senin bitirmeni beklemez."
+  },
+  {
+   "source": "Твою мать!",
+   "text": "Hassiktir!"
+  },
+  {
+   "source": "Оно… разозлилось? Больше я так колотить не буду.",
+   "text": "O şey… kızdı mı? Bir daha böyle vurmayacağım."
+  },
+  {
+   "source": "Проверить, кто стучит в дверь",
+   "text": "Kapıyı kimin çaldığına bak"
+  },
+  {
+   "source": "СОСЕД",
+   "text": "KOMŞU"
+  },
+  {
+   "source": "Господи, напугал! Я уж решил, что-то случилось.",
+   "text": "Tanrım, ödümü kopardın! Bir şey oldu sandım."
+  },
+  {
+   "source": "Я живу напротив. Видел в окне, как ты ходишь внизу, а потом всё стихло. Стучу — никто не открывает.",
+   "text": "Karşıda oturuyorum. Pencereden aşağıda dolaştığını gördüm, sonra her şey sustu. Kapıyı çalıyorum, açan yok."
+  },
+  {
+   "source": "Я… вышел подышать. С той стороны дома.",
+   "text": "Ben… biraz hava almaya çıktım. Evin öbür tarafına."
+  },
+  {
+   "source": "В такую темень? Ну… главное, что ты в порядке.",
+   "text": "Bu karanlıkta mı? Neyse… önemli olan iyi olman."
+  },
+  {
+   "source": "Привет. Я живу напротив. Прости, что так поздно.",
+   "text": "Selam. Karşıda oturuyorum. Kusura bakma, saat geç oldu."
+  },
+  {
+   "source": "Смотрю — ты внизу ходишь, не спишь. Решил заодно познакомиться.",
+   "text": "Baktım aşağıda dolaşıyorsun, uyumamışsın. Hazır uyanıksın, tanışayım dedim."
+  },
+  {
+   "source": "Внизу? Я спал наверху. Ты меня разбудил.",
+   "text": "Aşağıda mı? Ben yukarıda uyuyordum. Beni sen uyandırdın."
+  },
+  {
+   "source": "Да? Ну… значит, показалось. Что-то мелькнуло в окне.",
+   "text": "Öyle mi? Eh… bana öyle gelmiş demek. Pencerede bir şey kıpırdadı sandım."
+  },
+  {
+   "source": "И ещё. Пока я стоял у двери — это ты стучал по полу?",
+   "text": "Bir de şu var. Ben kapıda dururken — yere vuran sen miydin?"
+  },
+  {
+   "source": "Тук-тук… А снизу будто кто-то отвечал.",
+   "text": "Tak tak… Aşağıdan da biri cevap veriyor gibiydi."
+  },
+  {
+   "source": "…Трубы, наверное. Дом старый.",
+   "text": "…Borulardır herhalde. Ev eski."
+  },
+  {
+   "source": "Ты ведь у сына Хейла купил? Самого Уолтера с весны не видно. Сын говорит, уехал к сестре.",
+   "text": "Evi Hale'in oğlundan aldın, değil mi? Walter'ın kendisi bahardan beri ortalarda yok. Oğlu, kız kardeşinin yanına gitti diyor."
+  },
+  {
+   "source": "А сам потом неделю таскал в подвал мешки с цементом. Один, по ночам. Что-то бетонировал.",
+   "text": "Sonra da bir hafta boyunca bodruma çimento torbası taşıdı. Tek başına, geceleri. Bir şeyi betonluyordu."
+  },
+  {
+   "source": "Про подвал мне ничего не сказали.",
+   "text": "Bodrumla ilgili bana hiçbir şey söylemediler."
+  },
+  {
+   "source": "Ладно, не буду задерживать. Спокойной ночи.",
+   "text": "Neyse, seni tutmayayım. İyi geceler."
+  },
+  {
+   "source": "Оно шло не за домом. Оно шло за мной.",
+   "text": "O şey evin peşinde değildi. Benim peşimdeydi."
+  },
+  {
+   "source": "Выходить в такую темень? Нет уж.",
+   "text": "Bu karanlıkta dışarı mı çıkayım? Yok artık."
+  },
+  {
+   "source": "Никуда я сейчас не пойду. Мне нужно поспать.",
+   "text": "Şu an hiçbir yere gitmiyorum. Uyumam lazım."
+  },
+  {
+   "source": "Другой город, чужая комната. Здесь меня не найдут.",
+   "text": "Başka bir şehir, yabancı bir oda. Burada beni bulamazlar."
+  },
+  {
+   "source": "Под полом. Оно пришло за мной.",
+   "text": "Döşemenin altında. O şey benim için geldi."
+  },
+  {
+   "source": "Заперто. Про запертые комнаты мне никто не говорил.",
+   "text": "Kilitli. Kilitli odalardan kimse bahsetmemişti."
+  },
+  {
+   "source": "Похоже, от той запертой двери наверху.",
+   "text": "Galiba yukarıdaki o kilitli kapının."
+  },
+  {
+   "source": "Если отвёртка в доме есть, то там.",
+   "text": "Evde tornavida varsa oradadır."
+  },
+  {
+   "source": "Старый ключ. Что-то в этом доме он да открывает.",
+   "text": "Eski bir anahtar. Bu evde bir şeyi açıyor olmalı."
+  },
+  {
+   "source": "Болты руками не открутить. Нужна отвёртка.",
+   "text": "Bu cıvatalar elle sökülmez. Tornavida lazım."
+  },
+  {
+   "source": "Где-то в доме она должна быть.",
+   "text": "Evde bir yerlerde olmalı."
+  },
+  {
+   "source": "Открыто. Кладовка, забитая хламом.",
+   "text": "Açık. Ivır zıvırla dolu bir kiler."
+  },
+  {
+   "source": "Вот и отвёртка. Теперь вниз, к вентиляции.",
+   "text": "İşte tornavida. Şimdi aşağı, havalandırmaya."
+  },
+  {
+   "source": "Найти отвёртку",
+   "text": "Tornavida bul"
+  },
+  {
+   "source": "Вскрыть замок",
+   "text": "Kilidi zorla"
+  },
+  {
+   "source": "Дверь выбита. Вместе с петлями.",
+   "text": "Kapı kırılmış. Menteşeleriyle birlikte."
+  },
+  {
+   "source": "Засов выдержал. Петли — нет.",
+   "text": "Sürgü dayandı. Menteşeler dayanmadı."
+  },
+  {
+   "source": "► ГОТОВКА",
+   "text": "► YEMEK"
+  },
+  {
+   "source": "Останови стрелку пробелом в янтарной зоне. Попытка одна.",
+   "text": "Boşluk tuşuyla ibreyi kehribar alanda durdur. Tek şansın var."
+  },
+  {
+   "source": "НАЧАТЬ",
+   "text": "BAŞLA"
+  },
+  {
+   "source": "ВЫЙТИ",
+   "text": "ÇIK"
+  },
+  {
+   "source": "Останови стрелку в янтарной зоне",
+   "text": "İbreyi kehribar alanda durdur"
+  },
+  {
+   "source": "ПРОБЕЛ",
+   "text": "BOŞLUK"
+  },
+  {
+   "source": "СТОП",
+   "text": "DUR"
+  },
+  {
+   "source": "ПОДАТЬ УЖИН",
+   "text": "YEMEĞİ SERVİS ET"
+  },
+  {
+   "source": "Идеально!",
+   "text": "Mükemmel!"
+  },
+  {
+   "source": "Нормально",
+   "text": "Fena değil"
+  },
+  {
+   "source": "Подгорело",
+   "text": "Yandı"
+  },
+  {
+   "source": "Убрано: {0}",
+   "text": "Kaldırıldı: {0}"
+  },
+  {
+   "source": "В руках: {0}",
+   "text": "Elinde: {0}"
+  },
+  {
+   "source": "Использовано: {0}",
+   "text": "Kullanıldı: {0}"
+  },
+  {
+   "source": "► ОСМОТР",
+   "text": "► İNCELE"
+  },
+  {
+   "source": "► ИНВЕНТАРЬ",
+   "text": "► ENVANTER"
+  },
+  {
+   "source": "ЗАКРЫТЬ",
+   "text": "KAPAT"
+  },
+  {
+   "source": "УБРАТЬ",
+   "text": "KALDIR"
+  },
+  {
+   "source": "ВЗЯТЬ",
+   "text": "ELE AL"
+  },
+  {
+   "source": "ИСПОЛЬЗОВАТЬ",
+   "text": "KULLAN"
+  },
+  {
+   "source": "МЫШЬ",
+   "text": "FARE"
+  },
+  {
+   "source": "ВРАЩАТЬ",
+   "text": "DÖNDÜR"
+  },
+  {
+   "source": "КОЛЕСО",
+   "text": "TEKERLEK"
+  },
+  {
+   "source": "МАСШТАБ",
+   "text": "YAKINLAŞTIR"
+  },
+  {
+   "source": "СБРОС",
+   "text": "SIFIRLA"
+  },
+  {
+   "source": "НАЗАД",
+   "text": "GERİ"
+  },
+  {
+   "source": "ВЫБОР",
+   "text": "SEÇ"
+  },
+  {
+   "source": "ОСМОТР",
+   "text": "İNCELE"
+  },
+  {
+   "source": "Карманы пусты",
+   "text": "Ceplerin boş"
+  },
+  {
+   "source": "Взять отвёртку",
+   "text": "Tornavidayı al"
+  },
+  {
+   "source": "Подойдите ближе",
+   "text": "Yaklaş"
+  },
+  {
+   "source": "Люк подвала",
+   "text": "Bodrum kapağı"
+  },
+  {
+   "source": "Заколотить люк",
+   "text": "Kapağı çivile"
+  },
+  {
+   "source": "Проверить замок",
+   "text": "Kilidi kontrol et"
+  },
+  {
+   "source": "Закрыть люк",
+   "text": "Kapağı kapat"
+  },
+  {
+   "source": "Открыть люк",
+   "text": "Kapağı aç"
+  },
+  {
+   "source": "Вскрыть доски",
+   "text": "Tahtaları sök"
+  },
+  {
+   "source": "Собрать мусор",
+   "text": "Çöpleri topla"
+  },
+  {
+   "source": "Взять молоток",
+   "text": "Çekici al"
+  },
+  {
+   "source": "Переключить свет",
+   "text": "Işığı aç/kapat"
+  },
+  {
+   "source": "Взять",
+   "text": "Al"
+  },
+  {
+   "source": "Посмотреть ночную запись",
+   "text": "Gece kaydını izle"
+  },
+  {
+   "source": "Лечь спать",
+   "text": "Yat ve uyu"
+  },
+  {
+   "source": "Достать пирог",
+   "text": "Turtayı çıkar"
+  },
+  {
+   "source": "Открыть дверцу",
+   "text": "Kapağı aç"
+  },
+  {
+   "source": "Взять продукт",
+   "text": "Malzemeyi al"
+  },
+  {
+   "source": "Съесть ужин",
+   "text": "Yemeği ye"
+  },
+  {
+   "source": "Готовить ужин",
+   "text": "Yemek pişir"
+  },
+  {
+   "source": "Осмотреть",
+   "text": "İncele"
+  },
+  {
+   "source": "Открыть щиток",
+   "text": "Sigorta kutusunu aç"
+  },
+  {
+   "source": "Отодвинуть засов",
+   "text": "Sürgüyü çek"
+  },
+  {
+   "source": "Задвинуть засов",
+   "text": "Kapıyı sürgüle"
+  },
+  {
+   "source": "Заперто",
+   "text": "Kilitli"
+  },
+  {
+   "source": "Закрыть",
+   "text": "Kapat"
+  },
+  {
+   "source": "Открыть",
+   "text": "Aç"
+  },
+  {
+   "source": "Мой телефон. Сел намертво — экран не включается.",
+   "text": "Telefonum. Şarjı tamamen bitmiş — ekran açılmıyor bile."
+  },
+  {
+   "source": "Темно. На телефоне есть фонарик.",
+   "text": "Karanlık. Telefonda fener var."
+  },
+  {
+   "source": "ВКЛЮЧИТЬ ФОНАРИК НА ТЕЛЕФОНЕ",
+   "text": "TELEFONUN FENERİNİ AÇ"
+  },
+  {
+   "source": "Заперто.",
+   "text": "Kilitli."
+  },
+  {
+   "source": "Точно, я же сам задвинул засов.",
+   "text": "Doğru ya, kapıyı ben kendim sürgülemiştim."
+  },
+  {
+   "source": "ПОСТУЧАТЬ В ПОЛ",
+   "text": "YERE VUR"
+  },
+  {
+   "source": "ПРИСЕСТЬ",
+   "text": "EĞİL"
+  },
+  {
+   "source": "Поставить пирог",
+   "text": "Turtayı koy"
+  },
+  {
+   "source": "ФОНАРИК ТЕЛЕФОНА",
+   "text": "TELEFON FENERİ"
+  },
+  {
+   "source": "ЗАДАНИЯ",
+   "text": "GÖREVLER"
+  },
+  {
+   "source": "ИСТОРИЯ",
+   "text": "GEÇMİŞ"
+  },
+  {
+   "source": "Сейчас нет активного задания",
+   "text": "Şu an aktif görev yok"
+  },
+  {
+   "source": "Прогресс: {0} из {1}",
+   "text": "İlerleme: {0}/{1}"
+  },
+  {
+   "source": "Новые цели появятся по ходу истории",
+   "text": "Yeni görevler hikâye ilerledikçe açılacak"
+  },
+  {
+   "source": "Выполнено: {0}",
+   "text": "Tamamlanan: {0}"
+  },
+  {
+   "source": "Выполнено",
+   "text": "Tamamlandı"
+  },
+  {
+   "source": "Выполненные задания появятся здесь",
+   "text": "Tamamlanan görevler burada görünecek"
+  },
+  {
+   "source": "► ЗАДАНИЯ",
+   "text": "► GÖREVLER"
+  },
+  {
+   "source": "Текущая цель",
+   "text": "Mevcut görev"
+  },
+  {
+   "source": "ЛИСТАТЬ",
+   "text": "KAYDIR"
+  },
+  {
+   "source": "E поставить штатив у комода",
+   "text": "E tripodu şifonyerin yanına kur"
+  },
+  {
+   "source": "Отнесите штатив в спальню, к комоду",
+   "text": "Tripodu yatak odasındaki şifonyere götür"
+  },
+  {
+   "source": "E положить камеру на комод",
+   "text": "E kamerayı şifonyere koy"
+  },
+  {
+   "source": "Отнесите камеру в спальню, на комод",
+   "text": "Kamerayı yatak odasındaki şifonyere götür"
+  },
+  {
+   "source": "E поставить штатив здесь",
+   "text": "E tripodu buraya kur"
+  },
+  {
+   "source": "Поднесите штатив к отмеченному месту",
+   "text": "Tripodu işaretli yere götür"
+  },
+  {
+   "source": "E установить камеру на штатив",
+   "text": "E kamerayı tripoda tak"
+  },
+  {
+   "source": "Поднесите камеру к штативу",
+   "text": "Kamerayı tripoda yaklaştır"
+  },
+  {
+   "source": "1. Переезд",
+   "text": "1. Taşınma"
+  },
+  {
+   "source": "2. Первая ночь",
+   "text": "2. İlk Gece"
+  },
+  {
+   "source": "3. Второй день",
+   "text": "3. İkinci Gün"
+  },
+  {
+   "source": "4. Вторая ночь",
+   "text": "4. İkinci Gece"
+  },
+  {
+   "source": "E поставить на место",
+   "text": "E yerine koy"
+  },
+  {
+   "source": "E установить коробку",
+   "text": "E kutuyu yerleştir"
+  },
+  {
+   "source": "Отнесите коробку к месту",
+   "text": "Kutuyu yerine götür"
+  },
+  {
+   "source": "E ВЫКИНУТЬ МУСОР",
+   "text": "E ÇÖPÜ AT"
+  },
+  {
+   "source": "ВЫКИНУТЬ МУСОР",
+   "text": "ÇÖPÜ AT"
+  },
+  {
+   "source": "E съесть",
+   "text": "E ye"
+  },
+  {
+   "source": "E открыть дверцу",
+   "text": "E kapağı aç"
+  },
+  {
+   "source": "E поставить",
+   "text": "E koy"
+  },
+  {
+   "source": "Быстрее…",
+   "text": "Çabuk…"
+  },
+  {
+   "source": "Оно уже у самой створки.",
+   "text": "Kapağın tam dibinde."
+  },
+  {
+   "source": "Поздно. Люк открыт.",
+   "text": "Çok geç. Kapak açık."
+  },
+  {
+   "source": "Оно вышло.",
+   "text": "Dışarı çıktı."
+  },
+  {
+   "source": "Тихо",
+   "text": "Sessizlik"
+  },
+  {
+   "source": "Иногда люк лучше оставить закрытым. Навсегда.",
+   "text": "Bazı kapaklar kapalı kalsa iyidir. Sonsuza dek."
+  },
+  {
+   "source": "Дэниел снова заколотил люк. Снизу звал человек — потом затих. Как в прошлый раз.",
+   "text": "Daniel kapağı yine çiviledi. Aşağıdan bir adam seslendi — sonra sustu. Geçen seferki gibi."
+  },
+  {
+   "source": "Внизу",
+   "text": "Aşağıda"
+  },
+  {
+   "source": "У люка нельзя медлить.",
+   "text": "Kapağın başında oyalanma."
+  },
+  {
+   "source": "Доски не выдержали. Оно забрало того, за кем пришло.",
+   "text": "Tahtalar dayanmadı. O şey, peşinden geldiği kişiyi aldı."
+  },
+  {
+   "source": "Ты остался здесь",
+   "text": "Burada Kaldın"
+  },
+  {
+   "source": "Спрятаться — не значит скрыться. Тихий чёрный ход не безопаснее парадного.",
+   "text": "Saklanmak kurtulmak değildir. Sessiz arka kapı, ön kapıdan daha güvenli değil."
+  },
+  {
+   "source": "Оно нашло Дэниела раньше, чем он успел уйти.",
+   "text": "O şey, Daniel gitmeye fırsat bulamadan onu buldu."
+  },
+  {
+   "source": "Побег",
+   "text": "Kaçış"
+  },
+  {
+   "source": "Дорога ведёт прочь от дома. Не оглядывайся.",
+   "text": "Yol evden uzağa gidiyor. Arkana bakma."
+  },
+  {
+   "source": "Дэниел уехал. В новой комнате под полом снова постучали.",
+   "text": "Daniel gitti. Yeni odasında, döşemenin altından yine vuruşlar geldi."
+  },
+  {
+   "source": "Ответ",
+   "text": "Cevap"
+  },
+  {
+   "source": "Тому, кто стучит, можно ответить. Не всё надо заколачивать.",
+   "text": "Vurana cevap verilebilir. Her şeyi çivilemek gerekmez."
+  },
+  {
+   "source": "Дэниел спустился и впервые не сбежал. Теперь каждую ночь стучать будет он.",
+   "text": "Daniel aşağı indi ve ilk kez kaçmadı. Artık her gece vuran o olacak."
+  },
+  {
+   "source": "КОНЕЦ: {0} ({1}/{2})",
+   "text": "SON: {0} ({1}/{2})"
+  },
+  {
+   "source": "■ СТОП",
+   "text": "■ DUR"
+  },
+  {
+   "source": "ГОЛОС",
+   "text": "SES"
+  },
+  {
+   "source": "Эй! Наверху! Кто-нибудь!",
+   "text": "Hey! Yukarıdaki! Kimse yok mu!"
+  },
+  {
+   "source": "Не заколачивай! Выпусти меня!",
+   "text": "Çivileme! Çıkar beni!"
+  },
+  {
+   "source": "Там внизу человек. И я снова его заколотил.",
+   "text": "Aşağıda bir insan var. Ve onu yine içeri çiviledim."
+  },
+  {
+   "source": "Нет! Не закрывай люк!",
+   "text": "Hayır! Kapağı kapatma!"
+  },
+  {
+   "source": "Выпусти меня, сука!",
+   "text": "Çıkar beni, orospu çocuğu!"
+  },
+  {
+   "source": "Я не открыл тогда. Теперь открывать некому.",
+   "text": "O zaman açmadım. Artık açacağım kimse kalmadı."
+  },
+  {
+   "source": "ТЯНУТЬ ДВЕРЬ",
+   "text": "KAPIYI ÇEK"
+  },
+  {
+   "source": "ОТПУСТИТЬ КЛАВИШУ",
+   "text": "TUŞU BIRAK"
+  },
+  {
+   "source": "ЕСТЬ...",
+   "text": "YİYORSUN..."
+  },
+  {
+   "source": "ВЫПОЛНЯЕТСЯ...",
+   "text": "YAPILIYOR..."
+  },
+  {
+   "source": "ОПУСТИТЬ",
+   "text": "YERE KOY"
+  },
+  {
+   "source": "R / ПКМ",
+   "text": "R / SAĞ TIK"
+  },
+  {
+   "source": "БЛИЖЕ / ДАЛЬШЕ",
+   "text": "YAKIN / UZAK"
+  },
+  {
+   "source": "СКМ",
+   "text": "ORTA TIK"
+  },
+  {
+   "source": "СБРОС ВРАЩЕНИЯ",
+   "text": "DÖNDÜRMEYİ SIFIRLA"
+  },
+  {
+   "source": "ЛКМ",
+   "text": "SOL TIK"
+  },
+  {
+   "source": "БРОСИТЬ",
+   "text": "FIRLAT"
+  },
+  {
+   "source": "НЕТ МЕСТА ДЛЯ ПРЕДМЕТА, ОТОЙДИТЕ ОТ ПРЕПЯТСТВИЯ",
+   "text": "EŞYA İÇİN YER YOK, ENGELDEN UZAKLAŞ"
+  },
+  {
+   "source": "E + МЫШЬ",
+   "text": "E + FARE"
+  },
+  {
+   "source": "УДЕРЖИВАТЬ И ТЯНУТЬ",
+   "text": "BASILI TUT VE ÇEK"
+  },
+  {
+   "source": "НЕ ГОВОРИ НИ СЛОВА",
+   "text": "TEK KELİME ETME"
+  },
+  {
+   "source": "МИКРОФОН · СЛУШАЮ ТИШИНУ…",
+   "text": "MİKROFON · SESSİZLİK DİNLENİYOR…"
+  },
+  {
+   "source": "СЛИШКОМ ГРОМКО",
+   "text": "SES ÇOK YÜKSEK"
+  },
+  {
+   "source": "МИКРОФОН",
+   "text": "MİKROFON"
+  },
+  {
+   "source": "КУХНЯ",
+   "text": "MUTFAK"
+  },
+  {
+   "source": "ПРИХОЖАЯ",
+   "text": "ANTRE"
+  },
+  {
+   "source": "ГОСТИНАЯ",
+   "text": "SALON"
+  },
+  {
+   "source": "ЛЕСТНИЦА",
+   "text": "MERDİVEN"
+  },
+  {
+   "source": "СПАЛЬНЯ",
+   "text": "YATAK ODASI"
+  },
+  {
+   "source": "СПАЛЬНЯ 2",
+   "text": "YATAK ODASI 2"
+  },
+  {
+   "source": "ГАРДЕРОБ",
+   "text": "GARDIROP"
+  },
+  {
+   "source": "САНУЗЕЛ",
+   "text": "TUVALET"
+  },
+  {
+   "source": "ВАННАЯ",
+   "text": "BANYO"
+  },
+  {
+   "source": "ВАННАЯ 2",
+   "text": "BANYO 2"
+  },
+  {
+   "source": "ГАРАЖ",
+   "text": "GARAJ"
+  },
+  {
+   "source": "КРЫЛЬЦО",
+   "text": "VERANDA"
+  },
+  {
+   "source": "ДВОР",
+   "text": "BAHÇE"
+  },
+  {
+   "source": "РОЗЕТКИ",
+   "text": "PRİZLER"
+  },
+  {
+   "source": "БОЙЛЕР",
+   "text": "TERMOSİFON"
+  },
+  {
+   "source": "ПОДВАЛ",
+   "text": "BODRUM"
+  },
+  {
+   "source": "Снова выбило. Сначала группы, потом вводной.",
+   "text": "Yine attı. Önce hat sigortaları, sonra ana şalter."
+  },
+  {
+   "source": "Кухня опять выбила. Там что-то не так.",
+   "text": "Mutfak yine attı. Orada bir terslik var."
+  },
+  {
+   "source": "ВВОДНОЙ",
+   "text": "ANA ŞALTER"
+  },
+  {
+   "source": "СВЕТИТЬ",
+   "text": "IŞIK TUT"
+  },
+  {
+   "source": "ЩЁЛКНУТЬ АВТОМАТ",
+   "text": "ŞALTERİ ÇEVİR"
+  },
+  {
+   "source": "ПРИБЛИЗИТЬ",
+   "text": "YAKINLAŞTIR"
+  },
+  {
+   "source": "ОТЛОЖИТЬ",
+   "text": "BIRAK"
+  },
+  {
+   "source": "Здесь что-то есть… надо присмотреться",
+   "text": "Burada bir şey var… daha yakından bakmalıyım"
+  },
+  {
+   "source": "ЗАКОЛОТИТЬ",
+   "text": "ÇİVİLE"
+  },
+  {
+   "source": "СПУСТИТЬСЯ",
+   "text": "AŞAĞI İN"
+  },
+  {
+   "source": "ПОДУМАТЬ",
+   "text": "DÜŞÜN"
+  },
+  {
+   "source": "ЛЮК ПОДВАЛА",
+   "text": "BODRUM KAPAĞI"
+  },
+  {
+   "source": "Заколотить — и оно больше не вылезет.\nИли спуститься и узнать, кто стучал.",
+   "text": "Çivile — bir daha dışarı çıkamasın.\nYa da aşağı in ve kimin vurduğunu öğren."
+  },
+  {
+   "source": "ЦЕЛИТЬСЯ",
+   "text": "NİŞAN AL"
+  },
+  {
+   "source": "ДЕРЖАТЬ ДЛЯ ЗАМАХА, ОТПУСТИТЬ ДЛЯ УДАРА",
+   "text": "KALDIRMAK İÇİN BASILI TUT, VURMAK İÇİN BIRAK"
+  },
+  {
+   "source": "ЗАЛЕЗТЬ ПОД КРОВАТЬ",
+   "text": "YATAĞIN ALTINA GİR"
+  },
+  {
+   "source": "Удерживай ЛКМ над болтом",
+   "text": "Sol tıkı cıvatanın üzerinde basılı tut"
+  },
+  {
+   "source": "отойти",
+   "text": "geri çekil"
+  },
+  {
+   "source": "АВТО",
+   "text": "OTO"
+  },
+  {
+   "source": "ДАЛЕЕ",
+   "text": "DEVAM"
+  },
+  {
+   "source": "Здесь появятся прочитанные реплики и мысли.",
+   "text": "Okunan replikler ve düşünceler burada görünecek."
+  },
+  {
+   "source": "Размер текста: {0}%",
+   "text": "Metin boyutu: %{0}"
+  },
+  {
+   "source": "Автопродолжение: вкл",
+   "text": "Otomatik ilerleme: açık"
+  },
+  {
+   "source": "Автопродолжение: выкл",
+   "text": "Otomatik ilerleme: kapalı"
+  },
+  {
+   "source": "► ИСТОРИЯ",
+   "text": "► GEÇMİŞ"
+  },
+  {
+   "source": "Текст меньше",
+   "text": "Daha küçük metin"
+  },
+  {
+   "source": "Текст крупнее",
+   "text": "Daha büyük metin"
+  },
+  {
+   "source": "Кто был в доме ночью? Остановите плёнку на нужном кадре и сохраните его.",
+   "text": "Gece evde kim vardı? Bandı doğru karede durdur ve kareyi kaydet."
+  },
+  {
+   "source": "Кадр сохранён. Esc вернёт в комнату.",
+   "text": "Kare kaydedildi. Odaya dönmek için Esc."
+  },
+  {
+   "source": "Кадр сохранён {0}",
+   "text": "Kare kaydedildi: {0}"
+  },
+  {
+   "source": "На этом кадре ничего необычного.",
+   "text": "Bu karede olağandışı bir şey yok."
+  },
+  {
+   "source": "Сначала остановите плёнку.",
+   "text": "Önce bandı durdur."
+  },
+  {
+   "source": "ПУСК",
+   "text": "OYNAT"
+  },
+  {
+   "source": "ПЕРЕМОТКА",
+   "text": "SAR"
+  },
+  {
+   "source": "СОХРАНИТЬ КАДР",
+   "text": "KAREYİ KAYDET"
+  },
+  {
+   "source": "Собрать продукты на ужин",
+   "text": "Akşam yemeği için malzeme topla"
+  },
+  {
+   "source": "Приготовить ужин на плите",
+   "text": "Ocakta akşam yemeği pişir"
+  },
+  {
+   "source": "Всё на месте. Теперь к плите.",
+   "text": "Her şey tamam. Şimdi ocağa."
+  },
+  {
+   "source": "Съесть ужин на обеденном столе",
+   "text": "Yemeği yemek masasında ye"
+  },
+  {
+   "source": "Готово. Поем за столом.",
+   "text": "Hazır. Masada yerim."
+  },
+  {
+   "source": "Дом почти даром. Так дома не продают. Сын даже не торговался — лишь бы я поскорее въехал.",
+   "text": "Neredeyse bedava bir ev. Evler böyle satılmaz. Oğlu pazarlık bile etmedi — yeter ki bir an önce taşınayım."
+  },
+  {
+   "source": "Поел, и голова наконец заработала. Только ничего хорошего она не говорит.",
+   "text": "Karnım doydu, kafam da nihayet çalışmaya başladı. Ama söylediği hiçbir şey iç açıcı değil."
+  },
+  {
+   "source": "Может, задвинуть на ночь засов на входной двери? Лишним не будет.",
+   "text": "Gece için ön kapıyı sürgülesem mi? Zararı olmaz."
+  },
+  {
+   "source": "Вот так. Снаружи теперь никто не войдёт.",
+   "text": "İşte böyle. Artık dışarıdan kimse giremez."
+  },
+  {
+   "source": "Всё, я вымотался. Остальное завтра.",
+   "text": "Tamam, bittim. Gerisi yarına."
+  },
+  {
+   "source": "Ушло. Обратно вниз.",
+   "text": "Gitti. Yine aşağıya."
+  },
+  {
+   "source": "Пока оно внизу — заколочу люк.",
+   "text": "O şey aşağıdayken kapağı çivileyeyim."
+  },
+  {
+   "source": "Тихо.",
+   "text": "Sessiz."
+  },
+  {
+   "source": "Похоже, ушло. Пора выбираться.",
+   "text": "Galiba gitti. Çıkma vakti."
+  },
+  {
+   "source": "Нет… Оно здесь.",
+   "text": "Hayır… Burada."
+  },
+  {
+   "source": "Ну вот и он. Свой дом. Здесь всё будет по-другому.",
+   "text": "İşte geldik. Kendi evim. Burada her şey farklı olacak."
+  },
+  {
+   "source": "Прежние хозяева так спешили, что даже мусор не вынесли.",
+   "text": "Eski sahipleri o kadar acele etmiş ki çöpü bile atmamışlar."
+  },
+  {
+   "source": "Зайти в дом",
+   "text": "Eve gir"
+  },
+  {
+   "source": "Видеокамера и штатив. Всё-таки я взял их с собой.",
+   "text": "Kamera ve tripod. Demek yine de yanıma almışım."
+  },
+  {
+   "source": "Разберусь с коробками и отнесу их в спальню.",
+   "text": "Kutuları halledip bunları yatak odasına götürürüm."
+  },
+  {
+   "source": "Отнести камеру и штатив в спальню",
+   "text": "Kamerayı ve tripodu yatak odasına götür"
+  },
+  {
+   "source": "Надеюсь, здесь она мне не понадобится.",
+   "text": "Umarım burada ona ihtiyacım olmaz."
+  },
+  {
+   "source": "В холодильнике есть пирог. На ужин сойдёт.",
+   "text": "Buzdolabında turta var. Akşam yemeğine idare eder."
+  },
+  {
+   "source": "Установить видеокамеру на штатив",
+   "text": "Kamerayı tripoda tak"
+  },
+  {
+   "source": "…Кто здесь?",
+   "text": "…Kim var orada?"
+  },
+  {
+   "source": "Никого. Только я и пустой дом.",
+   "text": "Kimse yok. Sadece ben ve boş bir ev."
+  },
+  {
+   "source": "Опять. Как в старом доме: стоит отвернуться, и кажется, что за спиной кто-то ходит.",
+   "text": "Yine. Eski evdeki gibi: arkanı döndün mü, biri arkanda yürüyormuş gibi geliyor."
+  },
+  {
+   "source": "Там я месяцами не мог отличить сон от яви. Пока не купил камеру.",
+   "text": "Orada aylarca rüyayla gerçeği ayırt edemedim. Ta ki kamerayı alana kadar."
+  },
+  {
+   "source": "К утру память всё сглаживает. Плёнка — нет. Поставлю камеру внизу, чтобы весь первый этаж был в кадре.",
+   "text": "Sabaha hafıza her şeyi yumuşatır. Bant yumuşatmaz. Kamerayı aşağı kurayım, bütün zemin kat kadraja girsin."
+  },
+  {
+   "source": "Запись пошла. Утром посмотрю, что она увидела.",
+   "text": "Kayıt başladı. Sabah ne gördüğüne bakarım."
+  },
+  {
+   "source": "Так она ничего не снимет. Верну её на штатив.",
+   "text": "Böyle hiçbir şey çekmez. Tripoda geri takayım."
+  },
+  {
+   "source": "Опять. Средь бела дня, прямо подо мной.",
+   "text": "Yine. Güpegündüz, tam altımda."
+  },
+  {
+   "source": "Сначала вещи на полу, теперь это. Трубы так не стучат.",
+   "text": "Önce yerdeki eşyalar, şimdi de bu. Borular böyle vurmaz."
+  },
+  {
+   "source": "Вход в подвал — снаружи. Пора на него взглянуть.",
+   "text": "Bodrumun girişi dışarıda. Bir bakma vakti."
+  },
+  {
+   "source": "Камера писала всю ночь.",
+   "text": "Kamera bütün gece kayıttaydı."
+  },
+  {
+   "source": "Подключу её к телевизору в гостиной. Посмотрим, что тут было, пока я спал.",
+   "text": "Oturma odasındaki televizyona bağlayayım. Ben uyurken burada neler olmuş, görelim."
+  },
+  {
+   "source": "Посмотреть запись на телевизоре в гостиной",
+   "text": "Kaydı oturma odasındaki televizyonda izle"
+  },
+  {
+   "source": "Оно зашло с улицы. А люк подвала — прямо у крыльца.",
+   "text": "O şey dışarıdan girmiş. Bodrum kapağı da verandanın hemen yanında."
+  },
+  {
+   "source": "Значит, приходит оно оттуда. Хотя в этом подвале и спрятаться-то негде.",
+   "text": "Demek oradan geliyor. Gerçi o bodrumda saklanacak yer bile yok."
+  },
+  {
+   "source": "Поставлю камеру внизу, напротив решётки вентиляции. Пусть смотрит туда всю ночь.",
+   "text": "Kamerayı aşağıya, havalandırma ızgarasının karşısına kurayım. Bütün gece oraya baksın."
+  },
+  {
+   "source": "Поставить камеру в подвале",
+   "text": "Kamerayı bodruma kur"
+  },
+  {
+   "source": "Решётка в кадре. Если оно полезет оттуда, я это увижу.",
+   "text": "Izgara kadrajda. O şey oradan çıkarsa göreceğim."
+  },
+  {
+   "source": "А теперь поесть. Я с утра ничего не ел.",
+   "text": "Şimdi yemek. Sabahtan beri bir şey yemedim."
+  },
+  {
+   "source": "Что это было?!",
+   "text": "Neydi o?!"
+  },
+  {
+   "source": "Грохнуло внизу. У входной двери.",
+   "text": "Aşağıda bir şey gümbürdedi. Ön kapının yanında."
+  },
+  {
+   "source": "Опять стук.",
+   "text": "Yine vuruşlar."
+  },
+  {
+   "source": "Надо понять, откуда он идёт.",
+   "text": "Nereden geldiğini anlamam lazım."
+  },
+  {
+   "source": "Сначала свет. Потом разберусь со стуком.",
+   "text": "Önce ışık. Vuruşlarla sonra uğraşırım."
+  },
+  {
+   "source": "Проверить выключатель света",
+   "text": "Işık anahtarını kontrol et"
+  },
+  {
+   "source": "Проверить шум на кухне",
+   "text": "Mutfaktaki sesi kontrol et"
+  },
+  {
+   "source": "Стучат снизу. Из подвала.",
+   "text": "Aşağıdan vuruyorlar. Bodrumdan."
+  },
+  {
+   "source": "Только не как в прошлый раз…",
+   "text": "Yeter ki geçen seferki gibi olmasın…"
+  },
+  {
+   "source": "Люк снаружи. Пойду посмотрю.",
+   "text": "Kapak dışarıda. Gidip bakayım."
+  },
+  {
+   "source": "Без фонаря я туда не полезу.",
+   "text": "Fener olmadan oraya inmem."
+  },
+  {
+   "source": "Найти фонарик",
+   "text": "Fener bul"
+  },
+  {
+   "source": "Телефон сел. Нужен нормальный фонарик.",
+   "text": "Telefonun şarjı bitti. Düzgün bir fener lazım."
+  },
+  {
+   "source": "Там что-то мелькнуло. Перемотаю и остановлю кадр.",
+   "text": "Orada bir şey kıpırdadı. Geri sarıp kareyi durdurayım."
+  },
+  {
+   "source": "Оно смотрело прямо в объектив.",
+   "text": "Doğrudan objektife bakıyordu."
+  },
+  {
+   "source": "А потом поднялось наверх. К спальне. Пока я спал…",
+   "text": "Sonra da yukarı çıktı. Yatak odasına. Ben uyurken…"
+  },
+  {
+   "source": "Так-то лучше.",
+   "text": "Böylesi daha iyi."
+  },
+  {
+   "source": "Скорее всего, выбило автоматы. Щиток в гараже.",
+   "text": "Büyük ihtimalle sigortalar attı. Sigorta kutusu garajda."
+  },
+  {
+   "source": "С фонарём спокойнее. Теперь — откуда этот шум.",
+   "text": "Fenerle içim daha rahat. Şimdi — şu ses nereden geliyor?"
+  },
+  {
+   "source": "Проверить щиток",
+   "text": "Sigorta kutusunu kontrol et"
+  },
+  {
+   "source": "Есть свет.",
+   "text": "Elektrik geldi."
+  },
+  {
+   "source": "Только кухня не держит: автомат выбивает снова и снова.",
+   "text": "Bir tek mutfak tutmuyor: sigorta durmadan atıyor."
+  },
+  {
+   "source": "И стук как раз оттуда. Проверю кухню.",
+   "text": "Vuruşlar da tam oradan geliyor. Mutfağa bakayım."
+  },
+  {
+   "source": "Оно прямо за стеной…",
+   "text": "Tam duvarın arkasında…"
+  },
+  {
+   "source": "К чёрту щиток. Обойдусь фонариком.",
+   "text": "Sigortalar cehenneme. Fener yeter."
+  },
+  {
+   "source": "Сначала выясню, откуда стук.",
+   "text": "Önce vuruşların nereden geldiğini bulayım."
+  },
+  {
+   "source": "Свет не включается. Пробки выбило?",
+   "text": "Işık yanmıyor. Sigortalar mı attı?"
+  },
+  {
+   "source": "Сначала свет.",
+   "text": "Önce ışık."
+  },
+  {
+   "source": "В такой темноте я никуда не пойду.",
+   "text": "Bu karanlıkta hiçbir yere gitmem."
+  },
+  {
+   "source": "Выключатель. Начну с него.",
+   "text": "Işık anahtarı. Ondan başlayayım."
+  },
+  {
+   "source": "Кто-то только что пробежал по лестнице…",
+   "text": "Biri az önce merdivenden yukarı koştu…"
+  },
+  {
+   "source": "Проверить люк подвала снаружи",
+   "text": "Dışarıdaki bodrum kapağını kontrol et"
+  },
+  {
+   "source": "Заперт. На навесной замок.",
+   "text": "Kilitli. Asma kilitle."
+  },
+  {
+   "source": "Люк, запертый снаружи… С такими у меня свои счёты.",
+   "text": "Dışarıdan kilitlenmiş bir kapak… Böyle kapaklarla eski bir hesabım var."
+  },
+  {
+   "source": "Ключа у меня нет. Замок можно сбить ломом.",
+   "text": "Anahtarım yok. Kilidi levyeyle kırabilirim."
+  },
+  {
+   "source": "Найти лом",
+   "text": "Levye bul"
+  },
+  {
+   "source": "Этим замок и собью.",
+   "text": "Kilidi bununla kırarım."
+  },
+  {
+   "source": "Взламываю собственный подвал. Хорошее начало новой жизни.",
+   "text": "Kendi bodrumuma zorla giriyorum. Yeni hayata harika bir başlangıç."
+  },
+  {
+   "source": "Взламываю собственный подвал посреди ночи. Хорошее начало новой жизни.",
+   "text": "Gecenin bir yarısı kendi bodrumuma zorla giriyorum. Yeni hayata harika bir başlangıç."
+  },
+  {
+   "source": "Сорвать замок с люка подвала",
+   "text": "Bodrum kapağındaki kilidi kır"
+  },
+  {
+   "source": "Замок слетел. Посмотрим, что внизу.",
+   "text": "Kilit düştü. Bakalım aşağıda ne var."
+  },
+  {
+   "source": "Замок снят.",
+   "text": "Kilit açıldı."
+  },
+  {
+   "source": "Сначала посвечу на лестницу. Вслепую я туда не полезу.",
+   "text": "Önce merdivene ışık tutayım. Oraya körlemesine inmem."
+  },
+  {
+   "source": "Открыть подвал и осветить лестницу",
+   "text": "Bodrumu aç ve merdiveni aydınlat"
+  },
+  {
+   "source": "Исчезло.",
+   "text": "Kayboldu."
+  },
+  {
+   "source": "Нет. Второй раз я не побегу.",
+   "text": "Hayır. İkinci kez kaçmayacağım."
+  },
+  {
+   "source": "Заколочу люк. Как тогда. И больше оно не вылезет.",
+   "text": "Kapağı çivileyeceğim. O zamanki gibi. Bir daha dışarı çıkamaz."
+  },
+  {
+   "source": "Нужен молоток.",
+   "text": "Çekiç lazım."
+  },
+  {
+   "source": "Найти молоток",
+   "text": "Çekiç bul"
+  },
+  {
+   "source": "Спрятаться под кровать",
+   "text": "Yatağın altına saklan"
+  },
+  {
+   "source": "Люк… Оно вылезло.",
+   "text": "Kapak… O şey dışarı çıkmış."
+  },
+  {
+   "source": "Идёт сюда. Под кровать!",
+   "text": "Buraya geliyor. Yatağın altına!"
+  },
+  {
+   "source": "Ушло вниз.",
+   "text": "Aşağı indi."
+  },
+  {
+   "source": "Заколотить люк… или бежать отсюда?",
+   "text": "Kapağı mı çivilesem… yoksa buradan kaçsam mı?"
+  },
+  {
+   "source": "Камера в подвале ещё пишет. И тот, кто отвечал мне стуком, всё ещё там, внизу.",
+   "text": "Bodrumdaki kamera hâlâ kayıtta. Bana vuruşla cevap veren de hâlâ orada, aşağıda."
+  },
+  {
+   "source": "Заколотить люк подвала",
+   "text": "Bodrum kapağını çivile"
+  },
+  {
+   "source": "Собрать мусор по дому",
+   "text": "Evdeki çöpleri topla"
+  },
+  {
+   "source": "Вынести мусорный мешок",
+   "text": "Çöp torbasını dışarı çıkar"
+  },
+  {
+   "source": "Наконец-то привезли мои вещи.",
+   "text": "Eşyalarım nihayet geldi."
+  },
+  {
+   "source": "Осталось разнести коробки по комнатам.",
+   "text": "Geriye kutuları odalara taşımak kaldı."
+  },
+  {
+   "source": "Тишина и покой. Сразу после коробок.",
+   "text": "Huzur ve sessizlik. Kutulardan hemen sonra."
+  },
+  {
+   "source": "Отнести коробки по комнатам",
+   "text": "Kutuları odalara taşı"
+  },
+  {
+   "source": "Всё. Спина мне этого не простит.",
+   "text": "Tamam. Belim bunu bana asla affetmez."
+  },
+  {
+   "source": "Теперь наверх, разберу свои вещи. Потом ужин — и спать.",
+   "text": "Şimdi yukarı çıkıp eşyalarımı yerleştireyim. Sonra yemek — ve uyku."
+  },
+  {
+   "source": "Он видел кого-то внизу. А я всё это время спал наверху.",
+   "text": "Aşağıda birini görmüş. Oysa ben bütün bu süre yukarıda uyuyordum."
+  },
+  {
+   "source": "Он сам сказал, что показалось. Надо поспать.",
+   "text": "Kendisi de yanıldığını söyledi. Uyumam lazım."
+  },
+  {
+   "source": "Опять стук…",
+   "text": "Yine vuruşlar…"
+  },
+  {
+   "source": "Хватит. Старый дом, старые трубы.",
+   "text": "Yeter. Eski ev, eski borular."
+  },
+  {
+   "source": "Затихло. Надо поспать.",
+   "text": "Sustu. Uyumam lazım."
+  },
+  {
+   "source": "Утро. Дожил.",
+   "text": "Sabah. Atlattım."
+  },
+  {
+   "source": "Сейчас тихо. А дел всё ещё по горло.",
+   "text": "Şimdilik sessiz. Ama hâlâ yapacak bir sürü işim var."
+  },
+  {
+   "source": "Достать пирог из холодильника",
+   "text": "Turtayı buzdolabından çıkar"
+  },
+  {
+   "source": "Поставить пирог в микроволновку",
+   "text": "Turtayı mikrodalgaya koy"
+  },
+  {
+   "source": "Съесть пирог",
+   "text": "Turtayı ye"
+  },
+  {
+   "source": "Хоть поел по-человечески.",
+   "text": "Hiç değilse insan gibi yemek yedim."
+  },
+  {
+   "source": "Всё. На сегодня хватит.",
+   "text": "Tamam. Bugünlük bu kadar."
+  },
+  {
+   "source": "Пойти на кухню",
+   "text": "Mutfağa git"
+  },
+  {
+   "source": "Что здесь случилось?",
+   "text": "Burada ne oldu?"
+  },
+  {
+   "source": "Убрать разбросанные вещи на кухне",
+   "text": "Mutfakta dağılan eşyaları topla"
+  },
+  {
+   "source": "Вчера всё стояло на местах. Само оно на пол не попадало.",
+   "text": "Dün her şey yerli yerindeydi. Kendi kendine yere düşmedi ya."
+  },
+  {
+   "source": "МЫСЛИ",
+   "text": "DÜŞÜNCELER"
+  },
+  {
+   "source": "Только не это. Не снова.",
+   "text": "Olamaz. Yine olmasın."
+  },
+  {
+   "source": "Нет. Старый дом, тут всё скрипит.",
+   "text": "Hayır. Eski ev, her yeri gıcırdıyor."
+  },
+  {
+   "source": "Сначала вынесу этот чёртов мусор.",
+   "text": "Önce şu lanet çöpü atayım."
+  },
+  {
+   "source": "Удерживать, чтобы пропустить",
+   "text": "Atlamak için basılı tut"
+  },
+  {
+   "source": "НЕТ СИГНАЛА",
+   "text": "SİNYAL YOK"
+  },
+  {
+   "source": "ЗАПИСАНО: {0}/{1}",
+   "text": "KAYDEDİLDİ: {0}/{1}"
+  },
+  {
+   "source": "► КОНЦОВКИ",
+   "text": "► SONLAR"
+  },
+  {
+   "source": "Назад",
+   "text": "Geri"
+  },
+  {
+   "source": "Продолжить",
+   "text": "Devam Et"
+  },
+  {
+   "source": "Новая игра",
+   "text": "Yeni Oyun"
+  },
+  {
+   "source": "Выбор главы",
+   "text": "Bölüm Seç"
+  },
+  {
+   "source": "Концовки",
+   "text": "Sonlar"
+  },
+  {
+   "source": "Следующие главы откроются по мере прохождения",
+   "text": "Sonraki bölümler ilerledikçe açılacak"
+  },
+  {
+   "source": "▌▌ ПАУЗА",
+   "text": "▌▌ DURAKLATILDI"
+  },
+  {
+   "source": "Настройки",
+   "text": "Ayarlar"
+  },
+  {
+   "source": "В главное меню",
+   "text": "Ana Menü"
+  },
+  {
+   "source": "Выйти в главное меню?",
+   "text": "Ana menüye dönülsün mü?"
+  },
+  {
+   "source": "Текущий прогресс будет потерян.",
+   "text": "Mevcut ilerleme kaybolacak."
+  },
+  {
+   "source": "Остаться",
+   "text": "Kal"
+  },
+  {
+   "source": "Выйти в меню",
+   "text": "Menüye Dön"
+  },
+  {
+   "source": "СЧЁТЧИК {0}",
+   "text": "SAYAÇ {0}"
+  },
+  {
+   "source": "ПРОДОЛЖИТЬ",
+   "text": "DEVAM ET"
+  },
+  {
+   "source": "► НАСТРОЙКИ",
+   "text": "► AYARLAR"
+  },
+  {
+   "source": "Язык",
+   "text": "Dil"
+  },
+  {
+   "source": "Общая громкость",
+   "text": "Ana Ses Düzeyi"
+  },
+  {
+   "source": "Музыка",
+   "text": "Müzik"
+  },
+  {
+   "source": "Фоновые звуки",
+   "text": "Ortam Sesleri"
+  },
+  {
+   "source": "Эффекты",
+   "text": "Ses Efektleri"
+  },
+  {
+   "source": "Чувствительность мыши",
+   "text": "Fare Hassasiyeti"
+  },
+  {
+   "source": "Поле зрения",
+   "text": "Görüş Alanı"
+  },
+  {
+   "source": "Инверсия мыши по вертикали",
+   "text": "Fare Y Eksenini Ters Çevir"
+  },
+  {
+   "source": "Полноэкранный режим",
+   "text": "Tam Ekran"
+  },
+  {
+   "source": "Вертикальная синхронизация",
+   "text": "Dikey Senkronizasyon"
+  },
+  {
+   "source": "Качество графики",
+   "text": "Grafik Kalitesi"
+  },
+  {
+   "source": "Разрешение",
+   "text": "Çözünürlük"
+  },
+  {
+   "source": "ПРОБЕЛ / ЛКМ — ДАЛЕЕ",
+   "text": "BOŞLUK / SOL TIK — DEVAM"
+  },
+  {
+   "source": "Старый будильник",
+   "text": "Eski Çalar Saat"
+  },
+  {
+   "source": "На дне нацарапано: «Постучи в пол — оно повторит столько же. Без пауз. Это не я».",
+   "text": "Altına kazınmış: “Yere vur — o şey aynı sayıda tekrarlar. Duraksamadan. O ben değilim.”"
+  },
+  {
+   "source": "«Оно», не «он». И «это не я»… Тогда что же мне отвечает?",
+   "text": "“O şey” diyor, “biri” değil. Ve “o ben değilim”… O zaman bana cevap veren ne?"
+  },
+  {
+   "source": "Проверить можно только внизу, над подвалом.",
+   "text": "Bunu ancak aşağıda, bodrumun tam üstünde deneyebilirim."
+  },
+  {
+   "source": "Прошло несколько часов...",
+   "text": "Birkaç saat sonra..."
+  },
+  {
+   "source": "Старая книга",
+   "text": "Eski Kitap"
+  },
+  {
+   "source": "На обложке наклейка: «Эта книга принадлежит Уолтеру Хейлу». Прежний хозяин её не забрал.",
+   "text": "Kapakta bir etiket: “Bu kitap Walter Hale'e aittir.” Eski sahibi onu bırakıp gitmiş."
+  },
+  {
+   "source": "Уолтер Хейл. Значит, так звали прежнего хозяина.",
+   "text": "Walter Hale. Demek eski sahibin adı buymuş."
+  },
+  {
+   "source": "Книги бросают, когда уезжают в спешке. Уж я-то знаю.",
+   "text": "İnsan aceleyle giderken kitaplarını bırakır. Ben bilirim."
+  },
+  {
+   "source": "Нажмите E, чтобы открыть дверь",
+   "text": "Kapıyı açmak için E'ye bas"
+  },
+  {
+   "source": "Старое радио",
+   "text": "Eski Radyo"
+  },
+  {
+   "source": "Сзади наклейка: «Дослушай до конца. Повтори. Паузы тоже».",
+   "text": "Arkasında bir etiket: “Sonuna kadar dinle. Tekrarla. Duraklamaları da.”"
+  },
+  {
+   "source": "Повторить стук. Вместе с паузами.",
+   "text": "Vuruşları tekrarla. Duraklamalarıyla birlikte."
+  },
+  {
+   "source": "Кто-то оставил инструкцию. Для следующего жильца?",
+   "text": "Biri talimat bırakmış. Bir sonraki kiracı için mi?"
+  },
+  {
+   "source": "Взять ключ",
+   "text": "Anahtarı al"
+  },
+  {
+   "source": "Записка на тумбе",
+   "text": "Komodindeki Not"
+  },
+  {
+   "source": "На тумбе записка: «Если я внизу, отвечай мне. У. Х.»",
+   "text": "Komodinde bir not: “Aşağıdaysam bana cevap ver. W. H.”"
+  },
+  {
+   "source": "Лежала здесь с самого переезда, а я не заметил.",
+   "text": "Taşındığımdan beri burada duruyormuş, fark etmemişim."
+  },
+  {
+   "source": "У. Х.… Уолтер Хейл? Прежний хозяин.",
+   "text": "W. H.… Walter Hale mi? Eski ev sahibi."
+  },
+  {
+   "source": "«Если я внизу»… Он что, там? До сих пор?",
+   "text": "“Aşağıdaysam”… Yani orada mı? Hâlâ mı?"
+  },
+  {
+   "source": "Верните кружку к кофеварке",
+   "text": "Kupayı kahve makinesine geri koy"
+  },
+  {
+   "source": "Верните сковороду на плиту",
+   "text": "Tavayı ocağa geri koy"
+  },
+  {
+   "source": "Верните крышку на кастрюлю",
+   "text": "Kapağı tencereye geri koy"
+  },
+  {
+   "source": "Договор аренды",
+   "text": "Kira Sözleşmesi"
+  },
+  {
+   "source": "Договор аренды старого дома. Арендодатель: Уолтер Хейл. Арендатор: Дэниел Росс.",
+   "text": "Eski evin kira sözleşmesi. Kiraya veren: Walter Hale. Kiracı: Daniel Ross."
+  },
+  {
+   "source": "Это мой договор. Мой старый дом.",
+   "text": "Bu benim sözleşmem. Benim eski evim."
+  },
+  {
+   "source": "Я платил через агентство и ни разу не видел хозяина. Хейл.",
+   "text": "Kirayı emlakçı üzerinden ödüyordum, ev sahibini bir kez bile görmedim. Hale."
+  },
+  {
+   "source": "Его сын сам нашёл меня и отдал этот дом почти даром. Это не совпадение.",
+   "text": "Oğlu beni kendisi bulup bu evi neredeyse bedavaya verdi. Bu tesadüf değil."
+  },
+  {
+   "source": "Выйти",
+   "text": "Çık"
+  },
+  {
+   "source": "Громкость",
+   "text": "Ses"
+  },
+  {
+   "source": "Начать игру",
+   "text": "Oyuna Başla"
+  },
+  {
+   "source": "ЛОМ",
+   "text": "LEVYE"
+  },
+  {
+   "source": "Тяжёлый старый лом. Им можно сбить замок или что-нибудь вскрыть.",
+   "text": "Ağır, eski bir levye. Kilit kırmaya ya da bir şeyi zorlayıp açmaya yarar."
+  },
+  {
+   "source": "ФОНАРИК",
+   "text": "FENER"
+  },
+  {
+   "source": "Потёртый фонарик. Луч слабый, но в темноте с ним спокойнее.",
+   "text": "Yıpranmış bir fener. Işığı zayıf ama karanlıkta insanın içi rahat ediyor."
+  },
+  {
+   "source": "МОЛОТОК",
+   "text": "ÇEKİÇ"
+  },
+  {
+   "source": "Тяжёлый плотницкий молоток. Гвоздь войдёт с пары ударов.",
+   "text": "Ağır bir marangoz çekici. Çiviyi iki vuruşta çakar."
+  },
+  {
+   "source": "КЛЮЧ",
+   "text": "ANAHTAR"
+  },
+  {
+   "source": "Старый ключ с верстака в подвале. Где-то в этом доме есть запертая дверь.",
+   "text": "Bodrumdaki tezgâhtan eski bir anahtar. Bu evde bir yerde kilitli bir kapı var."
+  },
+  {
+   "source": "ТЕЛЕФОН",
+   "text": "TELEFON"
+  },
+  {
+   "source": "Мой телефон. Связи почти нет, зато есть фонарик.",
+   "text": "Telefonum. Neredeyse hiç çekmiyor ama feneri var."
+  },
+  {
+   "source": "ОТВЁРТКА",
+   "text": "TORNAVİDA"
+  },
+  {
+   "source": "Плоская отвёртка. Болты на решётке ей поддадутся.",
+   "text": "Düz uçlu tornavida. Izgaradaki cıvataları bununla sökebilirim."
+  }
+ ]
+}

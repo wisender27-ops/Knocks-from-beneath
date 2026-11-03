@@ -81,7 +81,7 @@ public sealed class BasementTapePlayProbe : MonoBehaviour
             var actor = player.GetComponent<PlayerInteraction>();
             InteractionFocus focus = default;
             bool resolved = hit && InteractionFocusResolver.TryResolve(actor, intro, h, out focus);
-            Check(resolved && focus.Prompt == "Посмотреть запись", $"Подсказка у камеры: «{(resolved ? focus.Prompt : "—")}» (ожидалось «Посмотреть запись», попадание {(hit ? h.collider.name : "нет")})");
+            Check(resolved && focus.Prompt == Loc.T("Посмотреть запись"), $"Подсказка у камеры: «{(resolved ? focus.Prompt : "—")}» (ожидалось «Посмотреть запись», попадание {(hit ? h.collider.name : "нет")})");
             Capture("camera-on-floor");
         }
 

@@ -10,12 +10,12 @@ namespace KnocksFromBeneath
         public const string KeyId = "HouseKey", ScrewdriverId = "Screwdriver", QuestTag = "screwdriver-find";
         private const float ThoughtCooldown = 5f;
 
-        private static readonly string[] LockedLines = { "Почему она закрыта? Мне о таком не говорили." };
-        private static readonly string[] KeyDirectLines = { "Ключ от той запертой двери наверху.", "Отвёртка наверняка там." };
-        private static readonly string[] KeyVagueLines = { "Старый ключ. Он наверняка что-то открывает в этом доме." };
-        private static readonly string[] NeedLines = { "Болты руками не открутить. Нужна отвёртка.", "В таком доме она должна быть." };
-        private static readonly string[] OpenedLines = { "Замок поддался. Здесь свалено всё подряд." };
-        private static readonly string[] FoundLines = { "Отвёртка. Теперь вниз, к вентиляции." };
+        private static readonly string[] LockedLines = { Loc.Key("Заперто. Про запертые комнаты мне никто не говорил.") };
+        private static readonly string[] KeyDirectLines = { Loc.Key("Похоже, от той запертой двери наверху."), Loc.Key("Если отвёртка в доме есть, то там.") };
+        private static readonly string[] KeyVagueLines = { Loc.Key("Старый ключ. Что-то в этом доме он да открывает.") };
+        private static readonly string[] NeedLines = { Loc.Key("Болты руками не открутить. Нужна отвёртка."), Loc.Key("Где-то в доме она должна быть.") };
+        private static readonly string[] OpenedLines = { Loc.Key("Открыто. Кладовка, забитая хламом.") };
+        private static readonly string[] FoundLines = { Loc.Key("Вот и отвёртка. Теперь вниз, к вентиляции.") };
 
         [Tooltip("Запертая дверь кладовой.")]
         public Door storageDoor;
@@ -56,7 +56,7 @@ namespace KnocksFromBeneath
         public void NeedScrewdriver()
         {
             if (Has(ScrewdriverId)) return;
-            ThoughtManager.Instance?.TryShowInteractionThoughts("need-screwdriver", NeedLines, ThoughtCooldown);
+            ThoughtManager.Instance?.TryShowInteractionThoughts("need-screwdriver", Loc.T(NeedLines), ThoughtCooldown);
             StartQuest();
         }
 
@@ -68,14 +68,14 @@ namespace KnocksFromBeneath
             if (chapter == null || !chapter.IsActive) return;
             started = true;
             if (key != null && !Has(KeyId) && !doorOpened) key.gameObject.SetActive(true);
-            QuestManager.Instance?.CreateQuest("Найти отвёртку", 1, null, QuestTag);
+            QuestManager.Instance?.CreateQuest(Loc.T("Найти отвёртку"), 1, null, QuestTag);
         }
 
         private void OnLockedAttempt()
         {
             if (Has(KeyId)) { Unlock(); return; }
             doorSeen = true;
-            ThoughtManager.Instance?.TryShowInteractionThoughts("storage-locked", LockedLines, ThoughtCooldown);
+            ThoughtManager.Instance?.TryShowInteractionThoughts("storage-locked", Loc.T(LockedLines), ThoughtCooldown);
         }
 
         private void Unlock()
@@ -84,7 +84,7 @@ namespace KnocksFromBeneath
             inventory.RemoveItem(KeyId);
             storageDoor.SetInteractionLocked(false);
             storageDoor.OpenDoor();
-            ThoughtManager.Instance?.ShowThoughts(OpenedLines);
+            ThoughtManager.Instance?.ShowThoughts(Loc.T(OpenedLines));
         }
 
         private void OnTaken(string id)
@@ -92,13 +92,13 @@ namespace KnocksFromBeneath
             if (id == KeyId)
             {
                 StartQuest();
-                ThoughtManager.Instance?.ShowThoughts(doorSeen ? KeyDirectLines : KeyVagueLines);
+                ThoughtManager.Instance?.ShowThoughts(Loc.T(doorSeen ? KeyDirectLines : KeyVagueLines));
             }
             else if (id == ScrewdriverId)
             {
                 if (QuestManager.Instance != null && QuestManager.Instance.IsQuestActive(QuestTag))
                     QuestManager.Instance.RecordQuestCompletion(QuestTag);
-                ThoughtManager.Instance?.ShowThoughts(FoundLines);
+                ThoughtManager.Instance?.ShowThoughts(Loc.T(FoundLines));
             }
         }
     }

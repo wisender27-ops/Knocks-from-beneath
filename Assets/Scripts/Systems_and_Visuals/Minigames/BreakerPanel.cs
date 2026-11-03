@@ -227,7 +227,7 @@ namespace KnocksFromBeneath
             if (beam != null) StartCoroutine(Flicker(0.35f));
             if (Board.MainTrips == 1)
                 ThoughtManager.Instance?.TryShowInteractionThoughts("breaker-main-trip",
-                    new[] { "Выбило. Сначала все группы, потом вводной." }, 0f);
+                    new[] { Loc.T("Снова выбило. Сначала группы, потом вводной.") }, 0f);
         }
 
         private void KitchenTrips()
@@ -236,7 +236,7 @@ namespace KnocksFromBeneath
             Shake(0.12f);
             if (Board.Retrips == 1)
                 ThoughtManager.Instance?.TryShowInteractionThoughts("breaker-kitchen-trip",
-                    new[] { "Кухня сама выбила. Не держит." }, 0f);
+                    new[] { Loc.T("Кухня опять выбила. Там что-то не так.") }, 0f);
         }
 
         private int FindAimed()
@@ -268,8 +268,8 @@ namespace KnocksFromBeneath
         {
             if (caption == null) return;
             if (Aimed == -2) caption.text = string.Empty;
-            else if (Aimed == -1) caption.text = "ВВОДНОЙ";
-            else caption.text = (Aimed + 1) + " · " + BreakerBoard.Labels[Aimed];
+            else if (Aimed == -1) caption.text = Loc.T("ВВОДНОЙ");
+            else caption.text = (Aimed + 1) + " · " + Loc.T(BreakerBoard.Labels[Aimed]);
         }
 
         // ---------------------------------------------------------------- стук снизу
@@ -653,7 +653,7 @@ namespace KnocksFromBeneath
             keys = UiKeyHints.Create(ui.transform, "Keys", font);
             keys.RectTransform.anchorMin = keys.RectTransform.anchorMax = keys.RectTransform.pivot = new Vector2(0.5f, 0f);
             keys.RectTransform.anchoredPosition = new Vector2(0f, 70f);
-            keys.Set("МЫШЬ", "СВЕТИТЬ", "ЛКМ", "ЩЁЛКНУТЬ АВТОМАТ");
+            keys.Set(Loc.T("МЫШЬ"), Loc.T("СВЕТИТЬ"), Loc.T("ЛКМ"), Loc.T("ЩЁЛКНУТЬ АВТОМАТ"));
         }
 
         private IntroSequence intro;

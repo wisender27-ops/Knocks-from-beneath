@@ -65,7 +65,8 @@ public class SettingsMenuUI : MonoBehaviour
     const float RowHeight = 52f, SliderWidth = 400f, ValueWidth = 100f, RowSpacing = 16f;
     const float ControlZoneWidth = SliderWidth + RowSpacing + ValueWidth;
 
-    public static SettingsMenuUI BuildRuntime(Transform parent, TMP_FontAsset font, Action onBack)
+    // onLanguageSelected задан только в главном меню: язык меняется там, посреди игры строки уже на экране.
+    public static SettingsMenuUI BuildRuntime(Transform parent, TMP_FontAsset font, Action onBack, Action onLanguageSelected = null)
     {
         RectTransform panel = Rect("Settings", parent, new Vector2(1160, 0));
         panel.gameObject.AddComponent<Image>().color = PanelColor;
@@ -75,26 +76,35 @@ public class SettingsMenuUI : MonoBehaviour
         panel.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         SettingsMenuUI ui = panel.gameObject.AddComponent<SettingsMenuUI>();
 
-        Label(panel, font, "► НАСТРОЙКИ", TextHeading, TextAnchor.MiddleLeft, 72).color = Accent;
+        Label(panel, font, Loc.T("► НАСТРОЙКИ"), TextHeading, TextAnchor.MiddleLeft, 72).color = Accent;
         Image rule = Rect("Rule", panel, Vector2.zero).gameObject.AddComponent<Image>();
         rule.color = new Color(Accent.r, Accent.g, Accent.b, .6f); rule.raycastTarget = false;
         rule.gameObject.AddComponent<LayoutElement>().preferredHeight = 2;
         Spacer(panel, 14);
 
-        ui.masterVolumeSlider = SliderRow(panel, font, "Общая громкость", out ui.masterVolumeValueText);
-        VolumeRow(panel, font, "Музыка", SettingsStore.GetMusicVolume, SettingsStore.SetMusicVolume);
-        VolumeRow(panel, font, "Фоновые звуки", SettingsStore.GetAmbienceVolume, SettingsStore.SetAmbienceVolume);
-        VolumeRow(panel, font, "Эффекты", SettingsStore.GetSfxVolume, SettingsStore.SetSfxVolume);
-        ui.mouseSensitivitySlider = SliderRow(panel, font, "Чувствительность мыши", out ui.mouseSensitivityValueText);
-        ui.fovSlider = SliderRow(panel, font, "Поле зрения", out ui.fovText);
+        if (onLanguageSelected != null)
+        {
+            int languageIndex = Array.FindIndex(Loc.Languages, language => language.Code == Loc.Current);
+            ChoiceRow(panel, font, Loc.T("Язык"), Loc.Languages[languageIndex].NativeName, direction => {
+                languageIndex = (languageIndex + direction + Loc.Languages.Length) % Loc.Languages.Length;
+                Loc.Select(Loc.Languages[languageIndex].Code);
+                onLanguageSelected();
+            });
+        }
+        ui.masterVolumeSlider = SliderRow(panel, font, Loc.T("Общая громкость"), out ui.masterVolumeValueText);
+        VolumeRow(panel, font, Loc.T("Музыка"), SettingsStore.GetMusicVolume, SettingsStore.SetMusicVolume);
+        VolumeRow(panel, font, Loc.T("Фоновые звуки"), SettingsStore.GetAmbienceVolume, SettingsStore.SetAmbienceVolume);
+        VolumeRow(panel, font, Loc.T("Эффекты"), SettingsStore.GetSfxVolume, SettingsStore.SetSfxVolume);
+        ui.mouseSensitivitySlider = SliderRow(panel, font, Loc.T("Чувствительность мыши"), out ui.mouseSensitivityValueText);
+        ui.fovSlider = SliderRow(panel, font, Loc.T("Поле зрения"), out ui.fovText);
         SetupSlider(ui.fovSlider, 50, 100, SettingsStore.GetFieldOfView(), value => { SettingsStore.SetFieldOfView(value); ui.fovText.text = Mathf.RoundToInt(value) + "°"; });
         ui.fovText.text = Mathf.RoundToInt(SettingsStore.GetFieldOfView()) + "°";
-        ui.invertToggle = ToggleRow(panel, font, "Инверсия мыши по вертикали", SettingsStore.GetInvertY(), SettingsStore.SetInvertY);
-        ui.fullscreenToggle = ToggleRow(panel, font, "Полноэкранный режим", SettingsStore.GetFullscreen(), SettingsStore.SetFullscreen);
-        ui.vsyncToggle = ToggleRow(panel, font, "Вертикальная синхронизация", SettingsStore.GetVSync(), SettingsStore.SetVSync);
+        ui.invertToggle = ToggleRow(panel, font, Loc.T("Инверсия мыши по вертикали"), SettingsStore.GetInvertY(), SettingsStore.SetInvertY);
+        ui.fullscreenToggle = ToggleRow(panel, font, Loc.T("Полноэкранный режим"), SettingsStore.GetFullscreen(), SettingsStore.SetFullscreen);
+        ui.vsyncToggle = ToggleRow(panel, font, Loc.T("Вертикальная синхронизация"), SettingsStore.GetVSync(), SettingsStore.SetVSync);
         string[] qualityNames = QualitySettings.names;
         int quality = SettingsStore.GetQuality();
-        ui.qualityValue = ChoiceRow(panel, font, "Качество графики", qualityNames[quality], direction => {
+        ui.qualityValue = ChoiceRow(panel, font, Loc.T("Качество графики"), qualityNames[quality], direction => {
             quality = (quality + direction + qualityNames.Length) % qualityNames.Length;
             SettingsStore.SetQuality(quality); ui.qualityValue.text = qualityNames[quality];
         });
@@ -108,7 +118,7 @@ public class SettingsMenuUI : MonoBehaviour
         }
         if (!ui.resolutions.Contains(current)) { ui.resolutions.Add(current); options.Add(current.x + " × " + current.y); }
         int resolutionIndex = ui.resolutions.IndexOf(current);
-        ui.resolutionValue = ChoiceRow(panel, font, "Разрешение", options[resolutionIndex], direction => {
+        ui.resolutionValue = ChoiceRow(panel, font, Loc.T("Разрешение"), options[resolutionIndex], direction => {
             resolutionIndex = (resolutionIndex + direction + options.Count) % options.Count;
             Vector2Int size = ui.resolutions[resolutionIndex];
             SettingsStore.SetResolution(size.x, size.y); ui.resolutionValue.text = options[resolutionIndex];
@@ -116,7 +126,7 @@ public class SettingsMenuUI : MonoBehaviour
 
         Spacer(panel, 28);
         HorizontalLayoutGroup footer = HorizontalRow("Footer", panel, 64, TextAnchor.MiddleLeft);
-        Button back = ButtonBox("Back", footer.transform, font, "НАЗАД", TextBase, 280, 64);
+        Button back = ButtonBox("Back", footer.transform, font, Loc.T("НАЗАД"), TextBase, 280, 64);
         back.onClick.AddListener(() => onBack?.Invoke());
         GameAudio.HookSelectables(panel);
         return ui;
@@ -170,7 +180,11 @@ public class SettingsMenuUI : MonoBehaviour
     static HorizontalLayoutGroup CaptionedRow(Transform parent, TMP_FontAsset font, string caption)
     {
         HorizontalLayoutGroup row = HorizontalRow(caption, parent, RowHeight, TextAnchor.MiddleLeft);
-        Size(Label(row.transform, font, caption, TextBase, TextAnchor.MiddleLeft, RowHeight).gameObject, -1, -1, 1);
+        TextMeshProUGUI label = Label(row.transform, font, caption, TextBase, TextAnchor.MiddleLeft, RowHeight);
+        // Переводы длиннее русского: подпись ужимается в свою строку, а не переносится поверх соседней.
+        label.textWrappingMode = TextWrappingModes.NoWrap;
+        label.enableAutoSizing = true; label.fontSizeMin = TextBase * .6f; label.fontSizeMax = TextBase;
+        Size(label.gameObject, -1, -1, 1);
         return row;
     }
     static void ApplyColors(Selectable selectable, Color normal, Color highlighted)
