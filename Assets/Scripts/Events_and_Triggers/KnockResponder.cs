@@ -212,9 +212,9 @@ namespace KnocksFromBeneath
         public static string[] HeroReaction(KnockReplyKind kind, bool firstAnswer, bool raged)
         {
             if (kind == KnockReplyKind.Repeat && firstAnswer)
-                return new[] { "...Столько же ударов. Он повторил.", "Это не эхо. Эхо так не умеет." };
+                return new[] { Loc.T("…Столько же ударов. Повторило."), Loc.T("Это не эхо. Эхо не ждёт, пока ты закончишь.") };
             if (kind == KnockReplyKind.Silence && raged)
-                return new[] { "Твою мать!", "Он... разозлился? Больше так не долблю." };
+                return new[] { Loc.T("Твою мать!"), Loc.T("Оно… разозлилось? Больше я так колотить не буду.") };
             return null;
         }
 

@@ -34,6 +34,12 @@ public class PlacementZone : MonoBehaviour
     [Range(0f, 1f)]
     [SerializeField] private float revealPopVolume = 0.5f;
 
+    // U-09 (1): тем же «попом» появляются штатив и видеокамера из коробки (CameraPlacementController).
+    public float RevealInterval => revealInterval;
+    public float RevealPopDuration => revealPopDuration;
+    public AudioClip RevealPopSound => revealPopSound;
+    public float RevealPopVolume => revealPopVolume;
+
     private bool[] isSlotOccupied;
     private bool _revealed;
     private readonly List<GameObject> _placedQuestBoxes = new List<GameObject>();

@@ -17,7 +17,7 @@ public class SettingsMenuUI : MonoBehaviour
     Toggle invertToggle, fullscreenToggle, vsyncToggle;
     TextMeshProUGUI qualityValue, resolutionValue, microphoneValue;
 
-    static string MicrophoneLabel(string device) => string.IsNullOrEmpty(device) ? "Авто" : device;
+    static string MicrophoneLabel(string device) => string.IsNullOrEmpty(device) ? Loc.T("Авто") : device;
     readonly List<Vector2Int> resolutions = new List<Vector2Int>();
 
     void OnEnable()
@@ -77,26 +77,26 @@ public class SettingsMenuUI : MonoBehaviour
         panel.gameObject.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
         SettingsMenuUI ui = panel.gameObject.AddComponent<SettingsMenuUI>();
 
-        Label(panel, font, "► НАСТРОЙКИ", TextHeading, TextAnchor.MiddleLeft, 72).color = Accent;
+        Label(panel, font, Loc.T("► НАСТРОЙКИ"), TextHeading, TextAnchor.MiddleLeft, 72).color = Accent;
         Image rule = Rect("Rule", panel, Vector2.zero).gameObject.AddComponent<Image>();
         rule.color = new Color(Accent.r, Accent.g, Accent.b, .6f); rule.raycastTarget = false;
         rule.gameObject.AddComponent<LayoutElement>().preferredHeight = 2;
         Spacer(panel, 14);
 
-        ui.masterVolumeSlider = SliderRow(panel, font, "Общая громкость", out ui.masterVolumeValueText);
-        VolumeRow(panel, font, "Музыка", SettingsStore.GetMusicVolume, SettingsStore.SetMusicVolume);
-        VolumeRow(panel, font, "Фоновые звуки", SettingsStore.GetAmbienceVolume, SettingsStore.SetAmbienceVolume);
-        VolumeRow(panel, font, "Эффекты", SettingsStore.GetSfxVolume, SettingsStore.SetSfxVolume);
-        ui.mouseSensitivitySlider = SliderRow(panel, font, "Чувствительность мыши", out ui.mouseSensitivityValueText);
-        ui.fovSlider = SliderRow(panel, font, "Поле зрения", out ui.fovText);
+        ui.masterVolumeSlider = SliderRow(panel, font, Loc.T("Общая громкость"), out ui.masterVolumeValueText);
+        VolumeRow(panel, font, Loc.T("Музыка"), SettingsStore.GetMusicVolume, SettingsStore.SetMusicVolume);
+        VolumeRow(panel, font, Loc.T("Фоновые звуки"), SettingsStore.GetAmbienceVolume, SettingsStore.SetAmbienceVolume);
+        VolumeRow(panel, font, Loc.T("Эффекты"), SettingsStore.GetSfxVolume, SettingsStore.SetSfxVolume);
+        ui.mouseSensitivitySlider = SliderRow(panel, font, Loc.T("Чувствительность мыши"), out ui.mouseSensitivityValueText);
+        ui.fovSlider = SliderRow(panel, font, Loc.T("Поле зрения"), out ui.fovText);
         SetupSlider(ui.fovSlider, 50, 100, SettingsStore.GetFieldOfView(), value => { SettingsStore.SetFieldOfView(value); ui.fovText.text = Mathf.RoundToInt(value) + "°"; });
         ui.fovText.text = Mathf.RoundToInt(SettingsStore.GetFieldOfView()) + "°";
-        ui.invertToggle = ToggleRow(panel, font, "Инверсия мыши по вертикали", SettingsStore.GetInvertY(), SettingsStore.SetInvertY);
-        ui.fullscreenToggle = ToggleRow(panel, font, "Полноэкранный режим", SettingsStore.GetFullscreen(), SettingsStore.SetFullscreen);
-        ui.vsyncToggle = ToggleRow(panel, font, "Вертикальная синхронизация", SettingsStore.GetVSync(), SettingsStore.SetVSync);
+        ui.invertToggle = ToggleRow(panel, font, Loc.T("Инверсия мыши по вертикали"), SettingsStore.GetInvertY(), SettingsStore.SetInvertY);
+        ui.fullscreenToggle = ToggleRow(panel, font, Loc.T("Полноэкранный режим"), SettingsStore.GetFullscreen(), SettingsStore.SetFullscreen);
+        ui.vsyncToggle = ToggleRow(panel, font, Loc.T("Вертикальная синхронизация"), SettingsStore.GetVSync(), SettingsStore.SetVSync);
         string[] qualityNames = QualitySettings.names;
         int quality = SettingsStore.GetQuality();
-        ui.qualityValue = ChoiceRow(panel, font, "Качество графики", qualityNames[quality], direction => {
+        ui.qualityValue = ChoiceRow(panel, font, Loc.T("Качество графики"), qualityNames[quality], direction => {
             quality = (quality + direction + qualityNames.Length) % qualityNames.Length;
             SettingsStore.SetQuality(quality); ui.qualityValue.text = qualityNames[quality];
         });
@@ -110,7 +110,7 @@ public class SettingsMenuUI : MonoBehaviour
         }
         if (!ui.resolutions.Contains(current)) { ui.resolutions.Add(current); options.Add(current.x + " × " + current.y); }
         int resolutionIndex = ui.resolutions.IndexOf(current);
-        ui.resolutionValue = ChoiceRow(panel, font, "Разрешение", options[resolutionIndex], direction => {
+        ui.resolutionValue = ChoiceRow(panel, font, Loc.T("Разрешение"), options[resolutionIndex], direction => {
             resolutionIndex = (resolutionIndex + direction + options.Count) % options.Count;
             Vector2Int size = ui.resolutions[resolutionIndex];
             SettingsStore.SetResolution(size.x, size.y); ui.resolutionValue.text = options[resolutionIndex];
@@ -121,20 +121,20 @@ public class SettingsMenuUI : MonoBehaviour
         List<string> microphones = new List<string> { string.Empty };
         microphones.AddRange(Microphone.devices);
         int microphoneIndex = Mathf.Max(0, microphones.IndexOf(SettingsStore.GetMicrophone()));
-        ui.microphoneValue = ChoiceRow(panel, font, "Микрофон", MicrophoneLabel(microphones[microphoneIndex]), direction => {
+        ui.microphoneValue = ChoiceRow(panel, font, Loc.T("Микрофон"), MicrophoneLabel(microphones[microphoneIndex]), direction => {
             microphoneIndex = (microphoneIndex + direction + microphones.Count) % microphones.Count;
             SettingsStore.SetMicrophone(microphones[microphoneIndex]);
             ui.microphoneValue.text = MicrophoneLabel(microphones[microphoneIndex]);
         });
         ui.microphoneValue.textWrappingMode = TextWrappingModes.NoWrap;
         ui.microphoneValue.overflowMode = TextOverflowModes.Ellipsis;
-        TextMeshProUGUI outputNote = Label(panel, font, "Наушники: устройство вывода звука выбирается в Windows.",
+        TextMeshProUGUI outputNote = Label(panel, font, Loc.T("Наушники: устройство вывода звука выбирается в Windows."),
             20, TextAnchor.MiddleLeft, 32);
         outputNote.color = UiStyle.Ash;
 
         Spacer(panel, 28);
         HorizontalLayoutGroup footer = HorizontalRow("Footer", panel, 64, TextAnchor.MiddleLeft);
-        Button back = ButtonBox("Back", footer.transform, font, "НАЗАД", TextBase, 280, 64);
+        Button back = ButtonBox("Back", footer.transform, font, Loc.T("НАЗАД"), TextBase, 280, 64);
         back.onClick.AddListener(() => onBack?.Invoke());
         GameAudio.HookSelectables(panel);
         return ui;
@@ -188,7 +188,11 @@ public class SettingsMenuUI : MonoBehaviour
     static HorizontalLayoutGroup CaptionedRow(Transform parent, TMP_FontAsset font, string caption)
     {
         HorizontalLayoutGroup row = HorizontalRow(caption, parent, RowHeight, TextAnchor.MiddleLeft);
-        Size(Label(row.transform, font, caption, TextBase, TextAnchor.MiddleLeft, RowHeight).gameObject, -1, -1, 1);
+        TextMeshProUGUI label = Label(row.transform, font, caption, TextBase, TextAnchor.MiddleLeft, RowHeight);
+        // Переводы длиннее русского: подпись ужимается в свою строку, а не переносится поверх соседней.
+        label.textWrappingMode = TextWrappingModes.NoWrap;
+        label.enableAutoSizing = true; label.fontSizeMin = TextBase * .6f; label.fontSizeMax = TextBase;
+        Size(label.gameObject, -1, -1, 1);
         return row;
     }
     static void ApplyColors(Selectable selectable, Color normal, Color highlighted)

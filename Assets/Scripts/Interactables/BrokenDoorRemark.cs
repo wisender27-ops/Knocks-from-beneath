@@ -14,8 +14,8 @@ namespace KnocksFromBeneath
 
         private static readonly string[] Lines =
         {
-            "Дверь выбита… вместе с петлями.",
-            "Засов выдержал. Петли не выдержали."
+            Loc.Key("Дверь выбита. Вместе с петлями."),
+            Loc.Key("Засов выдержал. Петли — нет.")
         };
 
         private Collider _leaf;
@@ -59,7 +59,7 @@ namespace KnocksFromBeneath
                     QueryTriggerInteraction.Ignore) && hit.collider != _leaf) return;
 
             ThoughtManager thoughts = ThoughtManager.Instance;
-            if (thoughts != null && thoughts.TryShowInteractionThoughts(Key, Lines, float.MaxValue))
+            if (thoughts != null && thoughts.TryShowInteractionThoughts(Key, Loc.T(Lines), float.MaxValue))
                 Destroy(this);
         }
     }

@@ -40,11 +40,11 @@ public class SimpleItemTests
     }
 
     [Test]
-    public void Item_AppearsOnlyWhileRequiredQuestIsActive()
+    public void Item_AlwaysVisible_PickableOnlyWhileRequiredQuestIsActive()
     {
         Assert.That(_item.IsAvailable, Is.False);
-        Assert.That(_collider.enabled, Is.False);
-        Assert.That(_renderer.enabled, Is.False);
+        Assert.That(_collider.enabled, Is.True);
+        Assert.That(_renderer.enabled, Is.True);
 
         _manager.CreateQuest("Найти молоток", 1, questTag: "hammer-find");
 
@@ -55,7 +55,7 @@ public class SimpleItemTests
         _manager.AddProgress(1);
 
         Assert.That(_item.IsAvailable, Is.False);
-        Assert.That(_collider.enabled, Is.False);
-        Assert.That(_renderer.enabled, Is.False);
+        Assert.That(_collider.enabled, Is.True);
+        Assert.That(_renderer.enabled, Is.True);
     }
 }

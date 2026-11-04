@@ -23,6 +23,7 @@ namespace KnocksFromBeneath
         private static readonly Vector3 BacklightSpot = new Vector3(-43.2f, 2.5f, 103.3f);   // на улице, за стеклом двери
         public const float ApproachDistance = 1.8f;
         private const float GroundFloorMaxY = 3f;
+        private const float GroundFloorMinY = 0.5f; // ниже — подвал, его выключатели сцена не трогает
         private const float VoiceDistance = 7f;
         private const float FadeSeconds = 1.5f;
         public const string TakeQuestTag = "night-two-water";
@@ -68,6 +69,8 @@ namespace KnocksFromBeneath
         }
         public bool Survived { get; private set; }
         public bool IsGlassHeld => _glass != null && _pickup != null && _pickup.GetHeldObject() == _glass;
+        // U-09 (7): пока из крана льётся вода, стакан нельзя бросить, отпустить или поставить.
+        public bool IsFilling => IsRunning && _filling && !_dead;
         public bool CanFill => IsRunning && !_dead && !_filling && !_filled && IsGlassHeld && IsQuestActive(FillQuestTag);
         public bool CanDrink => IsRunning && !_dead && _filled && !_drinking && !_drunk && IsGlassHeld && IsQuestActive(DrinkQuestTag);
         private static bool IsQuestActive(string tag) => QuestManager.Instance != null && QuestManager.Instance.IsQuestActive(tag);
@@ -89,6 +92,7 @@ namespace KnocksFromBeneath
 
         private void OnDisable()
         {
+            LightSwitch.SetToggleBlocker(null);
             GameEvents.OnBedTriggerReached -= OnBedReached;
             foreach (Door door in _outerDoors) if (door != null) door.Opened -= OnOuterDoorOpened;
             _outerDoors.Clear();
@@ -112,8 +116,8 @@ namespace KnocksFromBeneath
                 }
             if (fade != null) fade.alpha = 0f;
 
-            _showThoughts(new[] { "Пить хочется…", "Схожу вниз, на кухню, за водой." }, null);
-            _createQuest("Взять стакан на кухне", 1, OnGlassTaken, TakeQuestTag);
+            _showThoughts(new[] { Loc.T("Пересохло в горле…"), Loc.T("Схожу на кухню за водой.") }, null);
+            _createQuest(Loc.T("Взять стакан на кухне"), 1, OnGlassTaken, TakeQuestTag);
 
             while (!_inBed && !_dead) yield return null;
             if (_dead) yield break;
@@ -148,8 +152,12 @@ namespace KnocksFromBeneath
             light.range = 5.5f;
             light.shadows = LightShadows.None;
 
-            // Выключатели работают как обычно: авария дома — после сцены, когда герой проснётся снова.
+            // Авария дома — после сцены, когда герой проснётся снова.
             LightSwitch.SetNightTwoPowerTrip(false);
+            // U-09 (6): пока идёт «попить воды», свет на первом этаже не включить — кухня только в темноте.
+            LightSwitch.SetToggleBlocker(IsGroundFloorSwitch);
+            foreach (LightSwitch lightSwitch in FindObjectsByType<LightSwitch>())
+                if (IsGroundFloorSwitch(lightSwitch)) lightSwitch.ForceTurnOff();
             MonsterWatcherManager watchers = MonsterWatcherManager.Instance;
             if (watchers != null) { _watchersWere = watchers.ambientWatchersEnabled; watchers.ambientWatchersEnabled = false; }
 
@@ -166,8 +174,17 @@ namespace KnocksFromBeneath
             GameEvents.OnBedTriggerReached += OnBedReached;
         }
 
+        private static bool IsGroundFloorSwitch(LightSwitch lightSwitch)
+        {
+            // Вытяжка на кухне (выключатель без ламп) остаётся рабочей — это не свет.
+            if (lightSwitch == null || lightSwitch.lightsToControl == null || lightSwitch.lightsToControl.Length == 0) return false;
+            float y = lightSwitch.transform.position.y;
+            return y > GroundFloorMinY && y < GroundFloorMaxY;
+        }
+
         private void Cleanup()
         {
+            LightSwitch.SetToggleBlocker(null);
             GameEvents.OnBedTriggerReached -= OnBedReached;
             foreach (Door door in _outerDoors) if (door != null) door.Opened -= OnOuterDoorOpened;
             _outerDoors.Clear();
@@ -282,8 +299,8 @@ namespace KnocksFromBeneath
         // Подсказка, пока стакан в руках (CrosshairJuice): у раковины — E, с водой — F.
         public string HeldHint(bool aimingAtSink)
         {
-            if (CanDrink) return "F выпить воды";
-            if (CanFill) return aimingAtSink ? "E налить воды" : "Подойдите к раковине";
+            if (CanDrink) return Loc.T("F выпить воды");
+            if (CanFill) return aimingAtSink ? Loc.T("E налить воды") : Loc.T("Подойдите к раковине");
             return null;
         }
 
@@ -316,9 +333,9 @@ namespace KnocksFromBeneath
                 PlayVoice();
                 return;
             }
-            thoughts.ShowDialogue("???", new[] { "Не двигайся." }, () =>
+            thoughts.ShowDialogue(Loc.Key("???"), new[] { Loc.T("Не двигайся.") }, () =>
             {
-                if (!_dead) _showThoughts(new[] { "Оно… говорит.", "Не подходить к нему. Взять воды и обратно в кровать." }, null);
+                if (!_dead) _showThoughts(new[] { Loc.T("Оно… говорит."), Loc.T("Не подходить. Набрать воды — и обратно в кровать.") }, null);
             }, PlayVoice);
         }
 
@@ -331,7 +348,7 @@ namespace KnocksFromBeneath
         private void OnGlassTaken()
         {
             if (_dead) return;
-            _createQuest("Налить воды", 1, OnGlassFilled, FillQuestTag);
+            _createQuest(Loc.T("Налить воды"), 1, OnGlassFilled, FillQuestTag);
         }
 
         // E у раковины со стаканом в руках: кран, стакан наполняется.
@@ -363,7 +380,7 @@ namespace KnocksFromBeneath
         private void OnGlassFilled()
         {
             if (_dead) return;
-            _createQuest("Выпить воды", 1, OnWaterDrunk, DrinkQuestTag);
+            _createQuest(Loc.T("Выпить воды"), 1, OnWaterDrunk, DrinkQuestTag);
         }
 
         // F со стаканом воды в руках: только звук глотков, вода уходит.
@@ -387,8 +404,8 @@ namespace KnocksFromBeneath
         private void OnWaterDrunk()
         {
             if (_dead) return;
-            _showThoughts(new[] { "Холодная.", "А теперь наверх. Не оглядываться." }, null);
-            _createQuest("Вернуться в кровать", 1, () => _inBed = true, BedQuestTag);
+            _showThoughts(new[] { Loc.T("Холодная."), Loc.T("Теперь наверх. И не оглядываться.") }, null);
+            _createQuest(Loc.T("Вернуться в кровать"), 1, () => _inBed = true, BedQuestTag);
         }
 
         private void OnBedReached()

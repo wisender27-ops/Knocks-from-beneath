@@ -94,7 +94,7 @@ public class PlayerInteraction : MonoBehaviour
             var held = GetHeldObject();
             if (microwave == null || held == null || held.GetComponent<PieQuestItem>() == null ||
                 _interactionIntro == null || !_interactionIntro.CanPlacePieInMicrowave()) return;
-            focus = new InteractionFocus { Target = microwave.transform, Point = hit.point, Prompt = "Поставить пирог" };
+            focus = new InteractionFocus { Target = microwave.transform, Point = hit.point, Prompt = Loc.T("Поставить пирог") };
         }
         InteractionAttempted?.Invoke(focus);
         if (HasActiveAction && ActionTarget != null) return;
@@ -127,6 +127,8 @@ public class PlayerInteraction : MonoBehaviour
             return;
 
         if (_isEatingPie || IsBreakingLock || RetroInventoryScreen.IsAnyOpen || Time.timeScale == 0f) return;
+        // U-09 (7): во время еды пирога (выше) и набора воды предмет в руках не бросается и не отпускается.
+        if (IsHeldGlassFilling()) return;
 
         // held запрашивается заново для каждой кнопки, а не один раз в начале кадра:
         // если в этом же кадре E успел бросить/поставить предмет (HandleInteractPressed),
@@ -361,6 +363,13 @@ public class PlayerInteraction : MonoBehaviour
 
         StartCoroutine(EatPieRoutine(pie));
         return true;
+    }
+
+    bool IsHeldGlassFilling()
+    {
+        GameObject held = pickup != null ? pickup.GetHeldObject() : null;
+        if (held == null || !held.TryGetComponent(out WaterGlassInteractable glass)) return false;
+        return glass.Scene != null && glass.Scene.IsFilling;
     }
 
     // B-07: стакан в руках, луч на раковине — налить воды.

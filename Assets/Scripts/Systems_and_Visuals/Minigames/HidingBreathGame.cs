@@ -882,7 +882,7 @@ namespace KnocksFromBeneath
             var keys = UiKeyHints.Create(promptUi.transform, "Keys", Font());
             keys.RectTransform.anchorMin = keys.RectTransform.anchorMax = keys.RectTransform.pivot = new Vector2(0.5f, 0f);
             keys.RectTransform.anchoredPosition = new Vector2(0f, 110f);
-            keys.Set("E", "ЗАЛЕЗТЬ ПОД КРОВАТЬ");
+            keys.Set("E", Loc.T("ЗАЛЕЗТЬ ПОД КРОВАТЬ"));
             promptUi.SetActive(false);
         }
 
@@ -921,7 +921,7 @@ namespace KnocksFromBeneath
             title.rectTransform.anchorMin = title.rectTransform.anchorMax = title.rectTransform.pivot = new Vector2(0.5f, 1f);
             title.rectTransform.anchoredPosition = new Vector2(0f, -70f);
             title.rectTransform.sizeDelta = new Vector2(1000f, 46f);
-            title.text = "НЕ ГОВОРИ НИ СЛОВА";
+            title.text = Loc.T("НЕ ГОВОРИ НИ СЛОВА");
             const float width = 320f;
             var meter = UiStyle.Rect("Meter", ui.transform, new Vector2(0.5f, 0f), new Vector2(0.5f, 0.5f),
                 new Vector2(0f, 96f), new Vector2(width, 8f));
@@ -961,8 +961,8 @@ namespace KnocksFromBeneath
             Color ivory = UiStyle.Ivory;
             meterBar.color = level >= 1f ? UiStyle.Rust
                 : level > 0.7f ? UiStyle.Amber : new Color(ivory.r, ivory.g, ivory.b, 0.8f);
-            meterLabel.text = !Voice.Calibrated ? "МИКРОФОН · СЛУШАЮ ТИШИНУ…"
-                : level >= 1f ? "СЛИШКОМ ГРОМКО" : "МИКРОФОН";
+            meterLabel.text = !Voice.Calibrated ? Loc.T("МИКРОФОН · СЛУШАЮ ТИШИНУ…")
+                : level >= 1f ? Loc.T("СЛИШКОМ ГРОМКО") : Loc.T("МИКРОФОН");
             meterLabel.color = level >= 1f ? UiStyle.Rust : UiStyle.Ash;
         }
 

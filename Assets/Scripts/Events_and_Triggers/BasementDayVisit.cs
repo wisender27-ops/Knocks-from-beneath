@@ -43,9 +43,9 @@ namespace KnocksFromBeneath
             if (depths == null) { finished?.Invoke(); return; }
             Running = true;
             wallChecked = ventChecked = false;
-            depths.sealedWall.Initialize(() => QuestActive(InspectQuest) && !wallChecked, CheckWall, () => "Осмотреть стену");
-            depths.vent.Initialize(() => QuestActive(InspectQuest) && !ventChecked, CheckVent, () => "Осмотреть решётку");
-            createQuest?.Invoke("Спуститься в подвал", 1, OnDescended, DescendQuest);
+            depths.sealedWall.Initialize(() => QuestActive(InspectQuest) && !wallChecked, CheckWall, () => Loc.T("Осмотреть стену"));
+            depths.vent.Initialize(() => QuestActive(InspectQuest) && !ventChecked, CheckVent, () => Loc.T("Осмотреть решётку"));
+            createQuest?.Invoke(Loc.T("Спуститься в подвал"), 1, OnDescended, DescendQuest);
         }
 
         private void Update()
@@ -57,28 +57,28 @@ namespace KnocksFromBeneath
 
         private void OnDescended()
         {
-            createQuest?.Invoke("Осмотреть подвал", 2, OnInspected, InspectQuest);
-            say?.Invoke(new[] { "Котёл, верстак, полки. Обычный подвал.", "И тихо. Здесь стук не слышно." }, null);
+            createQuest?.Invoke(Loc.T("Осмотреть подвал"), 2, OnInspected, InspectQuest);
+            say?.Invoke(new[] { Loc.T("Котёл, верстак, полки. Подвал как подвал."), Loc.T("И тихо. Здесь стука не слышно.") }, null);
         }
 
         private void CheckWall()
         {
             wallChecked = true;
             QuestManager.Instance?.AddProgress(1);
-            say?.Invoke(new[] { "Здесь был проём. Его заложили, и кладка новее остальной.", "Десять шагов от стены до стены. А дом наверху раза в полтора длиннее." }, null);
+            say?.Invoke(new[] { Loc.T("Здесь был проём. Его заложили, и недавно: кладка свежее остальной."), Loc.T("Десять шагов от стены до стены. А дом наверху раза в полтора длиннее. Где остальное?") }, null);
         }
 
         private void CheckVent()
         {
             ventChecked = true;
             QuestManager.Instance?.AddProgress(1);
-            say?.Invoke(new[] { "Вентиляция. Квадратная труба шириной с человека. Зачем она такому подвалу?", "Решётка на болтах изнутри. Из трубы тянет холодом." }, null);
+            say?.Invoke(new[] { Loc.T("Вентиляционный короб шириной с человека. Зачем такой маленькому подвалу?"), Loc.T("Решётка на болтах. Из короба тянет холодом.") }, null);
         }
 
         private void OnInspected()
         {
-            say?.Invoke(new[] { "Никого. Некому тут стучать.", "И всё равно что-то не сходится." }, null);
-            createQuest?.Invoke("Подняться наверх", 1, () => StartCoroutine(KnockAgain()), AscendQuest);
+            say?.Invoke(new[] { Loc.T("Никого. Стучать здесь некому."), Loc.T("И всё равно что-то не сходится.") }, null);
+            createQuest?.Invoke(Loc.T("Подняться наверх"), 1, () => StartCoroutine(KnockAgain()), AscendQuest);
         }
 
         // Наверху стук идёт снова, тем же ритмом: у подвала, в котором только что никого не было.
@@ -92,9 +92,9 @@ namespace KnocksFromBeneath
             bool tape = tapeAvailable == null || tapeAvailable();
             sayImportant?.Invoke(new[]
             {
-                "Опять. Тот же стук, будто я и не спускался.",
-                "Там никого нет. Я только что там был.",
-                tape ? "Камера писала всю ночь. Надо посмотреть запись." : "Голова гудит. Надо поесть, иначе я ничего не пойму."
+                Loc.T("Опять. Тот же стук — будто я и не спускался."),
+                Loc.T("Внизу никого нет. Я только что оттуда."),
+                tape ? Loc.T("Камера писала всю ночь. Пора посмотреть запись.") : Loc.T("Голова гудит. Сначала поем, потом буду думать.")
             }, finished);
         }
 

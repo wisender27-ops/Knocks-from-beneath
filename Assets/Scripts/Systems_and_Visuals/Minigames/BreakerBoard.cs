@@ -18,8 +18,8 @@ namespace KnocksFromBeneath
         public const float CalmRetrip = 3.6f;
         public const float PanicRetrip = 1.8f;
         public static readonly string[] Labels = {
-            "КУХНЯ", "ПРИХОЖАЯ", "ГОСТИНАЯ", "ЛЕСТНИЦА", "СПАЛЬНЯ", "СПАЛЬНЯ 2", "ГАРДЕРОБ", "САНУЗЕЛ",
-            "ВАННАЯ", "ВАННАЯ 2", "ГАРАЖ", "КРЫЛЬЦО", "ДВОР", "РОЗЕТКИ", "БОЙЛЕР", "ПОДВАЛ" };
+            Loc.Key("КУХНЯ"), Loc.Key("ПРИХОЖАЯ"), Loc.Key("ГОСТИНАЯ"), Loc.Key("ЛЕСТНИЦА"), Loc.Key("СПАЛЬНЯ"), Loc.Key("СПАЛЬНЯ 2"), Loc.Key("ГАРДЕРОБ"), Loc.Key("САНУЗЕЛ"),
+            Loc.Key("ВАННАЯ"), Loc.Key("ВАННАЯ 2"), Loc.Key("ГАРАЖ"), Loc.Key("КРЫЛЬЦО"), Loc.Key("ДВОР"), Loc.Key("РОЗЕТКИ"), Loc.Key("БОЙЛЕР"), Loc.Key("ПОДВАЛ") };
 
         private readonly bool[] up = new bool[GroupCount];
         private float retripAt = -1f;

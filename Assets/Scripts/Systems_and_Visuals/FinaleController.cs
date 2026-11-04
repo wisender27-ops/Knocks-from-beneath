@@ -92,11 +92,11 @@ public class FinaleController : MonoBehaviour
         if (QuestManager.Instance != null && QuestManager.Instance.questUiText != null)
             QuestManager.Instance.questUiText.text = "";
         if (ThoughtManager.Instance != null)
-            ThoughtManager.Instance.ShowDialogue("ГОЛОС", new[] {
-                "Эй! Там кто-нибудь есть?",
-                "Выпустите меня!"
+            ThoughtManager.Instance.ShowDialogue(Loc.Key("ГОЛОС"), new[] {
+                Loc.T("Эй! Наверху! Кто-нибудь!"),
+                Loc.T("Не заколачивай! Выпусти меня!")
             }, () => ThoughtManager.Instance.ShowImportantThoughts(new[] {
-                "Там человек... Я снова это сделал."
+                Loc.T("Там внизу человек. И я снова его заколотил.")
             }, () => ShowEnding(EndingId.Boarded)));
         else ShowEnding(EndingId.Boarded);
     }
@@ -229,9 +229,9 @@ public class FinaleController : MonoBehaviour
         if (ThoughtManager.Instance != null)
         {
             ThoughtManager.Instance.ShowImportantThoughts(new string[] {
-                "Нет! Не закрывай люк!",
-                "Выпусти меня, сука!",
-                "Я не открыл тогда. Теперь открывать некому."
+                Loc.T("Нет! Не закрывай люк!"),
+                Loc.T("Выпусти меня, сука!"),
+                Loc.T("Я не открыл тогда. Теперь открывать некому.")
             }, () => ShowEnding(EndingId.Pushed));
         }
         else

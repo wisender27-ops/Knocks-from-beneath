@@ -49,10 +49,10 @@ public static class ChapterCheckpoints
 
     public static readonly ChapterInfo[] Chapters =
     {
-        new ChapterInfo(StoryChapter.DayOne, "1. Переезд", DebugStoryStage.None),
-        new ChapterInfo(StoryChapter.NightOne, "2. Первая ночь", DebugStoryStage.StartNightOne),
-        new ChapterInfo(StoryChapter.DayTwo, "3. Второй день", DebugStoryStage.StartDay2Decoration),
-        new ChapterInfo(StoryChapter.NightTwo, "4. Вторая ночь", DebugStoryStage.StartNight),
+        new ChapterInfo(StoryChapter.DayOne, Loc.Key("1. Переезд"), DebugStoryStage.None),
+        new ChapterInfo(StoryChapter.NightOne, Loc.Key("2. Первая ночь"), DebugStoryStage.StartNightOne),
+        new ChapterInfo(StoryChapter.DayTwo, Loc.Key("3. Второй день"), DebugStoryStage.StartDay2Decoration),
+        new ChapterInfo(StoryChapter.NightTwo, Loc.Key("4. Вторая ночь"), DebugStoryStage.StartNight),
     };
 
     // Ключи kfb.save.* (до правки) забиты дебаг-прыжками — прогресс начинается заново.

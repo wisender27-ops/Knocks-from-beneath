@@ -53,7 +53,7 @@ public sealed class RoomDecorationController
             SetupDecorationQuest();
             return;
         }
-        _createQuest("Пойти на кухню", 1, OnKitchenReached, KitchenQuestTag);
+        _createQuest(Loc.T("Пойти на кухню"), 1, OnKitchenReached, KitchenQuestTag);
         _startCoroutine(WaitForKitchen(kitchen));
     }
 
@@ -104,13 +104,13 @@ public sealed class RoomDecorationController
         return count > 0;
     }
 
-    void OnKitchenReached() => _showThoughts(new[] { "Что здесь произошло?" }, SetupDecorationQuest);
+    void OnKitchenReached() => _showThoughts(new[] { Loc.T("Что здесь случилось?") }, SetupDecorationQuest);
 
     public void SetupDecorationQuest()
     {
         SetZonesActive(true);
         int amount = _decorationZones != null ? Mathf.Max(1, _decorationZones.Length) : 1;
-        _createQuest("Убрать разбросанные вещи на кухне", amount, OnDecorationFinished, "room-decoration");
+        _createQuest(Loc.T("Убрать разбросанные вещи на кухне"), amount, OnDecorationFinished, "room-decoration");
         // Повторный вызов — no-op (PrepareForPlacementQuest срабатывает один раз);
         // нужен для дебаг-стартов, которые идут сюда в обход SetupKitchenQuest.
         ScatterItems();
@@ -136,7 +136,7 @@ public sealed class RoomDecorationController
     {
         SetZonesActive(false);
         _showThoughts(new string[] {
-            "Вчера всё стояло нормально. Само оно на пол не упало."
+            Loc.T("Вчера всё стояло на местах. Само оно на пол не попадало.")
         }, _onDecorationFinished);
     }
 

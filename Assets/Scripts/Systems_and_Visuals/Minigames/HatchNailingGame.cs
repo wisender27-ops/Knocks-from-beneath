@@ -524,7 +524,7 @@ namespace KnocksFromBeneath
             keys = UiKeyHints.Create(ui.transform, "Keys", font);
             keys.RectTransform.anchorMin = keys.RectTransform.anchorMax = keys.RectTransform.pivot = new Vector2(0.5f, 0f);
             keys.RectTransform.anchoredPosition = new Vector2(0f, 70f);
-            keys.Set("МЫШЬ", "ЦЕЛИТЬСЯ", "ЛКМ", "ДЕРЖАТЬ ДЛЯ ЗАМАХА, ОТПУСТИТЬ ДЛЯ УДАРА");
+            keys.Set(Loc.T("МЫШЬ"), Loc.T("ЦЕЛИТЬСЯ"), Loc.T("ЛКМ"), Loc.T("ДЕРЖАТЬ ДЛЯ ЗАМАХА, ОТПУСТИТЬ ДЛЯ УДАРА"));
         }
 
         private void Finish()

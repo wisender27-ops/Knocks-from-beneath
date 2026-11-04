@@ -183,7 +183,44 @@ namespace KnocksFromBeneath
             Bounds b = ObjectBounds(box);
             CreateCamera(new Vector3(b.center.x, b.max.y + 0.02f, b.center.z));
             CreateTripodBeside(b);
+            StartCoroutine(PopGearIn(RevealStyle()));
             GearFound?.Invoke();
+        }
+
+        // U-09 (1): камера и штатив вырастают из нуля так же, как вещи из коробки (PlacementZone.RevealItems).
+        private PlacementZone RevealStyle()
+        {
+            if (zones != null)
+                foreach (PlacementZone zone in zones)
+                    if (zone != null) return zone;
+            return null;
+        }
+
+        private System.Collections.IEnumerator PopGearIn(PlacementZone style)
+        {
+            float duration = style != null ? style.RevealPopDuration : 0.3f;
+            float interval = style != null ? style.RevealInterval : 0.12f;
+            Transform cam = cameraObject != null ? cameraObject.transform : null;
+            Transform legs = tripod != null ? tripod.transform : null;
+            Vector3 camScale = cam != null ? cam.localScale : Vector3.one;
+            Vector3 legsScale = legs != null ? legs.localScale : Vector3.one;
+            // Выпуклый MeshCollider штатива при нулевом масштабе не нужен физике: выключаем его, пока штатив растёт.
+            Collider[] legColliders = legs != null ? legs.GetComponentsInChildren<Collider>() : Array.Empty<Collider>();
+            foreach (Collider c in legColliders) c.enabled = false;
+            if (legs != null) legs.localScale = Vector3.zero;
+            PopGear(cam, camScale, duration, style);
+            if (interval > 0f) yield return new WaitForSeconds(interval);
+            PopGear(legs, legsScale, duration, style);
+            yield return new WaitForSeconds(duration);
+            foreach (Collider c in legColliders)
+                if (c != null) c.enabled = true;
+        }
+
+        private static void PopGear(Transform t, Vector3 scale, float duration, PlacementZone style)
+        {
+            if (t == null) return;
+            PopScaleAnimator.Play(t, scale, duration, 0f, freezePhysics: true);
+            if (style != null) PopScaleAnimator.PlayPopSound(t.position, style.RevealPopSound, style.RevealPopVolume);
         }
 
         // Used by debug jumps after the box delivery, and by old saves without a camera slot.
@@ -323,7 +360,7 @@ namespace KnocksFromBeneath
             CreateRecordLight();
             cameraObject.tag = "Pickable";
             if (cameraObject.GetComponent<PickableItem>() == null)
-                cameraObject.AddComponent<PickableItem>().displayName = "видеокамеру";
+                cameraObject.AddComponent<PickableItem>();
             Rigidbody body = cameraObject.GetComponent<Rigidbody>();
             if (body == null) body = cameraObject.AddComponent<Rigidbody>();
             body.mass = 1f;
@@ -417,7 +454,7 @@ namespace KnocksFromBeneath
             tripod.SetActive(true);
             tripod.tag = "Pickable";
             if (tripod.GetComponent<PickableItem>() == null)
-                tripod.AddComponent<PickableItem>().displayName = "штатив";
+                tripod.AddComponent<PickableItem>();
             tripodBody = tripod.GetComponent<Rigidbody>();
             if (tripodBody == null) tripodBody = tripod.AddComponent<Rigidbody>();
             tripodBody.mass = 3f;
@@ -519,17 +556,17 @@ namespace KnocksFromBeneath
             if (StoreActive && held != null && IsGear(held))
             {
                 hint = held == tripod
-                    ? NearStore(pickup, held) ? "E поставить штатив у комода" : "Отнесите штатив в спальню, к комоду"
-                    : NearStore(pickup, held) ? "E положить камеру на комод" : "Отнесите камеру в спальню, на комод";
+                    ? NearStore(pickup, held) ? Loc.T("E поставить штатив у комода") : Loc.T("Отнесите штатив в спальню, к комоду")
+                    : NearStore(pickup, held) ? Loc.T("E положить камеру на комод") : Loc.T("Отнесите камеру в спальню, на комод");
                 return true;
             }
             if (tripod != null && held == tripod)
             {
-                hint = FindSlot(pickup) >= 0 ? "E поставить штатив здесь" : "Поднесите штатив к отмеченному месту";
+                hint = FindSlot(pickup) >= 0 ? Loc.T("E поставить штатив здесь") : Loc.T("Поднесите штатив к отмеченному месту");
                 return true;
             }
             if (cameraObject == null || held != cameraObject || !MountActive) return false;
-            hint = FindTarget(pickup) ? "E установить камеру на штатив" : "Поднесите камеру к штативу";
+            hint = FindTarget(pickup) ? Loc.T("E установить камеру на штатив") : Loc.T("Поднесите камеру к штативу");
             return true;
         }
 

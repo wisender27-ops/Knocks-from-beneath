@@ -87,13 +87,14 @@ public class SimpleItem : MonoBehaviour
     private void SetAvailable(bool available)
     {
         IsAvailable = available;
-        bool visible = available || itemType == ItemType.Flashlight;
 
+        // U-09 (5): фонарик, молоток и лом всегда лежат на виду; квест решает только, можно ли их взять
+        // (InteractionFocusResolver/PlayerInteraction проверяют IsAvailable и IsItemRequired).
         for (int i = 0; i < _renderers.Length; i++)
-            _renderers[i].enabled = visible && _rendererStates[i];
+            _renderers[i].enabled = _rendererStates[i];
 
         for (int i = 0; i < _colliders.Length; i++)
-            _colliders[i].enabled = visible && _colliderStates[i];
+            _colliders[i].enabled = _colliderStates[i];
 
         for (int i = 0; i < _particles.Length; i++)
         {

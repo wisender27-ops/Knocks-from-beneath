@@ -62,7 +62,7 @@ public class ThoughtManager : MonoBehaviour
     // Главная функция, которую мы вызываем из IntroSequence
     // lines - список фраз
     // onComplete - действие, которое выполнится в самом конце (например, выдача квеста)
-    private const string ThoughtSpeaker = "МЫСЛИ";
+    private static readonly string ThoughtSpeaker = Loc.Key("МЫСЛИ");
 
     public void ShowThoughts(string[] lines, Action onComplete = null, Action onStart = null)
     {

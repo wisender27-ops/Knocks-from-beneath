@@ -17,8 +17,9 @@ namespace KnocksFromBeneath
         [SerializeField] private Texture2D previewTextureOverride;
 
         public string Id => id;
-        public string DisplayName => displayName;
-        public string Description => description;
+        // Поля хранят русский текст — ключ Loc; наружу отдаётся перевод на текущий язык.
+        public string DisplayName => Loc.T(displayName);
+        public string Description => Loc.T(description);
         public InventoryItemCategory Category => category;
         public int MaxStack => maxStack;
         public Sprite Icon => icon;

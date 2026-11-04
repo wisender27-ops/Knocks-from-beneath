@@ -93,9 +93,9 @@ namespace KnocksFromBeneath
         protected override void Build(Transform root)
         {
             TMPro.TextMeshProUGUI hint = Label("Hint", -300f, 26f);
-            hint.text = "Удерживай ЛКМ над болтом";
+            hint.text = Loc.T("Удерживай ЛКМ над болтом");
             var keys = KeyHints(hint.font, -335f);
-            keys.Set("Esc", "отойти");
+            keys.Set("Esc", Loc.T("отойти"));
         }
 
         protected override void Tick()

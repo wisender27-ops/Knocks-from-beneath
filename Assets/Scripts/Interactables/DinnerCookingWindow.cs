@@ -38,9 +38,9 @@ namespace KnocksFromBeneath
             elapsed = 0f;
             finished = false;
             started = false;
-            title.text = "► ГОТОВКА";
-            hint.text = "Останови указатель пробелом в янтарной зоне. Попытка одна.";
-            keys.Set("ENTER", "НАЧАТЬ", "ESC", "ВЫЙТИ");
+            title.text = Loc.T("► ГОТОВКА");
+            hint.text = Loc.T("Останови стрелку пробелом в янтарной зоне. Попытка одна.");
+            keys.Set("ENTER", Loc.T("НАЧАТЬ"), "ESC", Loc.T("ВЫЙТИ"));
             MoveNeedle(0f);
         }
 
@@ -52,8 +52,8 @@ namespace KnocksFromBeneath
                 if (Input.GetKeyDown(KeyCode.Return))
                 {
                     started = attemptUsed = true;
-                    hint.text = "Останови указатель в янтарной зоне";
-                    keys.Set("ПРОБЕЛ", "СТОП");
+                    hint.text = Loc.T("Останови стрелку в янтарной зоне");
+                    keys.Set(Loc.T("ПРОБЕЛ"), Loc.T("СТОП"));
                 }
                 return;
             }
@@ -67,16 +67,16 @@ namespace KnocksFromBeneath
             MoveNeedle(position);
             if (!Input.GetKeyDown(KeyCode.Space) && position < 1f) return;
             finished = true;
-            title.text = Quality(position);
+            title.text = Loc.T(Quality(position));
             hint.text = string.Empty;
-            keys.Set("ENTER", "ПОДАТЬ УЖИН");
+            keys.Set("ENTER", Loc.T("ПОДАТЬ УЖИН"));
         }
 
         public static string Quality(float position)
         {
-            if (position >= 0.47f && position <= 0.55f) return "Идеально!";
-            if (position >= 0.35f && position <= 0.67f) return "Нормально";
-            return "Подгорело";
+            if (position >= 0.47f && position <= 0.55f) return Loc.Key("Идеально!");
+            if (position >= 0.35f && position <= 0.67f) return Loc.Key("Нормально");
+            return Loc.Key("Подгорело");
         }
 
         private void MoveNeedle(float position)

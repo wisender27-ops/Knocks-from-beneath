@@ -18,7 +18,7 @@ namespace KnocksFromBeneath
             if (!TryOpen()) return false;
             boardChosen = onBoard;
             descendChosen = onDescend;
-            keys.Set("1", "ЗАКОЛОТИТЬ", "2", "СПУСТИТЬСЯ", "ESC", "ПОДУМАТЬ");
+            keys.Set("1", Loc.T("ЗАКОЛОТИТЬ"), "2", Loc.T("СПУСТИТЬСЯ"), "ESC", Loc.T("ПОДУМАТЬ"));
             return true;
         }
 
@@ -32,11 +32,11 @@ namespace KnocksFromBeneath
 
             var title = UiStyle.Text("Title", panel, font, 30f, UiStyle.Amber, TextAlignmentOptions.Top);
             Stretch(title.rectTransform, 20f, -20f, 140f, -14f);
-            title.text = "ЛЮК ПОДВАЛА";
+            title.text = Loc.T("ЛЮК ПОДВАЛА");
 
             var body = UiStyle.Text("Body", panel, font, 22f, UiStyle.Ivory, TextAlignmentOptions.Center);
             Stretch(body.rectTransform, 30f, -30f, 60f, -64f);
-            body.text = "Заколотить, и оно больше не вылезет.\nИли спуститься и узнать, кто стучал.";
+            body.text = Loc.T("Заколотить — и оно больше не вылезет.\nИли спуститься и узнать, кто стучал.");
 
             keys = KeyHints(font, -110f);
         }

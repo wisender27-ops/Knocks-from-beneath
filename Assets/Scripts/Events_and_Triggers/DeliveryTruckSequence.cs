@@ -139,7 +139,7 @@ namespace KnocksFromBeneath
 
             // Сигналим и ждём, пока игрок подойдёт к кузову.
             yield return new WaitForSeconds(.8f);
-            QuestManager.Instance?.CreateQuest("Забрать посылки у курьера", 1, questTag: "parcel-pickup");
+            QuestManager.Instance?.CreateQuest(Loc.T("Забрать коробки у курьера"), 1, questTag: "parcel-pickup");
             float nextHorn = 0f;
             while (!PlayerNearCargo())
             {

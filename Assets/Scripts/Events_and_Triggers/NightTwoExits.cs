@@ -11,7 +11,7 @@ namespace KnocksFromBeneath
     public sealed class NightTwoExits : MonoBehaviour
     {
         // E3: одна реплика на все пути, где монстр настиг героя.
-        public const string CaughtThought = "Оно шло не за домом. За мной.";
+        public static readonly string CaughtThought = Loc.Key("Оно шло не за домом. Оно шло за мной.");
 
         private static readonly Vector3 GarageBackDoor = new Vector3(-38.04f, 1.55f, 104.71f);
         private static readonly Vector3 KitchenBackDoor = new Vector3(-43.39f, 2.10f, 104.71f);
@@ -27,8 +27,8 @@ namespace KnocksFromBeneath
         private const float HouseWestX = -47f, HouseEastX = -33f, HouseSouthZ = 104.7f, HouseNorthZ = 119f;
         private const float PorchWestX = -40.4f, PorchZ = 116.4f;
 
-        private static readonly string[] DarkOutside = { "Я не хочу выходить из дома, пока там темно." };
-        private static readonly string[] WantToSleep = { "Я сейчас никуда не пойду, я хочу спать." };
+        private static readonly string[] DarkOutside = { Loc.Key("Выходить в такую темень? Нет уж.") };
+        private static readonly string[] WantToSleep = { Loc.Key("Никуда я сейчас не пойду. Мне нужно поспать.") };
 
         private Transform _player;
         private Vector3 _hatch;
@@ -166,8 +166,8 @@ namespace KnocksFromBeneath
 
         private void OnLockedAttempt()
         {
-            if (_stayIndoors) ThoughtManager.Instance?.TryShowInteractionThoughts("stay-indoors", WantToSleep, ThoughtCooldown);
-            else if (_locked) ThoughtManager.Instance?.TryShowInteractionThoughts("back-door-dark", DarkOutside, ThoughtCooldown);
+            if (_stayIndoors) ThoughtManager.Instance?.TryShowInteractionThoughts("stay-indoors", Loc.T(WantToSleep), ThoughtCooldown);
+            else if (_locked) ThoughtManager.Instance?.TryShowInteractionThoughts("back-door-dark", Loc.T(DarkOutside), ThoughtCooldown);
         }
 
         private void Update()
@@ -434,7 +434,7 @@ namespace KnocksFromBeneath
             if (player != null) { player.StopMotion(); player.isCameraLocked = true; }
             PrepareEndingLines(_player != null ? _player.GetComponentInChildren<Camera>() : null,
                 GetComponent<IntroSequence>()?.fadeScreen);
-            yield return ShowLines(new[] { "Новая комната. Здесь меня не найдут." });
+            yield return ShowLines(new[] { Loc.Key("Другой город, чужая комната. Здесь меня не найдут.") });
 
             // Стук монстра идёт без пауз, не 2·1: он нашёл героя и здесь.
             var clip = Resources.Load<AudioClip>("Audio/Horror/AnswerKnock");
@@ -448,7 +448,7 @@ namespace KnocksFromBeneath
                 }
                 Destroy(source.gameObject);
             }
-            yield return ShowLines(new[] { "Под полом. Оно пришло за мной." });
+            yield return ShowLines(new[] { Loc.Key("Под полом. Оно пришло за мной.") });
         }
 
         // Экран чёрным держит камера, а не затемнение: при затемнении FadeTransitionPresentation прячет реплики.
@@ -465,11 +465,12 @@ namespace KnocksFromBeneath
                 QuestManager.Instance.questUiText.text = "";
         }
 
+        // lines — русские ключи (Loc.Key): переводятся здесь, при показе.
         public static IEnumerator ShowLines(string[] lines)
         {
             if (ThoughtManager.Instance == null) yield break;
             bool done = false;
-            ThoughtManager.Instance.ShowImportantThoughts(lines, () => done = true);
+            ThoughtManager.Instance.ShowImportantThoughts(Loc.T(lines), () => done = true);
             while (!done) yield return null;
         }
 

@@ -7,8 +7,8 @@ namespace KnocksFromBeneath
     public sealed class PhoneFlashlight : MonoBehaviour
     {
         public const string ModelResource = "Props/PhoneFlashlight";
-        public const string DeadDescription = "Мой телефон. Батарея села — экран больше не включается.";
-        private static readonly string[] Introduction = { "Темно... Можно включить фонарик на телефоне." };
+        public static readonly string DeadDescription = Loc.Key("Мой телефон. Сел намертво — экран не включается.");
+        private static readonly string[] Introduction = { Loc.Key("Темно. На телефоне есть фонарик.") };
         private readonly PhoneFlashlightState state = new PhoneFlashlightState();
         private PlayerInventory inventory;
         private PickupController pickup;
@@ -132,7 +132,7 @@ namespace KnocksFromBeneath
             if (!available) return;
 
             if (state.IsNight && !introductionShown && Time.time >= hintReadyAt && ThoughtManager.Instance != null &&
-                ThoughtManager.Instance.TryShowInteractionThoughts("phone-light-intro", Introduction))
+                ThoughtManager.Instance.TryShowInteractionThoughts("phone-light-intro", Loc.T(Introduction)))
                 introductionShown = true;
 
             // ЛКМ тоже включает фонарик, но только пустой рукой: с ломом в руке это удар, а в кадр броска
@@ -164,7 +164,7 @@ namespace KnocksFromBeneath
             firstHint = UiKeyHints.Create(canvas.transform, "PhoneFlashlightHint", font, 1.7f, UiStyle.Amber);
             firstHint.RectTransform.anchorMin = firstHint.RectTransform.anchorMax = firstHint.RectTransform.pivot = new Vector2(.5f, .5f);
             firstHint.RectTransform.anchoredPosition = new Vector2(0f, -120f);
-            firstHint.Set("ЛКМ", "ВКЛЮЧИТЬ ФОНАРИК НА ТЕЛЕФОНЕ");
+            firstHint.Set(Loc.T("ЛКМ"), Loc.T("ВКЛЮЧИТЬ ФОНАРИК НА ТЕЛЕФОНЕ"));
             firstHintGroup = firstHint.gameObject.AddComponent<CanvasGroup>();
             firstHint.gameObject.SetActive(false);
         }

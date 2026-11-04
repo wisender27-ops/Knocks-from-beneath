@@ -48,7 +48,7 @@ public sealed class PieQuestController
         if (_pieObject != null) _pieObject.SetActive(true);
         if (_microwaveZone != null) _microwaveZone.SetActive(false);
 
-        _createQuest("Достать пирог из холодильника", 1, null, "pie-take");
+        _createQuest(Loc.T("Достать пирог из холодильника"), 1, null, "pie-take");
     }
 
     // Публикуется через GameEvents.OnPieGrabbed безусловно — сами решаем
@@ -71,7 +71,7 @@ public sealed class PieQuestController
         _isPieHeated = false;
         if (_pieObject != null) _pieObject.SetActive(true);
         if (_microwaveZone != null) _microwaveZone.SetActive(true);
-        _createQuest("Поставить пирог в микроволновку", 1, OnPiePlacedInMicrowave, "pie-microwave");
+        _createQuest(Loc.T("Поставить пирог в микроволновку"), 1, OnPiePlacedInMicrowave, "pie-microwave");
     }
 
     public void SetupEatQuest()
@@ -80,7 +80,7 @@ public sealed class PieQuestController
         _isPieHeated = true;
         if (_pieObject != null) _pieObject.SetActive(true);
         if (_microwaveZone != null) _microwaveZone.SetActive(false);
-        _createQuest("Съесть пирог", 1, OnPieEaten, "pie-eat");
+        _createQuest(Loc.T("Съесть пирог"), 1, OnPieEaten, "pie-eat");
     }
 
     public void OnPiePlacedInMicrowave()
@@ -88,15 +88,15 @@ public sealed class PieQuestController
         _recordCompletion?.Invoke("pie-microwave");
         _isPieHeated = true;
         if (_microwaveZone != null) _microwaveZone.SetActive(false);
-        _createQuest("Съесть пирог", 1, OnPieEaten, "pie-eat");
+        _createQuest(Loc.T("Съесть пирог"), 1, OnPieEaten, "pie-eat");
     }
 
     public void OnPieEaten()
     {
         _recordCompletion?.Invoke("pie-eat");
         _showThoughts(new string[] {
-            "Хоть поел нормально.",
-            "Всё. На сегодня с меня хватит."
+            Loc.T("Хоть поел по-человечески."),
+            Loc.T("Всё. На сегодня хватит.")
         }, _onDinnerFinished);
     }
 

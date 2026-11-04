@@ -163,9 +163,9 @@ public class TrashManager : MonoBehaviour
         }
 
         ThoughtManager.Instance.ShowThoughts(new[] {
-            "Только не опять.",
-            "Нет. Старый дом, тут всё скрипит.",
-            "Сначала вынесу этот чёртов мусор."
+            Loc.T("Только не это. Не снова."),
+            Loc.T("Нет. Старый дом, тут всё скрипит."),
+            Loc.T("Сначала вынесу этот чёртов мусор.")
         }, () => GameEvents.OnTrashDeliveryReady?.Invoke(), onStart: PlayFloorKnock);
     }
 

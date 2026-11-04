@@ -182,16 +182,16 @@ namespace KnocksFromBeneath
         public static string TrustLine(int before, int after)
         {
             if (before < TrustedLevel && after >= TrustedLevel)
-                return "Он отвечает сразу. Будто ждёт меня. Будто доверяет.";
+                return Loc.T("Отвечает сразу, будто ждал. Будто доверяет мне.");
             if (before > DistrustLevel && after <= DistrustLevel)
-                return "Он больше не зовёт. Обиделся? На что вообще обижается подвал...";
+                return Loc.T("Он больше не зовёт. Похоже, я сам его отвадил.");
             return null;
         }
 
         // S-03: первый ответ в трубе — герой слышит, что стучат двое. Один раз за игру.
         public static string VoicesLine(KnockCallOutcome outcome, bool noticed) =>
             outcome == KnockCallOutcome.Correct && !noticed
-                ? "И звук другой. Металл, в трубах, с паузой. А то, что ходит у меня под ногами, бьёт по дереву. Ровно, без пауз."
+                ? Loc.T("И звук другой: металл, в трубах, с паузой. А то, что ходит у меня под ногами, бьёт по дереву — ровно, без пауз. Их двое.")
                 : null;
 
         private static string[] WithLine(string[] lines, string line)
@@ -209,12 +209,12 @@ namespace KnocksFromBeneath
             {
                 case KnockCallOutcome.Correct:
                     return _successes == 1
-                        ? new[] { "Тот же ритм... и тихий стук в ответ.", "Трубы сами так не стучат. Там внизу кто-то есть. И он меня понял." }
-                        : new[] { "Он снова ответил. Будто кивнул." };
+                        ? new[] { Loc.T("Тот же ритм… и тихий стук в ответ."), Loc.T("Трубы так не стучат. Внизу кто-то есть. И он меня понял.") }
+                        : new[] { Loc.T("Он снова ответил. Будто кивнул.") };
                 case KnockCallOutcome.Wrong:
-                    return new[] { "Не тот ритм. Снизу ни звука." };
+                    return new[] { Loc.T("Сбился. Снизу — ни звука.") };
                 default:
-                    return new[] { "Я не ответил. Внизу стало тихо." };
+                    return new[] { Loc.T("Я не ответил. Внизу затихли.") };
             }
         }
 
