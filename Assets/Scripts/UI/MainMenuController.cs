@@ -20,20 +20,14 @@ public class MainMenuController : MonoBehaviour
     private Canvas runtimeGalleryCanvas;
 
     // Кнопки меню — копии кнопки «Начать игру», чтобы совпадали стиль и вёрстка; сцену меню не трогаем.
-    // Главный экран: «Играть», «Концовки», «Язык», «Настройки», «Выход».
+    // Главный экран: «Играть», «Концовки», «Настройки», «Выход»; язык — флагом в правом верхнем углу.
     // «Играть» открывает «Продолжить» / «Новая игра» / «Выбор главы», «Выбор главы» — список глав.
     private readonly List<GameObject> mainButtons = new List<GameObject>();
     private readonly List<GameObject> playButtons = new List<GameObject>();
     private readonly List<GameObject> chapterButtons = new List<GameObject>();
-    private readonly List<GameObject> languageButtons = new List<GameObject>();
     private List<GameObject> openGroup;
     private const float LockedAlpha = 0.45f;
-    private const int LanguageColumns = 2;
-    private const float LanguageFontSize = 42f, LanguageMinFontSize = 28f;
-    private static readonly Vector2 LanguageCell = new Vector2(480f, 60f);
-    private static readonly Vector2 LanguageSpacing = new Vector2(24f, 6f);
-    // L-02: смена языка перезагружает меню, чтобы все подписи собрались заново; список языков открывается снова.
-    private static bool reopenLanguagesAfterChange;
+    private MenuLanguagePicker languagePicker;
 
     void Awake()
     {
@@ -46,19 +40,20 @@ public class MainMenuController : MonoBehaviour
         SettingsStore.ApplyMasterVolume();
         ChapterCheckpoints.CommitReached(); // вышли из игры в меню — открываем пройденные главы
         BuildMenu();
-        ShowMain();
-        if (reopenLanguagesAfterChange)
+        if (mainPanel != null)
         {
-            reopenLanguagesAfterChange = false;
-            ShowGroup(languageButtons);
+            TMP_FontAsset font = PauseMenuController.FindFont();
+            MenuCredits.Build(mainPanel.transform, font);
+            languagePicker = MenuLanguagePicker.Build(mainPanel.transform, font, SelectLanguage);
         }
+        ShowMain();
     }
 
+    // L-02: смена языка перезагружает меню, чтобы все подписи собрались заново.
     void SelectLanguage(string code)
     {
-        if (code == Loc.Current) { ShowMain(); return; }
+        if (code == Loc.Current) return;
         Loc.Select(code);
-        reopenLanguagesAfterChange = true;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
@@ -93,8 +88,6 @@ public class MainMenuController : MonoBehaviour
     public void OpenPlay() => ShowGroup(playButtons);
 
     public void OpenChapters() => ShowGroup(chapterButtons);
-
-    public void OpenLanguages() => ShowGroup(languageButtons);
 
     public void OpenSettings()
     {
@@ -137,14 +130,13 @@ public class MainMenuController : MonoBehaviour
         ShowGroup(mainButtons);
     }
 
-    // На панели видна одна группа кнопок: главная, «Играть», главы или языки.
+    // На панели видна одна группа кнопок: главная, «Играть» или главы.
     void ShowGroup(List<GameObject> group)
     {
         openGroup = group;
         SetActive(mainButtons, group == mainButtons);
         SetActive(playButtons, group == playButtons);
         SetActive(chapterButtons, group == chapterButtons);
-        SetActive(languageButtons, group == languageButtons);
     }
 
     static void SetActive(List<GameObject> group, bool active)
@@ -161,7 +153,6 @@ public class MainMenuController : MonoBehaviour
         // Главная группа; «Настройки» и «Выход» из сцены стоят ниже вставленных кнопок.
         mainButtons.Add(Place(CloneButton(start, "BtnPlay", Loc.T("Играть"), OpenPlay), ref slot));
         mainButtons.Add(Place(CloneButton(start, "BtnEndings", Loc.T("Концовки"), OpenGallery), ref slot));
-        mainButtons.Add(Place(CloneButton(start, "BtnLanguage", Loc.T("Язык"), OpenLanguages), ref slot));
         mainButtons.Add(mainPanel.transform.Find("BtnSettings").gameObject);
         mainButtons.Add(mainPanel.transform.Find("BtnQuit").gameObject);
 
@@ -175,7 +166,6 @@ public class MainMenuController : MonoBehaviour
         playButtons.Add(Place(CloneButton(start, "BtnPlayBack", Loc.T("Назад"), ShowMain), ref slot));
 
         BuildChapterButtons(start, ref slot);
-        BuildLanguageButtons(start, ref slot);
     }
 
     // Открытые главы, за ними одна следующая — серая и неактивная, дальше только подсказка.
@@ -201,35 +191,6 @@ public class MainMenuController : MonoBehaviour
             chapterButtons.Add(Place(button, ref slot));
         }
         chapterButtons.Add(Place(CloneButton(start, "BtnChaptersBack", Loc.T("Назад"), OpenPlay), ref slot));
-    }
-
-    // Языки — сетка в две колонки: тринадцать кнопок в столбик не помещаются на экран.
-    // Каждый язык подписан на своём языке, текущий выделен янтарным.
-    void BuildLanguageButtons(Transform start, ref int slot)
-    {
-        RectTransform grid = new GameObject("LanguageGrid", typeof(RectTransform)).GetComponent<RectTransform>();
-        grid.SetParent(start.parent, false);
-        grid.gameObject.layer = start.gameObject.layer;
-        GridLayoutGroup layout = grid.gameObject.AddComponent<GridLayoutGroup>();
-        layout.cellSize = LanguageCell;
-        layout.spacing = LanguageSpacing;
-        layout.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-        layout.constraintCount = LanguageColumns;
-        layout.childAlignment = TextAnchor.UpperLeft;
-
-        foreach (Loc.Language language in Loc.Languages)
-        {
-            string code = language.Code;
-            GameObject button = CloneButton(start, "BtnLanguage_" + code, language.NativeName, () => SelectLanguage(code));
-            button.transform.SetParent(grid, false);
-            TMP_Text label = button.GetComponentInChildren<TMP_Text>(true);
-            label.enableAutoSizing = true;
-            label.fontSizeMax = LanguageFontSize;
-            label.fontSizeMin = LanguageMinFontSize;
-            if (code == Loc.Current) label.color = UiStyle.Amber;
-        }
-        languageButtons.Add(Place(grid.gameObject, ref slot));
-        languageButtons.Add(Place(CloneButton(start, "BtnLanguagesBack", Loc.T("Назад"), ShowMain), ref slot));
     }
 
     static GameObject Place(GameObject item, ref int slot)
@@ -282,7 +243,8 @@ public class MainMenuController : MonoBehaviour
     void Update()
     {
         if (!Input.GetKeyDown(KeyCode.Escape)) return;
-        if (runtimeGalleryCanvas != null) ShowMain();
+        if (languagePicker != null && languagePicker.IsOpen) languagePicker.Close();
+        else if (runtimeGalleryCanvas != null) ShowMain();
         else if (runtimeSettingsCanvas != null && runtimeSettingsCanvas.gameObject.activeSelf) BackFromSettings();
         else if (openGroup == chapterButtons) OpenPlay();
         else if (openGroup != mainButtons) ShowMain();
